@@ -36,7 +36,7 @@ function shareOpen() {
 		name: file.split('/')[1]
 	}));
 
-	navigator.clipboard.writeText(`${location.href.replace('/' + location.search, '')}/?viewOnly=true&openDefaultFiles=${JSON.stringify(openFiles)}`).then(() => {
+	navigator.clipboard.writeText(`${location.href.replace('/' + location.search, '')}/?openDefaultFiles=${JSON.stringify(openFiles)}&viewOnly=true`).then(() => {
 		alert('Link copied to clipboard');
 	})
 }
