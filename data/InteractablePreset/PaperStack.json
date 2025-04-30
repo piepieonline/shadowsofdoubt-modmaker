@@ -2,7 +2,7 @@
     "presetName": "PaperStack",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 98052,
+        "m_FileID": 103106,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 94004,
+        "m_FileID": 98612,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93462,
+        "m_FileID": 97884,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119842,
+            "m_FileID": 126398,
             "m_PathID": 0
         }
     ],
@@ -179,17 +179,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120620,
+            "m_FileID": 127186,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120586,
+            "m_FileID": 127152,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 120582,
+            "m_FileID": 127148,
             "m_PathID": 0
         }
     ],
@@ -206,7 +206,7 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 120842,
+                    "m_FileID": 127414,
                     "m_PathID": 0
                 }
             ],
@@ -263,7 +263,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 119620,
+        "m_FileID": 126170,
         "m_PathID": 0
     },
     "locationIsParent": true,

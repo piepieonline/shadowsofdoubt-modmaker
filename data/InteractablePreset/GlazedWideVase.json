@@ -2,7 +2,7 @@
     "presetName": "GlazedWideVase",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 50398,
+        "m_FileID": 54030,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 50388,
+        "m_FileID": 54020,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13680,
+            "m_FileID": 13738,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14812,
+            "m_FileID": 14870,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 28962,
+        "m_FileID": 32596,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -107,7 +107,7 @@
     "mass": 1.0,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 13454,
+        "m_FileID": 13512,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -183,11 +183,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12636,
+            "m_FileID": 12684,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15212,
+            "m_FileID": 15278,
             "m_PathID": 0
         }
     ],
@@ -205,15 +205,15 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14662,
+                    "m_FileID": 14720,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 14912,
+                    "m_FileID": 14970,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 27108,
+                    "m_FileID": 30748,
                     "m_PathID": 0
                 }
             ],
@@ -225,7 +225,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 17608,
+                    "m_FileID": 17674,
                     "m_PathID": 0
                 }
             ],
@@ -282,7 +282,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13302,
+        "m_FileID": 13356,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -426,7 +426,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 50378,
+        "m_FileID": 54010,
         "m_PathID": 0
     },
     "menuOverride": {

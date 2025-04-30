@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 20576,
+        "m_FileID": 24220,
         "m_PathID": 0
     },
     "lightswitch": 0,
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,

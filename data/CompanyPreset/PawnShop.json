@@ -3,6 +3,7 @@
     "companyCategories": [
         7
     ],
+    "createMenu": false,
     "isIllegal": false,
     "useBuildingName": false,
     "useBuildingOverrideName": false,
@@ -78,7 +79,7 @@
     "enableLoiteringBehaviour": true,
     "menus": [
         {
-            "m_FileID": 23110,
+            "m_FileID": 26750,
             "m_PathID": 0
         }
     ],
@@ -86,11 +87,11 @@
     "previousFakeSalesRecords": 10,
     "requiredTraits": [
         {
-            "m_FileID": 13380,
+            "m_FileID": 13438,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15374,
+            "m_FileID": 15440,
             "m_PathID": 0
         }
     ],
@@ -99,11 +100,11 @@
     "sellValueMultiplier": 0.5,
     "possibleUniformColours": [],
     "workHours": {
-        "m_FileID": 13568,
+        "m_FileID": 13626,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 23108,
+        "m_FileID": 26748,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

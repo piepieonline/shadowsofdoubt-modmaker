@@ -3,6 +3,7 @@
     "companyCategories": [
         7
     ],
+    "createMenu": false,
     "isIllegal": true,
     "useBuildingName": false,
     "useBuildingOverrideName": false,
@@ -65,7 +66,7 @@
     "enableLoiteringBehaviour": false,
     "menus": [
         {
-            "m_FileID": 20618,
+            "m_FileID": 24262,
             "m_PathID": 0
         }
     ],
@@ -77,11 +78,11 @@
     "sellValueMultiplier": 0.5,
     "possibleUniformColours": [],
     "workHours": {
-        "m_FileID": 16054,
+        "m_FileID": 16122,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 43618,
+        "m_FileID": 47266,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

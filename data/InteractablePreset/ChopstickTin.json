@@ -2,7 +2,7 @@
     "presetName": "ChopstickTin",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 15416,
+        "m_FileID": 15482,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 15436,
+        "m_FileID": 15502,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14806,
+            "m_FileID": 14864,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 12756,
+        "m_FileID": 12804,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,7 +179,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 15432,
+            "m_FileID": 15498,
             "m_PathID": 0
         }
     ],

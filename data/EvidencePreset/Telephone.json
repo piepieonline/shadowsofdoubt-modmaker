@@ -2,7 +2,7 @@
     "presetName": "Telephone",
     "subClass": "Witness",
     "windowStyle": {
-        "m_FileID": 13812,
+        "m_FileID": 13870,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 13808,
+        "m_FileID": 13866,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 12684,
+        "m_FileID": 12732,
         "m_PathID": 0
     },
     "useInGamePhoto": false,

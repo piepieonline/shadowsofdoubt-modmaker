@@ -2,7 +2,7 @@
     "presetName": "CaseTray",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 39576,
+        "m_FileID": 43224,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 39586,
+        "m_FileID": 43234,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 39574,
+            "m_FileID": 43222,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14806,
+            "m_FileID": 14864,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": false,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 15070,
+        "m_FileID": 15136,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 19778,
+            "m_FileID": 23426,
             "m_PathID": 0
         }
     ],
@@ -218,18 +218,18 @@
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 29650,
+            "m_FileID": 33282,
             "m_PathID": 0
         },
         {
-            "m_FileID": 16410,
+            "m_FileID": 16478,
             "m_PathID": 0
         }
     ],
     "limitToCertainBuildings": true,
     "onlyInBuildings": [
         {
-            "m_FileID": 22964,
+            "m_FileID": 26584,
             "m_PathID": 0
         }
     ],

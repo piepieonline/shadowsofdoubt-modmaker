@@ -2,7 +2,7 @@
     "presetName": "Photograph",
     "subClass": "",
     "windowStyle": {
-        "m_FileID": 121136,
+        "m_FileID": 127718,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 93208,
+        "m_FileID": 97542,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 90424,
+        "m_FileID": 94512,
         "m_PathID": 0
     },
     "useInGamePhoto": false,
@@ -47,7 +47,7 @@
     "factSetup": [
         {
             "preset": {
-                "m_FileID": 119672,
+                "m_FileID": 126222,
                 "m_PathID": 0
             },
             "link": 5,
@@ -58,7 +58,7 @@
         },
         {
             "preset": {
-                "m_FileID": 119678,
+                "m_FileID": 126228,
                 "m_PathID": 0
             },
             "link": 2,

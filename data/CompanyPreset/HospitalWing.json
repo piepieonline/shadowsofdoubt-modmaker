@@ -3,6 +3,7 @@
     "companyCategories": [
         5
     ],
+    "createMenu": false,
     "isIllegal": false,
     "useBuildingName": false,
     "useBuildingOverrideName": false,
@@ -77,11 +78,11 @@
         }
     ],
     "workHours": {
-        "m_FileID": 118598,
+        "m_FileID": 125146,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 118610,
+        "m_FileID": 125158,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

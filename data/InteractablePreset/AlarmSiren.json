@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 59962,
+        "m_FileID": 63622,
         "m_PathID": 0
     },
     "lightswitch": 1,
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 38718,
+        "m_FileID": 42342,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -136,7 +136,7 @@
             "switchState": 1,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 61838,
+                "m_FileID": 65520,
                 "m_PathID": 0
             },
             "isLoop": true,

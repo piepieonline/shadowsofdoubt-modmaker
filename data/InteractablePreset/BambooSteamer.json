@@ -2,7 +2,7 @@
     "presetName": "BambooSteamer",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 69198,
+        "m_FileID": 72878,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 69222,
+        "m_FileID": 72902,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14892,
+            "m_FileID": 14950,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14806,
+            "m_FileID": 14864,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13292,
+        "m_FileID": 13346,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,11 +183,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13474,
+            "m_FileID": 13532,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15432,
+            "m_FileID": 15498,
             "m_PathID": 0
         }
     ],
@@ -205,19 +205,19 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 24682,
+                    "m_FileID": 28318,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 53834,
+                    "m_FileID": 57490,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 55078,
+                    "m_FileID": 58734,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56924,
+                    "m_FileID": 60586,
                     "m_PathID": 0
                 }
             ],

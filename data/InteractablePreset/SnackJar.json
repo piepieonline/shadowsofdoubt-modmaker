@@ -2,7 +2,7 @@
     "presetName": "SnackJar",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 40282,
+        "m_FileID": 43930,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 40268,
+        "m_FileID": 43916,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 27334,
+        "m_FileID": 30974,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13680,
+            "m_FileID": 13738,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13444,
+        "m_FileID": 13502,
         "m_PathID": 0
     },
     "overrideMass": true,
@@ -103,7 +103,7 @@
     "mass": 1.0,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 40278,
+        "m_FileID": 43926,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -115,7 +115,7 @@
     "shardEveryXPixels": 64,
     "overrideSpatterSettings": true,
     "spatterSimulation": {
-        "m_FileID": 35886,
+        "m_FileID": 39510,
         "m_PathID": 0
     },
     "spatterCountMultiplier": 0.019999999552965165,
@@ -179,11 +179,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13364,
+            "m_FileID": 13422,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15432,
+            "m_FileID": 15498,
             "m_PathID": 0
         }
     ],
@@ -245,7 +245,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13302,
+        "m_FileID": 13356,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -312,7 +312,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 13470,
+        "m_FileID": 13528,
         "m_PathID": 0
     },
     "isInventoryItem": false,
@@ -339,7 +339,7 @@
         "m_PathID": 0
     },
     "playerConsumeLoop": {
-        "m_FileID": 14446,
+        "m_FileID": 14504,
         "m_PathID": 0
     },
     "takeOneEvent": {

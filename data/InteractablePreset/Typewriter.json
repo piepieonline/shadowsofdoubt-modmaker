@@ -2,7 +2,7 @@
     "presetName": "Typewriter",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 32732,
+        "m_FileID": 36356,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 32750,
+        "m_FileID": 36374,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13680,
+            "m_FileID": 13738,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 17414,
+        "m_FileID": 17480,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,7 +179,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13838,
+            "m_FileID": 13896,
             "m_PathID": 0
         }
     ],
@@ -197,7 +197,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14438,
+                    "m_FileID": 14496,
                     "m_PathID": 0
                 }
             ],

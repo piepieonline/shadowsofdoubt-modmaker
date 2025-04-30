@@ -2,7 +2,7 @@
     "presetName": "FlowerBunchAffair",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 96456,
+        "m_FileID": 101324,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93076,
+        "m_FileID": 97362,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93462,
+        "m_FileID": 97884,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119838,
+            "m_FileID": 126394,
             "m_PathID": 0
         },
         {
-            "m_FileID": 119806,
+            "m_FileID": 126362,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 120338,
+        "m_FileID": 126898,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,13 +183,13 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120646,
+            "m_FileID": 127212,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 120574,
+            "m_FileID": 127140,
             "m_PathID": 0
         }
     ],
@@ -250,7 +250,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 119612,
+        "m_FileID": 126162,
         "m_PathID": 0
     },
     "locationIsParent": true,

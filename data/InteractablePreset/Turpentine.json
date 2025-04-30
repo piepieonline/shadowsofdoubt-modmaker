@@ -2,7 +2,7 @@
     "presetName": "Turpentine",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 39224,
+        "m_FileID": 42872,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 39210,
+        "m_FileID": 42858,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 13384,
+        "m_FileID": 13442,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12752,
+            "m_FileID": 12800,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13526,
+        "m_FileID": 13584,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,17 +179,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 15212,
+            "m_FileID": 15278,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13364,
+            "m_FileID": 13422,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13362,
+            "m_FileID": 13420,
             "m_PathID": 0
         }
     ],
@@ -206,11 +206,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 17592,
+                    "m_FileID": 17658,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 13380,
+                    "m_FileID": 13438,
                     "m_PathID": 0
                 }
             ],
@@ -267,7 +267,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13302,
+        "m_FileID": 13356,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -334,7 +334,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 15472,
+        "m_FileID": 15538,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -411,7 +411,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 39228,
+        "m_FileID": 42876,
         "m_PathID": 0
     },
     "menuOverride": {

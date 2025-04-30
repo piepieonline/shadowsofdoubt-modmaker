@@ -2,7 +2,7 @@
     "presetName": "CoughMedicine",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 35110,
+        "m_FileID": 38734,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 35104,
+        "m_FileID": 38728,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 13512,
+        "m_FileID": 13570,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12752,
+            "m_FileID": 12800,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13444,
+        "m_FileID": 13502,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -103,7 +103,7 @@
     "mass": 1.0,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 17336,
+        "m_FileID": 17402,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -115,7 +115,7 @@
     "shardEveryXPixels": 64,
     "overrideSpatterSettings": true,
     "spatterSimulation": {
-        "m_FileID": 18682,
+        "m_FileID": 18748,
         "m_PathID": 0
     },
     "spatterCountMultiplier": 1.0,
@@ -179,21 +179,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13488,
+            "m_FileID": 13546,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13520,
+            "m_FileID": 13578,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13500,
+            "m_FileID": 13558,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 12586,
+            "m_FileID": 12634,
             "m_PathID": 0
         }
     ],
@@ -210,7 +210,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 35114,
+                    "m_FileID": 38738,
                     "m_PathID": 0
                 }
             ],
@@ -267,7 +267,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13302,
+        "m_FileID": 13356,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -334,7 +334,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 15472,
+        "m_FileID": 15538,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -411,7 +411,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 35116,
+        "m_FileID": 38740,
         "m_PathID": 0
     },
     "menuOverride": {

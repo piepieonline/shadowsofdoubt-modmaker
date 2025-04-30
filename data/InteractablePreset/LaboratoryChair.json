@@ -2,7 +2,7 @@
     "presetName": "LaboratoryChair",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 69548,
+        "m_FileID": 73228,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 69538,
+        "m_FileID": 73218,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,22 +87,22 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13680,
+            "m_FileID": 13738,
             "m_PathID": 0
         },
         {
-            "m_FileID": 21886,
+            "m_FileID": 25502,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15670,
+            "m_FileID": 15738,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 34946,
+        "m_FileID": 38570,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -129,19 +129,19 @@
     "spatterCountMultiplier": 1.0,
     "overrideFurnitureSetting": true,
     "enterTransition": {
-        "m_FileID": 21892,
+        "m_FileID": 25508,
         "m_PathID": 0
     },
     "exitTransition": {
-        "m_FileID": 15668,
+        "m_FileID": 15736,
         "m_PathID": 0
     },
     "enterTransition2": {
-        "m_FileID": 21892,
+        "m_FileID": 25508,
         "m_PathID": 0
     },
     "exitTransition2": {
-        "m_FileID": 15668,
+        "m_FileID": 15736,
         "m_PathID": 0
     },
     "switchSFX": [],
@@ -187,7 +187,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13848,
+            "m_FileID": 13906,
             "m_PathID": 0
         }
     ],
@@ -222,7 +222,7 @@
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 14828,
+            "m_FileID": 14886,
             "m_PathID": 0
         }
     ],

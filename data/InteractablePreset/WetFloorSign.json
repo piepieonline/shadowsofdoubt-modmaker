@@ -2,7 +2,7 @@
     "presetName": "WetFloorSign",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 17164,
+        "m_FileID": 17230,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 17146,
+        "m_FileID": 17212,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13680,
+            "m_FileID": 13738,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13648,
+        "m_FileID": 13706,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,7 +179,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13660,
+            "m_FileID": 13718,
             "m_PathID": 0
         }
     ],
@@ -212,46 +212,46 @@
     "perCommercialLimit": 1,
     "banFromRooms": [
         {
-            "m_FileID": 13668,
+            "m_FileID": 13726,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13664,
+            "m_FileID": 13722,
             "m_PathID": 0
         }
     ],
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 17134,
+            "m_FileID": 17200,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17156,
+            "m_FileID": 17222,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17178,
+            "m_FileID": 17244,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15082,
+            "m_FileID": 15148,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17186,
+            "m_FileID": 17252,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17180,
+            "m_FileID": 17246,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17166,
+            "m_FileID": 17232,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17142,
+            "m_FileID": 17208,
             "m_PathID": 0
         }
     ],

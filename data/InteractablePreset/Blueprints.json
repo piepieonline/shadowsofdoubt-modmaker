@@ -2,7 +2,7 @@
     "presetName": "Blueprints",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 98314,
+        "m_FileID": 103386,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93400,
+        "m_FileID": 97804,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93184,
+        "m_FileID": 97502,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119810,
+            "m_FileID": 126366,
             "m_PathID": 0
         }
     ],
@@ -179,13 +179,13 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120580,
+            "m_FileID": 127146,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 120582,
+            "m_FileID": 127148,
             "m_PathID": 0
         }
     ],

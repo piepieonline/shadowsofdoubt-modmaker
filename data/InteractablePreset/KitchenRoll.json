@@ -2,7 +2,7 @@
     "presetName": "KitchenRoll",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 59190,
+        "m_FileID": 62854,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 59188,
+        "m_FileID": 62852,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13680,
+            "m_FileID": 13738,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14812,
+            "m_FileID": 14870,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13292,
+        "m_FileID": 13346,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -107,7 +107,7 @@
     "mass": 1.0,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 22488,
+        "m_FileID": 26106,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13474,
+            "m_FileID": 13532,
             "m_PathID": 0
         }
     ],
@@ -201,7 +201,7 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 14052,
+                    "m_FileID": 14110,
                     "m_PathID": 0
                 }
             ],
@@ -231,19 +231,19 @@
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 18342,
+            "m_FileID": 18408,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15082,
+            "m_FileID": 15148,
             "m_PathID": 0
         },
         {
-            "m_FileID": 18542,
+            "m_FileID": 18608,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14794,
+            "m_FileID": 14852,
             "m_PathID": 0
         }
     ],
@@ -275,7 +275,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13302,
+        "m_FileID": 13356,
         "m_PathID": 0
     },
     "locationIsParent": true,

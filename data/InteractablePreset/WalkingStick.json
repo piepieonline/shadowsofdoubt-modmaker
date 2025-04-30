@@ -2,7 +2,7 @@
     "presetName": "WalkingStick",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 49604,
+        "m_FileID": 53238,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 49610,
+        "m_FileID": 53244,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13680,
+            "m_FileID": 13738,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14812,
+            "m_FileID": 14870,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 12786,
+        "m_FileID": 12834,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13842,
+            "m_FileID": 13900,
             "m_PathID": 0
         }
     ],
@@ -201,7 +201,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 33350,
+                    "m_FileID": 36974,
                     "m_PathID": 0
                 }
             ],
@@ -258,7 +258,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13302,
+        "m_FileID": 13356,
         "m_PathID": 0
     },
     "locationIsParent": true,

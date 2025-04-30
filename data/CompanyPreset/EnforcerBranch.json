@@ -1,6 +1,7 @@
 {
     "presetName": "EnforcerBranch",
     "companyCategories": [],
+    "createMenu": false,
     "isIllegal": false,
     "useBuildingName": false,
     "useBuildingOverrideName": false,
@@ -75,11 +76,11 @@
         }
     ],
     "workHours": {
-        "m_FileID": 118598,
+        "m_FileID": 125146,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 118608,
+        "m_FileID": 125156,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

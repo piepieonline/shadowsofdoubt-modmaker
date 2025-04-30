@@ -2,7 +2,7 @@
     "presetName": "WorldCoin",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 98396,
+        "m_FileID": 103474,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93936,
+        "m_FileID": 98528,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93450,
+        "m_FileID": 97866,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119856,
+            "m_FileID": 126412,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 120336,
+        "m_FileID": 126896,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,23 +179,23 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120586,
+            "m_FileID": 127152,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120588,
+            "m_FileID": 127154,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120632,
+            "m_FileID": 127198,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120654,
+            "m_FileID": 127220,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120604,
+            "m_FileID": 127170,
             "m_PathID": 0
         }
     ],

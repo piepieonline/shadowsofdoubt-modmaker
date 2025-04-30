@@ -281,6 +281,71 @@
       "Item3": ""
     }
   },
+  "InteractionDialogInstance": {
+    "id": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
+    "treeID": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
+    "pickedItem": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
+    "pickedWorldItemID": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "mainBranch": {
+      "Item1": "Branch",
+      "Item2": false,
+      "Item3": ""
+    },
+    "secondaryBranches": {
+      "Item1": "Branch",
+      "Item2": true,
+      "Item3": ""
+    },
+    "newspaperFeatures": {
+      "Item1": "InteractionDialogFeature",
+      "Item2": true,
+      "Item3": ""
+    },
+    "tree": {
+      "Item1": "DDSTreeSave",
+      "Item2": false,
+      "Item3": ""
+    },
+    "generatedDialogOptions": {
+      "Item1": "DialogOption",
+      "Item2": true,
+      "Item3": ""
+    }
+  },
+  "EventsTestResult": {},
+  "Branch": {
+    "msgInstanceID": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
+    "completedEventIndexes": {
+      "Item1": "Int32",
+      "Item2": true,
+      "Item3": ""
+    },
+    "inst": {
+      "Item1": "InteractionDialogInstance",
+      "Item2": false,
+      "Item3": ""
+    }
+  },
   "DisposalType": {},
   "Wound": {
     "humanID": {
@@ -457,6 +522,11 @@
       "Item2": false,
       "Item3": ""
     },
+    "createdFor": {
+      "Item1": "NewAIAction",
+      "Item2": false,
+      "Item3": ""
+    },
     "node": {
       "Item1": "NewNode",
       "Item2": false,
@@ -564,11 +634,6 @@
     },
     "createdAt": {
       "Item1": "Single",
-      "Item2": false,
-      "Item3": ""
-    },
-    "debug": {
-      "Item1": "String",
       "Item2": false,
       "Item3": ""
     },
@@ -741,6 +806,11 @@
       "Item2": false,
       "Item3": "The time this should happen at (ideally)"
     },
+    "activeTimestamp": {
+      "Item1": "Single",
+      "Item2": false,
+      "Item3": ""
+    },
     "duration": {
       "Item1": "Single",
       "Item2": false,
@@ -762,16 +832,6 @@
       "Item3": ""
     },
     "travelTime": {
-      "Item1": "Single",
-      "Item2": false,
-      "Item3": ""
-    },
-    "activeTime": {
-      "Item1": "Single",
-      "Item2": false,
-      "Item3": "The amount of time this has been active"
-    },
-    "lastUpdatedAt": {
       "Item1": "Single",
       "Item2": false,
       "Item3": ""
@@ -1755,11 +1815,6 @@
       "Item2": false,
       "Item3": ""
     },
-    "duration": {
-      "Item1": "Single",
-      "Item2": false,
-      "Item3": ""
-    },
     "caller": {
       "Item1": "Int32",
       "Item2": false,
@@ -2137,6 +2192,16 @@
       "Item1": "DDSBlockCondition",
       "Item2": true,
       "Item3": ""
+    },
+    "baseSuccessChance": {
+      "Item1": "Single",
+      "Item2": false,
+      "Item3": ""
+    },
+    "events": {
+      "Item1": "DDSInteractionEvent",
+      "Item2": true,
+      "Item3": ""
     }
   },
   "DDSBlockCondition": {
@@ -2258,9 +2323,29 @@
       "Item2": false,
       "Item3": ""
     },
+    "interactionCitizenLimitation": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "itemPool": {
+      "Item1": "String",
+      "Item2": true,
+      "Item3": ""
+    },
+    "interactionOnePerCity": {
+      "Item1": "Boolean",
+      "Item2": false,
+      "Item3": ""
+    },
     "messageRef": {
       "Item1": "String",
       "Item2": true,
+      "Item3": ""
+    },
+    "citizenAddCount": {
+      "Item1": "Int32",
+      "Item2": false,
       "Item3": ""
     }
   },
@@ -2440,6 +2525,21 @@
       "Item2": false,
       "Item3": ""
     },
+    "isDialogSuccess": {
+      "Item1": "Boolean",
+      "Item2": false,
+      "Item3": ""
+    },
+    "secondaryBranchTrigger": {
+      "Item1": "Boolean",
+      "Item2": false,
+      "Item3": ""
+    },
+    "dialogSuccessModifier": {
+      "Item1": "Single",
+      "Item2": false,
+      "Item3": ""
+    },
     "useTraits": {
       "Item1": "Boolean",
       "Item2": false,
@@ -2503,6 +2603,19 @@
       "Item3": ""
     }
   },
+  "DDSInteractionEvent": {
+    "on": {
+      "Item1": "InteractionEvent",
+      "Item2": false,
+      "Item3": ""
+    },
+    "param": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    }
+  },
+  "InteractionEvent": {},
   "CullDebugType": {},
   "DebugLocationLink": {
     "name": {
@@ -3917,6 +4030,183 @@
     }
   },
   "CitizenPool": {},
+  "TerritoryOwner": {},
+  "TextData": {
+    "Text": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
+    "color": {
+      "Item1": "Color",
+      "Item2": false,
+      "Item3": ""
+    },
+    "Key": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    }
+  },
+  "SpecialInteraction": {
+    "frequency": {
+      "Item1": "Frequency",
+      "Item2": false,
+      "Item3": ""
+    },
+    "othersLabels": {
+      "Item1": "OthersLabels",
+      "Item2": false,
+      "Item3": ""
+    },
+    "specialEffects": {
+      "Item1": "SpecialEffects",
+      "Item2": false,
+      "Item3": ""
+    },
+    "wizcardToSpawn": {
+      "Item1": "Wizcard",
+      "Item2": false,
+      "Item3": ""
+    },
+    "extraAttack": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "extraHealth": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "bonusDamage": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    }
+  },
+  "Frequency": {},
+  "OthersLabels": {},
+  "SpecialEffects": {},
+  "Wizcard": {
+    "cardName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
+    "cardDescription": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
+    "attack": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "health": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "startHealth": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "mana": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "manaPerTurn": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "boardSprites": {
+      "Item1": "Sprite",
+      "Item2": true,
+      "Item3": ""
+    },
+    "cardSpace": {
+      "Item1": "CardSpace",
+      "Item2": false,
+      "Item3": ""
+    },
+    "occupySpace": {
+      "Item1": "Boolean",
+      "Item2": false,
+      "Item3": ""
+    },
+    "enemy": {
+      "Item1": "Boolean",
+      "Item2": false,
+      "Item3": ""
+    },
+    "specialInteractions": {
+      "Item1": "SpecialInteraction",
+      "Item2": true,
+      "Item3": ""
+    },
+    "labels": {
+      "Item1": "Labels",
+      "Item2": false,
+      "Item3": ""
+    },
+    "moveSpaces": {
+      "Item1": "Boolean",
+      "Item2": true,
+      "Item3": ""
+    },
+    "spawnSpaces": {
+      "Item1": "Boolean",
+      "Item2": true,
+      "Item3": ""
+    },
+    "attackSpaces": {
+      "Item1": "Boolean",
+      "Item2": true,
+      "Item3": ""
+    },
+    "buffSpaces": {
+      "Item1": "Boolean",
+      "Item2": true,
+      "Item3": ""
+    },
+    "app": {
+      "Item1": "WizcardsApp",
+      "Item2": false,
+      "Item3": ""
+    },
+    "myBoardSpace": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "isHovered": {
+      "Item1": "Boolean",
+      "Item2": false,
+      "Item3": ""
+    },
+    "comp": {
+      "Item1": "ComputerController",
+      "Item2": false,
+      "Item3": ""
+    },
+    "hoverComponent": {
+      "Item1": "ComputerOSUIComponent",
+      "Item2": false,
+      "Item3": ""
+    },
+    "rectTransform": {
+      "Item1": "RectTransform",
+      "Item2": false,
+      "Item3": ""
+    }
+  },
+  "Labels": {},
+  "CopyStat": {},
   "DLSSQuality": {},
   "StackType": {},
   "InventorySlot": {
@@ -5176,6 +5466,18 @@
     },
     "telephoneEntry": {
       "Item1": "EvidenceTelephone",
+      "Item2": false,
+      "Item3": ""
+    }
+  },
+  "InteractionDialogFeature": {
+    "msgID": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
+    "humanID": {
+      "Item1": "Int32",
       "Item2": false,
       "Item3": ""
     }
@@ -6775,6 +7077,11 @@
     },
     "speakingToRef": {
       "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "interactionDialogRef": {
+      "Item1": "String",
       "Item2": false,
       "Item3": ""
     },
@@ -10157,6 +10464,11 @@
       "Item1": "AvoidConfineStateSave",
       "Item2": true,
       "Item3": ""
+    },
+    "interactionDialog": {
+      "Item1": "InteractionDialogInstance",
+      "Item2": true,
+      "Item3": ""
     }
   },
   "AvoidConfineStateSave": {
@@ -10183,6 +10495,11 @@
       "Item3": ""
     },
     "trigerTime": {
+      "Item1": "Single",
+      "Item2": false,
+      "Item3": ""
+    },
+    "timestamp": {
       "Item1": "Single",
       "Item2": false,
       "Item3": ""
@@ -10229,11 +10546,6 @@
     },
     "var": {
       "Item1": "Int32",
-      "Item2": false,
-      "Item3": ""
-    },
-    "activeTime": {
-      "Item1": "Single",
       "Item2": false,
       "Item3": ""
     },
@@ -11584,6 +11896,11 @@
     },
     "roomRef": {
       "Item1": "NewRoom",
+      "Item2": false,
+      "Item3": ""
+    },
+    "interactionInstance": {
+      "Item1": "InteractionDialogInstance",
       "Item2": false,
       "Item3": ""
     }
@@ -13492,7 +13809,7 @@
       "Item3": "If true this action will use this threshold before it is interupted"
     },
     "interuptionThreshold": {
-      "Item1": "Int32",
+      "Item1": "Single",
       "Item2": false,
       "Item3": "Other goals will have to reach this much above the current priority before this one is interupted..."
     },
@@ -15932,6 +16249,11 @@
       "Item2": true,
       "Item3": "The category of this company"
     },
+    "createMenu": {
+      "Item1": "Boolean",
+      "Item2": false,
+      "Item3": ""
+    },
     "isIllegal": {
       "Item1": "Boolean",
       "Item2": false,
@@ -16643,6 +16965,16 @@
     }
   },
   "DialogPreset": {
+    "removeDialogOnSuccess": {
+      "Item1": "DialogPreset",
+      "Item2": true,
+      "Item3": ""
+    },
+    "removeDialog": {
+      "Item1": "DialogPreset",
+      "Item2": true,
+      "Item3": "Remove these other options"
+    },
     "msgID": {
       "Item1": "String",
       "Item2": false,
@@ -16774,16 +17106,6 @@
       "Item3": "Add these as player responses following..."
     },
     "followUpDialogFail": {
-      "Item1": "DialogPreset",
-      "Item2": true,
-      "Item3": ""
-    },
-    "removeDialog": {
-      "Item1": "DialogPreset",
-      "Item2": true,
-      "Item3": "Remove these other options"
-    },
-    "removeDialogOnSuccess": {
       "Item1": "DialogPreset",
       "Item2": true,
       "Item3": ""
@@ -17907,6 +18229,11 @@
       "Item2": false,
       "Item3": ""
     },
+    "steamVersionOnly": {
+      "Item1": "Boolean",
+      "Item2": false,
+      "Item3": ""
+    },
     "attackMainSpeed": {
       "Item1": "Single",
       "Item2": false,
@@ -18448,6 +18775,11 @@
     }
   },
   "FurnitureNodeRule": {
+    "furnitureClass": {
+      "Item1": "FurnitureClass",
+      "Item2": false,
+      "Item3": "What should be found at this node?"
+    },
     "offset": {
       "Item1": "Vector2",
       "Item2": false,
@@ -18462,11 +18794,6 @@
       "Item1": "Boolean",
       "Item2": false,
       "Item3": ""
-    },
-    "furnitureClass": {
-      "Item1": "FurnitureClass",
-      "Item2": false,
-      "Item3": "What should be found at this node?"
     },
     "addScore": {
       "Item1": "Int32",
@@ -22559,6 +22886,11 @@
     }
   },
   "MurderLeadItem": {
+    "compatibleWithMotives": {
+      "Item1": "MurderMO",
+      "Item2": true,
+      "Item3": ""
+    },
     "name": {
       "Item1": "String",
       "Item2": false,
@@ -22567,11 +22899,6 @@
     "compatibleWithAllMotives": {
       "Item1": "Boolean",
       "Item2": false,
-      "Item3": ""
-    },
-    "compatibleWithMotives": {
-      "Item1": "MurderMO",
-      "Item2": true,
       "Item3": ""
     },
     "spawnOnPhase": {

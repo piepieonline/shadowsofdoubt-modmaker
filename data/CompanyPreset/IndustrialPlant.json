@@ -1,6 +1,7 @@
 {
     "presetName": "IndustrialPlant",
     "companyCategories": [],
+    "createMenu": false,
     "isIllegal": false,
     "useBuildingName": false,
     "useBuildingOverrideName": true,
@@ -91,11 +92,11 @@
         }
     ],
     "workHours": {
-        "m_FileID": 45086,
+        "m_FileID": 48734,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 45084,
+        "m_FileID": 48732,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

@@ -2,7 +2,7 @@
     "presetName": "ApartmentSaleNote",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 100076,
+        "m_FileID": 105282,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93446,
+        "m_FileID": 97862,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93184,
+        "m_FileID": 97502,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119838,
+            "m_FileID": 126394,
             "m_PathID": 0
         },
         {
-            "m_FileID": 119806,
+            "m_FileID": 126362,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 120338,
+        "m_FileID": 126898,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120628,
+            "m_FileID": 127194,
             "m_PathID": 0
         }
     ],
@@ -245,7 +245,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 119570,
+        "m_FileID": 126120,
         "m_PathID": 0
     },
     "locationIsParent": true,

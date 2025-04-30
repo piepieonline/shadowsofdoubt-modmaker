@@ -2,7 +2,7 @@
     "presetName": "Padlock",
     "spawnable": false,
     "prefab": {
-        "m_FileID": 96042,
+        "m_FileID": 100880,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93034,
+        "m_FileID": 97314,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119864,
+            "m_FileID": 126420,
             "m_PathID": 0
         }
     ],
@@ -141,7 +141,7 @@
             "switchState": 4,
             "boolIs": false,
             "triggerAudio": {
-                "m_FileID": 117436,
+                "m_FileID": 123982,
                 "m_PathID": 0
             },
             "isLoop": false,
@@ -250,7 +250,7 @@
     "AIWillCorrectPosition": true,
     "useEvidence": false,
     "useSingleton": {
-        "m_FileID": 119662,
+        "m_FileID": 126212,
         "m_PathID": 0
     },
     "findEvidence": 0,
@@ -293,11 +293,11 @@
     "isSelfLock": false,
     "useMaterialChanges": false,
     "lockOffMaterial": {
-        "m_FileID": 87938,
+        "m_FileID": 91684,
         "m_PathID": 0
     },
     "lockOnMaterial": {
-        "m_FileID": 87936,
+        "m_FileID": 91682,
         "m_PathID": 0
     },
     "isComputer": false,

@@ -2,7 +2,7 @@
     "presetName": "M4",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 99444,
+        "m_FileID": 104586,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93024,
+        "m_FileID": 97298,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93450,
+        "m_FileID": 97866,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,11 +87,11 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119856,
+            "m_FileID": 126412,
             "m_PathID": 0
         },
         {
-            "m_FileID": 119792,
+            "m_FileID": 126348,
             "m_PathID": 0
         }
     ],
@@ -183,19 +183,19 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120586,
+            "m_FileID": 127152,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120588,
+            "m_FileID": 127154,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120632,
+            "m_FileID": 127198,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120654,
+            "m_FileID": 127220,
             "m_PathID": 0
         }
     ],
@@ -213,7 +213,7 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 120674,
+                    "m_FileID": 127242,
                     "m_PathID": 0
                 }
             ],
@@ -225,7 +225,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 121014,
+                    "m_FileID": 127594,
                     "m_PathID": 0
                 }
             ],

@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 14898,
+        "m_FileID": 14956,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 19800,
+            "m_FileID": 23448,
             "m_PathID": 0
         }
     ],
@@ -263,7 +263,7 @@
     },
     "passwordSource": 0,
     "attemptedOpenSound": {
-        "m_FileID": 14896,
+        "m_FileID": 14954,
         "m_PathID": 0
     },
     "armLockOnClose": false,

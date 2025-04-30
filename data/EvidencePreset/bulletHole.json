@@ -2,7 +2,7 @@
     "presetName": "bulletHole",
     "subClass": "",
     "windowStyle": {
-        "m_FileID": 121136,
+        "m_FileID": 127718,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 93068,
+        "m_FileID": 97352,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 90424,
+        "m_FileID": 94512,
         "m_PathID": 0
     },
     "useInGamePhoto": false,
@@ -47,7 +47,7 @@
     "factSetup": [
         {
             "preset": {
-                "m_FileID": 119672,
+                "m_FileID": 126222,
                 "m_PathID": 0
             },
             "link": 5,
@@ -66,7 +66,7 @@
     "isMatchParent": false,
     "matchTypes": [
         {
-            "m_FileID": 119780,
+            "m_FileID": 126334,
             "m_PathID": 0
         }
     ],

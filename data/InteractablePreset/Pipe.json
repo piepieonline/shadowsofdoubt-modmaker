@@ -2,7 +2,7 @@
     "presetName": "Pipe",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 100980,
+        "m_FileID": 106248,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 94032,
+        "m_FileID": 98650,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93462,
+        "m_FileID": 97884,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119840,
+            "m_FileID": 126396,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 120356,
+        "m_FileID": 126918,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,15 +179,15 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120586,
+            "m_FileID": 127152,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120646,
+            "m_FileID": 127212,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120582,
+            "m_FileID": 127148,
             "m_PathID": 0
         }
     ],
@@ -205,7 +205,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 121044,
+                    "m_FileID": 127624,
                     "m_PathID": 0
                 }
             ],
@@ -262,7 +262,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 119658,
+        "m_FileID": 126208,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -329,7 +329,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 119740,
+        "m_FileID": 126294,
         "m_PathID": 0
     },
     "isInventoryItem": true,

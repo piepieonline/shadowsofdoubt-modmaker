@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 21994,
+            "m_FileID": 25608,
             "m_PathID": 0
         }
     ],
@@ -186,7 +186,7 @@
             "onlyIfHome": false,
             "insertActions": [
                 {
-                    "m_FileID": 14044,
+                    "m_FileID": 14102,
                     "m_PathID": 0
                 }
             ]
@@ -196,7 +196,7 @@
             "ifSwitchBool": true,
             "ifCondition": 1,
             "ifGoal": {
-                "m_FileID": 29824,
+                "m_FileID": 33456,
                 "m_PathID": 0
             },
             "scope": 1,
@@ -206,7 +206,7 @@
             "onlyIfHome": false,
             "insertActions": [
                 {
-                    "m_FileID": 14044,
+                    "m_FileID": 14102,
                     "m_PathID": 0
                 }
             ]
@@ -440,11 +440,11 @@
     "recordCreationTime": false,
     "musicTracks": [
         {
-            "m_FileID": 38476,
+            "m_FileID": 42100,
             "m_PathID": 0
         },
         {
-            "m_FileID": 38478,
+            "m_FileID": 42102,
             "m_PathID": 0
         }
     ],

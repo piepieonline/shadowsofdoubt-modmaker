@@ -2,7 +2,7 @@
     "presetName": "Diary",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 98980,
+        "m_FileID": 104078,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93232,
+        "m_FileID": 97570,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93190,
+        "m_FileID": 97510,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119838,
+            "m_FileID": 126394,
             "m_PathID": 0
         },
         {
-            "m_FileID": 119806,
+            "m_FileID": 126362,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.20000000298023225,
     "physicsProfile": {
-        "m_FileID": 120338,
+        "m_FileID": 126898,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120630,
+            "m_FileID": 127196,
             "m_PathID": 0
         }
     ],
@@ -201,15 +201,15 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 120822,
+                    "m_FileID": 127394,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 120754,
+                    "m_FileID": 127324,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 120816,
+                    "m_FileID": 127388,
                     "m_PathID": 0
                 }
             ],
@@ -266,7 +266,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 119602,
+        "m_FileID": 126152,
         "m_PathID": 0
     },
     "locationIsParent": true,

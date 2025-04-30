@@ -2,7 +2,7 @@
     "presetName": "CityDirectory",
     "subClass": "",
     "windowStyle": {
-        "m_FileID": 121134,
+        "m_FileID": 127716,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 93184,
+        "m_FileID": 97502,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 90424,
+        "m_FileID": 94512,
         "m_PathID": 0
     },
     "useInGamePhoto": false,

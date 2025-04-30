@@ -2,7 +2,7 @@
     "presetName": "NaiWongBao",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 45158,
+        "m_FileID": 48806,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 45156,
+        "m_FileID": 48804,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 15700,
+        "m_FileID": 15768,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12752,
+            "m_FileID": 12800,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 14456,
+        "m_FileID": 14514,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,17 +179,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 14464,
+            "m_FileID": 14522,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14474,
+            "m_FileID": 14532,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13452,
+            "m_FileID": 13510,
             "m_PathID": 0
         }
     ],
@@ -206,7 +206,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14738,
+                    "m_FileID": 14796,
                     "m_PathID": 0
                 }
             ],
@@ -263,7 +263,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 15682,
+        "m_FileID": 15750,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -330,7 +330,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 15708,
+        "m_FileID": 15776,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -353,11 +353,11 @@
     "destroyWhenAllConsumed": false,
     "useSameModelAsTrash": false,
     "trashItem": {
-        "m_FileID": 33250,
+        "m_FileID": 36874,
         "m_PathID": 0
     },
     "playerConsumeLoop": {
-        "m_FileID": 14446,
+        "m_FileID": 14504,
         "m_PathID": 0
     },
     "takeOneEvent": {
@@ -407,7 +407,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 36934,
+        "m_FileID": 40558,
         "m_PathID": 0
     },
     "menuOverride": {

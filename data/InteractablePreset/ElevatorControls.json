@@ -2,7 +2,7 @@
     "presetName": "ElevatorControls",
     "spawnable": false,
     "prefab": {
-        "m_FileID": 98588,
+        "m_FileID": 103672,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93462,
+        "m_FileID": 97884,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119862,
+            "m_FileID": 126418,
             "m_PathID": 0
         }
     ],
@@ -141,7 +141,7 @@
             "switchState": 4,
             "boolIs": false,
             "triggerAudio": {
-                "m_FileID": 117870,
+                "m_FileID": 124416,
                 "m_PathID": 0
             },
             "isLoop": false,
@@ -250,7 +250,7 @@
     "AIWillCorrectPosition": false,
     "useEvidence": true,
     "useSingleton": {
-        "m_FileID": 119666,
+        "m_FileID": 126216,
         "m_PathID": 0
     },
     "findEvidence": 0,
@@ -293,11 +293,11 @@
     "isSelfLock": false,
     "useMaterialChanges": false,
     "lockOffMaterial": {
-        "m_FileID": 87938,
+        "m_FileID": 91684,
         "m_PathID": 0
     },
     "lockOnMaterial": {
-        "m_FileID": 87936,
+        "m_FileID": 91682,
         "m_PathID": 0
     },
     "isComputer": false,

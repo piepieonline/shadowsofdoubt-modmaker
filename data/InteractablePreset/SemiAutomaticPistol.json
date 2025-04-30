@@ -2,7 +2,7 @@
     "presetName": "SemiAutomaticPistol",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 97404,
+        "m_FileID": 102390,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93672,
+        "m_FileID": 98172,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93814,
+        "m_FileID": 98366,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119840,
+            "m_FileID": 126396,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 120344,
+        "m_FileID": 126904,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,33 +179,33 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120586,
+            "m_FileID": 127152,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120634,
+            "m_FileID": 127200,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 120588,
+            "m_FileID": 127154,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120582,
+            "m_FileID": 127148,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120646,
+            "m_FileID": 127212,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120606,
+            "m_FileID": 127172,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120604,
+            "m_FileID": 127170,
             "m_PathID": 0
         }
     ],
@@ -266,7 +266,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 119658,
+        "m_FileID": 126208,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -333,7 +333,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 119738,
+        "m_FileID": 126292,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -371,7 +371,7 @@
     "chanceOfDroppedAngle": 0.0,
     "droppedAngleHeightBoost": 0.10000000149011612,
     "weapon": {
-        "m_FileID": 121092,
+        "m_FileID": 127674,
         "m_PathID": 0
     },
     "inventoryCarryItem": false,
@@ -391,37 +391,37 @@
     "takeWith": true,
     "putDownPositions": [
         {
-            "m_FileID": 120646,
+            "m_FileID": 127212,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120582,
+            "m_FileID": 127148,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120634,
+            "m_FileID": 127200,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120574,
+            "m_FileID": 127140,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120586,
+            "m_FileID": 127152,
             "m_PathID": 0
         }
     ],
     "backupPutDownPositions": [
         {
-            "m_FileID": 120588,
+            "m_FileID": 127154,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120606,
+            "m_FileID": 127172,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120604,
+            "m_FileID": 127170,
             "m_PathID": 0
         }
     ],
@@ -444,7 +444,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 120524,
+        "m_FileID": 127090,
         "m_PathID": 0
     },
     "menuOverride": {

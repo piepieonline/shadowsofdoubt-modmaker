@@ -2,7 +2,7 @@
     "presetName": "M1",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 27368,
+        "m_FileID": 31008,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 27374,
+        "m_FileID": 31014,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 14678,
+        "m_FileID": 14736,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 19204,
+            "m_FileID": 22848,
             "m_PathID": 0
         }
     ],
@@ -179,19 +179,19 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12586,
+            "m_FileID": 12634,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13282,
+            "m_FileID": 13336,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12636,
+            "m_FileID": 12684,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13500,
+            "m_FileID": 13558,
             "m_PathID": 0
         }
     ],

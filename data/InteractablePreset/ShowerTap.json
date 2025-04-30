@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 14898,
+        "m_FileID": 14956,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,11 +87,11 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 22328,
+            "m_FileID": 25946,
             "m_PathID": 0
         },
         {
-            "m_FileID": 22326,
+            "m_FileID": 25944,
             "m_PathID": 0
         }
     ],
@@ -145,7 +145,7 @@
             "switchState": 0,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 22322,
+                "m_FileID": 25940,
                 "m_PathID": 0
             },
             "isLoop": true,

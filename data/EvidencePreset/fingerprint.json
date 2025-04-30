@@ -2,7 +2,7 @@
     "presetName": "fingerprint",
     "subClass": "Fingerprint",
     "windowStyle": {
-        "m_FileID": 121136,
+        "m_FileID": 127718,
         "m_PathID": 0
     },
     "useDataKeys": true,
@@ -48,11 +48,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 93036,
+        "m_FileID": 97318,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 89390,
+        "m_FileID": 93322,
         "m_PathID": 0
     },
     "useInGamePhoto": false,
@@ -78,7 +78,7 @@
     "factSetup": [
         {
             "preset": {
-                "m_FileID": 119670,
+                "m_FileID": 126220,
                 "m_PathID": 0
             },
             "link": 1,
@@ -97,7 +97,7 @@
     "isMatchParent": false,
     "matchTypes": [
         {
-            "m_FileID": 119776,
+            "m_FileID": 126330,
             "m_PathID": 0
         }
     ],

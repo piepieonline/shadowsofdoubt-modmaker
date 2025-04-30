@@ -1,6 +1,7 @@
 {
     "presetName": "StreetFoodVendorSnacks",
     "companyCategories": [],
+    "createMenu": false,
     "isIllegal": false,
     "useBuildingName": false,
     "useBuildingOverrideName": false,
@@ -76,7 +77,7 @@
     "enableLoiteringBehaviour": false,
     "menus": [
         {
-            "m_FileID": 22752,
+            "m_FileID": 26368,
             "m_PathID": 0
         }
     ],
@@ -88,11 +89,11 @@
     "sellValueMultiplier": 0.5,
     "possibleUniformColours": [],
     "workHours": {
-        "m_FileID": 49012,
+        "m_FileID": 52646,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 49010,
+        "m_FileID": 52644,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

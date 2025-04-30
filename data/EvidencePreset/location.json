@@ -2,7 +2,7 @@
     "presetName": "location",
     "subClass": "Location",
     "windowStyle": {
-        "m_FileID": 12690,
+        "m_FileID": 12738,
         "m_PathID": 0
     },
     "useDataKeys": true,
@@ -43,11 +43,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 37574,
+        "m_FileID": 41198,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 46280,
+        "m_FileID": 49920,
         "m_PathID": 0
     },
     "useInGamePhoto": true,
@@ -73,7 +73,7 @@
     "factSetup": [
         {
             "preset": {
-                "m_FileID": 31662,
+                "m_FileID": 35290,
                 "m_PathID": 0
             },
             "link": 3,

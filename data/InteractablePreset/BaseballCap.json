@@ -2,7 +2,7 @@
     "presetName": "BaseballCap",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 100048,
+        "m_FileID": 105254,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93668,
+        "m_FileID": 98164,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93804,
+        "m_FileID": 98356,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119840,
+            "m_FileID": 126396,
             "m_PathID": 0
         },
         {
-            "m_FileID": 119806,
+            "m_FileID": 126362,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 120356,
+        "m_FileID": 126918,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,11 +183,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120632,
+            "m_FileID": 127198,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120626,
+            "m_FileID": 127192,
             "m_PathID": 0
         }
     ],
@@ -205,7 +205,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 120940,
+                    "m_FileID": 127512,
                     "m_PathID": 0
                 }
             ],
@@ -262,7 +262,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 119658,
+        "m_FileID": 126208,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -329,7 +329,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 119740,
+        "m_FileID": 126294,
         "m_PathID": 0
     },
     "isInventoryItem": true,

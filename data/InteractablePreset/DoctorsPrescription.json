@@ -2,7 +2,7 @@
     "presetName": "DoctorsPrescription",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 19030,
+        "m_FileID": 22674,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 19058,
+        "m_FileID": 22702,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12682,
+        "m_FileID": 12730,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14812,
+            "m_FileID": 14870,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14806,
+            "m_FileID": 14864,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.20000000298023225,
     "physicsProfile": {
-        "m_FileID": 14840,
+        "m_FileID": 14898,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,13 +183,13 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12586,
+            "m_FileID": 12634,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13452,
+            "m_FileID": 13510,
             "m_PathID": 0
         }
     ],
@@ -206,55 +206,55 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 47158,
+                    "m_FileID": 50798,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 33342,
+                    "m_FileID": 36966,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 33350,
+                    "m_FileID": 36974,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 17042,
+                    "m_FileID": 17108,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 33406,
+                    "m_FileID": 37030,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 14970,
+                    "m_FileID": 15032,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 19296,
+                    "m_FileID": 22944,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 30696,
+                    "m_FileID": 34324,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 30698,
+                    "m_FileID": 34326,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 12778,
+                    "m_FileID": 12826,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 35114,
+                    "m_FileID": 38738,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 13508,
+                    "m_FileID": 13566,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 37684,
+                    "m_FileID": 41308,
                     "m_PathID": 0
                 }
             ],
@@ -286,7 +286,7 @@
     "limitToCertainBuildings": false,
     "onlyInBuildings": [],
     "attemptToStoreInFolder": {
-        "m_FileID": 22066,
+        "m_FileID": 25684,
         "m_PathID": 0
     },
     "folderPlacementChance": 1.0,
@@ -311,7 +311,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 59238,
+        "m_FileID": 62902,
         "m_PathID": 0
     },
     "locationIsParent": true,

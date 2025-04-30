@@ -2,7 +2,7 @@
     "presetName": "FreestandingATM",
     "spawnable": false,
     "prefab": {
-        "m_FileID": 15356,
+        "m_FileID": 15422,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 15300,
+        "m_FileID": 15366,
         "m_PathID": 0
     },
     "lightswitch": 0,
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 15358,
+        "m_FileID": 15424,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 15306,
+            "m_FileID": 15372,
             "m_PathID": 0
         }
     ],
@@ -283,15 +283,15 @@
     },
     "isComputer": true,
     "bootApp": {
-        "m_FileID": 15354,
+        "m_FileID": 15420,
         "m_PathID": 0
     },
     "logInApp": {
-        "m_FileID": 18758,
+        "m_FileID": 20334,
         "m_PathID": 0
     },
     "desktopApp": {
-        "m_FileID": 18758,
+        "m_FileID": 20334,
         "m_PathID": 0
     },
     "additionalApps": [],

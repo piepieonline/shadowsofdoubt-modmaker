@@ -1,6 +1,7 @@
 {
     "presetName": "MediumOffice",
     "companyCategories": [],
+    "createMenu": false,
     "isIllegal": false,
     "useBuildingName": false,
     "useBuildingOverrideName": false,
@@ -70,11 +71,11 @@
     "sellValueMultiplier": 0.5,
     "possibleUniformColours": [],
     "workHours": {
-        "m_FileID": 22330,
+        "m_FileID": 25948,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 33378,
+        "m_FileID": 37002,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

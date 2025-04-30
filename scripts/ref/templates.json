@@ -338,7 +338,7 @@
     "unteruptableByFollowingCategories": false,
     "uninteruptableByCategories": [],
     "useInteruptionThreshold": false,
-    "interuptionThreshold": 1,
+    "interuptionThreshold": 1.0,
     "repeatDelayOnBusy": 0.10000000149011612,
     "repeatDelayOnInterupt": 0.10000000149011612,
     "repeatDelayOnFinishActions": 0.10000000149011612,
@@ -961,6 +961,7 @@
   "CompanyPreset": {
     "presetName": "",
     "companyCategories": [],
+    "createMenu": true,
     "isIllegal": false,
     "useBuildingName": false,
     "useBuildingOverrideName": false,

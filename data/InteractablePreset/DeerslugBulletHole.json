@@ -2,7 +2,7 @@
     "presetName": "DeerslugBulletHole",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 39662,
+        "m_FileID": 43310,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 20612,
+        "m_FileID": 24256,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 22356,
+        "m_FileID": 25974,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14812,
+            "m_FileID": 14870,
             "m_PathID": 0
         }
     ],
@@ -236,7 +236,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 20596,
+        "m_FileID": 24240,
         "m_PathID": 0
     },
     "locationIsParent": true,

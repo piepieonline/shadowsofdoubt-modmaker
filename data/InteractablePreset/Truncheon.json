@@ -2,7 +2,7 @@
     "presetName": "Truncheon",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 31314,
+        "m_FileID": 34942,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 58892,
+        "m_FileID": 62556,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12752,
+            "m_FileID": 12800,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 12756,
+        "m_FileID": 12804,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,13 +179,13 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12636,
+            "m_FileID": 12684,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13452,
+            "m_FileID": 13510,
             "m_PathID": 0
         }
     ],
@@ -246,7 +246,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13302,
+        "m_FileID": 13356,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -313,7 +313,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 17302,
+        "m_FileID": 17368,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -351,7 +351,7 @@
     "chanceOfDroppedAngle": 0.0,
     "droppedAngleHeightBoost": 0.10000000149011612,
     "weapon": {
-        "m_FileID": 31310,
+        "m_FileID": 34938,
         "m_PathID": 0
     },
     "inventoryCarryItem": false,
@@ -371,17 +371,17 @@
     "takeWith": true,
     "putDownPositions": [
         {
-            "m_FileID": 13452,
+            "m_FileID": 13510,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12636,
+            "m_FileID": 12684,
             "m_PathID": 0
         }
     ],
     "backupPutDownPositions": [
         {
-            "m_FileID": 13362,
+            "m_FileID": 13420,
             "m_PathID": 0
         }
     ],
@@ -404,7 +404,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 37760,
+        "m_FileID": 41384,
         "m_PathID": 0
     },
     "menuOverride": {

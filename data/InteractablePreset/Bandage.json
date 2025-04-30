@@ -2,7 +2,7 @@
     "presetName": "Bandage",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 100472,
+        "m_FileID": 105720,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93214,
+        "m_FileID": 97550,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93528,
+        "m_FileID": 97972,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119840,
+            "m_FileID": 126396,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 120356,
+        "m_FileID": 126918,
         "m_PathID": 0
     },
     "overrideMass": true,
@@ -179,21 +179,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120564,
+            "m_FileID": 127130,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120566,
+            "m_FileID": 127132,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120654,
+            "m_FileID": 127220,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 120586,
+            "m_FileID": 127152,
             "m_PathID": 0
         }
     ],
@@ -210,27 +210,27 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 120668,
+                    "m_FileID": 127236,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 120670,
+                    "m_FileID": 127238,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 120678,
+                    "m_FileID": 127248,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 120686,
+                    "m_FileID": 127256,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 120688,
+                    "m_FileID": 127258,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 120690,
+                    "m_FileID": 127260,
                     "m_PathID": 0
                 }
             ],
@@ -287,7 +287,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 119658,
+        "m_FileID": 126208,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -354,7 +354,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 119742,
+        "m_FileID": 126296,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -385,7 +385,7 @@
         "m_PathID": 0
     },
     "takeOneEvent": {
-        "m_FileID": 117522,
+        "m_FileID": 124068,
         "m_PathID": 0
     },
     "disposal": 1,
@@ -431,7 +431,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 120476,
+        "m_FileID": 127042,
         "m_PathID": 0
     },
     "menuOverride": {

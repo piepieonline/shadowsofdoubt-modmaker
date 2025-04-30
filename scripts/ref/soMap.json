@@ -696,6 +696,7 @@
       "Salt",
       "SampleTubes",
       "Saucepan",
+      "Saxophone",
       "ScentedCandles",
       "ScienceLabNoteForumula",
       "ScienceLabNoteList",
@@ -791,6 +792,7 @@
       "TelephoneRouterDoor",
       "Television",
       "TennisBall",
+      "TennisRacket",
       "Thread",
       "TiffanyCeilingLight",
       "TiffanyLamp",
@@ -845,6 +847,7 @@
       "VintageOfficeChair",
       "VintageSword",
       "VintageTelephone",
+      "Violin",
       "VMailLetter",
       "Vodka",
       "VoyeurRandomNote",
@@ -2334,6 +2337,7 @@
       "BallisticArmour",
       "BananaCue",
       "Bandage",
+      "BanhMi",
       "BasBouleBat",
       "BasBouleCard",
       "BattleRifle",
@@ -2421,6 +2425,7 @@
       "Ring",
       "Rope",
       "SampleTubes",
+      "Saxophone",
       "Screwdriver",
       "SemiAutomaticPistol",
       "SemiAutomaticPistolSilenced",
@@ -2441,6 +2446,7 @@
       "TakeawayCoffee",
       "Takoyaki",
       "Tampons",
+      "TennisRacket",
       "TinnedFood",
       "Tobacco",
       "ToiletPaper",
@@ -2453,10 +2459,12 @@
       "VentilationBox",
       "VideoTape",
       "VintageSword",
+      "Violin",
       "Vodka",
       "Wine",
       "Wok",
-      "YakisobaPan"
+      "YakisobaPan",
+      "YorkiePie"
     ],
     "SubObjectClassPreset": [
       "Alcohol",
@@ -3056,6 +3064,7 @@
       "ActiveFlashBomb",
       "ActiveIncapacitator",
       "ActiveTracker",
+      "AICleanup",
       "AILean",
       "AIRob",
       "AirVent",
@@ -3138,6 +3147,7 @@
       "Seat",
       "SeatNoSound",
       "SecondaryLight",
+      "SecondaryLightNoSound",
       "Security",
       "Shower",
       "Sink",
@@ -3228,6 +3238,7 @@
       "FPSPlaceFurnitureRotateRight",
       "FPSPunch",
       "FPSPutDown",
+      "FPSSmoke",
       "FPSSwap",
       "FPSTakedown",
       "FPSTakeOne",
@@ -3529,6 +3540,7 @@
       "food_foodLarge",
       "food_foodSmall",
       "food_medicine",
+      "food_smokable",
       "furniturePlacement",
       "handcuffs",
       "incapacitator",
@@ -3560,6 +3572,7 @@
       "FoodItem",
       "Football",
       "Grenade",
+      "HeavyContinuousSpeculativeItem",
       "LargeCardboardItem",
       "LargeMetal",
       "LargeWooden",
@@ -4519,6 +4532,7 @@
       "TakeALookAroundBribe3",
       "TakeALookAroundBribe4",
       "TelephoneGreeting",
+      "TelephoneWrongPerson",
       "TurnInSabotage",
       "WarnNotewriter"
     ],
@@ -5630,7 +5644,8 @@
       "Security",
       "Solitaire",
       "Surveillance",
-      "VMail"
+      "VMail",
+      "Wizcards"
     ],
     "ColourSchemePreset": [
       "AntiqueBronze-Ginger",
@@ -5843,6 +5858,11 @@
       "Oneg",
       "ABpos",
       "ABneg"
+    ],
+    "EventsTestResult": [
+      "fail",
+      "success",
+      "wait"
     ],
     "DisposalType": [
       "anywhere",
@@ -6409,7 +6429,8 @@
       "vmail",
       "telephone",
       "never",
-      "newspaperArticle"
+      "newspaperArticle",
+      "onGameStart"
     ],
     "TraitConditionType": [
       "IfAnyOfThese",
@@ -6479,7 +6500,8 @@
       "vmail",
       "document",
       "newspaper",
-      "misc"
+      "misc",
+      "interactionDialog"
     ],
     "repeat": [
       "never",
@@ -6495,6 +6517,7 @@
     "triggerPoint": [
       "never",
       "newspaperArticle",
+      "onGameStart",
       "onNewAction",
       "onNewTrackTarget",
       "telephone",
@@ -6504,6 +6527,7 @@
     "treeType": [
       "conversation",
       "document",
+      "interactionDialog",
       "misc",
       "newspaper",
       "vmail"
@@ -6517,6 +6541,36 @@
     "ElementType": [
       "newShot",
       "ddsMessage"
+    ],
+    "on": [
+      "clearAllAddedDialogOptions",
+      "clearItem",
+      "deleteItem",
+      "findWorldItemFromPool",
+      "generateNewItemFromPool",
+      "giveMoney",
+      "isInteractionDialog",
+      "none",
+      "postNewspaperAd",
+      "testHasItem",
+      "testHasItemSameType",
+      "testHasItemSameTypeAndOwner",
+      "testHasItemSameTypeAndOwnerStat"
+    ],
+    "InteractionEvent": [
+      "none",
+      "isInteractionDialog",
+      "generateNewItemFromPool",
+      "findWorldItemFromPool",
+      "giveMoney",
+      "testHasItem",
+      "testHasItemSameType",
+      "testHasItemSameTypeAndOwner",
+      "testHasItemSameTypeAndOwnerStat",
+      "clearItem",
+      "deleteItem",
+      "clearAllAddedDialogOptions",
+      "postNewspaperAd"
     ],
     "CullDebugType": [
       "none",
@@ -7055,6 +7109,85 @@
       "companyOnly",
       "buildingOnly"
     ],
+    "TerritoryOwner": [
+      "Player",
+      "Enemy",
+      "None"
+    ],
+    "frequency": [
+      "EveryTurn",
+      "None",
+      "WhenDies",
+      "WhenSpawned"
+    ],
+    "othersLabels": [
+      "Animal",
+      "Building",
+      "Fabric",
+      "Human",
+      "Mage",
+      "Metallic",
+      "Monster",
+      "None",
+      "Wooden"
+    ],
+    "specialEffects": [
+      "DoubleAttack",
+      "DoubleHP",
+      "DoubleMana",
+      "None"
+    ],
+    "Frequency": [
+      "None",
+      "WhenSpawned",
+      "EveryTurn",
+      "WhenDies"
+    ],
+    "OthersLabels": [
+      "None",
+      "Monster",
+      "Animal",
+      "Building",
+      "Metallic",
+      "Wooden",
+      "Human",
+      "Mage",
+      "Fabric"
+    ],
+    "SpecialEffects": [
+      "None",
+      "DoubleHP",
+      "DoubleAttack",
+      "DoubleMana"
+    ],
+    "labels": [
+      "Animal",
+      "Building",
+      "Fabric",
+      "Human",
+      "Mage",
+      "Metallic",
+      "Monster",
+      "None",
+      "Wooden"
+    ],
+    "Labels": [
+      "None",
+      "Monster",
+      "Animal",
+      "Building",
+      "Metallic",
+      "Wooden",
+      "Human",
+      "Mage",
+      "Fabric"
+    ],
+    "CopyStat": [
+      "None",
+      "Attack",
+      "Health",
+      "Both"
+    ],
     "DLSSQuality": [
       "MaximumPerformance",
       "Balanced",
@@ -7345,7 +7478,8 @@
       "spP",
       "phy",
       "drm",
-      "lhc"
+      "lhc",
+      "inStorage"
     ],
     "varType": [
       "addressID",
@@ -7359,6 +7493,7 @@
       "groupID",
       "humanID",
       "inspected",
+      "inStorage",
       "isTrash",
       "jobID",
       "jobTag",
@@ -7673,6 +7808,7 @@
     "msgType": [
       "conversation",
       "document",
+      "interactionDialog",
       "misc",
       "newspaper",
       "vmail"
@@ -8056,7 +8192,9 @@
       "dateOfBirth",
       "timeOfDeath",
       "referenceDiscovery",
-      "postedByDiscovery"
+      "postedByDiscovery",
+      "discoverCallFrom",
+      "discoverCallTo"
     ],
     "DataKey": [
       "name",
@@ -8107,6 +8245,8 @@
       "addressBookDiscovery",
       "dateOfBirth",
       "diaryDiscovery",
+      "discoverCallFrom",
+      "discoverCallTo",
       "foundAt",
       "foundOn",
       "jobDiscovery",
@@ -9571,6 +9711,8 @@
       "addressBookDiscovery",
       "dateOfBirth",
       "diaryDiscovery",
+      "discoverCallFrom",
+      "discoverCallTo",
       "foundAt",
       "foundOn",
       "jobDiscovery",
@@ -9665,7 +9807,8 @@
       "rotateFurnRight",
       "putBriefcaseCash",
       "camFlashOn",
-      "camFlashOff"
+      "camFlashOff",
+      "smoke"
     ],
     "availability": [
       "always",
@@ -9712,6 +9855,7 @@
       "raiseTrue",
       "rotateFurnLeft",
       "rotateFurnRight",
+      "smoke",
       "takeBriefcaseCash",
       "takedown",
       "takeOne",
@@ -10239,6 +10383,8 @@
       "briefcase",
       "burningBarrel",
       "caseTray",
+      "cigarettes",
+      "cigars",
       "codebreaker",
       "doorWedge",
       "fingerprint",
@@ -11192,6 +11338,8 @@
       "briefcase",
       "burningBarrel",
       "caseTray",
+      "cigarettes",
+      "cigars",
       "codebreaker",
       "doorWedge",
       "fingerprint",

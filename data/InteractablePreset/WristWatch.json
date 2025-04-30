@@ -2,7 +2,7 @@
     "presetName": "WristWatch",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 56480,
+        "m_FileID": 60142,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 56478,
+        "m_FileID": 60140,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 14678,
+        "m_FileID": 14736,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12752,
+            "m_FileID": 12800,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13438,
+        "m_FileID": 13496,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,11 +179,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12586,
+            "m_FileID": 12634,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12636,
+            "m_FileID": 12684,
             "m_PathID": 0
         }
     ],
@@ -201,7 +201,7 @@
             "rule": 1,
             "traitList": [
                 {
-                    "m_FileID": 56462,
+                    "m_FileID": 60124,
                     "m_PathID": 0
                 }
             ],
@@ -258,7 +258,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13302,
+        "m_FileID": 13356,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -325,7 +325,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 13470,
+        "m_FileID": 13528,
         "m_PathID": 0
     },
     "isInventoryItem": true,

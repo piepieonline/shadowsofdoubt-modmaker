@@ -2,7 +2,7 @@
     "presetName": "WeaponsDealerBuyPoint",
     "spawnable": false,
     "prefab": {
-        "m_FileID": 21936,
+        "m_FileID": 25552,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 18818,
+            "m_FileID": 22462,
             "m_PathID": 0
         }
     ],

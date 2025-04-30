@@ -2,7 +2,7 @@
     "presetName": "ShipInBottle",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 15598,
+        "m_FileID": 15666,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 15614,
+        "m_FileID": 15682,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13680,
+            "m_FileID": 13738,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14812,
+            "m_FileID": 14870,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13444,
+        "m_FileID": 13502,
         "m_PathID": 0
     },
     "overrideMass": true,
@@ -107,7 +107,7 @@
     "mass": 0.6000000238418579,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 13454,
+        "m_FileID": 13512,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -183,11 +183,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12636,
+            "m_FileID": 12684,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15212,
+            "m_FileID": 15278,
             "m_PathID": 0
         }
     ],
@@ -205,7 +205,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14662,
+                    "m_FileID": 14720,
                     "m_PathID": 0
                 }
             ],
@@ -217,7 +217,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 15592,
+                    "m_FileID": 15660,
                     "m_PathID": 0
                 }
             ],
@@ -274,7 +274,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13302,
+        "m_FileID": 13356,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -418,7 +418,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 15602,
+        "m_FileID": 15670,
         "m_PathID": 0
     },
     "menuOverride": {

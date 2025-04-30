@@ -5,6 +5,7 @@
         1,
         2
     ],
+    "createMenu": true,
     "isIllegal": false,
     "useBuildingName": false,
     "useBuildingOverrideName": true,
@@ -68,7 +69,7 @@
     "enableLoiteringBehaviour": false,
     "menus": [
         {
-            "m_FileID": 13984,
+            "m_FileID": 14042,
             "m_PathID": 0
         }
     ],
@@ -85,11 +86,11 @@
     "sellValueMultiplier": 0.5,
     "possibleUniformColours": [],
     "workHours": {
-        "m_FileID": 13568,
+        "m_FileID": 13626,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 52928,
+        "m_FileID": 56584,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

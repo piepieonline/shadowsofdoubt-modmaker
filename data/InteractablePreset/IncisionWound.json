@@ -2,7 +2,7 @@
     "presetName": "IncisionWound",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 24504,
+        "m_FileID": 28140,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 22332,
+        "m_FileID": 25950,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 14900,
+        "m_FileID": 14958,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14812,
+            "m_FileID": 14870,
             "m_PathID": 0
         }
     ],
@@ -236,7 +236,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 17048,
+        "m_FileID": 17114,
         "m_PathID": 0
     },
     "locationIsParent": false,

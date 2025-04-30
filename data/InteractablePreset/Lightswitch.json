@@ -2,7 +2,7 @@
     "presetName": "Lightswitch",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 94404,
+        "m_FileID": 99126,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93986,
+        "m_FileID": 98586,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93080,
+        "m_FileID": 97366,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119850,
+            "m_FileID": 126406,
             "m_PathID": 0
         },
         {
-            "m_FileID": 119806,
+            "m_FileID": 126362,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.15000000596046449,
     "physicsProfile": {
-        "m_FileID": 120338,
+        "m_FileID": 126898,
         "m_PathID": 0
     },
     "overrideMass": false,

@@ -2,7 +2,7 @@
     "presetName": "LargeCalibreGlassBulletHole",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 97314,
+        "m_FileID": 102280,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93898,
+        "m_FileID": 98478,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93038,
+        "m_FileID": 97320,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119838,
+            "m_FileID": 126394,
             "m_PathID": 0
         }
     ],
@@ -236,7 +236,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 119574,
+        "m_FileID": 126124,
         "m_PathID": 0
     },
     "locationIsParent": true,

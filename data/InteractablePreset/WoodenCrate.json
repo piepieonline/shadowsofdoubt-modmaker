@@ -2,7 +2,7 @@
     "presetName": "WoodenCrate",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 56124,
+        "m_FileID": 59780,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 56110,
+        "m_FileID": 59766,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13680,
+            "m_FileID": 13738,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 34946,
+        "m_FileID": 38570,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,11 +179,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13682,
+            "m_FileID": 13740,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13652,
+            "m_FileID": 13710,
             "m_PathID": 0
         }
     ],

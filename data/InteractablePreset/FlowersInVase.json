@@ -2,7 +2,7 @@
     "presetName": "FlowersInVase",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 56094,
+        "m_FileID": 59750,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 56066,
+        "m_FileID": 59722,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14812,
+            "m_FileID": 14870,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13680,
+            "m_FileID": 13738,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13444,
+        "m_FileID": 13502,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -107,7 +107,7 @@
     "mass": 1.0,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 17336,
+        "m_FileID": 17402,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -119,7 +119,7 @@
     "shardEveryXPixels": 64,
     "overrideSpatterSettings": true,
     "spatterSimulation": {
-        "m_FileID": 15452,
+        "m_FileID": 15518,
         "m_PathID": 0
     },
     "spatterCountMultiplier": 0.20000000298023225,
@@ -183,11 +183,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 15904,
+            "m_FileID": 15972,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14342,
+            "m_FileID": 14400,
             "m_PathID": 0
         }
     ],
@@ -205,7 +205,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 15524,
+                    "m_FileID": 15592,
                     "m_PathID": 0
                 }
             ],
@@ -217,7 +217,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 15526,
+                    "m_FileID": 15594,
                     "m_PathID": 0
                 }
             ],
@@ -274,7 +274,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13302,
+        "m_FileID": 13356,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -418,7 +418,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 25520,
+        "m_FileID": 29156,
         "m_PathID": 0
     },
     "menuOverride": {

@@ -2,7 +2,7 @@
     "presetName": "Ring",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 97324,
+        "m_FileID": 102290,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93580,
+        "m_FileID": 98046,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93462,
+        "m_FileID": 97884,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119840,
+            "m_FileID": 126396,
             "m_PathID": 0
         },
         {
-            "m_FileID": 119792,
+            "m_FileID": 126348,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 120336,
+        "m_FileID": 126896,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,11 +183,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120586,
+            "m_FileID": 127152,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120626,
+            "m_FileID": 127192,
             "m_PathID": 0
         }
     ],
@@ -205,7 +205,7 @@
             "rule": 1,
             "traitList": [
                 {
-                    "m_FileID": 120938,
+                    "m_FileID": 127510,
                     "m_PathID": 0
                 }
             ],
@@ -262,7 +262,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 119658,
+        "m_FileID": 126208,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -329,7 +329,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 119740,
+        "m_FileID": 126294,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -406,7 +406,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 120494,
+        "m_FileID": 127060,
         "m_PathID": 0
     },
     "menuOverride": {

@@ -2,7 +2,7 @@
     "presetName": "KitchenBin",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 34796,
+        "m_FileID": 38420,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 34810,
+        "m_FileID": 38434,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 34816,
+            "m_FileID": 38440,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14806,
+            "m_FileID": 14864,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 15070,
+        "m_FileID": 15136,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 22116,
+            "m_FileID": 25734,
             "m_PathID": 0
         }
     ],
@@ -245,7 +245,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 19048,
+        "m_FileID": 22692,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -403,7 +403,7 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 34808,
+        "m_FileID": 38432,
         "m_PathID": 0
     },
     "copyFrom": {

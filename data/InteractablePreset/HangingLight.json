@@ -2,7 +2,7 @@
     "presetName": "HangingLight",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 56950,
+        "m_FileID": 60612,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 23978,
+        "m_FileID": 27612,
         "m_PathID": 0
     },
     "lightswitch": 0,
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 56944,
+        "m_FileID": 60606,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 19664,
+        "m_FileID": 23312,
         "m_PathID": 0
     },
     "itemClass": 5,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14806,
+            "m_FileID": 14864,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 14840,
+        "m_FileID": 14898,
         "m_PathID": 0
     },
     "overrideMass": false,

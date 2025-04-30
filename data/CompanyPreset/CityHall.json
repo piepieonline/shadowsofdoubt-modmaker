@@ -1,6 +1,7 @@
 {
     "presetName": "CityHall",
     "companyCategories": [],
+    "createMenu": false,
     "isIllegal": false,
     "useBuildingName": false,
     "useBuildingOverrideName": true,
@@ -75,11 +76,11 @@
         }
     ],
     "workHours": {
-        "m_FileID": 13980,
+        "m_FileID": 14038,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 29484,
+        "m_FileID": 33118,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

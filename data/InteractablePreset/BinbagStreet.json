@@ -2,7 +2,7 @@
     "presetName": "BinbagStreet",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 37706,
+        "m_FileID": 41330,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 37718,
+        "m_FileID": 41342,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 13802,
+        "m_FileID": 13860,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13680,
+            "m_FileID": 13738,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 14456,
+        "m_FileID": 14514,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -103,7 +103,7 @@
     "mass": 1.0,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 20248,
+        "m_FileID": 23896,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -115,7 +115,7 @@
     "shardEveryXPixels": 64,
     "overrideSpatterSettings": false,
     "spatterSimulation": {
-        "m_FileID": 20226,
+        "m_FileID": 23874,
         "m_PathID": 0
     },
     "spatterCountMultiplier": 0.5,
@@ -179,7 +179,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13658,
+            "m_FileID": 13716,
             "m_PathID": 0
         }
     ],
@@ -212,11 +212,11 @@
     "perCommercialLimit": 1,
     "banFromRooms": [
         {
-            "m_FileID": 18498,
+            "m_FileID": 18564,
             "m_PathID": 0
         },
         {
-            "m_FileID": 18484,
+            "m_FileID": 18550,
             "m_PathID": 0
         }
     ],

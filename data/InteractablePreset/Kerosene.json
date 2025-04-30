@@ -2,7 +2,7 @@
     "presetName": "Kerosene",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 41188,
+        "m_FileID": 44836,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 41212,
+        "m_FileID": 44860,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 13512,
+        "m_FileID": 13570,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13680,
+            "m_FileID": 13738,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14812,
+            "m_FileID": 14870,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13526,
+        "m_FileID": 13584,
         "m_PathID": 0
     },
     "overrideMass": true,
@@ -107,7 +107,7 @@
     "mass": 2.0,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 13402,
+        "m_FileID": 13460,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -119,7 +119,7 @@
     "shardEveryXPixels": 64,
     "overrideSpatterSettings": true,
     "spatterSimulation": {
-        "m_FileID": 15452,
+        "m_FileID": 15518,
         "m_PathID": 0
     },
     "spatterCountMultiplier": 1.0,
@@ -183,17 +183,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 22176,
+            "m_FileID": 25794,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13368,
+            "m_FileID": 13426,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13362,
+            "m_FileID": 13420,
             "m_PathID": 0
         }
     ],
@@ -210,15 +210,15 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 13380,
+                    "m_FileID": 13438,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 17592,
+                    "m_FileID": 17658,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 15374,
+                    "m_FileID": 15440,
                     "m_PathID": 0
                 }
             ],
@@ -275,7 +275,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13302,
+        "m_FileID": 13356,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -342,7 +342,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 13470,
+        "m_FileID": 13528,
         "m_PathID": 0
     },
     "isInventoryItem": false,

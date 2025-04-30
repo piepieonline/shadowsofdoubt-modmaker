@@ -2,7 +2,7 @@
     "presetName": "TShirtOnFloorBlue",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 100390,
+        "m_FileID": 105634,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93272,
+        "m_FileID": 97636,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93804,
+        "m_FileID": 98356,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119838,
+            "m_FileID": 126394,
             "m_PathID": 0
         }
     ],

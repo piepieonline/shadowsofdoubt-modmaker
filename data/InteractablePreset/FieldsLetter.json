@@ -2,7 +2,7 @@
     "presetName": "FieldsLetter",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 16096,
+        "m_FileID": 16164,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 16092,
+        "m_FileID": 16160,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 16116,
+        "m_FileID": 16184,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14812,
+            "m_FileID": 14870,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14806,
+            "m_FileID": 14864,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.20000000298023225,
     "physicsProfile": {
-        "m_FileID": 14840,
+        "m_FileID": 14898,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,17 +183,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12586,
+            "m_FileID": 12634,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13500,
+            "m_FileID": 13558,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13452,
+            "m_FileID": 13510,
             "m_PathID": 0
         }
     ],
@@ -210,7 +210,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 17246,
+                    "m_FileID": 17312,
                     "m_PathID": 0
                 }
             ],
@@ -267,7 +267,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 20722,
+        "m_FileID": 24366,
         "m_PathID": 0
     },
     "locationIsParent": true,

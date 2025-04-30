@@ -2,7 +2,7 @@
     "presetName": "BirthCertificate",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 95068,
+        "m_FileID": 99868,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93030,
+        "m_FileID": 97306,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93184,
+        "m_FileID": 97502,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,11 +87,11 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119838,
+            "m_FileID": 126394,
             "m_PathID": 0
         },
         {
-            "m_FileID": 119806,
+            "m_FileID": 126362,
             "m_PathID": 0
         }
     ],
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120586,
+            "m_FileID": 127152,
             "m_PathID": 0
         }
     ],
@@ -220,7 +220,7 @@
     "limitToCertainBuildings": false,
     "onlyInBuildings": [],
     "attemptToStoreInFolder": {
-        "m_FileID": 119654,
+        "m_FileID": 126204,
         "m_PathID": 0
     },
     "folderPlacementChance": 1.0,
@@ -245,7 +245,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 119592,
+        "m_FileID": 126142,
         "m_PathID": 0
     },
     "locationIsParent": true,

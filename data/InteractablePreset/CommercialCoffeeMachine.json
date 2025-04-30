@@ -2,7 +2,7 @@
     "presetName": "CommercialCoffeeMachine",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 41686,
+        "m_FileID": 45334,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 41654,
+        "m_FileID": 45302,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 35064,
+        "m_FileID": 38688,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,22 +87,22 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14812,
+            "m_FileID": 14870,
             "m_PathID": 0
         },
         {
-            "m_FileID": 33652,
+            "m_FileID": 37276,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14806,
+            "m_FileID": 14864,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13526,
+        "m_FileID": 13584,
         "m_PathID": 0
     },
     "overrideMass": true,
@@ -149,7 +149,7 @@
             "switchState": 0,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 41652,
+                "m_FileID": 45300,
                 "m_PathID": 0
             },
             "isLoop": true,
@@ -219,7 +219,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 13478,
+                    "m_FileID": 13536,
                     "m_PathID": 0
                 }
             ],
@@ -276,7 +276,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13302,
+        "m_FileID": 13356,
         "m_PathID": 0
     },
     "locationIsParent": true,

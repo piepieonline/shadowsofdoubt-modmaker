@@ -2,7 +2,7 @@
     "presetName": "MurderWeaponSingleton",
     "subClass": "",
     "windowStyle": {
-        "m_FileID": 12690,
+        "m_FileID": 12738,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 12684,
+        "m_FileID": 12732,
         "m_PathID": 0
     },
     "useInGamePhoto": false,
@@ -54,7 +54,7 @@
     "isMatchParent": true,
     "matchTypes": [
         {
-            "m_FileID": 17052,
+            "m_FileID": 17118,
             "m_PathID": 0
         }
     ],

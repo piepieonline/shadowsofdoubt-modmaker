@@ -2,7 +2,7 @@
     "presetName": "HandWarmer",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 21936,
+        "m_FileID": 25552,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 66150,
+        "m_FileID": 69826,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 24602,
+            "m_FileID": 28238,
             "m_PathID": 0
         }
     ],
@@ -179,7 +179,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 14252,
+            "m_FileID": 14310,
             "m_PathID": 0
         }
     ],

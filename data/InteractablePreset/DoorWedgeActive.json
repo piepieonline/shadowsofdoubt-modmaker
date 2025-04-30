@@ -2,7 +2,7 @@
     "presetName": "DoorWedgeActive",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 96038,
+        "m_FileID": 100876,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93942,
+        "m_FileID": 98534,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93050,
+        "m_FileID": 97332,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119796,
+            "m_FileID": 126352,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 120358,
+        "m_FileID": 126920,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -231,7 +231,7 @@
     "AIWillCorrectPosition": true,
     "useEvidence": false,
     "useSingleton": {
-        "m_FileID": 119664,
+        "m_FileID": 126214,
         "m_PathID": 0
     },
     "findEvidence": 0,

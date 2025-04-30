@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 19172,
+        "m_FileID": 22816,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 19164,
+            "m_FileID": 22808,
             "m_PathID": 0
         }
     ],
@@ -121,19 +121,19 @@
     "spatterCountMultiplier": 1.0,
     "overrideFurnitureSetting": true,
     "enterTransition": {
-        "m_FileID": 15268,
+        "m_FileID": 15334,
         "m_PathID": 0
     },
     "exitTransition": {
-        "m_FileID": 19166,
+        "m_FileID": 22810,
         "m_PathID": 0
     },
     "enterTransition2": {
-        "m_FileID": 15268,
+        "m_FileID": 15334,
         "m_PathID": 0
     },
     "exitTransition2": {
-        "m_FileID": 19166,
+        "m_FileID": 22810,
         "m_PathID": 0
     },
     "switchSFX": [
@@ -141,7 +141,7 @@
             "switchState": 0,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 19174,
+                "m_FileID": 22818,
                 "m_PathID": 0
             },
             "isLoop": true,

@@ -2,7 +2,7 @@
     "presetName": "WallDecalObject",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 51854,
+        "m_FileID": 55486,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 51848,
+        "m_FileID": 55480,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 22356,
+        "m_FileID": 25974,
         "m_PathID": 0
     },
     "itemClass": 4,

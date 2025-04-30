@@ -2,7 +2,7 @@
     "presetName": "SyncDisk",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 95598,
+        "m_FileID": 100426,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 93202,
+        "m_FileID": 97526,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 93144,
+        "m_FileID": 97450,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 119840,
+            "m_FileID": 126396,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 120358,
+        "m_FileID": 126920,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,37 +179,37 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 120586,
+            "m_FileID": 127152,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120578,
+            "m_FileID": 127144,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120626,
+            "m_FileID": 127192,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120618,
+            "m_FileID": 127184,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 120646,
+            "m_FileID": 127212,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120582,
+            "m_FileID": 127148,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120632,
+            "m_FileID": 127198,
             "m_PathID": 0
         },
         {
-            "m_FileID": 120652,
+            "m_FileID": 127218,
             "m_PathID": 0
         }
     ],
@@ -270,7 +270,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 119658,
+        "m_FileID": 126208,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -337,7 +337,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 119740,
+        "m_FileID": 126294,
         "m_PathID": 0
     },
     "isInventoryItem": true,

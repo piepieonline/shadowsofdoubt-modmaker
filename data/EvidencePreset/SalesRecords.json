@@ -2,7 +2,7 @@
     "presetName": "SalesRecords",
     "subClass": "",
     "windowStyle": {
-        "m_FileID": 31640,
+        "m_FileID": 35268,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 14980,
+        "m_FileID": 15042,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 12684,
+        "m_FileID": 12732,
         "m_PathID": 0
     },
     "useInGamePhoto": false,
@@ -47,7 +47,7 @@
     "factSetup": [
         {
             "preset": {
-                "m_FileID": 12688,
+                "m_FileID": 12736,
                 "m_PathID": 0
             },
             "link": 5,

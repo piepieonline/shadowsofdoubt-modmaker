@@ -1,6 +1,7 @@
 {
     "presetName": "Laboratory",
     "companyCategories": [],
+    "createMenu": false,
     "isIllegal": false,
     "useBuildingName": false,
     "useBuildingOverrideName": false,
@@ -96,11 +97,11 @@
         }
     ],
     "workHours": {
-        "m_FileID": 22330,
+        "m_FileID": 25948,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 55990,
+        "m_FileID": 59646,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

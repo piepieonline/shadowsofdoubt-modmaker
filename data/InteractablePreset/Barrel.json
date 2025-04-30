@@ -2,7 +2,7 @@
     "presetName": "Barrel",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 59026,
+        "m_FileID": 62690,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 59028,
+        "m_FileID": 62692,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12738,
+        "m_FileID": 12786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13680,
+            "m_FileID": 13738,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 17414,
+        "m_FileID": 17480,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,13 +179,13 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13658,
+            "m_FileID": 13716,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13682,
+            "m_FileID": 13740,
             "m_PathID": 0
         }
     ],
