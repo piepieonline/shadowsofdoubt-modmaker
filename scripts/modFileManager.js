@@ -50,8 +50,8 @@ async function openModFolder(modName, create = false, type = null, createDDS = f
 }
 
 function cloneTemplate(template) {
-    var templateToClone = window.templates[template];
-    if(!templateToClone)
+    var templateToClone = template in window.enums ? 0 : window.templates[template];
+    if(templateToClone === undefined)
     {
         function remapTemplate(obj)
         {
