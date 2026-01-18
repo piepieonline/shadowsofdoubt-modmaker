@@ -2,7 +2,7 @@
     "presetName": "DuctTape",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 25472,
+        "m_FileID": 25550,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 25468,
+        "m_FileID": 25546,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12786,
+        "m_FileID": 12860,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12800,
+            "m_FileID": 12874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13346,
+        "m_FileID": 13420,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,23 +179,23 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12634,
+            "m_FileID": 12708,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12640,
+            "m_FileID": 12714,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13336,
+            "m_FileID": 13410,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13426,
+            "m_FileID": 13500,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17670,
+            "m_FileID": 17746,
             "m_PathID": 0
         }
     ],
@@ -213,11 +213,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14346,
+                    "m_FileID": 14420,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 14862,
+                    "m_FileID": 14936,
                     "m_PathID": 0
                 }
             ],
@@ -274,7 +274,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -341,7 +341,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 12792,
+        "m_FileID": 12866,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -432,10 +432,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

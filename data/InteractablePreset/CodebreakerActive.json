@@ -2,7 +2,7 @@
     "presetName": "CodebreakerActive",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 100972,
+        "m_FileID": 101000,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98328,
+        "m_FileID": 98350,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97314,
+        "m_FileID": 97332,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126350,
+            "m_FileID": 126478,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": false,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 126924,
+        "m_FileID": 127054,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -141,7 +141,7 @@
             "switchState": 0,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 124058,
+                "m_FileID": 124180,
                 "m_PathID": 0
             },
             "isLoop": true,
@@ -250,7 +250,7 @@
     "AIWillCorrectPosition": true,
     "useEvidence": false,
     "useSingleton": {
-        "m_FileID": 126214,
+        "m_FileID": 126340,
         "m_PathID": 0
     },
     "findEvidence": 0,
@@ -413,10 +413,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

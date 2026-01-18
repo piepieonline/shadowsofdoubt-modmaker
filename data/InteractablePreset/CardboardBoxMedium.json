@@ -2,7 +2,7 @@
     "presetName": "CardboardBoxMedium",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 59660,
+        "m_FileID": 59776,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 59656,
+        "m_FileID": 59772,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12786,
+        "m_FileID": 12860,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13738,
+            "m_FileID": 13812,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13706,
+        "m_FileID": 13780,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,15 +179,15 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13718,
+            "m_FileID": 13792,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13710,
+            "m_FileID": 13784,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13740,
+            "m_FileID": 13814,
             "m_PathID": 0
         }
     ],
@@ -220,11 +220,11 @@
     "perCommercialLimit": 1,
     "banFromRooms": [
         {
-            "m_FileID": 13726,
+            "m_FileID": 13800,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13722,
+            "m_FileID": 13796,
             "m_PathID": 0
         }
     ],
@@ -416,10 +416,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

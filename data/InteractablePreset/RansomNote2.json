@@ -2,7 +2,7 @@
     "presetName": "RansomNote2",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 16164,
+        "m_FileID": 16238,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 16160,
+        "m_FileID": 16234,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12730,
+        "m_FileID": 12804,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14870,
+            "m_FileID": 14944,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14864,
+            "m_FileID": 14938,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.20000000298023225,
     "physicsProfile": {
-        "m_FileID": 14898,
+        "m_FileID": 14972,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,21 +183,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13510,
+            "m_FileID": 13584,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12684,
+            "m_FileID": 12758,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13532,
+            "m_FileID": 13606,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 12634,
+            "m_FileID": 12708,
             "m_PathID": 0
         }
     ],
@@ -258,7 +258,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 51734,
+        "m_FileID": 51810,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -416,10 +416,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

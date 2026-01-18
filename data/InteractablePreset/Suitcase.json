@@ -2,7 +2,7 @@
     "presetName": "Suitcase",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 102724,
+        "m_FileID": 102762,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98080,
+        "m_FileID": 98100,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97884,
+        "m_FileID": 97902,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126416,
+            "m_FileID": 126544,
             "m_PathID": 0
         },
         {
-            "m_FileID": 126362,
+            "m_FileID": 126490,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 126898,
+        "m_FileID": 127028,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -398,10 +398,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

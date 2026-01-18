@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 23312,
+        "m_FileID": 23390,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -116,19 +116,19 @@
     "spatterCountMultiplier": 1.0,
     "overrideFurnitureSetting": false,
     "enterTransition": {
-        "m_FileID": 15334,
+        "m_FileID": 15408,
         "m_PathID": 0
     },
     "exitTransition": {
-        "m_FileID": 22810,
+        "m_FileID": 22888,
         "m_PathID": 0
     },
     "enterTransition2": {
-        "m_FileID": 15334,
+        "m_FileID": 15408,
         "m_PathID": 0
     },
     "exitTransition2": {
-        "m_FileID": 22810,
+        "m_FileID": 22888,
         "m_PathID": 0
     },
     "switchSFX": [
@@ -136,7 +136,7 @@
             "switchState": 0,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 42096,
+                "m_FileID": 42172,
                 "m_PathID": 0
             },
             "isLoop": true,
@@ -408,10 +408,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

@@ -2,7 +2,7 @@
     "presetName": "MicroCruncher",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 99318,
+        "m_FileID": 99346,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 125550,
+        "m_FileID": 125674,
         "m_PathID": 0
     },
     "lightswitch": 0,
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98250,
+        "m_FileID": 98272,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97884,
+        "m_FileID": 97902,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126378,
+            "m_FileID": 126506,
             "m_PathID": 0
         },
         {
-            "m_FileID": 126362,
+            "m_FileID": 126490,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 126914,
+        "m_FileID": 127044,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -171,7 +171,7 @@
             "onlyIfHome": false,
             "insertActions": [
                 {
-                    "m_FileID": 124818,
+                    "m_FileID": 124942,
                     "m_PathID": 0
                 }
             ]
@@ -191,7 +191,7 @@
             "onlyIfHome": true,
             "insertActions": [
                 {
-                    "m_FileID": 124818,
+                    "m_FileID": 124942,
                     "m_PathID": 0
                 }
             ]
@@ -224,7 +224,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127138,
+            "m_FileID": 127268,
             "m_PathID": 0
         }
     ],
@@ -333,68 +333,60 @@
     },
     "isComputer": true,
     "bootApp": {
-        "m_FileID": 125160,
+        "m_FileID": 125284,
         "m_PathID": 0
     },
     "logInApp": {
-        "m_FileID": 125168,
+        "m_FileID": 125292,
         "m_PathID": 0
     },
     "desktopApp": {
-        "m_FileID": 125162,
+        "m_FileID": 125286,
         "m_PathID": 0
     },
     "additionalApps": [
         {
-            "m_FileID": 125170,
+            "m_FileID": 125294,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125182,
+            "m_FileID": 125306,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125176,
+            "m_FileID": 125300,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125164,
+            "m_FileID": 125288,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125172,
+            "m_FileID": 125296,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125166,
+            "m_FileID": 125290,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125178,
+            "m_FileID": 125302,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125180,
+            "m_FileID": 125304,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125174,
+            "m_FileID": 125298,
             "m_PathID": 0
         },
         {
-            "m_FileID": 172580,
+            "m_FileID": 125292,
             "m_PathID": 0
         },
         {
-            "m_FileID": 172904,
-            "m_PathID": 0
-        },
-        {
-            "m_FileID": 125168,
-            "m_PathID": 0
-        },
-        {
-            "m_FileID": 125184,
+            "m_FileID": 125308,
             "m_PathID": 0
         }
     ],
@@ -497,10 +489,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

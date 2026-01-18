@@ -2,7 +2,7 @@
     "presetName": "street",
     "subClass": "Location",
     "windowStyle": {
-        "m_FileID": 12738,
+        "m_FileID": 12812,
         "m_PathID": 0
     },
     "useDataKeys": true,
@@ -43,11 +43,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 41198,
+        "m_FileID": 41274,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 49920,
+        "m_FileID": 49994,
         "m_PathID": 0
     },
     "useInGamePhoto": false,

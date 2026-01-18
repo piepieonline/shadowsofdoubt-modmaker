@@ -2,7 +2,7 @@
     "presetName": "CommercialCoffeeMachine",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 45334,
+        "m_FileID": 45410,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 45302,
+        "m_FileID": 45378,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 38688,
+        "m_FileID": 38764,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,22 +87,22 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14870,
+            "m_FileID": 14944,
             "m_PathID": 0
         },
         {
-            "m_FileID": 37276,
+            "m_FileID": 37352,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14864,
+            "m_FileID": 14938,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13584,
+        "m_FileID": 13658,
         "m_PathID": 0
     },
     "overrideMass": true,
@@ -149,7 +149,7 @@
             "switchState": 0,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 45300,
+                "m_FileID": 45376,
                 "m_PathID": 0
             },
             "isLoop": true,
@@ -219,7 +219,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 13536,
+                    "m_FileID": 13610,
                     "m_PathID": 0
                 }
             ],
@@ -276,7 +276,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -434,10 +434,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

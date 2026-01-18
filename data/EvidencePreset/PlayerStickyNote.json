@@ -2,7 +2,7 @@
     "presetName": "PlayerStickyNote",
     "subClass": "StickyNote",
     "windowStyle": {
-        "m_FileID": 12738,
+        "m_FileID": 12812,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,7 +17,7 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 73202,
+        "m_FileID": 73326,
         "m_PathID": 0
     },
     "defaultNullImage": {

@@ -2,7 +2,7 @@
     "presetName": "Photo",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 102356,
+        "m_FileID": 102392,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98026,
+        "m_FileID": 98046,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97542,
+        "m_FileID": 97560,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126396,
+            "m_FileID": 126524,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.20000000298023225,
     "physicsProfile": {
-        "m_FileID": 126918,
+        "m_FileID": 127048,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,11 +179,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127198,
+            "m_FileID": 127328,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127220,
+            "m_FileID": 127350,
             "m_PathID": 0
         }
     ],
@@ -201,19 +201,19 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127394,
+                    "m_FileID": 127526,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127388,
+                    "m_FileID": 127520,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127324,
+                    "m_FileID": 127454,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127374,
+                    "m_FileID": 127506,
                     "m_PathID": 0
                 }
             ],
@@ -241,7 +241,7 @@
     "perCommercialLimit": 1,
     "banFromRooms": [
         {
-            "m_FileID": 125768,
+            "m_FileID": 125892,
             "m_PathID": 0
         }
     ],
@@ -275,7 +275,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126172,
+        "m_FileID": 126298,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -433,10 +433,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

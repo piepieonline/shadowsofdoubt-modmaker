@@ -2,7 +2,7 @@
     "presetName": "Key",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 104310,
+        "m_FileID": 104358,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97492,
+        "m_FileID": 97510,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97884,
+        "m_FileID": 97902,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126402,
+            "m_FileID": 126530,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 126896,
+        "m_FileID": 127026,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,29 +179,29 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127152,
+            "m_FileID": 127282,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127154,
+            "m_FileID": 127284,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 127212,
+            "m_FileID": 127342,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127148,
+            "m_FileID": 127278,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127198,
+            "m_FileID": 127328,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127170,
+            "m_FileID": 127300,
             "m_PathID": 0
         }
     ],
@@ -420,10 +420,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

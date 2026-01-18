@@ -2,7 +2,7 @@
     "presetName": "EnforcerNote",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 99872,
+        "m_FileID": 99900,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98426,
+        "m_FileID": 98448,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97460,
+        "m_FileID": 97478,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126394,
+            "m_FileID": 126522,
             "m_PathID": 0
         },
         {
-            "m_FileID": 126362,
+            "m_FileID": 126490,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.20000000298023225,
     "physicsProfile": {
-        "m_FileID": 126898,
+        "m_FileID": 127028,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,25 +183,25 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127152,
+            "m_FileID": 127282,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127212,
+            "m_FileID": 127342,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127140,
+            "m_FileID": 127270,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127190,
+            "m_FileID": 127320,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 127170,
+            "m_FileID": 127300,
             "m_PathID": 0
         }
     ],
@@ -262,7 +262,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126160,
+        "m_FileID": 126286,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -420,10 +420,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

@@ -4,7 +4,7 @@
     "disabled": false,
     "compatibleWith": [
         {
-            "m_FileID": 14830,
+            "m_FileID": 14904,
             "m_PathID": 0
         }
     ],
@@ -20,7 +20,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 15454,
+                    "m_FileID": 15528,
                     "m_PathID": 0
                 }
             ],
@@ -31,11 +31,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 16570,
+                    "m_FileID": 16644,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 36980,
+                    "m_FileID": 37056,
                     "m_PathID": 0
                 }
             ],
@@ -46,7 +46,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 45144,
+                    "m_FileID": 45220,
                     "m_PathID": 0
                 }
             ],
@@ -59,7 +59,7 @@
         {
             "companies": [
                 {
-                    "m_FileID": 34026,
+                    "m_FileID": 34104,
                     "m_PathID": 0
                 }
             ],
@@ -96,19 +96,19 @@
     "requiresSniperVantageAtHome": false,
     "weaponsPool": [
         {
-            "m_FileID": 14822,
+            "m_FileID": 14896,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14814,
+            "m_FileID": 14888,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14838,
+            "m_FileID": 14912,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14832,
+            "m_FileID": 14906,
             "m_PathID": 0
         }
     ],
@@ -136,19 +136,19 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 15176,
+                    "m_FileID": 15250,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 20470,
+                    "m_FileID": 20548,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 29252,
+                    "m_FileID": 29330,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 14110,
+                    "m_FileID": 14184,
                     "m_PathID": 0
                 }
             ],
@@ -174,7 +174,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 32146,
+                    "m_FileID": 32224,
                     "m_PathID": 0
                 }
             ],
@@ -191,7 +191,7 @@
             "chanceRatio": 0,
             "itemTag": 0,
             "spawnItem": {
-                "m_FileID": 48670,
+                "m_FileID": 48746,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -211,7 +211,7 @@
     "graffiti": [
         {
             "preset": {
-                "m_FileID": 14826,
+                "m_FileID": 14900,
                 "m_PathID": 0
             },
             "pos": 1,
@@ -232,7 +232,7 @@
     "callingCardPool": [
         {
             "item": {
-                "m_FileID": 37320,
+                "m_FileID": 37396,
                 "m_PathID": 0
             },
             "origin": 0,
@@ -245,7 +245,7 @@
     ],
     "playerTaunts": [
         {
-            "m_FileID": 33958,
+            "m_FileID": 34036,
             "m_PathID": 0
         }
     ]

@@ -2,7 +2,7 @@
     "presetName": "PhotoChemicals",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 53638,
+        "m_FileID": 53714,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 53658,
+        "m_FileID": 53734,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 13442,
+        "m_FileID": 13516,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12800,
+            "m_FileID": 12874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13584,
+        "m_FileID": 13658,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,13 +179,13 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13578,
+            "m_FileID": 13652,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13420,
+            "m_FileID": 13494,
             "m_PathID": 0
         }
     ],
@@ -202,7 +202,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 16442,
+                    "m_FileID": 16516,
                     "m_PathID": 0
                 }
             ],
@@ -259,7 +259,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -326,7 +326,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 15538,
+        "m_FileID": 15612,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -403,7 +403,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 24090,
+        "m_FileID": 24168,
         "m_PathID": 0
     },
     "menuOverride": {
@@ -417,10 +417,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

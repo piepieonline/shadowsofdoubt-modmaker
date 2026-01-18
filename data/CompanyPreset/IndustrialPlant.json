@@ -92,11 +92,11 @@
         }
     ],
     "workHours": {
-        "m_FileID": 48734,
+        "m_FileID": 48810,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 48732,
+        "m_FileID": 48808,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

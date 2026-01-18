@@ -2,7 +2,7 @@
     "presetName": "TelephoneNumber",
     "subClass": "Telephone",
     "windowStyle": {
-        "m_FileID": 12738,
+        "m_FileID": 12812,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 13866,
+        "m_FileID": 13940,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 49056,
+        "m_FileID": 49128,
         "m_PathID": 0
     },
     "useInGamePhoto": false,

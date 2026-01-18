@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 63622,
+        "m_FileID": 63746,
         "m_PathID": 0
     },
     "lightswitch": 1,
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 42342,
+        "m_FileID": 42418,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -136,7 +136,7 @@
             "switchState": 1,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 65520,
+                "m_FileID": 65644,
                 "m_PathID": 0
             },
             "isLoop": true,
@@ -408,10 +408,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

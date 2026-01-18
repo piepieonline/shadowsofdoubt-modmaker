@@ -3,7 +3,7 @@
     "murderWeaponPool": [
         {
             "weapon": {
-                "m_FileID": 30668,
+                "m_FileID": 30746,
                 "m_PathID": 0
             },
             "chanceOfDroppingAtScene": 0.800000011920929,
@@ -16,11 +16,11 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 35514,
+                            "m_FileID": 35590,
                             "m_PathID": 0
                         },
                         {
-                            "m_FileID": 15580,
+                            "m_FileID": 15654,
                             "m_PathID": 0
                         }
                     ],
@@ -31,11 +31,11 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 15594,
+                            "m_FileID": 15668,
                             "m_PathID": 0
                         },
                         {
-                            "m_FileID": 15592,
+                            "m_FileID": 15666,
                             "m_PathID": 0
                         }
                     ],

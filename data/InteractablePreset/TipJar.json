@@ -2,7 +2,7 @@
     "presetName": "TipJar",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 27844,
+        "m_FileID": 27922,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 27836,
+        "m_FileID": 27914,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12786,
+        "m_FileID": 12860,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,11 +87,11 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14870,
+            "m_FileID": 14944,
             "m_PathID": 0
         },
         {
-            "m_FileID": 22848,
+            "m_FileID": 22926,
             "m_PathID": 0
         }
     ],
@@ -184,7 +184,7 @@
     "subObjectClasses": [],
     "backupClasses": [
         {
-            "m_FileID": 13510,
+            "m_FileID": 13584,
             "m_PathID": 0
         }
     ],
@@ -218,11 +218,11 @@
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 14852,
+            "m_FileID": 14926,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17740,
+            "m_FileID": 17816,
             "m_PathID": 0
         }
     ],
@@ -412,10 +412,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

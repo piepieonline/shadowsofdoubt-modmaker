@@ -2,7 +2,7 @@
     "presetName": "BattleRifle",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 14148,
+        "m_FileID": 14222,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 22704,
+        "m_FileID": 22782,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 22714,
+        "m_FileID": 22792,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12800,
+            "m_FileID": 12874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 16434,
+        "m_FileID": 16508,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,7 +179,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 17362,
+            "m_FileID": 17438,
             "m_PathID": 0
         }
     ],
@@ -197,7 +197,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14184,
+                    "m_FileID": 14258,
                     "m_PathID": 0
                 }
             ],
@@ -254,7 +254,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -321,7 +321,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 17368,
+        "m_FileID": 17444,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -359,7 +359,7 @@
     "chanceOfDroppedAngle": 0.0,
     "droppedAngleHeightBoost": 0.10000000149011612,
     "weapon": {
-        "m_FileID": 14160,
+        "m_FileID": 14234,
         "m_PathID": 0
     },
     "inventoryCarryItem": false,
@@ -379,21 +379,21 @@
     "takeWith": true,
     "putDownPositions": [
         {
-            "m_FileID": 17362,
+            "m_FileID": 17438,
             "m_PathID": 0
         }
     ],
     "backupPutDownPositions": [
         {
-            "m_FileID": 13944,
+            "m_FileID": 14018,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13718,
+            "m_FileID": 13792,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13420,
+            "m_FileID": 13494,
             "m_PathID": 0
         }
     ],
@@ -416,7 +416,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 22706,
+        "m_FileID": 22784,
         "m_PathID": 0
     },
     "menuOverride": {
@@ -430,10 +430,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

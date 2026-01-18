@@ -2,7 +2,7 @@
     "presetName": "ShoppingList",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 14888,
+        "m_FileID": 14962,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 14880,
+        "m_FileID": 14954,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12730,
+        "m_FileID": 12804,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14870,
+            "m_FileID": 14944,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14864,
+            "m_FileID": 14938,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.20000000298023225,
     "physicsProfile": {
-        "m_FileID": 14898,
+        "m_FileID": 14972,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,21 +183,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13938,
+            "m_FileID": 14012,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13532,
+            "m_FileID": 13606,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13336,
+            "m_FileID": 13410,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 12640,
+            "m_FileID": 12714,
             "m_PathID": 0
         }
     ],
@@ -229,23 +229,23 @@
     "perCommercialLimit": 1,
     "banFromRooms": [
         {
-            "m_FileID": 14418,
+            "m_FileID": 14492,
             "m_PathID": 0
         },
         {
-            "m_FileID": 16490,
+            "m_FileID": 16564,
             "m_PathID": 0
         },
         {
-            "m_FileID": 25992,
+            "m_FileID": 26070,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13722,
+            "m_FileID": 13796,
             "m_PathID": 0
         },
         {
-            "m_FileID": 25980,
+            "m_FileID": 26058,
             "m_PathID": 0
         }
     ],
@@ -279,7 +279,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 40784,
+        "m_FileID": 40860,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -437,10 +437,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

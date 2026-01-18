@@ -2,7 +2,7 @@
     "presetName": "AshtrayHome",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 15130,
+        "m_FileID": 15204,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 15160,
+        "m_FileID": 15234,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12786,
+        "m_FileID": 12860,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14870,
+            "m_FileID": 14944,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14864,
+            "m_FileID": 14938,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 15136,
+        "m_FileID": 15210,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,11 +183,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13510,
+            "m_FileID": 13584,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13532,
+            "m_FileID": 13606,
             "m_PathID": 0
         }
     ],
@@ -205,15 +205,15 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 12626,
+                    "m_FileID": 12700,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 12628,
+                    "m_FileID": 12702,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 12624,
+                    "m_FileID": 12698,
                     "m_PathID": 0
                 }
             ],
@@ -241,11 +241,11 @@
     "perCommercialLimit": 1,
     "banFromRooms": [
         {
-            "m_FileID": 15148,
+            "m_FileID": 15222,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15134,
+            "m_FileID": 15208,
             "m_PathID": 0
         }
     ],
@@ -265,7 +265,7 @@
     "ownedRule": 3,
     "overrideWithOnlyOwnedSpawnAtWork": true,
     "subSpawnClass": {
-        "m_FileID": 15128,
+        "m_FileID": 15202,
         "m_PathID": 0
     },
     "subSpawnPositions": [
@@ -364,7 +364,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -522,10 +522,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

@@ -2,7 +2,7 @@
     "presetName": "VintageTelephone",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 62444,
+        "m_FileID": 62566,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 62440,
+        "m_FileID": 62562,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 13866,
+        "m_FileID": 13940,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 35244,
+            "m_FileID": 35322,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14864,
+            "m_FileID": 14938,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13584,
+        "m_FileID": 13658,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -145,7 +145,7 @@
             "switchState": 0,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 35212,
+                "m_FileID": 35290,
                 "m_PathID": 0
             },
             "isLoop": true,
@@ -202,7 +202,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 28270,
+            "m_FileID": 28348,
             "m_PathID": 0
         }
     ],
@@ -422,10 +422,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

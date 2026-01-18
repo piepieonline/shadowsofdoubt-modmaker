@@ -4,7 +4,7 @@
     "disabled": false,
     "compatibleWith": [
         {
-            "m_FileID": 56418,
+            "m_FileID": 56534,
             "m_PathID": 0
         }
     ],
@@ -20,7 +20,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 15454,
+                    "m_FileID": 15528,
                     "m_PathID": 0
                 }
             ],
@@ -31,11 +31,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 42122,
+                    "m_FileID": 42198,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 15172,
+                    "m_FileID": 15246,
                     "m_PathID": 0
                 }
             ],
@@ -73,7 +73,7 @@
     "requiresSniperVantageAtHome": false,
     "weaponsPool": [
         {
-            "m_FileID": 14838,
+            "m_FileID": 14912,
             "m_PathID": 0
         }
     ],
@@ -86,211 +86,211 @@
     "allowDen": true,
     "denFurniture": [
         {
-            "m_FileID": 64214,
+            "m_FileID": 64338,
             "m_PathID": 0
         },
         {
-            "m_FileID": 53672,
+            "m_FileID": 53748,
             "m_PathID": 0
         },
         {
-            "m_FileID": 40768,
+            "m_FileID": 40844,
             "m_PathID": 0
         },
         {
-            "m_FileID": 59126,
+            "m_FileID": 59242,
             "m_PathID": 0
         },
         {
-            "m_FileID": 61892,
+            "m_FileID": 62014,
             "m_PathID": 0
         },
         {
-            "m_FileID": 41908,
+            "m_FileID": 41984,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12604,
+            "m_FileID": 12678,
             "m_PathID": 0
         },
         {
-            "m_FileID": 60926,
+            "m_FileID": 61048,
             "m_PathID": 0
         },
         {
-            "m_FileID": 60926,
+            "m_FileID": 61048,
             "m_PathID": 0
         },
         {
-            "m_FileID": 60926,
+            "m_FileID": 61048,
             "m_PathID": 0
         },
         {
-            "m_FileID": 42022,
+            "m_FileID": 42098,
             "m_PathID": 0
         },
         {
-            "m_FileID": 42472,
+            "m_FileID": 42548,
             "m_PathID": 0
         },
         {
-            "m_FileID": 22868,
+            "m_FileID": 22946,
             "m_PathID": 0
         },
         {
-            "m_FileID": 62904,
+            "m_FileID": 63028,
             "m_PathID": 0
         },
         {
-            "m_FileID": 22824,
+            "m_FileID": 22902,
             "m_PathID": 0
         },
         {
-            "m_FileID": 64226,
+            "m_FileID": 64350,
             "m_PathID": 0
         },
         {
-            "m_FileID": 40522,
+            "m_FileID": 40598,
             "m_PathID": 0
         },
         {
-            "m_FileID": 57866,
+            "m_FileID": 57982,
             "m_PathID": 0
         },
         {
-            "m_FileID": 64206,
+            "m_FileID": 64330,
             "m_PathID": 0
         },
         {
-            "m_FileID": 36754,
+            "m_FileID": 36830,
             "m_PathID": 0
         },
         {
-            "m_FileID": 37050,
+            "m_FileID": 37126,
             "m_PathID": 0
         },
         {
-            "m_FileID": 39774,
+            "m_FileID": 39850,
             "m_PathID": 0
         },
         {
-            "m_FileID": 61892,
+            "m_FileID": 62014,
             "m_PathID": 0
         },
         {
-            "m_FileID": 61892,
+            "m_FileID": 62014,
             "m_PathID": 0
         },
         {
-            "m_FileID": 62128,
+            "m_FileID": 62250,
             "m_PathID": 0
         }
     ],
     "denStyleOverride": [
         {
-            "m_FileID": 12578,
+            "m_FileID": 12652,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12576,
+            "m_FileID": 12650,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12720,
+            "m_FileID": 12794,
             "m_PathID": 0
         }
     ],
     "denItems": [
         {
-            "m_FileID": 51502,
+            "m_FileID": 51578,
             "m_PathID": 0
         },
         {
-            "m_FileID": 25464,
+            "m_FileID": 25542,
             "m_PathID": 0
         },
         {
-            "m_FileID": 25464,
+            "m_FileID": 25542,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14362,
+            "m_FileID": 14436,
             "m_PathID": 0
         },
         {
-            "m_FileID": 64110,
+            "m_FileID": 64234,
             "m_PathID": 0
         },
         {
-            "m_FileID": 39164,
+            "m_FileID": 39240,
             "m_PathID": 0
         },
         {
-            "m_FileID": 64218,
+            "m_FileID": 64342,
             "m_PathID": 0
         },
         {
-            "m_FileID": 28668,
+            "m_FileID": 28746,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13446,
+            "m_FileID": 13520,
             "m_PathID": 0
         },
         {
-            "m_FileID": 56314,
+            "m_FileID": 56430,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14408,
+            "m_FileID": 14482,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15036,
+            "m_FileID": 15110,
             "m_PathID": 0
         },
         {
-            "m_FileID": 35320,
+            "m_FileID": 35396,
             "m_PathID": 0
         },
         {
-            "m_FileID": 59760,
+            "m_FileID": 59876,
             "m_PathID": 0
         },
         {
-            "m_FileID": 39464,
+            "m_FileID": 39540,
             "m_PathID": 0
         },
         {
-            "m_FileID": 24268,
+            "m_FileID": 24346,
             "m_PathID": 0
         },
         {
-            "m_FileID": 35074,
+            "m_FileID": 35152,
             "m_PathID": 0
         },
         {
-            "m_FileID": 35134,
+            "m_FileID": 35212,
             "m_PathID": 0
         },
         {
-            "m_FileID": 35018,
+            "m_FileID": 35096,
             "m_PathID": 0
         },
         {
-            "m_FileID": 44842,
+            "m_FileID": 44918,
             "m_PathID": 0
         },
         {
-            "m_FileID": 42890,
+            "m_FileID": 42966,
             "m_PathID": 0
         },
         {
-            "m_FileID": 39562,
+            "m_FileID": 39638,
             "m_PathID": 0
         },
         {
-            "m_FileID": 28366,
+            "m_FileID": 28444,
             "m_PathID": 0
         }
     ],
@@ -308,7 +308,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 31022,
+                    "m_FileID": 31100,
                     "m_PathID": 0
                 }
             ],
@@ -334,7 +334,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56416,
+                    "m_FileID": 56532,
                     "m_PathID": 0
                 }
             ],
@@ -372,7 +372,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56416,
+                    "m_FileID": 56532,
                     "m_PathID": 0
                 }
             ],
@@ -410,7 +410,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56416,
+                    "m_FileID": 56532,
                     "m_PathID": 0
                 }
             ],
@@ -448,7 +448,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56416,
+                    "m_FileID": 56532,
                     "m_PathID": 0
                 }
             ],
@@ -486,7 +486,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56416,
+                    "m_FileID": 56532,
                     "m_PathID": 0
                 }
             ],
@@ -503,7 +503,7 @@
             "chanceRatio": 0,
             "itemTag": 0,
             "spawnItem": {
-                "m_FileID": 58012,
+                "m_FileID": 58128,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -524,7 +524,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56416,
+                    "m_FileID": 56532,
                     "m_PathID": 0
                 }
             ],
@@ -541,7 +541,7 @@
             "chanceRatio": 0,
             "itemTag": 1,
             "spawnItem": {
-                "m_FileID": 50998,
+                "m_FileID": 51074,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -562,7 +562,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56416,
+                    "m_FileID": 56532,
                     "m_PathID": 0
                 }
             ],
@@ -579,7 +579,7 @@
             "chanceRatio": 0,
             "itemTag": 2,
             "spawnItem": {
-                "m_FileID": 60572,
+                "m_FileID": 60690,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -600,7 +600,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56416,
+                    "m_FileID": 56532,
                     "m_PathID": 0
                 }
             ],
@@ -617,7 +617,7 @@
             "chanceRatio": 0,
             "itemTag": 3,
             "spawnItem": {
-                "m_FileID": 48078,
+                "m_FileID": 48154,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -638,7 +638,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56416,
+                    "m_FileID": 56532,
                     "m_PathID": 0
                 }
             ],
@@ -655,7 +655,7 @@
             "chanceRatio": 0,
             "itemTag": 4,
             "spawnItem": {
-                "m_FileID": 16706,
+                "m_FileID": 16780,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -676,7 +676,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56416,
+                    "m_FileID": 56532,
                     "m_PathID": 0
                 }
             ],
@@ -693,7 +693,7 @@
             "chanceRatio": 0,
             "itemTag": 5,
             "spawnItem": {
-                "m_FileID": 63768,
+                "m_FileID": 63892,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -714,7 +714,7 @@
     "callingCardPool": [],
     "playerTaunts": [
         {
-            "m_FileID": 15784,
+            "m_FileID": 15858,
             "m_PathID": 0
         }
     ]

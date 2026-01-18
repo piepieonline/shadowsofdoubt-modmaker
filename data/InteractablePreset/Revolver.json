@@ -2,7 +2,7 @@
     "presetName": "Revolver",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 53864,
+        "m_FileID": 53940,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 53862,
+        "m_FileID": 53938,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 22714,
+        "m_FileID": 22792,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12800,
+            "m_FileID": 12874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 17258,
+        "m_FileID": 17334,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,33 +179,33 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12634,
+            "m_FileID": 12708,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15278,
+            "m_FileID": 15352,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13336,
+            "m_FileID": 13410,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12822,
+            "m_FileID": 12896,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13510,
+            "m_FileID": 13584,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13420,
+            "m_FileID": 13494,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12640,
+            "m_FileID": 12714,
             "m_PathID": 0
         }
     ],
@@ -266,7 +266,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -333,7 +333,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 17368,
+        "m_FileID": 17444,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -371,7 +371,7 @@
     "chanceOfDroppedAngle": 0.0,
     "droppedAngleHeightBoost": 0.10000000149011612,
     "weapon": {
-        "m_FileID": 46850,
+        "m_FileID": 46926,
         "m_PathID": 0
     },
     "inventoryCarryItem": false,
@@ -391,37 +391,37 @@
     "takeWith": true,
     "putDownPositions": [
         {
-            "m_FileID": 13510,
+            "m_FileID": 13584,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12822,
+            "m_FileID": 12896,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15278,
+            "m_FileID": 15352,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13532,
+            "m_FileID": 13606,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12634,
+            "m_FileID": 12708,
             "m_PathID": 0
         }
     ],
     "backupPutDownPositions": [
         {
-            "m_FileID": 13336,
+            "m_FileID": 13410,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13420,
+            "m_FileID": 13494,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12640,
+            "m_FileID": 12714,
             "m_PathID": 0
         }
     ],
@@ -444,7 +444,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 22948,
+        "m_FileID": 23026,
         "m_PathID": 0
     },
     "menuOverride": {
@@ -458,10 +458,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

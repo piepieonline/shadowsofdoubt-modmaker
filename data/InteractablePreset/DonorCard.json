@@ -2,7 +2,7 @@
     "presetName": "DonorCard",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 104316,
+        "m_FileID": 104364,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97716,
+        "m_FileID": 97734,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97542,
+        "m_FileID": 97560,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126394,
+            "m_FileID": 126522,
             "m_PathID": 0
         },
         {
-            "m_FileID": 126362,
+            "m_FileID": 126490,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 126898,
+        "m_FileID": 127028,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,21 +183,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127148,
+            "m_FileID": 127278,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127212,
+            "m_FileID": 127342,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127152,
+            "m_FileID": 127282,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 127170,
+            "m_FileID": 127300,
             "m_PathID": 0
         }
     ],
@@ -258,7 +258,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126154,
+        "m_FileID": 126280,
         "m_PathID": 0
     },
     "locationIsParent": false,
@@ -383,37 +383,37 @@
     "takeWith": true,
     "putDownPositions": [
         {
-            "m_FileID": 127148,
+            "m_FileID": 127278,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127212,
+            "m_FileID": 127342,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127200,
+            "m_FileID": 127330,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127140,
+            "m_FileID": 127270,
             "m_PathID": 0
         }
     ],
     "backupPutDownPositions": [
         {
-            "m_FileID": 127152,
+            "m_FileID": 127282,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127154,
+            "m_FileID": 127284,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127172,
+            "m_FileID": 127302,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127170,
+            "m_FileID": 127300,
             "m_PathID": 0
         }
     ],
@@ -450,10 +450,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

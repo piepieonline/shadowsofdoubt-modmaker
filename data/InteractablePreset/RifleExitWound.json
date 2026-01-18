@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 25950,
+        "m_FileID": 26028,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 14958,
+        "m_FileID": 15032,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14870,
+            "m_FileID": 14944,
             "m_PathID": 0
         }
     ],
@@ -236,7 +236,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 43128,
+        "m_FileID": 43204,
         "m_PathID": 0
     },
     "locationIsParent": false,
@@ -394,10 +394,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

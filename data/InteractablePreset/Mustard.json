@@ -2,7 +2,7 @@
     "presetName": "Mustard",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 70194,
+        "m_FileID": 70318,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 70188,
+        "m_FileID": 70312,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 30974,
+        "m_FileID": 31052,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12800,
+            "m_FileID": 12874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 14514,
+        "m_FileID": 14588,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -103,7 +103,7 @@
     "mass": 0.20000000298023225,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 13460,
+        "m_FileID": 13534,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -115,7 +115,7 @@
     "shardEveryXPixels": 64,
     "overrideSpatterSettings": true,
     "spatterSimulation": {
-        "m_FileID": 39510,
+        "m_FileID": 39586,
         "m_PathID": 0
     },
     "spatterCountMultiplier": 0.25,
@@ -179,7 +179,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 15972,
+            "m_FileID": 16046,
             "m_PathID": 0
         }
     ],
@@ -212,7 +212,7 @@
     "perCommercialLimit": 1,
     "banFromRooms": [
         {
-            "m_FileID": 17252,
+            "m_FileID": 17328,
             "m_PathID": 0
         }
     ],
@@ -246,7 +246,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -313,7 +313,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 13528,
+        "m_FileID": 13602,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -340,7 +340,7 @@
         "m_PathID": 0
     },
     "playerConsumeLoop": {
-        "m_FileID": 14504,
+        "m_FileID": 14578,
         "m_PathID": 0
     },
     "takeOneEvent": {
@@ -404,10 +404,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

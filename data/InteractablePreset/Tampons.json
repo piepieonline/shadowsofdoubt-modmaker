@@ -2,7 +2,7 @@
     "presetName": "Tampons",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 16506,
+        "m_FileID": 16580,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 16474,
+        "m_FileID": 16548,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 13570,
+        "m_FileID": 13644,
         "m_PathID": 0
     },
     "itemClass": 1,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12800,
+            "m_FileID": 12874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13346,
+        "m_FileID": 13420,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,21 +179,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13546,
+            "m_FileID": 13620,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13578,
+            "m_FileID": 13652,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13558,
+            "m_FileID": 13632,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13420,
+            "m_FileID": 13494,
             "m_PathID": 0
         }
     ],
@@ -210,7 +210,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 16498,
+                    "m_FileID": 16572,
                     "m_PathID": 0
                 }
             ],
@@ -240,35 +240,35 @@
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 13722,
+            "m_FileID": 13796,
             "m_PathID": 0
         },
         {
-            "m_FileID": 16510,
+            "m_FileID": 16584,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14418,
+            "m_FileID": 14492,
             "m_PathID": 0
         },
         {
-            "m_FileID": 16490,
+            "m_FileID": 16564,
             "m_PathID": 0
         },
         {
-            "m_FileID": 16488,
+            "m_FileID": 16562,
             "m_PathID": 0
         },
         {
-            "m_FileID": 16508,
+            "m_FileID": 16582,
             "m_PathID": 0
         },
         {
-            "m_FileID": 16478,
+            "m_FileID": 16552,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14566,
+            "m_FileID": 14640,
             "m_PathID": 0
         }
     ],
@@ -300,7 +300,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -367,7 +367,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 13528,
+        "m_FileID": 13602,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -444,7 +444,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 16484,
+        "m_FileID": 16558,
         "m_PathID": 0
     },
     "menuOverride": {
@@ -458,10 +458,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

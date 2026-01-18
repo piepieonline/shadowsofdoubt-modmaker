@@ -62,7 +62,7 @@
     "enableLoiteringBehaviour": true,
     "menus": [
         {
-            "m_FileID": 61686,
+            "m_FileID": 61808,
             "m_PathID": 0
         }
     ],
@@ -74,11 +74,11 @@
     "sellValueMultiplier": 0.5,
     "possibleUniformColours": [],
     "workHours": {
-        "m_FileID": 14038,
+        "m_FileID": 14112,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 43496,
+        "m_FileID": 43572,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

@@ -2,7 +2,7 @@
     "presetName": "BambooSteamer",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 72878,
+        "m_FileID": 73002,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 72902,
+        "m_FileID": 73026,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12786,
+        "m_FileID": 12860,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14950,
+            "m_FileID": 15024,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14864,
+            "m_FileID": 14938,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13346,
+        "m_FileID": 13420,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,11 +183,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13532,
+            "m_FileID": 13606,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15498,
+            "m_FileID": 15572,
             "m_PathID": 0
         }
     ],
@@ -205,19 +205,19 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 28318,
+                    "m_FileID": 28396,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 57490,
+                    "m_FileID": 57606,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 58734,
+                    "m_FileID": 58850,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 60586,
+                    "m_FileID": 60704,
                     "m_PathID": 0
                 }
             ],
@@ -432,10 +432,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

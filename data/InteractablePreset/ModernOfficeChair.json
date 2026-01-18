@@ -2,7 +2,7 @@
     "presetName": "ModernOfficeChair",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 69694,
+        "m_FileID": 69818,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 69700,
+        "m_FileID": 69824,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12786,
+        "m_FileID": 12860,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,22 +87,22 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13738,
+            "m_FileID": 13812,
             "m_PathID": 0
         },
         {
-            "m_FileID": 25502,
+            "m_FileID": 25580,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15738,
+            "m_FileID": 15812,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 38570,
+        "m_FileID": 38646,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -129,19 +129,19 @@
     "spatterCountMultiplier": 1.0,
     "overrideFurnitureSetting": true,
     "enterTransition": {
-        "m_FileID": 25508,
+        "m_FileID": 25586,
         "m_PathID": 0
     },
     "exitTransition": {
-        "m_FileID": 15736,
+        "m_FileID": 15810,
         "m_PathID": 0
     },
     "enterTransition2": {
-        "m_FileID": 25508,
+        "m_FileID": 25586,
         "m_PathID": 0
     },
     "exitTransition2": {
-        "m_FileID": 15736,
+        "m_FileID": 15810,
         "m_PathID": 0
     },
     "switchSFX": [],
@@ -187,7 +187,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13906,
+            "m_FileID": 13980,
             "m_PathID": 0
         }
     ],
@@ -407,10 +407,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

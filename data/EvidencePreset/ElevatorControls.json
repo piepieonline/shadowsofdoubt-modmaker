@@ -2,7 +2,7 @@
     "presetName": "ElevatorControls",
     "subClass": "",
     "windowStyle": {
-        "m_FileID": 127722,
+        "m_FileID": 127866,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 97314,
+        "m_FileID": 97332,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 94512,
+        "m_FileID": 94548,
         "m_PathID": 0
     },
     "useInGamePhoto": false,

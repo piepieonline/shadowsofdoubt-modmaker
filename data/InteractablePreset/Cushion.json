@@ -2,7 +2,7 @@
     "presetName": "Cushion",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 71678,
+        "m_FileID": 71802,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 71682,
+        "m_FileID": 71806,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12786,
+        "m_FileID": 12860,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13738,
+            "m_FileID": 13812,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14870,
+            "m_FileID": 14944,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 46612,
+        "m_FileID": 46688,
         "m_PathID": 0
     },
     "overrideMass": true,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 15802,
+            "m_FileID": 15876,
             "m_PathID": 0
         }
     ],
@@ -245,7 +245,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -403,10 +403,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

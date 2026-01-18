@@ -2,7 +2,7 @@
     "presetName": "DeskLampArm",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 59418,
+        "m_FileID": 59534,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 23338,
+        "m_FileID": 23416,
         "m_PathID": 0
     },
     "lightswitch": 0,
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 59396,
+        "m_FileID": 59512,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 23312,
+        "m_FileID": 23390,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 23314,
+            "m_FileID": 23392,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14864,
+            "m_FileID": 14938,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 15136,
+        "m_FileID": 15210,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13942,
+            "m_FileID": 14016,
             "m_PathID": 0
         }
     ],
@@ -218,47 +218,47 @@
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 16508,
+            "m_FileID": 16582,
             "m_PathID": 0
         },
         {
-            "m_FileID": 16478,
+            "m_FileID": 16552,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14566,
+            "m_FileID": 14640,
             "m_PathID": 0
         },
         {
-            "m_FileID": 16488,
+            "m_FileID": 16562,
             "m_PathID": 0
         },
         {
-            "m_FileID": 25996,
+            "m_FileID": 26074,
             "m_PathID": 0
         },
         {
-            "m_FileID": 27864,
+            "m_FileID": 27942,
             "m_PathID": 0
         },
         {
-            "m_FileID": 33282,
+            "m_FileID": 33360,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17244,
+            "m_FileID": 17320,
             "m_PathID": 0
         },
         {
-            "m_FileID": 26870,
+            "m_FileID": 26948,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12724,
+            "m_FileID": 12798,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14886,
+            "m_FileID": 14960,
             "m_PathID": 0
         }
     ],
@@ -448,10 +448,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

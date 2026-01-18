@@ -2,7 +2,7 @@
     "presetName": "CrumpledNameCipher",
     "subClass": "",
     "windowStyle": {
-        "m_FileID": 12738,
+        "m_FileID": 12812,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 12730,
+        "m_FileID": 12804,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 12732,
+        "m_FileID": 12806,
         "m_PathID": 0
     },
     "useInGamePhoto": false,
@@ -47,7 +47,7 @@
     "factSetup": [
         {
             "preset": {
-                "m_FileID": 12736,
+                "m_FileID": 12810,
                 "m_PathID": 0
             },
             "link": 5,

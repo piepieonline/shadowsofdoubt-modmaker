@@ -1247,7 +1247,8 @@
     "closeFinished": null,
     "objectImpact": null,
     "ignoreOcclusion": false,
-    "switchState1AnimationSync": false
+    "switchState1AnimationSync": false,
+    "useFixedUpdate": false
   },
   "DoorPairPreset": {
     "id": "",
@@ -1294,6 +1295,7 @@
       "z": -0.05000000074505806
     },
     "isTransparent": false,
+    "nonRainGlassMaterial": null,
     "doorSignOffset": {
       "x": -0.6800000071525574,
       "y": 1.7999999523162842,
@@ -2294,8 +2296,7 @@
     "hourlyChime": null,
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
-    "searchLoop": null,
-    "copyFrom": null
+    "searchLoop": null
   },
   "JobPreset": {
     "presetName": "",
@@ -2908,6 +2909,14 @@
       "m_PostInfinity": 2,
       "m_RotationOrder": 4
     },
+    "fixYMovementForRatController": false,
+    "playerYCurveIfRat": {
+      "serializedVersion": "2",
+      "m_Curve": [],
+      "m_PreInfinity": 2,
+      "m_PostInfinity": 2,
+      "m_RotationOrder": 4
+    },
     "transitionRelativity": 0,
     "disableWriteReturnPosition": false,
     "transitionToSavedReturnPosition": false,
@@ -3374,7 +3383,6 @@
       "a": 0.0
     },
     "includeDescription": true,
-    "instancingType": 0,
     "autoNotificationMessage": false,
     "priority": 4,
     "fadeToWhite": false,

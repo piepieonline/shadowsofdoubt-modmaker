@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97884,
+        "m_FileID": 97902,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -231,7 +231,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126140,
+        "m_FileID": 126266,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -389,10 +389,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

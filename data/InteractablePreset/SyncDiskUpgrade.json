@@ -2,7 +2,7 @@
     "presetName": "SyncDiskUpgrade",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 66112,
+        "m_FileID": 66236,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 66100,
+        "m_FileID": 66224,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 22816,
+        "m_FileID": 22894,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12800,
+            "m_FileID": 12874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 32596,
+        "m_FileID": 32674,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,33 +179,33 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12634,
+            "m_FileID": 12708,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13798,
+            "m_FileID": 13872,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14676,
+            "m_FileID": 14750,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13510,
+            "m_FileID": 13584,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12822,
+            "m_FileID": 12896,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12684,
+            "m_FileID": 12758,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17394,
+            "m_FileID": 17470,
             "m_PathID": 0
         }
     ],
@@ -222,15 +222,15 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 15460,
+                    "m_FileID": 15534,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 31022,
+                    "m_FileID": 31100,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 35576,
+                    "m_FileID": 35652,
                     "m_PathID": 0
                 }
             ],
@@ -287,7 +287,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -354,7 +354,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 12792,
+        "m_FileID": 12866,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -445,10 +445,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

@@ -2,7 +2,7 @@
     "presetName": "PrintedSurveillance",
     "subClass": "Surveillance",
     "windowStyle": {
-        "m_FileID": 127718,
+        "m_FileID": 127860,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 97542,
+        "m_FileID": 97560,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 94512,
+        "m_FileID": 94548,
         "m_PathID": 0
     },
     "useInGamePhoto": false,

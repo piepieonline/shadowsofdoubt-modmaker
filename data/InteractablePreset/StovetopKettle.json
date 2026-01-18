@@ -2,7 +2,7 @@
     "presetName": "StovetopKettle",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 102098,
+        "m_FileID": 102134,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97968,
+        "m_FileID": 97988,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97884,
+        "m_FileID": 97902,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126424,
+            "m_FileID": 126552,
             "m_PathID": 0
         },
         {
-            "m_FileID": 126394,
+            "m_FileID": 126522,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 126914,
+        "m_FileID": 127044,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -107,7 +107,7 @@
     "mass": 1.0,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 126888,
+        "m_FileID": 127018,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -119,7 +119,7 @@
     "shardEveryXPixels": 64,
     "overrideSpatterSettings": true,
     "spatterSimulation": {
-        "m_FileID": 127106,
+        "m_FileID": 127236,
         "m_PathID": 0
     },
     "spatterCountMultiplier": 0.20000000298023225,
@@ -145,7 +145,7 @@
             "switchState": 2,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 124432,
+                "m_FileID": 124554,
                 "m_PathID": 0
             },
             "isLoop": true,
@@ -202,7 +202,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127208,
+            "m_FileID": 127338,
             "m_PathID": 0
         }
     ],
@@ -220,11 +220,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127522,
+                    "m_FileID": 127656,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127566,
+                    "m_FileID": 127700,
                     "m_PathID": 0
                 }
             ],
@@ -281,7 +281,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126208,
+        "m_FileID": 126334,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -439,10 +439,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

@@ -2,7 +2,7 @@
     "presetName": "SynthMilk",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 30348,
+        "m_FileID": 30426,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 30328,
+        "m_FileID": 30406,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 18226,
+        "m_FileID": 18302,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12800,
+            "m_FileID": 12874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 14514,
+        "m_FileID": 14588,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -103,7 +103,7 @@
     "mass": 0.800000011920929,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 13460,
+        "m_FileID": 13534,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -115,7 +115,7 @@
     "shardEveryXPixels": 64,
     "overrideSpatterSettings": true,
     "spatterSimulation": {
-        "m_FileID": 13428,
+        "m_FileID": 13502,
         "m_PathID": 0
     },
     "spatterCountMultiplier": 0.25,
@@ -179,17 +179,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 14532,
+            "m_FileID": 14606,
             "m_PathID": 0
         },
         {
-            "m_FileID": 18238,
+            "m_FileID": 18314,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13532,
+            "m_FileID": 13606,
             "m_PathID": 0
         }
     ],
@@ -206,7 +206,7 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 30338,
+                    "m_FileID": 30416,
                     "m_PathID": 0
                 }
             ],
@@ -263,7 +263,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -330,7 +330,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 15538,
+        "m_FileID": 15612,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -357,7 +357,7 @@
         "m_PathID": 0
     },
     "playerConsumeLoop": {
-        "m_FileID": 15526,
+        "m_FileID": 15600,
         "m_PathID": 0
     },
     "takeOneEvent": {
@@ -407,7 +407,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 30326,
+        "m_FileID": 30404,
         "m_PathID": 0
     },
     "menuOverride": {
@@ -421,10 +421,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

@@ -2,7 +2,7 @@
     "presetName": "EmployeePhoto",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 104256,
+        "m_FileID": 104304,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98582,
+        "m_FileID": 98604,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97542,
+        "m_FileID": 97560,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126394,
+            "m_FileID": 126522,
             "m_PathID": 0
         },
         {
-            "m_FileID": 126362,
+            "m_FileID": 126490,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 126898,
+        "m_FileID": 127028,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127156,
+            "m_FileID": 127286,
             "m_PathID": 0
         }
     ],
@@ -245,7 +245,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126156,
+        "m_FileID": 126282,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -403,10 +403,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

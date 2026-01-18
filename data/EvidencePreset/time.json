@@ -2,7 +2,7 @@
     "presetName": "time",
     "subClass": "Time",
     "windowStyle": {
-        "m_FileID": 12738,
+        "m_FileID": 12812,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 37862,
+        "m_FileID": 37938,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 33904,
+        "m_FileID": 33982,
         "m_PathID": 0
     },
     "useInGamePhoto": false,

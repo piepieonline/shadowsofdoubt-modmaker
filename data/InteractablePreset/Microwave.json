@@ -2,7 +2,7 @@
     "presetName": "Microwave",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 74020,
+        "m_FileID": 74144,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 74032,
+        "m_FileID": 74156,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12786,
+        "m_FileID": 12860,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14950,
+            "m_FileID": 15024,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14864,
+            "m_FileID": 14938,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 12804,
+        "m_FileID": 12878,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13532,
+            "m_FileID": 13606,
             "m_PathID": 0
         }
     ],
@@ -201,15 +201,15 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 15460,
+                    "m_FileID": 15534,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 35576,
+                    "m_FileID": 35652,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 31022,
+                    "m_FileID": 31100,
                     "m_PathID": 0
                 }
             ],
@@ -239,15 +239,15 @@
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 18408,
+            "m_FileID": 18484,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15148,
+            "m_FileID": 15222,
             "m_PathID": 0
         },
         {
-            "m_FileID": 18608,
+            "m_FileID": 18684,
             "m_PathID": 0
         }
     ],
@@ -437,10 +437,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

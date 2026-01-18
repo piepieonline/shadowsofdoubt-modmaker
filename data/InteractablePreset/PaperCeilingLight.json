@@ -2,7 +2,7 @@
     "presetName": "PaperCeilingLight",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 66052,
+        "m_FileID": 66176,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 37220,
+        "m_FileID": 37296,
         "m_PathID": 0
     },
     "lightswitch": 0,
@@ -46,7 +46,7 @@
     "isMainLight": true,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 66060,
+        "m_FileID": 66184,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 23312,
+        "m_FileID": 23390,
         "m_PathID": 0
     },
     "itemClass": 5,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14864,
+            "m_FileID": 14938,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 14898,
+        "m_FileID": 14972,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -394,10 +394,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

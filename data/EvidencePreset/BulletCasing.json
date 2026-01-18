@@ -2,7 +2,7 @@
     "presetName": "BulletCasing",
     "subClass": "RetailItem",
     "windowStyle": {
-        "m_FileID": 127718,
+        "m_FileID": 127860,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 98366,
+        "m_FileID": 98388,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 94512,
+        "m_FileID": 94548,
         "m_PathID": 0
     },
     "useInGamePhoto": false,
@@ -47,7 +47,7 @@
     "factSetup": [
         {
             "preset": {
-                "m_FileID": 126222,
+                "m_FileID": 126348,
                 "m_PathID": 0
             },
             "link": 5,
@@ -66,11 +66,11 @@
     "isMatchParent": false,
     "matchTypes": [
         {
-            "m_FileID": 126334,
+            "m_FileID": 126462,
             "m_PathID": 0
         },
         {
-            "m_FileID": 126336,
+            "m_FileID": 126464,
             "m_PathID": 0
         }
     ],

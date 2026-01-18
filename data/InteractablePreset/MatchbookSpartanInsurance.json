@@ -2,7 +2,7 @@
     "presetName": "MatchbookSpartanInsurance",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 102924,
+        "m_FileID": 102962,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98406,
+        "m_FileID": 98428,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 98156,
+        "m_FileID": 98178,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126396,
+            "m_FileID": 126524,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 126918,
+        "m_FileID": 127048,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,17 +179,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127170,
+            "m_FileID": 127300,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 127152,
+            "m_FileID": 127282,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127154,
+            "m_FileID": 127284,
             "m_PathID": 0
         }
     ],
@@ -206,15 +206,15 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127634,
+                    "m_FileID": 127770,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127614,
+                    "m_FileID": 127750,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127624,
+                    "m_FileID": 127760,
                     "m_PathID": 0
                 }
             ],
@@ -226,15 +226,15 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127362,
+                    "m_FileID": 127494,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127372,
+                    "m_FileID": 127504,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127294,
+                    "m_FileID": 127424,
                     "m_PathID": 0
                 }
             ],
@@ -291,7 +291,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126208,
+        "m_FileID": 126334,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -358,7 +358,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126290,
+        "m_FileID": 126418,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -449,10 +449,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

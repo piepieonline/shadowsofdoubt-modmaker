@@ -2,7 +2,7 @@
     "presetName": "AdHospital",
     "subClass": "",
     "windowStyle": {
-        "m_FileID": 127718,
+        "m_FileID": 127860,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 97502,
+        "m_FileID": 97520,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 94512,
+        "m_FileID": 94548,
         "m_PathID": 0
     },
     "useInGamePhoto": false,
@@ -47,7 +47,7 @@
     "factSetup": [
         {
             "preset": {
-                "m_FileID": 126222,
+                "m_FileID": 126348,
                 "m_PathID": 0
             },
             "link": 5,

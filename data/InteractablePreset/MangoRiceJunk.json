@@ -2,7 +2,7 @@
     "presetName": "MangoRiceJunk",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 42648,
+        "m_FileID": 42724,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 42646,
+        "m_FileID": 42722,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 22912,
+        "m_FileID": 22990,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12800,
+            "m_FileID": 12874,
             "m_PathID": 0
         }
     ],
@@ -179,13 +179,13 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12640,
+            "m_FileID": 12714,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 12634,
+            "m_FileID": 12708,
             "m_PathID": 0
         }
     ],
@@ -202,7 +202,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 22930,
+                    "m_FileID": 23008,
                     "m_PathID": 0
                 }
             ],
@@ -214,11 +214,11 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 14110,
+                    "m_FileID": 14184,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 12610,
+                    "m_FileID": 12684,
                     "m_PathID": 0
                 }
             ],
@@ -275,7 +275,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -342,7 +342,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 15776,
+        "m_FileID": 15850,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -407,7 +407,7 @@
     "isMoney": false,
     "entertainmentSource": false,
     "isHeatSource": false,
-    "markAsTrashOnCreate": false,
+    "markAsTrashOnCreate": true,
     "isLitter": true,
     "isDecal": false,
     "isMovableChair": false,
@@ -433,10 +433,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

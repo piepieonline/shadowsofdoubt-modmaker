@@ -2,7 +2,7 @@
     "presetName": "WetFloorSign",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 17230,
+        "m_FileID": 17306,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 17212,
+        "m_FileID": 17288,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12786,
+        "m_FileID": 12860,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13738,
+            "m_FileID": 13812,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13706,
+        "m_FileID": 13780,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,7 +179,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13718,
+            "m_FileID": 13792,
             "m_PathID": 0
         }
     ],
@@ -212,46 +212,46 @@
     "perCommercialLimit": 1,
     "banFromRooms": [
         {
-            "m_FileID": 13726,
+            "m_FileID": 13800,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13722,
+            "m_FileID": 13796,
             "m_PathID": 0
         }
     ],
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 17200,
+            "m_FileID": 17276,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17222,
+            "m_FileID": 17298,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17244,
+            "m_FileID": 17320,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15148,
+            "m_FileID": 15222,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17252,
+            "m_FileID": 17328,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17246,
+            "m_FileID": 17322,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17232,
+            "m_FileID": 17308,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17208,
+            "m_FileID": 17284,
             "m_PathID": 0
         }
     ],
@@ -441,10 +441,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

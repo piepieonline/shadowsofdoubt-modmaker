@@ -2,7 +2,7 @@
     "presetName": "JadeNecklace",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 101228,
+        "m_FileID": 101258,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97906,
+        "m_FileID": 97924,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97866,
+        "m_FileID": 97884,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126396,
+            "m_FileID": 126524,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 126894,
+        "m_FileID": 127024,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,13 +179,13 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127192,
+            "m_FileID": 127322,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 127152,
+            "m_FileID": 127282,
             "m_PathID": 0
         }
     ],
@@ -246,7 +246,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126208,
+        "m_FileID": 126334,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -313,7 +313,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126294,
+        "m_FileID": 126422,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -404,10 +404,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

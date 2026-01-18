@@ -4,7 +4,7 @@
     "disabled": false,
     "compatibleWith": [
         {
-            "m_FileID": 39946,
+            "m_FileID": 40022,
             "m_PathID": 0
         }
     ],
@@ -20,7 +20,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14824,
+                    "m_FileID": 14898,
                     "m_PathID": 0
                 }
             ],
@@ -31,11 +31,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 32142,
+                    "m_FileID": 32220,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 16570,
+                    "m_FileID": 16644,
                     "m_PathID": 0
                 }
             ],
@@ -46,7 +46,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 42330,
+                    "m_FileID": 42406,
                     "m_PathID": 0
                 }
             ],
@@ -57,7 +57,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 42324,
+                    "m_FileID": 42400,
                     "m_PathID": 0
                 }
             ],
@@ -68,7 +68,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 16442,
+                    "m_FileID": 16516,
                     "m_PathID": 0
                 }
             ],
@@ -79,7 +79,7 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 14836,
+                    "m_FileID": 14910,
                     "m_PathID": 0
                 }
             ],
@@ -117,7 +117,7 @@
     "requiresSniperVantageAtHome": true,
     "weaponsPool": [
         {
-            "m_FileID": 39952,
+            "m_FileID": 40028,
             "m_PathID": 0
         }
     ],
@@ -159,7 +159,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 42338,
+                    "m_FileID": 42414,
                     "m_PathID": 0
                 }
             ],
@@ -197,7 +197,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 42338,
+                    "m_FileID": 42414,
                     "m_PathID": 0
                 }
             ],
@@ -235,7 +235,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 42338,
+                    "m_FileID": 42414,
                     "m_PathID": 0
                 }
             ],
@@ -273,7 +273,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 42338,
+                    "m_FileID": 42414,
                     "m_PathID": 0
                 }
             ],
@@ -311,7 +311,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 42338,
+                    "m_FileID": 42414,
                     "m_PathID": 0
                 }
             ],
@@ -328,7 +328,7 @@
             "chanceRatio": 0,
             "itemTag": 0,
             "spawnItem": {
-                "m_FileID": 35558,
+                "m_FileID": 35634,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -349,7 +349,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 42338,
+                    "m_FileID": 42414,
                     "m_PathID": 0
                 }
             ],
@@ -366,7 +366,7 @@
             "chanceRatio": 0,
             "itemTag": 1,
             "spawnItem": {
-                "m_FileID": 42326,
+                "m_FileID": 42402,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -387,7 +387,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 42338,
+                    "m_FileID": 42414,
                     "m_PathID": 0
                 }
             ],
@@ -404,7 +404,7 @@
             "chanceRatio": 0,
             "itemTag": 2,
             "spawnItem": {
-                "m_FileID": 42332,
+                "m_FileID": 42408,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -425,7 +425,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 42338,
+                    "m_FileID": 42414,
                     "m_PathID": 0
                 }
             ],
@@ -442,7 +442,7 @@
             "chanceRatio": 0,
             "itemTag": 3,
             "spawnItem": {
-                "m_FileID": 42334,
+                "m_FileID": 42410,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -463,7 +463,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 42338,
+                    "m_FileID": 42414,
                     "m_PathID": 0
                 }
             ],
@@ -480,7 +480,7 @@
             "chanceRatio": 0,
             "itemTag": 4,
             "spawnItem": {
-                "m_FileID": 42336,
+                "m_FileID": 42412,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -501,7 +501,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 42338,
+                    "m_FileID": 42414,
                     "m_PathID": 0
                 }
             ],
@@ -518,7 +518,7 @@
             "chanceRatio": 0,
             "itemTag": 5,
             "spawnItem": {
-                "m_FileID": 42336,
+                "m_FileID": 42412,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -539,7 +539,7 @@
     "callingCardPool": [],
     "playerTaunts": [
         {
-            "m_FileID": 42328,
+            "m_FileID": 42404,
             "m_PathID": 0
         }
     ]

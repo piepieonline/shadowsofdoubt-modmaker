@@ -76,11 +76,11 @@
         }
     ],
     "workHours": {
-        "m_FileID": 125146,
+        "m_FileID": 125270,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 125156,
+        "m_FileID": 125280,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

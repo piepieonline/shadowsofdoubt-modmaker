@@ -2,7 +2,7 @@
     "presetName": "HospitalBed",
     "subClass": "Witness",
     "windowStyle": {
-        "m_FileID": 16392,
+        "m_FileID": 16466,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 14324,
+        "m_FileID": 14398,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 12732,
+        "m_FileID": 12806,
         "m_PathID": 0
     },
     "useInGamePhoto": false,

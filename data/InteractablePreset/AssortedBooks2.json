@@ -2,7 +2,7 @@
     "presetName": "AssortedBooks2",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 73262,
+        "m_FileID": 73386,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 73256,
+        "m_FileID": 73380,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 26050,
+        "m_FileID": 26128,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -75,11 +75,11 @@
     "apartmentPlacementMode": 1,
     "mustTouchFurniture": [
         {
-            "m_FileID": 58672,
+            "m_FileID": 58788,
             "m_PathID": 0
         },
         {
-            "m_FileID": 33144,
+            "m_FileID": 33222,
             "m_PathID": 0
         }
     ],
@@ -96,18 +96,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 58680,
+            "m_FileID": 58796,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14864,
+            "m_FileID": 14938,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 14898,
+        "m_FileID": 14972,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -192,7 +192,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 33154,
+            "m_FileID": 33232,
             "m_PathID": 0
         }
     ],
@@ -210,7 +210,7 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 15184,
+                    "m_FileID": 15258,
                     "m_PathID": 0
                 }
             ],
@@ -222,27 +222,27 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14484,
+                    "m_FileID": 14558,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 38386,
+                    "m_FileID": 38462,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 14496,
+                    "m_FileID": 14570,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 15182,
+                    "m_FileID": 15256,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 15190,
+                    "m_FileID": 15264,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 15186,
+                    "m_FileID": 15260,
                     "m_PathID": 0
                 }
             ],
@@ -518,10 +518,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

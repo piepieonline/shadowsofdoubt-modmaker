@@ -2,7 +2,7 @@
     "presetName": "ShoePairBallet",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 63736,
+        "m_FileID": 63860,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 63728,
+        "m_FileID": 63852,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 16898,
+        "m_FileID": 16972,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14870,
+            "m_FileID": 14944,
             "m_PathID": 0
         }
     ],
@@ -179,13 +179,13 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 31156,
+            "m_FileID": 31234,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13420,
+            "m_FileID": 13494,
             "m_PathID": 0
         }
     ],
@@ -202,7 +202,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 32124,
+                    "m_FileID": 32202,
                     "m_PathID": 0
                 }
             ],
@@ -259,7 +259,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -417,10 +417,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

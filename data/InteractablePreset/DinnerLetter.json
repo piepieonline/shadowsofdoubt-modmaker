@@ -2,7 +2,7 @@
     "presetName": "DinnerLetter",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 16164,
+        "m_FileID": 16238,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 16160,
+        "m_FileID": 16234,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 16184,
+        "m_FileID": 16258,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14870,
+            "m_FileID": 14944,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14864,
+            "m_FileID": 14938,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.20000000298023225,
     "physicsProfile": {
-        "m_FileID": 14898,
+        "m_FileID": 14972,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,17 +183,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12634,
+            "m_FileID": 12708,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13558,
+            "m_FileID": 13632,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13510,
+            "m_FileID": 13584,
             "m_PathID": 0
         }
     ],
@@ -210,7 +210,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14836,
+                    "m_FileID": 14910,
                     "m_PathID": 0
                 }
             ],
@@ -222,15 +222,15 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 31022,
+                    "m_FileID": 31100,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 32116,
+                    "m_FileID": 32194,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 29038,
+                    "m_FileID": 29116,
                     "m_PathID": 0
                 }
             ],
@@ -287,7 +287,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 32118,
+        "m_FileID": 32196,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -445,10 +445,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

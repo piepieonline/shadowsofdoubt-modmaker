@@ -2,7 +2,7 @@
     "presetName": "LeatherBall",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 104706,
+        "m_FileID": 104754,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98638,
+        "m_FileID": 98660,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97884,
+        "m_FileID": 97902,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126424,
+            "m_FileID": 126552,
             "m_PathID": 0
         },
         {
-            "m_FileID": 126394,
+            "m_FileID": 126522,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 126892,
+        "m_FileID": 127022,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,17 +183,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127198,
+            "m_FileID": 127328,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127128,
+            "m_FileID": 127258,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 127172,
+            "m_FileID": 127302,
             "m_PathID": 0
         }
     ],
@@ -210,7 +210,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127562,
+                    "m_FileID": 127696,
                     "m_PathID": 0
                 }
             ],
@@ -267,7 +267,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126208,
+        "m_FileID": 126334,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -334,7 +334,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126284,
+        "m_FileID": 126412,
         "m_PathID": 0
     },
     "isInventoryItem": false,
@@ -425,10 +425,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

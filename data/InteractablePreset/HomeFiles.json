@@ -2,7 +2,7 @@
     "presetName": "HomeFiles",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 101130,
+        "m_FileID": 101158,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98548,
+        "m_FileID": 98570,
         "m_PathID": 0
     },
     "imagePos": {
@@ -61,11 +61,11 @@
     },
     "imageScale": 1.0,
     "imagePrefabOverride": {
-        "m_FileID": 102008,
+        "m_FileID": 102042,
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97884,
+        "m_FileID": 97902,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126398,
+            "m_FileID": 126526,
             "m_PathID": 0
         }
     ],
@@ -179,7 +179,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127144,
+            "m_FileID": 127274,
             "m_PathID": 0
         }
     ],
@@ -241,7 +241,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126204,
+        "m_FileID": 126330,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -399,10 +399,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

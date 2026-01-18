@@ -2,7 +2,7 @@
     "presetName": "Hourglass",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 101946,
+        "m_FileID": 101978,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97682,
+        "m_FileID": 97700,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97884,
+        "m_FileID": 97902,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126396,
+            "m_FileID": 126524,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 126916,
+        "m_FileID": 127046,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -103,7 +103,7 @@
     "mass": 1.0,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 126884,
+        "m_FileID": 127014,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -115,7 +115,7 @@
     "shardEveryXPixels": 64,
     "overrideSpatterSettings": true,
     "spatterSimulation": {
-        "m_FileID": 127110,
+        "m_FileID": 127240,
         "m_PathID": 0
     },
     "spatterCountMultiplier": 0.20000000298023225,
@@ -179,15 +179,15 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127198,
+            "m_FileID": 127328,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127212,
+            "m_FileID": 127342,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127140,
+            "m_FileID": 127270,
             "m_PathID": 0
         }
     ],
@@ -205,7 +205,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127528,
+                    "m_FileID": 127662,
                     "m_PathID": 0
                 }
             ],
@@ -262,7 +262,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126208,
+        "m_FileID": 126334,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -329,7 +329,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126294,
+        "m_FileID": 126422,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -387,25 +387,25 @@
     "takeWith": false,
     "putDownPositions": [
         {
-            "m_FileID": 127192,
+            "m_FileID": 127322,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127200,
+            "m_FileID": 127330,
             "m_PathID": 0
         }
     ],
     "backupPutDownPositions": [
         {
-            "m_FileID": 127212,
+            "m_FileID": 127342,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127198,
+            "m_FileID": 127328,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127172,
+            "m_FileID": 127302,
             "m_PathID": 0
         }
     ],
@@ -442,10 +442,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

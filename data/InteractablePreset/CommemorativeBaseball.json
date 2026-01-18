@@ -2,7 +2,7 @@
     "presetName": "CommemorativeBaseball",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 34662,
+        "m_FileID": 34740,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 34672,
+        "m_FileID": 34750,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12786,
+        "m_FileID": 12860,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12800,
+            "m_FileID": 12874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 34668,
+        "m_FileID": 34746,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,11 +179,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12684,
+            "m_FileID": 12758,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14676,
+            "m_FileID": 14750,
             "m_PathID": 0
         }
     ],
@@ -201,7 +201,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 16110,
+                    "m_FileID": 16184,
                     "m_PathID": 0
                 }
             ],
@@ -258,7 +258,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13356,
+        "m_FileID": 13430,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -325,19 +325,19 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 0,
+        "m_FileID": 13602,
         "m_PathID": 0
     },
     "isInventoryItem": true,
     "fpsItemOffset": {
         "x": 0.0,
-        "y": 0.0,
-        "z": 0.0
+        "y": 24.0,
+        "z": -344.0
     },
     "fpsItemRotation": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0
+        "x": 52.08467483520508,
+        "y": 0.00002275324186484795,
+        "z": -0.000007886738785600755
     },
     "fpsItemScaleModifier": {
         "x": 0.0,
@@ -383,25 +383,25 @@
     "takeWith": false,
     "putDownPositions": [
         {
-            "m_FileID": 14676,
+            "m_FileID": 14750,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15278,
+            "m_FileID": 15352,
             "m_PathID": 0
         }
     ],
     "backupPutDownPositions": [
         {
-            "m_FileID": 13510,
+            "m_FileID": 13584,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12684,
+            "m_FileID": 12758,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13420,
+            "m_FileID": 13494,
             "m_PathID": 0
         }
     ],
@@ -438,10 +438,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

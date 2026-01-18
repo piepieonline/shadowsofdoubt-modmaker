@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 16184,
+        "m_FileID": 16258,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 64140,
+            "m_FileID": 64264,
             "m_PathID": 0
         }
     ],
@@ -141,7 +141,7 @@
             "switchState": 4,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 42208,
+                "m_FileID": 42284,
                 "m_PathID": 0
             },
             "isLoop": false,
@@ -159,7 +159,7 @@
             "switchState": 4,
             "boolIs": false,
             "triggerAudio": {
-                "m_FileID": 42210,
+                "m_FileID": 42286,
                 "m_PathID": 0
             },
             "isLoop": false,
@@ -300,7 +300,7 @@
     },
     "passwordSource": 0,
     "attemptedOpenSound": {
-        "m_FileID": 14954,
+        "m_FileID": 15028,
         "m_PathID": 0
     },
     "armLockOnClose": false,
@@ -431,10 +431,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

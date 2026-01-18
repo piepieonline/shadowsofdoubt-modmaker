@@ -2,7 +2,7 @@
     "presetName": "FlashBomb",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 105774,
+        "m_FileID": 105826,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97644,
+        "m_FileID": 97662,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97768,
+        "m_FileID": 97786,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126390,
+            "m_FileID": 126518,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 126908,
+        "m_FileID": 127038,
         "m_PathID": 0
     },
     "overrideMass": true,
@@ -179,21 +179,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127152,
+            "m_FileID": 127282,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127212,
+            "m_FileID": 127342,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127148,
+            "m_FileID": 127278,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 127140,
+            "m_FileID": 127270,
             "m_PathID": 0
         }
     ],
@@ -254,7 +254,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126208,
+        "m_FileID": 126334,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -321,7 +321,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126310,
+        "m_FileID": 126438,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -398,7 +398,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 127080,
+        "m_FileID": 127210,
         "m_PathID": 0
     },
     "menuOverride": {
@@ -412,10 +412,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }

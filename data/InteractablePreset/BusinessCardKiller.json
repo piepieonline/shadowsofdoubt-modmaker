@@ -2,7 +2,7 @@
     "presetName": "BusinessCardKiller",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 37318,
+        "m_FileID": 37394,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 37324,
+        "m_FileID": 37400,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 25674,
+        "m_FileID": 25752,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14870,
+            "m_FileID": 14944,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14864,
+            "m_FileID": 14938,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13346,
+        "m_FileID": 13420,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12634,
+            "m_FileID": 12708,
             "m_PathID": 0
         }
     ],
@@ -245,7 +245,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 37316,
+        "m_FileID": 37392,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -403,10 +403,6 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 0,
-        "m_PathID": 0
-    },
-    "copyFrom": {
         "m_FileID": 0,
         "m_PathID": 0
     }
