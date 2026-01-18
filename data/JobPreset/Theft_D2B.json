@@ -1,0 +1,509 @@
+{
+    "presetName": "Theft_D2B",
+    "disabled": false,
+    "caseName": "Theft",
+    "jobPosting": {
+        "m_FileID": 14070,
+        "m_PathID": 0
+    },
+    "subClass": "",
+    "allowSyncDiskRewards": true,
+    "allowBlackMarketSyncDiskRewards": true,
+    "physicalRewardLocation": 1,
+    "generateHidingLocation": true,
+    "socialCreditLevelMinSpawnFrequency": {
+        "serializedVersion": "2",
+        "m_Curve": [
+            {
+                "serializedVersion": "3",
+                "time": 0.0,
+                "value": 0.0,
+                "inSlope": 0.0,
+                "outSlope": 0.0,
+                "weightedMode": 0,
+                "inWeight": 0.0,
+                "outWeight": 0.0
+            },
+            {
+                "serializedVersion": "3",
+                "time": 1.0,
+                "value": 1.0,
+                "inSlope": -0.2741597890853882,
+                "outSlope": -0.2741597890853882,
+                "weightedMode": 0,
+                "inWeight": 0.3333333432674408,
+                "outWeight": 0.07131008058786392
+            },
+            {
+                "serializedVersion": "3",
+                "time": 10.0,
+                "value": 0.0,
+                "inSlope": 0.0,
+                "outSlope": 0.0,
+                "weightedMode": 0,
+                "inWeight": 0.0,
+                "outWeight": 0.0
+            }
+        ],
+        "m_PreInfinity": 2,
+        "m_PostInfinity": 2,
+        "m_RotationOrder": 4
+    },
+    "activePerCitizen": 0.009999999776482582,
+    "maxJobs": 8,
+    "immediatePostCountThreshold": 2,
+    "difficultyTag": 3,
+    "changePosterDialogCompliancy": 0,
+    "changePerpDialogCompliancy": 0,
+    "purpetratorMotives": [
+        {
+            "m_FileID": 28160,
+            "m_PathID": 0
+        }
+    ],
+    "penaltyForPurpAndPosterSameBuilding": 0,
+    "startingScenarios": [
+        {
+            "name": "Work Available",
+            "dds": "548010e3-19ac-4403-a899-46157f3dd518",
+            "leads": []
+        },
+        {
+            "name": "Variation 2",
+            "dds": "184b1730-61c7-4eac-8796-efb1eca51cf9",
+            "leads": []
+        }
+    ],
+    "compatibleIntros": [
+        {
+            "preset": {
+                "m_FileID": 14062,
+                "m_PathID": 0
+            },
+            "frequency": 0
+        },
+        {
+            "preset": {
+                "m_FileID": 14098,
+                "m_PathID": 0
+            },
+            "frequency": 0
+        },
+        {
+            "preset": {
+                "m_FileID": 14058,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        },
+        {
+            "preset": {
+                "m_FileID": 14078,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        },
+        {
+            "preset": {
+                "m_FileID": 14074,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        }
+    ],
+    "leadPoolData": 3,
+    "createFactsOnInformationAcquisition": [
+        {
+            "factPreset": {
+                "m_FileID": 14094,
+                "m_PathID": 0
+            },
+            "from": 13,
+            "to": 2,
+            "overrideFromKeys": false,
+            "fromKeys": [],
+            "featureKeysFromLeadPool": false,
+            "overrideToKeys": true,
+            "toKeys": [
+                32,
+                34
+            ],
+            "featureKeysFromLeadPoolTo": true
+        }
+    ],
+    "informationAcquisitionLeads": [
+        {
+            "leadEvidence": 2,
+            "keys": [
+                32,
+                34
+            ],
+            "useKeyFromLeadPool": true,
+            "autoPin": true,
+            "addDialogOptions": [],
+            "factsReveal": [
+                "LivesAtBuilding",
+                "LivesOnFloor"
+            ],
+            "mergeKeys": [],
+            "discoveryApplication": []
+        },
+        {
+            "leadEvidence": 11,
+            "keys": [
+                0
+            ],
+            "useKeyFromLeadPool": false,
+            "autoPin": true,
+            "addDialogOptions": [],
+            "factsReveal": [],
+            "mergeKeys": [],
+            "discoveryApplication": []
+        }
+    ],
+    "revengeObjectives": [],
+    "spawnItems": [
+        {
+            "name": "Sensitive Document Work",
+            "findExisting": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 28160,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": true,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": true,
+            "orGroup": 0,
+            "chanceRatio": 4,
+            "disableOnDifficulties": [],
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 28152,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 3,
+            "belongsTo": 2,
+            "writer": 0,
+            "receiver": 0,
+            "security": 1,
+            "priority": 3,
+            "ownershipRule": 3
+        },
+        {
+            "name": "Sensitive Document Home",
+            "findExisting": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 28160,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": true,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": true,
+            "orGroup": 0,
+            "chanceRatio": 4,
+            "disableOnDifficulties": [],
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 28152,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 2,
+            "belongsTo": 2,
+            "writer": 0,
+            "receiver": 0,
+            "security": 1,
+            "priority": 3,
+            "ownershipRule": 3
+        }
+    ],
+    "resolveQuestions": [
+        {
+            "name": "Locate and steal the item; |stolenitem.name|",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 4,
+            "automaticAnswers": [],
+            "tag": 0,
+            "icon": 32,
+            "rewardRange": {
+                "x": 300.0,
+                "y": 500.0
+            },
+            "penaltyRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "isOptional": false,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "Locate and steal the item; |stolenitem.name|",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        },
+        {
+            "name": "Leave the item near the |secretlocation|",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [
+                {
+                    "m_FileID": 17144,
+                    "m_PathID": 0
+                }
+            ],
+            "inputType": 4,
+            "automaticAnswers": [],
+            "tag": 0,
+            "icon": 32,
+            "rewardRange": {
+                "x": 300.0,
+                "y": 500.0
+            },
+            "penaltyRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "isOptional": false,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "Leave the item near the |secretlocation|",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        },
+        {
+            "name": "Destroy the item by throwing it into the sea",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [
+                {
+                    "m_FileID": 28158,
+                    "m_PathID": 0
+                }
+            ],
+            "inputType": 4,
+            "automaticAnswers": [],
+            "tag": 0,
+            "icon": 32,
+            "rewardRange": {
+                "x": 300.0,
+                "y": 500.0
+            },
+            "penaltyRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "isOptional": false,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "Destroy the item by throwing it into the sea",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        }
+    ],
+    "additional": [
+        {
+            "name": "Locate and steal the item; |stolenitem.name|",
+            "elementType": 16,
+            "dialogReference": "",
+            "tagReference": 0,
+            "spawnItems": [],
+            "enableUpdateWhileTalking": false,
+            "objectiveDelay": 0.0,
+            "validItems": [],
+            "validFurniture": [],
+            "disableOnDifficulties": [],
+            "onlyCompativleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "triggerFailIfItemDestroyed": [
+                0
+            ]
+        },
+        {
+            "name": "Leave the item near the |secretlocation|",
+            "elementType": 17,
+            "dialogReference": "",
+            "tagReference": 0,
+            "spawnItems": [],
+            "enableUpdateWhileTalking": false,
+            "objectiveDelay": 0.0,
+            "validItems": [],
+            "validFurniture": [],
+            "disableOnDifficulties": [],
+            "onlyCompativleWithIntros": [],
+            "onlyCompatibleWithHandIns": [
+                {
+                    "m_FileID": 17144,
+                    "m_PathID": 0
+                }
+            ],
+            "triggerFailIfItemDestroyed": [
+                0
+            ]
+        },
+        {
+            "name": "Destroy the item by throwing it into the sea",
+            "elementType": 18,
+            "dialogReference": "",
+            "tagReference": 0,
+            "spawnItems": [],
+            "enableUpdateWhileTalking": false,
+            "objectiveDelay": 0.0,
+            "validItems": [],
+            "validFurniture": [],
+            "disableOnDifficulties": [],
+            "onlyCompativleWithIntros": [],
+            "onlyCompatibleWithHandIns": [
+                {
+                    "m_FileID": 28158,
+                    "m_PathID": 0
+                }
+            ],
+            "triggerFailIfItemDestroyed": []
+        }
+    ],
+    "compatibleHandIns": [
+        {
+            "preset": {
+                "m_FileID": 28158,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        },
+        {
+            "preset": {
+                "m_FileID": 17144,
+                "m_PathID": 0
+            },
+            "frequency": 2
+        }
+    ],
+    "dialogReferences": [
+        {
+            "name": "IntroCall",
+            "dialog": {
+                "m_FileID": 28156,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroAskStaff",
+            "dialog": {
+                "m_FileID": 28148,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroAskStaffPhoto",
+            "dialog": {
+                "m_FileID": 14068,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroGooseChase1",
+            "dialog": {
+                "m_FileID": 14104,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroGooseChase2",
+            "dialog": {
+                "m_FileID": 28162,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroMeetUpSpecific1",
+            "dialog": {
+                "m_FileID": 14092,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroMeetUpSpecific2",
+            "dialog": {
+                "m_FileID": 28146,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "TelephoneHandIn",
+            "dialog": {
+                "m_FileID": 14084,
+                "m_PathID": 0
+            }
+        }
+    ],
+    "debugCopyFrom": {
+        "m_FileID": 28150,
+        "m_PathID": 0
+    }
+}

@@ -1,0 +1,326 @@
+{
+    "presetName": "MissingPerson",
+    "disabled": true,
+    "caseName": "MissingPerson",
+    "jobPosting": {
+        "m_FileID": 14070,
+        "m_PathID": 0
+    },
+    "subClass": "MissingPerson",
+    "allowSyncDiskRewards": true,
+    "allowBlackMarketSyncDiskRewards": true,
+    "physicalRewardLocation": 1,
+    "generateHidingLocation": false,
+    "socialCreditLevelMinSpawnFrequency": {
+        "serializedVersion": "2",
+        "m_Curve": [],
+        "m_PreInfinity": 2,
+        "m_PostInfinity": 2,
+        "m_RotationOrder": 4
+    },
+    "activePerCitizen": 0.009999999776482582,
+    "maxJobs": 8,
+    "immediatePostCountThreshold": 2,
+    "difficultyTag": 0,
+    "changePosterDialogCompliancy": 0,
+    "changePerpDialogCompliancy": 2,
+    "purpetratorMotives": [
+        {
+            "m_FileID": 66392,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 25616,
+            "m_PathID": 0
+        }
+    ],
+    "penaltyForPurpAndPosterSameBuilding": 0,
+    "startingScenarios": [
+        {
+            "name": "Variation 1",
+            "dds": "e5a14ec6-01d6-46f7-ad16-081a6da86786",
+            "leads": [
+                {
+                    "leadEvidence": 0,
+                    "keys": [],
+                    "useKeyFromLeadPool": false,
+                    "autoPin": false,
+                    "addDialogOptions": [],
+                    "factsReveal": [],
+                    "mergeKeys": [
+                        1,
+                        2
+                    ],
+                    "discoveryApplication": []
+                }
+            ]
+        },
+        {
+            "name": "Variation 2",
+            "dds": "620be4f0-d358-406e-ad0c-5ab280c6be86",
+            "leads": [
+                {
+                    "leadEvidence": 0,
+                    "keys": [],
+                    "useKeyFromLeadPool": false,
+                    "autoPin": false,
+                    "addDialogOptions": [],
+                    "factsReveal": [],
+                    "mergeKeys": [
+                        1,
+                        2
+                    ],
+                    "discoveryApplication": []
+                }
+            ]
+        }
+    ],
+    "compatibleIntros": [],
+    "leadPoolData": 0,
+    "createFactsOnInformationAcquisition": [],
+    "informationAcquisitionLeads": [],
+    "revengeObjectives": [],
+    "spawnItems": [
+        {
+            "name": "Suicide Note",
+            "findExisting": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 66392,
+                    "m_PathID": 0
+                },
+                {
+                    "m_FileID": 25616,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": false,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": false,
+            "orGroup": 0,
+            "chanceRatio": 0,
+            "disableOnDifficulties": [],
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 52544,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 2,
+            "belongsTo": 2,
+            "writer": 2,
+            "receiver": 1,
+            "security": 0,
+            "priority": 0,
+            "ownershipRule": 4
+        },
+        {
+            "name": "Debt Collection Letter",
+            "findExisting": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 25616,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": false,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": false,
+            "orGroup": 0,
+            "chanceRatio": 0,
+            "disableOnDifficulties": [],
+            "itemTag": 1,
+            "spawnItem": {
+                "m_FileID": 27884,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 2,
+            "belongsTo": 2,
+            "writer": 0,
+            "receiver": 2,
+            "security": 0,
+            "priority": 0,
+            "ownershipRule": 1
+        },
+        {
+            "name": "Repossession Notice",
+            "findExisting": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 25616,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": false,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": false,
+            "orGroup": 0,
+            "chanceRatio": 0,
+            "disableOnDifficulties": [],
+            "itemTag": 2,
+            "spawnItem": {
+                "m_FileID": 51422,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 2,
+            "belongsTo": 2,
+            "writer": 0,
+            "receiver": 2,
+            "security": 0,
+            "priority": 0,
+            "ownershipRule": 1
+        }
+    ],
+    "resolveQuestions": [
+        {
+            "name": "Uncover evidence as to the whereabouts of |purp.name|",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 2,
+            "automaticAnswers": [],
+            "tag": 0,
+            "icon": 4,
+            "rewardRange": {
+                "x": 300.0,
+                "y": 400.0
+            },
+            "penaltyRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "isOptional": false,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        },
+        {
+            "name": "Uncover evidence as to why they are missing",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 2,
+            "automaticAnswers": [],
+            "tag": 1,
+            "icon": 7,
+            "rewardRange": {
+                "x": 100.0,
+                "y": 200.0
+            },
+            "penaltyRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "isOptional": true,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        },
+        {
+            "name": "Where was the last known whereabouts of |purp.name|?",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 1,
+            "automaticAnswers": [],
+            "tag": 1,
+            "icon": 9,
+            "rewardRange": {
+                "x": 300.0,
+                "y": 400.0
+            },
+            "penaltyRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "isOptional": true,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        }
+    ],
+    "additional": [],
+    "compatibleHandIns": [],
+    "dialogReferences": [],
+    "debugCopyFrom": {
+        "m_FileID": 0,
+        "m_PathID": 0
+    }
+}

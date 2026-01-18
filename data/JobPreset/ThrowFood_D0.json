@@ -1,0 +1,262 @@
+{
+    "presetName": "ThrowFood_D0",
+    "disabled": false,
+    "caseName": "Humiliate",
+    "jobPosting": {
+        "m_FileID": 14070,
+        "m_PathID": 0
+    },
+    "subClass": "",
+    "allowSyncDiskRewards": false,
+    "allowBlackMarketSyncDiskRewards": true,
+    "physicalRewardLocation": 3,
+    "generateHidingLocation": false,
+    "socialCreditLevelMinSpawnFrequency": {
+        "serializedVersion": "2",
+        "m_Curve": [
+            {
+                "serializedVersion": "3",
+                "time": 0.0,
+                "value": 1.0,
+                "inSlope": -1.1063753366470338,
+                "outSlope": -1.1063753366470338,
+                "weightedMode": 0,
+                "inWeight": 0.0,
+                "outWeight": 0.08386122435331345
+            },
+            {
+                "serializedVersion": "3",
+                "time": 2.0,
+                "value": 0.0,
+                "inSlope": -0.002983353566378355,
+                "outSlope": -0.002983353566378355,
+                "weightedMode": 0,
+                "inWeight": 0.3333333432674408,
+                "outWeight": 0.13572874665260316
+            },
+            {
+                "serializedVersion": "3",
+                "time": 10.0,
+                "value": 0.0,
+                "inSlope": 0.0,
+                "outSlope": 0.0,
+                "weightedMode": 0,
+                "inWeight": 0.0,
+                "outWeight": 0.0
+            }
+        ],
+        "m_PreInfinity": 2,
+        "m_PostInfinity": 2,
+        "m_RotationOrder": 4
+    },
+    "activePerCitizen": 0.009999999776482582,
+    "maxJobs": 8,
+    "immediatePostCountThreshold": 2,
+    "difficultyTag": 0,
+    "changePosterDialogCompliancy": 0,
+    "changePerpDialogCompliancy": 1,
+    "purpetratorMotives": [
+        {
+            "m_FileID": 14088,
+            "m_PathID": 0
+        }
+    ],
+    "penaltyForPurpAndPosterSameBuilding": 0,
+    "startingScenarios": [
+        {
+            "name": "Humiliation",
+            "dds": "0eaf0e5e-87a7-4c32-b6aa-333e1a3f8157",
+            "leads": []
+        }
+    ],
+    "compatibleIntros": [
+        {
+            "preset": {
+                "m_FileID": 14062,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        },
+        {
+            "preset": {
+                "m_FileID": 14098,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        },
+        {
+            "preset": {
+                "m_FileID": 14058,
+                "m_PathID": 0
+            },
+            "frequency": 0
+        },
+        {
+            "preset": {
+                "m_FileID": 14078,
+                "m_PathID": 0
+            },
+            "frequency": 0
+        },
+        {
+            "preset": {
+                "m_FileID": 14074,
+                "m_PathID": 0
+            },
+            "frequency": 0
+        }
+    ],
+    "leadPoolData": 0,
+    "createFactsOnInformationAcquisition": [
+        {
+            "factPreset": {
+                "m_FileID": 14094,
+                "m_PathID": 0
+            },
+            "from": 13,
+            "to": 2,
+            "overrideFromKeys": false,
+            "fromKeys": [],
+            "featureKeysFromLeadPool": false,
+            "overrideToKeys": true,
+            "toKeys": [
+                0
+            ],
+            "featureKeysFromLeadPoolTo": true
+        }
+    ],
+    "informationAcquisitionLeads": [
+        {
+            "leadEvidence": 2,
+            "keys": [
+                0
+            ],
+            "useKeyFromLeadPool": false,
+            "autoPin": true,
+            "addDialogOptions": [],
+            "factsReveal": [],
+            "mergeKeys": [],
+            "discoveryApplication": []
+        }
+    ],
+    "revengeObjectives": [
+        {
+            "m_FileID": 17154,
+            "m_PathID": 0
+        }
+    ],
+    "spawnItems": [],
+    "resolveQuestions": [
+        {
+            "name": "Revenge",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 3,
+            "automaticAnswers": [],
+            "tag": 1,
+            "icon": 15,
+            "rewardRange": {
+                "x": 300.0,
+                "y": 300.0
+            },
+            "penaltyRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "isOptional": false,
+            "useAlternateName": false,
+            "useName": 0,
+            "target": 2,
+            "location": 2,
+            "revengeObjective": "",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        }
+    ],
+    "additional": [],
+    "compatibleHandIns": [
+        {
+            "preset": {
+                "m_FileID": 17144,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        }
+    ],
+    "dialogReferences": [
+        {
+            "name": "IntroCall",
+            "dialog": {
+                "m_FileID": 17150,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroAskStaff",
+            "dialog": {
+                "m_FileID": 17152,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroAskStaffPhoto",
+            "dialog": {
+                "m_FileID": 14068,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroGooseChase1",
+            "dialog": {
+                "m_FileID": 14104,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroGooseChase2",
+            "dialog": {
+                "m_FileID": 17156,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroMeetUpSpecific1",
+            "dialog": {
+                "m_FileID": 14092,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroMeetUpSpecific2",
+            "dialog": {
+                "m_FileID": 17146,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "TelephoneHandIn",
+            "dialog": {
+                "m_FileID": 14084,
+                "m_PathID": 0
+            }
+        }
+    ],
+    "debugCopyFrom": {
+        "m_FileID": 14082,
+        "m_PathID": 0
+    }
+}

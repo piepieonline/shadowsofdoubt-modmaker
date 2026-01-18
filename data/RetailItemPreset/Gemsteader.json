@@ -1,0 +1,49 @@
+{
+    "presetName": "Gemsteader",
+    "itemPreset": {
+        "m_FileID": 126768,
+        "m_PathID": 0
+    },
+    "canBeFavourite": true,
+    "isHot": false,
+    "isConsumable": true,
+    "brandName": "Gemsteader",
+    "tags": [
+        0
+    ],
+    "desireCategory": 6,
+    "menuCategory": 1,
+    "ethnicity": [
+        0,
+        1,
+        15
+    ],
+    "minimumWealth": 0.0,
+    "mustFeatureTraits": [],
+    "cantFeatureTrait": [],
+    "preferredTraits": [],
+    "nourishment": 0.0,
+    "hydration": 0.8999999761581421,
+    "alertness": 0.0,
+    "energy": 0.0,
+    "excitement": 0.4000000059604645,
+    "chores": 0.0,
+    "hygiene": 0.0,
+    "bladder": 0.0,
+    "heat": 0.0,
+    "drunk": 0.10000000149011612,
+    "sick": 0.0,
+    "headache": 0.0,
+    "wet": 0.0,
+    "brokenLeg": 0.0,
+    "bruised": 0.0,
+    "blackEye": 0.0,
+    "blackedOut": 0.0,
+    "numb": 0.0,
+    "bleeding": 0.0,
+    "wellRested": 0.0,
+    "breath": 0.0,
+    "starchAddiction": -1.0,
+    "poisoned": 0.0,
+    "health": 0.0
+}

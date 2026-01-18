@@ -3,7 +3,9 @@
     "CompanyPreset",
     "EvidencePreset",
     "InteractablePreset",
+    "JobPreset",
     "MurderMO",
     "MurderPreset",
-    "MurderWeaponsPool"
+    "MurderWeaponsPool",
+    "RetailItemPreset"
 ]

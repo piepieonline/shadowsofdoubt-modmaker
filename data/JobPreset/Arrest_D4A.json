@@ -1,0 +1,244 @@
+{
+    "presetName": "Arrest_D4A",
+    "disabled": false,
+    "caseName": "Arrest",
+    "jobPosting": {
+        "m_FileID": 14070,
+        "m_PathID": 0
+    },
+    "subClass": "",
+    "allowSyncDiskRewards": true,
+    "allowBlackMarketSyncDiskRewards": false,
+    "physicalRewardLocation": 2,
+    "generateHidingLocation": false,
+    "socialCreditLevelMinSpawnFrequency": {
+        "serializedVersion": "2",
+        "m_Curve": [
+            {
+                "serializedVersion": "3",
+                "time": 0.0,
+                "value": 0.0,
+                "inSlope": 0.0,
+                "outSlope": 0.0,
+                "weightedMode": 0,
+                "inWeight": 0.0,
+                "outWeight": 0.0
+            },
+            {
+                "serializedVersion": "3",
+                "time": 3.0,
+                "value": 1.0,
+                "inSlope": 1.0083591938018799,
+                "outSlope": -0.26992520689964297,
+                "weightedMode": 0,
+                "inWeight": 0.09521204233169556,
+                "outWeight": 0.06801477074623108
+            },
+            {
+                "serializedVersion": "3",
+                "time": 10.0,
+                "value": 0.0,
+                "inSlope": 0.0,
+                "outSlope": 0.0,
+                "weightedMode": 0,
+                "inWeight": 0.0,
+                "outWeight": 0.0
+            }
+        ],
+        "m_PreInfinity": 2,
+        "m_PostInfinity": 2,
+        "m_RotationOrder": 4
+    },
+    "activePerCitizen": 0.009999999776482582,
+    "maxJobs": 8,
+    "immediatePostCountThreshold": 2,
+    "difficultyTag": 5,
+    "changePosterDialogCompliancy": 0,
+    "changePerpDialogCompliancy": 2,
+    "purpetratorMotives": [
+        {
+            "m_FileID": 35656,
+            "m_PathID": 0
+        }
+    ],
+    "penaltyForPurpAndPosterSameBuilding": 0,
+    "startingScenarios": [
+        {
+            "name": "Arrest",
+            "dds": "3f86bfd8-3c8f-4061-9aef-5c70acaa0ffb",
+            "leads": []
+        }
+    ],
+    "compatibleIntros": [
+        {
+            "preset": {
+                "m_FileID": 35662,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        }
+    ],
+    "leadPoolData": 0,
+    "createFactsOnInformationAcquisition": [
+        {
+            "factPreset": {
+                "m_FileID": 14094,
+                "m_PathID": 0
+            },
+            "from": 13,
+            "to": 2,
+            "overrideFromKeys": false,
+            "fromKeys": [],
+            "featureKeysFromLeadPool": false,
+            "overrideToKeys": true,
+            "toKeys": [
+                1
+            ],
+            "featureKeysFromLeadPoolTo": true
+        }
+    ],
+    "informationAcquisitionLeads": [
+        {
+            "leadEvidence": 2,
+            "keys": [
+                1
+            ],
+            "useKeyFromLeadPool": true,
+            "autoPin": true,
+            "addDialogOptions": [],
+            "factsReveal": [],
+            "mergeKeys": [],
+            "discoveryApplication": []
+        }
+    ],
+    "revengeObjectives": [],
+    "spawnItems": [],
+    "resolveQuestions": [
+        {
+            "name": "Indentify the suspect",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 0,
+            "automaticAnswers": [
+                2
+            ],
+            "tag": 0,
+            "icon": 4,
+            "rewardRange": {
+                "x": 300.0,
+                "y": 400.0
+            },
+            "penaltyRange": {
+                "x": 50.0,
+                "y": 50.0
+            },
+            "isOptional": false,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        },
+        {
+            "name": "Arrest the target",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 5,
+            "automaticAnswers": [],
+            "tag": 0,
+            "icon": 35,
+            "rewardRange": {
+                "x": 300.0,
+                "y": 400.0
+            },
+            "penaltyRange": {
+                "x": 50.0,
+                "y": 50.0
+            },
+            "isOptional": false,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "Indentify the suspect",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        }
+    ],
+    "additional": [
+        {
+            "name": "Has handcuffs",
+            "elementType": 19,
+            "dialogReference": "",
+            "tagReference": 0,
+            "spawnItems": [],
+            "enableUpdateWhileTalking": false,
+            "objectiveDelay": 0.0,
+            "validItems": [],
+            "validFurniture": [],
+            "disableOnDifficulties": [],
+            "onlyCompativleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "triggerFailIfItemDestroyed": []
+        }
+    ],
+    "compatibleHandIns": [
+        {
+            "preset": {
+                "m_FileID": 35658,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        }
+    ],
+    "dialogReferences": [
+        {
+            "name": "IntroCall",
+            "dialog": {
+                "m_FileID": 35664,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "TelephoneHandIn",
+            "dialog": {
+                "m_FileID": 14084,
+                "m_PathID": 0
+            }
+        }
+    ],
+    "debugCopyFrom": {
+        "m_FileID": 14082,
+        "m_PathID": 0
+    }
+}

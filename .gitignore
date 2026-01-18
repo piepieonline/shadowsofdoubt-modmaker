@@ -8,6 +8,8 @@ data/*
 !data/CompanyPreset
 !data/EvidencePreset
 !data/InteractablePreset
+!data/JobPreset
 !data/MurderMO
 !data/MurderPreset
 !data/MurderWeaponsPool
+!data/RetailItemPreset
