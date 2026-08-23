@@ -2,7 +2,7 @@
     "presetName": "Cigarettes",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 104022,
+        "m_FileID": 104254,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98486,
+        "m_FileID": 98648,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 98178,
+        "m_FileID": 98338,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126524,
+            "m_FileID": 126970,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127048,
+        "m_FileID": 127494,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,15 +179,15 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127282,
+            "m_FileID": 127728,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127342,
+            "m_FileID": 127788,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127278,
+            "m_FileID": 127724,
             "m_PathID": 0
         }
     ],
@@ -205,7 +205,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127770,
+                    "m_FileID": 128216,
                     "m_PathID": 0
                 }
             ],
@@ -262,7 +262,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126334,
+        "m_FileID": 126778,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -329,7 +329,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126416,
+        "m_FileID": 126860,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -406,7 +406,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 127176,
+        "m_FileID": 127622,
         "m_PathID": 0
     },
     "menuOverride": {

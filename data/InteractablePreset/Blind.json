@@ -15,7 +15,7 @@
         "y": 1.0,
         "z": 1.0
     },
-    "dontSaveWithSaveGames": true,
+    "dontSaveWithSaveGames": false,
     "onlySaveWithSaveGamesIfWorldObject": false,
     "excludeFromObjectPooling": false,
     "excludeFromVisibilityRangeChecks": false,
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 15030,
+        "m_FileID": 15092,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 35402,
+            "m_FileID": 35496,
             "m_PathID": 0
         }
     ],

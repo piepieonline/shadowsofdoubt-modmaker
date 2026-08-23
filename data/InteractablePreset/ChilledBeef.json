@@ -2,7 +2,7 @@
     "presetName": "ChilledBeef",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 100120,
+        "m_FileID": 100300,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98498,
+        "m_FileID": 98660,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97514,
+        "m_FileID": 97672,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126524,
+            "m_FileID": 126970,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127036,
+        "m_FileID": 127482,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -103,7 +103,7 @@
     "mass": 0.20000000298023225,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 127018,
+        "m_FileID": 127464,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -115,7 +115,7 @@
     "shardEveryXPixels": 64,
     "overrideSpatterSettings": true,
     "spatterSimulation": {
-        "m_FileID": 127234,
+        "m_FileID": 127680,
         "m_PathID": 0
     },
     "spatterCountMultiplier": 0.5,
@@ -179,7 +179,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127288,
+            "m_FileID": 127734,
             "m_PathID": 0
         }
     ],
@@ -197,11 +197,11 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 127738,
+                    "m_FileID": 128184,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127740,
+                    "m_FileID": 128186,
                     "m_PathID": 0
                 }
             ],
@@ -213,7 +213,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127682,
+                    "m_FileID": 128128,
                     "m_PathID": 0
                 }
             ],
@@ -270,7 +270,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126334,
+        "m_FileID": 126778,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -337,7 +337,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126410,
+        "m_FileID": 126854,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -364,7 +364,7 @@
         "m_PathID": 0
     },
     "playerConsumeLoop": {
-        "m_FileID": 124196,
+        "m_FileID": 124632,
         "m_PathID": 0
     },
     "takeOneEvent": {
@@ -414,7 +414,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 127156,
+        "m_FileID": 127602,
         "m_PathID": 0
     },
     "menuOverride": {

@@ -1,11 +1,11 @@
 [
-    "CharacterTrait",
-    "CompanyPreset",
-    "EvidencePreset",
-    "InteractablePreset",
-    "JobPreset",
-    "MurderMO",
-    "MurderPreset",
-    "MurderWeaponsPool",
-    "RetailItemPreset"
+  "CharacterTrait",
+  "CompanyPreset",
+  "EvidencePreset",
+  "InteractablePreset",
+  "JobPreset",
+  "MurderMO",
+  "MurderPreset",
+  "MurderWeaponsPool",
+  "RetailItemPreset"
 ]

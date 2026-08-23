@@ -3,7 +3,7 @@
     "murderWeaponPool": [
         {
             "weapon": {
-                "m_FileID": 30746,
+                "m_FileID": 30838,
                 "m_PathID": 0
             },
             "chanceOfDroppingAtScene": 1.0,

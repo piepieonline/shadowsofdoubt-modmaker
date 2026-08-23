@@ -2,7 +2,7 @@
     "presetName": "MicroCruncher",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 99346,
+        "m_FileID": 99510,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 125674,
+        "m_FileID": 126118,
         "m_PathID": 0
     },
     "lightswitch": 0,
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98272,
+        "m_FileID": 98432,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97902,
+        "m_FileID": 98062,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126506,
+            "m_FileID": 126952,
             "m_PathID": 0
         },
         {
-            "m_FileID": 126490,
+            "m_FileID": 126936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127044,
+        "m_FileID": 127490,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -171,7 +171,7 @@
             "onlyIfHome": false,
             "insertActions": [
                 {
-                    "m_FileID": 124942,
+                    "m_FileID": 125384,
                     "m_PathID": 0
                 }
             ]
@@ -191,7 +191,7 @@
             "onlyIfHome": true,
             "insertActions": [
                 {
-                    "m_FileID": 124942,
+                    "m_FileID": 125384,
                     "m_PathID": 0
                 }
             ]
@@ -224,7 +224,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127268,
+            "m_FileID": 127714,
             "m_PathID": 0
         }
     ],
@@ -333,60 +333,60 @@
     },
     "isComputer": true,
     "bootApp": {
-        "m_FileID": 125284,
+        "m_FileID": 125728,
         "m_PathID": 0
     },
     "logInApp": {
-        "m_FileID": 125292,
+        "m_FileID": 125736,
         "m_PathID": 0
     },
     "desktopApp": {
-        "m_FileID": 125286,
+        "m_FileID": 125730,
         "m_PathID": 0
     },
     "additionalApps": [
         {
-            "m_FileID": 125294,
+            "m_FileID": 125738,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125306,
+            "m_FileID": 125750,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125300,
+            "m_FileID": 125744,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125288,
+            "m_FileID": 125732,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125296,
+            "m_FileID": 125740,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125290,
+            "m_FileID": 125734,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125302,
+            "m_FileID": 125746,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125304,
+            "m_FileID": 125748,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125298,
+            "m_FileID": 125742,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125292,
+            "m_FileID": 125736,
             "m_PathID": 0
         },
         {
-            "m_FileID": 125308,
+            "m_FileID": 125752,
             "m_PathID": 0
         }
     ],
@@ -456,7 +456,7 @@
     "takeWith": false,
     "putDownPositions": [],
     "backupPutDownPositions": [],
-    "specialCaseFlag": 0,
+    "specialCaseFlag": 52,
     "affectRoomSteamLevel": false,
     "isPayphone": false,
     "isClock": false,

@@ -2,7 +2,7 @@
     "presetName": "DetectiveStuff",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 104310,
+        "m_FileID": 104546,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98418,
+        "m_FileID": 98578,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 98642,
+        "m_FileID": 98804,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126508,
+            "m_FileID": 126954,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127042,
+        "m_FileID": 127488,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -236,7 +236,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126334,
+        "m_FileID": 126778,
         "m_PathID": 0
     },
     "locationIsParent": true,

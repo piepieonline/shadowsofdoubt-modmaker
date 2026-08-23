@@ -2,7 +2,7 @@
     "presetName": "CroqueMonsieur",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 99948,
+        "m_FileID": 100126,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97886,
+        "m_FileID": 98046,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97736,
+        "m_FileID": 97894,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126524,
+            "m_FileID": 126970,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127036,
+        "m_FileID": 127482,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,17 +179,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127312,
+            "m_FileID": 127758,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127288,
+            "m_FileID": 127734,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 127342,
+            "m_FileID": 127788,
             "m_PathID": 0
         }
     ],
@@ -250,7 +250,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126334,
+        "m_FileID": 126778,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -317,7 +317,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126410,
+        "m_FileID": 126854,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -340,11 +340,11 @@
     "destroyWhenAllConsumed": true,
     "useSameModelAsTrash": false,
     "trashItem": {
-        "m_FileID": 126658,
+        "m_FileID": 127104,
         "m_PathID": 0
     },
     "playerConsumeLoop": {
-        "m_FileID": 124196,
+        "m_FileID": 124632,
         "m_PathID": 0
     },
     "takeOneEvent": {
@@ -394,7 +394,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 127146,
+        "m_FileID": 127592,
         "m_PathID": 0
     },
     "menuOverride": {

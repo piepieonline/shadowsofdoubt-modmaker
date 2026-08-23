@@ -2,7 +2,7 @@
     "presetName": "VentilationBox",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 58010,
+        "m_FileID": 58104,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 58006,
+        "m_FileID": 58100,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14944,
+            "m_FileID": 15006,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13812,
+            "m_FileID": 13874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 12878,
+        "m_FileID": 12940,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13970,
+            "m_FileID": 14032,
             "m_PathID": 0
         }
     ],
@@ -218,7 +218,7 @@
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 14960,
+            "m_FileID": 15022,
             "m_PathID": 0
         }
     ],
@@ -250,7 +250,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13430,
+        "m_FileID": 13492,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -375,25 +375,25 @@
     "takeWith": false,
     "putDownPositions": [
         {
-            "m_FileID": 14750,
+            "m_FileID": 14812,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15352,
+            "m_FileID": 15414,
             "m_PathID": 0
         }
     ],
     "backupPutDownPositions": [
         {
-            "m_FileID": 13584,
+            "m_FileID": 13646,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12758,
+            "m_FileID": 12820,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13494,
+            "m_FileID": 13556,
             "m_PathID": 0
         }
     ],
@@ -416,7 +416,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 49512,
+        "m_FileID": 49606,
         "m_PathID": 0
     },
     "menuOverride": {

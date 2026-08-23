@@ -2,7 +2,7 @@
     "presetName": "FloorDecalObject",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 56626,
+        "m_FileID": 56720,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 56628,
+        "m_FileID": 56722,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 26052,
+        "m_FileID": 26122,
         "m_PathID": 0
     },
     "itemClass": 4,

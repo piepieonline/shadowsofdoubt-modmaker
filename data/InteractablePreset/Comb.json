@@ -2,7 +2,7 @@
     "presetName": "Comb",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 63234,
+        "m_FileID": 63328,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 63228,
+        "m_FileID": 63322,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12874,
+            "m_FileID": 12936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13420,
+        "m_FileID": 13482,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,15 +179,15 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 17470,
+            "m_FileID": 17532,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13620,
+            "m_FileID": 13682,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12708,
+            "m_FileID": 12770,
             "m_PathID": 0
         }
     ],
@@ -205,7 +205,7 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 22746,
+                    "m_FileID": 22814,
                     "m_PathID": 0
                 }
             ],
@@ -217,15 +217,15 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 63242,
+                    "m_FileID": 63336,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 17226,
+                    "m_FileID": 17288,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 17456,
+                    "m_FileID": 17518,
                     "m_PathID": 0
                 }
             ],
@@ -253,19 +253,19 @@
     "perCommercialLimit": 1,
     "banFromRooms": [
         {
-            "m_FileID": 18410,
+            "m_FileID": 18472,
             "m_PathID": 0
         },
         {
-            "m_FileID": 18572,
+            "m_FileID": 18634,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15208,
+            "m_FileID": 15270,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17816,
+            "m_FileID": 17878,
             "m_PathID": 0
         }
     ],
@@ -299,7 +299,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13430,
+        "m_FileID": 13492,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -366,7 +366,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 12866,
+        "m_FileID": 12928,
         "m_PathID": 0
     },
     "isInventoryItem": true,

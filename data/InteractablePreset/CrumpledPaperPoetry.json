@@ -2,7 +2,7 @@
     "presetName": "CrumpledPaperPoetry",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 13918,
+        "m_FileID": 13980,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 13906,
+        "m_FileID": 13968,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 13934,
+        "m_FileID": 13996,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12874,
+            "m_FileID": 12936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13420,
+        "m_FileID": 13482,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,21 +179,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12708,
+            "m_FileID": 12770,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12896,
+            "m_FileID": 12958,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 12714,
+            "m_FileID": 12776,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13494,
+            "m_FileID": 13556,
             "m_PathID": 0
         }
     ],
@@ -210,11 +210,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 17232,
+                    "m_FileID": 17294,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 17226,
+                    "m_FileID": 17288,
                     "m_PathID": 0
                 }
             ],
@@ -271,7 +271,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 17228,
+        "m_FileID": 17290,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -338,7 +338,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 13602,
+        "m_FileID": 13664,
         "m_PathID": 0
     },
     "isInventoryItem": true,

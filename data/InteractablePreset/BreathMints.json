@@ -2,7 +2,7 @@
     "presetName": "BreathMints",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 104118,
+        "m_FileID": 104354,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97702,
+        "m_FileID": 97860,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97394,
+        "m_FileID": 97552,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126524,
+            "m_FileID": 126970,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127036,
+        "m_FileID": 127482,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,25 +179,25 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127282,
+            "m_FileID": 127728,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127328,
+            "m_FileID": 127774,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127278,
+            "m_FileID": 127724,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127342,
+            "m_FileID": 127788,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 127300,
+            "m_FileID": 127746,
             "m_PathID": 0
         }
     ],
@@ -214,7 +214,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127746,
+                    "m_FileID": 128192,
                     "m_PathID": 0
                 }
             ],
@@ -271,7 +271,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126334,
+        "m_FileID": 126778,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -338,7 +338,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126408,
+        "m_FileID": 126852,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -361,11 +361,11 @@
     "destroyWhenAllConsumed": false,
     "useSameModelAsTrash": false,
     "trashItem": {
-        "m_FileID": 126650,
+        "m_FileID": 127096,
         "m_PathID": 0
     },
     "playerConsumeLoop": {
-        "m_FileID": 124196,
+        "m_FileID": 124632,
         "m_PathID": 0
     },
     "takeOneEvent": {
@@ -415,7 +415,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 127164,
+        "m_FileID": 127610,
         "m_PathID": 0
     },
     "menuOverride": {

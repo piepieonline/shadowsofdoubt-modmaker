@@ -2,7 +2,7 @@
     "presetName": "AddressBook",
     "subClass": "",
     "windowStyle": {
-        "m_FileID": 127860,
+        "m_FileID": 128306,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 97520,
+        "m_FileID": 97678,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 94548,
+        "m_FileID": 94654,
         "m_PathID": 0
     },
     "useInGamePhoto": false,
@@ -47,7 +47,7 @@
     "factSetup": [
         {
             "preset": {
-                "m_FileID": 126348,
+                "m_FileID": 126792,
                 "m_PathID": 0
             },
             "link": 5,

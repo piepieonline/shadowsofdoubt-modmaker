@@ -2,7 +2,7 @@
     "presetName": "InOutTray",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 57508,
+        "m_FileID": 57602,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 57494,
+        "m_FileID": 57588,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14938,
+            "m_FileID": 15000,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 14972,
+        "m_FileID": 15034,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,7 +179,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 14018,
+            "m_FileID": 14080,
             "m_PathID": 0
         }
     ],
@@ -197,15 +197,15 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 15506,
+                    "m_FileID": 15568,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 14420,
+                    "m_FileID": 14482,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 17388,
+                    "m_FileID": 17450,
                     "m_PathID": 0
                 }
             ],
@@ -217,7 +217,7 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 16644,
+                    "m_FileID": 16706,
                     "m_PathID": 0
                 }
             ],
@@ -245,7 +245,7 @@
     "perCommercialLimit": 1,
     "banFromRooms": [
         {
-            "m_FileID": 14960,
+            "m_FileID": 15022,
             "m_PathID": 0
         }
     ],
@@ -265,7 +265,7 @@
     "ownedRule": 1,
     "overrideWithOnlyOwnedSpawnAtWork": false,
     "subSpawnClass": {
-        "m_FileID": 23540,
+        "m_FileID": 23608,
         "m_PathID": 0
     },
     "subSpawnPositions": [

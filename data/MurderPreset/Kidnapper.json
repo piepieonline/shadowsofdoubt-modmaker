@@ -12,7 +12,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 32226,
+                    "m_FileID": 32318,
                     "m_PathID": 0
                 }
             ],
@@ -23,11 +23,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 16644,
+                    "m_FileID": 16706,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 32220,
+                    "m_FileID": 32312,
                     "m_PathID": 0
                 }
             ],
@@ -56,7 +56,7 @@
     },
     "pickDen": true,
     "kidnapperTimeUntilKill": 6.0,
-    "minimumTimeBetweenMurders": 12.0,
+    "minimumTimeBetweenMurders": 1.5,
     "nonHomeMaximumOccupantsTrigger": 99,
     "nonHomeMaximumOccupantsCancel": 99,
     "requiresAcquirePhase": true,
@@ -66,7 +66,7 @@
         {
             "actions": [
                 {
-                    "m_FileID": 32236,
+                    "m_FileID": 32328,
                     "m_PathID": 0
                 }
             ],
@@ -78,7 +78,7 @@
         {
             "actions": [
                 {
-                    "m_FileID": 22506,
+                    "m_FileID": 22574,
                     "m_PathID": 0
                 }
             ],
@@ -101,7 +101,7 @@
         {
             "actions": [
                 {
-                    "m_FileID": 32232,
+                    "m_FileID": 32324,
                     "m_PathID": 0
                 }
             ],
@@ -117,7 +117,7 @@
         {
             "actions": [
                 {
-                    "m_FileID": 32230,
+                    "m_FileID": 32322,
                     "m_PathID": 0
                 }
             ],
@@ -129,7 +129,7 @@
         {
             "actions": [
                 {
-                    "m_FileID": 32234,
+                    "m_FileID": 32326,
                     "m_PathID": 0
                 }
             ],
@@ -145,7 +145,7 @@
         {
             "actions": [
                 {
-                    "m_FileID": 56540,
+                    "m_FileID": 56634,
                     "m_PathID": 0
                 }
             ],
@@ -157,7 +157,7 @@
         {
             "actions": [
                 {
-                    "m_FileID": 23368,
+                    "m_FileID": 23436,
                     "m_PathID": 0
                 }
             ],
@@ -168,7 +168,7 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 12698,
+                            "m_FileID": 12760,
                             "m_PathID": 0
                         }
                     ],
@@ -185,7 +185,7 @@
         {
             "actions": [
                 {
-                    "m_FileID": 32228,
+                    "m_FileID": 32320,
                     "m_PathID": 0
                 }
             ],
@@ -201,11 +201,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -220,7 +220,7 @@
                     "rule": 2,
                     "traitList": [
                         {
-                            "m_FileID": 28498,
+                            "m_FileID": 28590,
                             "m_PathID": 0
                         }
                     ],
@@ -232,11 +232,11 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 17182,
+                            "m_FileID": 17244,
                             "m_PathID": 0
                         },
                         {
-                            "m_FileID": 14256,
+                            "m_FileID": 14318,
                             "m_PathID": 0
                         }
                     ],
@@ -274,11 +274,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -316,11 +316,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -358,11 +358,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -400,11 +400,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -444,11 +444,11 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -463,7 +463,7 @@
                     "rule": 2,
                     "traitList": [
                         {
-                            "m_FileID": 15258,
+                            "m_FileID": 15320,
                             "m_PathID": 0
                         }
                     ],
@@ -478,7 +478,7 @@
             "chanceRatio": 0,
             "itemTag": 14,
             "spawnItem": {
-                "m_FileID": 32222,
+                "m_FileID": 32314,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -499,11 +499,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -518,7 +518,7 @@
                     "rule": 2,
                     "traitList": [
                         {
-                            "m_FileID": 15258,
+                            "m_FileID": 15320,
                             "m_PathID": 0
                         }
                     ],
@@ -533,7 +533,7 @@
             "chanceRatio": 2,
             "itemTag": 15,
             "spawnItem": {
-                "m_FileID": 32212,
+                "m_FileID": 32304,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -554,11 +554,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -573,7 +573,7 @@
                     "rule": 2,
                     "traitList": [
                         {
-                            "m_FileID": 28498,
+                            "m_FileID": 28590,
                             "m_PathID": 0
                         }
                     ],
@@ -585,11 +585,11 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 17182,
+                            "m_FileID": 17244,
                             "m_PathID": 0
                         },
                         {
-                            "m_FileID": 14256,
+                            "m_FileID": 14318,
                             "m_PathID": 0
                         }
                     ],
@@ -604,7 +604,7 @@
             "chanceRatio": 0,
             "itemTag": 16,
             "spawnItem": {
-                "m_FileID": 32216,
+                "m_FileID": 32308,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -625,11 +625,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -644,7 +644,7 @@
                     "rule": 2,
                     "traitList": [
                         {
-                            "m_FileID": 28498,
+                            "m_FileID": 28590,
                             "m_PathID": 0
                         }
                     ],
@@ -656,11 +656,11 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 17182,
+                            "m_FileID": 17244,
                             "m_PathID": 0
                         },
                         {
-                            "m_FileID": 14256,
+                            "m_FileID": 14318,
                             "m_PathID": 0
                         }
                     ],
@@ -675,7 +675,7 @@
             "chanceRatio": 0,
             "itemTag": 17,
             "spawnItem": {
-                "m_FileID": 28202,
+                "m_FileID": 28294,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -696,11 +696,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -715,7 +715,7 @@
                     "rule": 2,
                     "traitList": [
                         {
-                            "m_FileID": 28498,
+                            "m_FileID": 28590,
                             "m_PathID": 0
                         }
                     ],
@@ -727,11 +727,11 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 17182,
+                            "m_FileID": 17244,
                             "m_PathID": 0
                         },
                         {
-                            "m_FileID": 14256,
+                            "m_FileID": 14318,
                             "m_PathID": 0
                         }
                     ],
@@ -746,7 +746,7 @@
             "chanceRatio": 0,
             "itemTag": 18,
             "spawnItem": {
-                "m_FileID": 32214,
+                "m_FileID": 32306,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -767,11 +767,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -786,7 +786,7 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 14256,
+                            "m_FileID": 14318,
                             "m_PathID": 0
                         }
                     ],
@@ -801,7 +801,7 @@
             "chanceRatio": 2,
             "itemTag": 19,
             "spawnItem": {
-                "m_FileID": 29230,
+                "m_FileID": 29322,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -822,11 +822,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -843,7 +843,7 @@
             "chanceRatio": 1,
             "itemTag": 20,
             "spawnItem": {
-                "m_FileID": 56538,
+                "m_FileID": 56632,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -864,11 +864,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -885,7 +885,7 @@
             "chanceRatio": 1,
             "itemTag": 20,
             "spawnItem": {
-                "m_FileID": 56528,
+                "m_FileID": 56622,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -906,11 +906,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -927,7 +927,7 @@
             "chanceRatio": 1,
             "itemTag": 20,
             "spawnItem": {
-                "m_FileID": 30782,
+                "m_FileID": 30874,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -948,11 +948,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -969,7 +969,7 @@
             "chanceRatio": 1,
             "itemTag": 20,
             "spawnItem": {
-                "m_FileID": 56530,
+                "m_FileID": 56624,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -990,11 +990,11 @@
             "compatibleWithAllMotives": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 56532,
+                    "m_FileID": 56626,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56536,
+                    "m_FileID": 56630,
                     "m_PathID": 0
                 }
             ],
@@ -1011,7 +1011,7 @@
             "chanceRatio": 1,
             "itemTag": 21,
             "spawnItem": {
-                "m_FileID": 16204,
+                "m_FileID": 16266,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -1094,7 +1094,7 @@
             "useName": 0,
             "target": 0,
             "location": 0,
-            "revengeObjective": "",
+            "revengeObjective": "What is the full name of the kidnapper?",
             "revengeObjTarget": -1,
             "revengeObjLoc": -1,
             "revengeObjPassed": 0.0,
@@ -1149,7 +1149,7 @@
         },
         {
             "name": "Save the life of the kidnapper's victim",
-            "displayObjective": true,
+            "displayObjective": false,
             "displayOnlyAtPhase": false,
             "displayAtPhase": 0,
             "objectiveDelay": 0.0,
@@ -1188,7 +1188,7 @@
         }
     ],
     "copyFrom": {
-        "m_FileID": 14904,
+        "m_FileID": 14966,
         "m_PathID": 0
     }
 }

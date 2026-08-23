@@ -1,15 +1,3 @@
 cert.pem
 key.pem
 .idea
-
-data/*
-!data/onlineTypes.json
-!data/CharacterTrait
-!data/CompanyPreset
-!data/EvidencePreset
-!data/InteractablePreset
-!data/JobPreset
-!data/MurderMO
-!data/MurderPreset
-!data/MurderWeaponsPool
-!data/RetailItemPreset

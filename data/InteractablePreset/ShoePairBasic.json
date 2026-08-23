@@ -2,7 +2,7 @@
     "presetName": "ShoePairBasic",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 31200,
+        "m_FileID": 31292,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 31206,
+        "m_FileID": 31298,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 16972,
+        "m_FileID": 17034,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14944,
+            "m_FileID": 15006,
             "m_PathID": 0
         }
     ],
@@ -179,13 +179,13 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 31234,
+            "m_FileID": 31326,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13494,
+            "m_FileID": 13556,
             "m_PathID": 0
         }
     ],

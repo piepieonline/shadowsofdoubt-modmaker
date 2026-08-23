@@ -2,7 +2,7 @@
     "presetName": "BedsideLamp",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 102566,
+        "m_FileID": 102782,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 125672,
+        "m_FileID": 126116,
         "m_PathID": 0
     },
     "lightswitch": 0,
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98438,
+        "m_FileID": 98598,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97384,
+        "m_FileID": 97542,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126556,
+            "m_FileID": 127002,
             "m_PathID": 0
         },
         {
-            "m_FileID": 126490,
+            "m_FileID": 126936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127030,
+        "m_FileID": 127476,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127264,
+            "m_FileID": 127710,
             "m_PathID": 0
         }
     ],

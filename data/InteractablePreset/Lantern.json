@@ -2,7 +2,7 @@
     "presetName": "Lantern",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 26882,
+        "m_FileID": 26954,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 26880,
+        "m_FileID": 26952,
         "m_PathID": 0
     },
     "lightswitch": 0,
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 26914,
+        "m_FileID": 26986,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 23392,
+            "m_FileID": 23460,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14938,
+            "m_FileID": 15000,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 12878,
+        "m_FileID": 12940,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,11 +183,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13584,
+            "m_FileID": 13646,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13494,
+            "m_FileID": 13556,
             "m_PathID": 0
         }
     ],
@@ -205,11 +205,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 17114,
+                    "m_FileID": 17176,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 15514,
+                    "m_FileID": 15576,
                     "m_PathID": 0
                 }
             ],

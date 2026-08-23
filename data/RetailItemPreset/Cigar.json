@@ -1,7 +1,7 @@
 {
     "presetName": "Cigar",
     "itemPreset": {
-        "m_FileID": 126880,
+        "m_FileID": 127326,
         "m_PathID": 0
     },
     "canBeFavourite": false,
@@ -15,7 +15,7 @@
     "minimumWealth": 0.6859999895095825,
     "mustFeatureTraits": [
         {
-            "m_FileID": 127750,
+            "m_FileID": 128196,
             "m_PathID": 0
         }
     ],

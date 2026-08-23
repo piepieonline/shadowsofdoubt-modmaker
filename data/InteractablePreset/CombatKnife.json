@@ -2,7 +2,7 @@
     "presetName": "CombatKnife",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 47324,
+        "m_FileID": 47416,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 56450,
+        "m_FileID": 56544,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 15842,
+        "m_FileID": 15904,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12874,
+            "m_FileID": 12936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 17206,
+        "m_FileID": 17268,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,21 +179,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12708,
+            "m_FileID": 12770,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14750,
+            "m_FileID": 14812,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13606,
+            "m_FileID": 13668,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12714,
+            "m_FileID": 12776,
             "m_PathID": 0
         }
     ],
@@ -227,15 +227,15 @@
     "limitToCertainRooms": false,
     "onlyInRooms": [
         {
-            "m_FileID": 18484,
+            "m_FileID": 18546,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15222,
+            "m_FileID": 15284,
             "m_PathID": 0
         },
         {
-            "m_FileID": 18684,
+            "m_FileID": 18746,
             "m_PathID": 0
         }
     ],
@@ -267,7 +267,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13430,
+        "m_FileID": 13492,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -334,7 +334,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 17444,
+        "m_FileID": 17506,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -372,7 +372,7 @@
     "chanceOfDroppedAngle": 0.0,
     "droppedAngleHeightBoost": 0.10000000149011612,
     "weapon": {
-        "m_FileID": 47330,
+        "m_FileID": 47422,
         "m_PathID": 0
     },
     "inventoryCarryItem": false,
@@ -392,37 +392,37 @@
     "takeWith": true,
     "putDownPositions": [
         {
-            "m_FileID": 12708,
+            "m_FileID": 12770,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14750,
+            "m_FileID": 14812,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12758,
+            "m_FileID": 12820,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13410,
+            "m_FileID": 13472,
             "m_PathID": 0
         }
     ],
     "backupPutDownPositions": [
         {
-            "m_FileID": 13584,
+            "m_FileID": 13646,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12896,
+            "m_FileID": 12958,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13494,
+            "m_FileID": 13556,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12714,
+            "m_FileID": 12776,
             "m_PathID": 0
         }
     ],
@@ -445,7 +445,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 38830,
+        "m_FileID": 38922,
         "m_PathID": 0
     },
     "menuOverride": {

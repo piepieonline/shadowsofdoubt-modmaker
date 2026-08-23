@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97902,
+        "m_FileID": 98062,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126492,
+            "m_FileID": 126938,
             "m_PathID": 0
         }
     ],
@@ -236,7 +236,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126266,
+        "m_FileID": 126710,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -394,7 +394,7 @@
     "chimeEqualToHour": false,
     "chimeDelay": 1.5,
     "searchLoop": {
-        "m_FileID": 124576,
+        "m_FileID": 125018,
         "m_PathID": 0
     }
 }

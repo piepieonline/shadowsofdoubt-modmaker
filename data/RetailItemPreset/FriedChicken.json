@@ -1,7 +1,7 @@
 {
     "presetName": "FriedChicken",
     "itemPreset": {
-        "m_FileID": 25510,
+        "m_FileID": 25578,
         "m_PathID": 0
     },
     "canBeFavourite": true,
@@ -18,17 +18,17 @@
     "mustFeatureTraits": [],
     "cantFeatureTrait": [
         {
-            "m_FileID": 34360,
+            "m_FileID": 34454,
             "m_PathID": 0
         },
         {
-            "m_FileID": 30416,
+            "m_FileID": 30508,
             "m_PathID": 0
         }
     ],
     "preferredTraits": [
         {
-            "m_FileID": 34358,
+            "m_FileID": 34452,
             "m_PathID": 0
         }
     ],

@@ -2,7 +2,7 @@
     "presetName": "Saxophone",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 64068,
+        "m_FileID": 64162,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 64046,
+        "m_FileID": 64140,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12874,
+            "m_FileID": 12936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 12878,
+        "m_FileID": 12940,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -103,7 +103,7 @@
     "mass": 1.0,
     "breakable": false,
     "particleProfile": {
-        "m_FileID": 13586,
+        "m_FileID": 13648,
         "m_PathID": 0
     },
     "overrideShatterSettings": true,
@@ -179,7 +179,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 17438,
+            "m_FileID": 17500,
             "m_PathID": 0
         }
     ],
@@ -197,7 +197,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 50840,
+                    "m_FileID": 50934,
                     "m_PathID": 0
                 }
             ],
@@ -254,7 +254,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13430,
+        "m_FileID": 13492,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -321,7 +321,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 12866,
+        "m_FileID": 12928,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -398,7 +398,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 15060,
+        "m_FileID": 15122,
         "m_PathID": 0
     },
     "menuOverride": {

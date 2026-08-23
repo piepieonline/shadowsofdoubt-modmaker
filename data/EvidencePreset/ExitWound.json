@@ -2,7 +2,7 @@
     "presetName": "ExitWound",
     "subClass": "Wound",
     "windowStyle": {
-        "m_FileID": 127860,
+        "m_FileID": 128306,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 98564,
+        "m_FileID": 98726,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 93548,
+        "m_FileID": 93650,
         "m_PathID": 0
     },
     "useInGamePhoto": false,
@@ -47,7 +47,7 @@
     "factSetup": [
         {
             "preset": {
-                "m_FileID": 126350,
+                "m_FileID": 126794,
                 "m_PathID": 0
             },
             "link": 1,
@@ -66,7 +66,7 @@
     "isMatchParent": false,
     "matchTypes": [
         {
-            "m_FileID": 126462,
+            "m_FileID": 126908,
             "m_PathID": 0
         }
     ],

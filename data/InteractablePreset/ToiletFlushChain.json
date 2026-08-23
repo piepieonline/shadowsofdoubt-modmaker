@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 39390,
+        "m_FileID": 39482,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 39392,
+            "m_FileID": 39484,
             "m_PathID": 0
         }
     ],

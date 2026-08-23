@@ -79,7 +79,7 @@
     "enableLoiteringBehaviour": true,
     "menus": [
         {
-            "m_FileID": 125210,
+            "m_FileID": 125654,
             "m_PathID": 0
         }
     ],
@@ -87,31 +87,31 @@
     "previousFakeSalesRecords": 5,
     "requiredTraits": [
         {
-            "m_FileID": 127360,
+            "m_FileID": 127806,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127776,
+            "m_FileID": 128222,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127654,
+            "m_FileID": 128100,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127648,
+            "m_FileID": 128094,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127704,
+            "m_FileID": 128150,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127706,
+            "m_FileID": 128152,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127708,
+            "m_FileID": 128154,
             "m_PathID": 0
         }
     ],
@@ -120,11 +120,11 @@
     "sellValueMultiplier": 0.5,
     "possibleUniformColours": [],
     "workHours": {
-        "m_FileID": 125272,
+        "m_FileID": 125716,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 125276,
+        "m_FileID": 125720,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

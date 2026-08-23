@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 41430,
+            "m_FileID": 41522,
             "m_PathID": 0
         }
     ],
@@ -141,7 +141,7 @@
             "switchState": 0,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 52868,
+                "m_FileID": 52962,
                 "m_PathID": 0
             },
             "isLoop": true,
@@ -186,7 +186,7 @@
             "onlyIfHome": false,
             "insertActions": [
                 {
-                    "m_FileID": 52870,
+                    "m_FileID": 52964,
                     "m_PathID": 0
                 }
             ]
@@ -196,7 +196,7 @@
             "ifSwitchBool": true,
             "ifCondition": 1,
             "ifGoal": {
-                "m_FileID": 33534,
+                "m_FileID": 33628,
                 "m_PathID": 0
             },
             "scope": 1,
@@ -206,7 +206,7 @@
             "onlyIfHome": false,
             "insertActions": [
                 {
-                    "m_FileID": 52870,
+                    "m_FileID": 52964,
                     "m_PathID": 0
                 }
             ]

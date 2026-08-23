@@ -2,7 +2,7 @@
     "presetName": "KillerTauntNoteGeneral",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 14962,
+        "m_FileID": 15024,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 14954,
+        "m_FileID": 15016,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12804,
+        "m_FileID": 12866,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14944,
+            "m_FileID": 15006,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14938,
+            "m_FileID": 15000,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.20000000298023225,
     "physicsProfile": {
-        "m_FileID": 14972,
+        "m_FileID": 15034,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,21 +183,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13584,
+            "m_FileID": 13646,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12758,
+            "m_FileID": 12820,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13606,
+            "m_FileID": 13668,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 12708,
+            "m_FileID": 12770,
             "m_PathID": 0
         }
     ],
@@ -258,7 +258,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 15856,
+        "m_FileID": 15918,
         "m_PathID": 0
     },
     "locationIsParent": true,

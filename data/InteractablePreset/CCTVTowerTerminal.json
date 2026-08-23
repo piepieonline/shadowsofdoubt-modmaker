@@ -2,7 +2,7 @@
     "presetName": "CCTVTowerTerminal",
     "spawnable": false,
     "prefab": {
-        "m_FileID": 15496,
+        "m_FileID": 15558,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 15440,
+        "m_FileID": 15502,
         "m_PathID": 0
     },
     "lightswitch": 0,
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 15498,
+        "m_FileID": 15560,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 15446,
+            "m_FileID": 15508,
             "m_PathID": 0
         }
     ],
@@ -283,15 +283,15 @@
     },
     "isComputer": true,
     "bootApp": {
-        "m_FileID": 15494,
+        "m_FileID": 15556,
         "m_PathID": 0
     },
     "logInApp": {
-        "m_FileID": 15444,
+        "m_FileID": 15506,
         "m_PathID": 0
     },
     "desktopApp": {
-        "m_FileID": 15444,
+        "m_FileID": 15506,
         "m_PathID": 0
     },
     "additionalApps": [],

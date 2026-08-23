@@ -1,7 +1,7 @@
 {
     "presetName": "Hamburger",
     "itemPreset": {
-        "m_FileID": 126770,
+        "m_FileID": 127216,
         "m_PathID": 0
     },
     "canBeFavourite": true,
@@ -18,17 +18,17 @@
     "mustFeatureTraits": [],
     "cantFeatureTrait": [
         {
-            "m_FileID": 127738,
+            "m_FileID": 128184,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127740,
+            "m_FileID": 128186,
             "m_PathID": 0
         }
     ],
     "preferredTraits": [
         {
-            "m_FileID": 127682,
+            "m_FileID": 128128,
             "m_PathID": 0
         }
     ],

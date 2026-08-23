@@ -4,7 +4,7 @@
     "disabled": false,
     "compatibleWith": [
         {
-            "m_FileID": 14904,
+            "m_FileID": 14966,
             "m_PathID": 0
         }
     ],
@@ -20,7 +20,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14178,
+                    "m_FileID": 14240,
                     "m_PathID": 0
                 }
             ],
@@ -58,11 +58,11 @@
     "requiresSniperVantageAtHome": false,
     "weaponsPool": [
         {
-            "m_FileID": 14896,
+            "m_FileID": 14958,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14888,
+            "m_FileID": 14950,
             "m_PathID": 0
         }
     ],
@@ -90,11 +90,11 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 14178,
+                    "m_FileID": 14240,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 14876,
+                    "m_FileID": 14938,
                     "m_PathID": 0
                 }
             ],
@@ -105,7 +105,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 18388,
+                    "m_FileID": 18450,
                     "m_PathID": 0
                 }
             ],
@@ -131,7 +131,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 18396,
+                    "m_FileID": 18458,
                     "m_PathID": 0
                 }
             ],
@@ -148,7 +148,7 @@
             "chanceRatio": 0,
             "itemTag": 0,
             "spawnItem": {
-                "m_FileID": 18390,
+                "m_FileID": 18452,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -169,7 +169,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 18396,
+                    "m_FileID": 18458,
                     "m_PathID": 0
                 }
             ],
@@ -186,7 +186,7 @@
             "chanceRatio": 0,
             "itemTag": 1,
             "spawnItem": {
-                "m_FileID": 18392,
+                "m_FileID": 18454,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -207,7 +207,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 18396,
+                    "m_FileID": 18458,
                     "m_PathID": 0
                 }
             ],
@@ -224,7 +224,7 @@
             "chanceRatio": 0,
             "itemTag": 2,
             "spawnItem": {
-                "m_FileID": 18394,
+                "m_FileID": 18456,
                 "m_PathID": 0
             },
             "vmailThread": "43243b33-ee1a-44d1-9815-030ca90656bb",
@@ -245,7 +245,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 18396,
+                    "m_FileID": 18458,
                     "m_PathID": 0
                 }
             ],
@@ -283,7 +283,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 18396,
+                    "m_FileID": 18458,
                     "m_PathID": 0
                 }
             ],
@@ -320,12 +320,12 @@
     "graffiti": [
         {
             "preset": {
-                "m_FileID": 14914,
+                "m_FileID": 14976,
                 "m_PathID": 0
             },
             "pos": 0,
             "artImage": {
-                "m_FileID": 18386,
+                "m_FileID": 18448,
                 "m_PathID": 0
             },
             "ddsMessageTextList": "",
@@ -339,7 +339,7 @@
         },
         {
             "preset": {
-                "m_FileID": 14900,
+                "m_FileID": 14962,
                 "m_PathID": 0
             },
             "pos": 1,
@@ -360,7 +360,7 @@
     "callingCardPool": [
         {
             "item": {
-                "m_FileID": 13910,
+                "m_FileID": 13972,
                 "m_PathID": 0
             },
             "origin": 0,
@@ -373,7 +373,7 @@
     ],
     "playerTaunts": [
         {
-            "m_FileID": 18398,
+            "m_FileID": 18460,
             "m_PathID": 0
         }
     ]

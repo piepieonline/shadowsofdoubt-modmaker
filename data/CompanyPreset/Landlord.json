@@ -71,11 +71,11 @@
     "sellValueMultiplier": 0.5,
     "possibleUniformColours": [],
     "workHours": {
-        "m_FileID": 28496,
+        "m_FileID": 28588,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 34064,
+        "m_FileID": 34158,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

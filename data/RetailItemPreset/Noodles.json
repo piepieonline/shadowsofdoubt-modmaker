@@ -1,7 +1,7 @@
 {
     "presetName": "Noodles",
     "itemPreset": {
-        "m_FileID": 126774,
+        "m_FileID": 127220,
         "m_PathID": 0
     },
     "canBeFavourite": true,
@@ -21,7 +21,7 @@
     "cantFeatureTrait": [],
     "preferredTraits": [
         {
-            "m_FileID": 127680,
+            "m_FileID": 128126,
             "m_PathID": 0
         }
     ],

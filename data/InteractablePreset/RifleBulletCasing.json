@@ -2,7 +2,7 @@
     "presetName": "RifleBulletCasing",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 104694,
+        "m_FileID": 104932,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98488,
+        "m_FileID": 98650,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97902,
+        "m_FileID": 98062,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126524,
+            "m_FileID": 126970,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127026,
+        "m_FileID": 127472,
         "m_PathID": 0
     },
     "overrideMass": true,
@@ -236,7 +236,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126324,
+        "m_FileID": 126768,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -303,7 +303,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126422,
+        "m_FileID": 126866,
         "m_PathID": 0
     },
     "isInventoryItem": true,

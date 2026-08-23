@@ -2,7 +2,7 @@
     "presetName": "MopBucket",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 28732,
+        "m_FileID": 28824,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 28738,
+        "m_FileID": 28830,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13812,
+            "m_FileID": 13874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13780,
+        "m_FileID": 13842,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,17 +179,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 17746,
+            "m_FileID": 17808,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13814,
+            "m_FileID": 13876,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13792,
+            "m_FileID": 13854,
             "m_PathID": 0
         }
     ],
@@ -223,15 +223,15 @@
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 15040,
+            "m_FileID": 15102,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17322,
+            "m_FileID": 17384,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17308,
+            "m_FileID": 17370,
             "m_PathID": 0
         }
     ],

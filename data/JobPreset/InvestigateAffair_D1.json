@@ -3,7 +3,7 @@
     "disabled": false,
     "caseName": "InvestigateAffair",
     "jobPosting": {
-        "m_FileID": 14070,
+        "m_FileID": 14132,
         "m_PathID": 0
     },
     "subClass": "",
@@ -47,7 +47,7 @@
     "changePerpDialogCompliancy": 2,
     "purpetratorMotives": [
         {
-            "m_FileID": 61550,
+            "m_FileID": 61644,
             "m_PathID": 0
         }
     ],
@@ -67,7 +67,7 @@
     "compatibleIntros": [
         {
             "preset": {
-                "m_FileID": 54454,
+                "m_FileID": 54548,
                 "m_PathID": 0
             },
             "frequency": 1
@@ -77,7 +77,7 @@
     "createFactsOnInformationAcquisition": [
         {
             "factPreset": {
-                "m_FileID": 43364,
+                "m_FileID": 43456,
                 "m_PathID": 0
             },
             "from": 2,
@@ -167,23 +167,23 @@
     ],
     "revengeObjectives": [
         {
-            "m_FileID": 42962,
+            "m_FileID": 43054,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14102,
+            "m_FileID": 14164,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14090,
+            "m_FileID": 14152,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14100,
+            "m_FileID": 14162,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17154,
+            "m_FileID": 17216,
             "m_PathID": 0
         }
     ],
@@ -193,7 +193,7 @@
             "findExisting": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 61550,
+                    "m_FileID": 61644,
                     "m_PathID": 0
                 }
             ],
@@ -209,7 +209,7 @@
             "disableOnDifficulties": [],
             "itemTag": 0,
             "spawnItem": {
-                "m_FileID": 16254,
+                "m_FileID": 16316,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -230,7 +230,7 @@
             "findExisting": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 61550,
+                    "m_FileID": 61644,
                     "m_PathID": 0
                 }
             ],
@@ -246,7 +246,7 @@
             "disableOnDifficulties": [],
             "itemTag": 0,
             "spawnItem": {
-                "m_FileID": 16254,
+                "m_FileID": 16316,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -267,7 +267,7 @@
             "findExisting": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 61550,
+                    "m_FileID": 61644,
                     "m_PathID": 0
                 }
             ],
@@ -283,7 +283,7 @@
             "disableOnDifficulties": [],
             "itemTag": 1,
             "spawnItem": {
-                "m_FileID": 48672,
+                "m_FileID": 48766,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -304,7 +304,7 @@
             "findExisting": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 61550,
+                    "m_FileID": 61644,
                     "m_PathID": 0
                 }
             ],
@@ -320,7 +320,7 @@
             "disableOnDifficulties": [],
             "itemTag": 1,
             "spawnItem": {
-                "m_FileID": 48672,
+                "m_FileID": 48766,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -341,7 +341,7 @@
             "findExisting": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 61550,
+                    "m_FileID": 61644,
                     "m_PathID": 0
                 }
             ],
@@ -354,7 +354,7 @@
                     "rule": 2,
                     "traitList": [
                         {
-                            "m_FileID": 14910,
+                            "m_FileID": 14972,
                             "m_PathID": 0
                         }
                     ],
@@ -370,7 +370,7 @@
             "disableOnDifficulties": [],
             "itemTag": 2,
             "spawnItem": {
-                "m_FileID": 47288,
+                "m_FileID": 47380,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -614,7 +614,7 @@
     "compatibleHandIns": [
         {
             "preset": {
-                "m_FileID": 14096,
+                "m_FileID": 14158,
                 "m_PathID": 0
             },
             "frequency": 1
@@ -624,34 +624,34 @@
         {
             "name": "IntroMeetUpSpecific1",
             "dialog": {
-                "m_FileID": 14092,
+                "m_FileID": 14154,
                 "m_PathID": 0
             }
         },
         {
             "name": "IntroMeetUpSpecific2",
             "dialog": {
-                "m_FileID": 61554,
+                "m_FileID": 61648,
                 "m_PathID": 0
             }
         },
         {
             "name": "DirectHandIn",
             "dialog": {
-                "m_FileID": 40922,
+                "m_FileID": 41014,
                 "m_PathID": 0
             }
         },
         {
             "name": "TelephoneHandIn",
             "dialog": {
-                "m_FileID": 14084,
+                "m_FileID": 14146,
                 "m_PathID": 0
             }
         }
     ],
     "debugCopyFrom": {
-        "m_FileID": 14082,
+        "m_FileID": 14144,
         "m_PathID": 0
     }
 }

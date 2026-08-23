@@ -1,7 +1,7 @@
 {
     "presetName": "Sleeping Pills",
     "itemPreset": {
-        "m_FileID": 15110,
+        "m_FileID": 15172,
         "m_PathID": 0
     },
     "canBeFavourite": false,
@@ -15,7 +15,7 @@
     "minimumWealth": 0.0,
     "mustFeatureTraits": [
         {
-            "m_FileID": 15106,
+            "m_FileID": 15168,
             "m_PathID": 0
         }
     ],

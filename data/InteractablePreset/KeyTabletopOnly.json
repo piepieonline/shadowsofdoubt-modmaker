@@ -2,7 +2,7 @@
     "presetName": "KeyTabletopOnly",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 104358,
+        "m_FileID": 104596,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97510,
+        "m_FileID": 97668,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97902,
+        "m_FileID": 98062,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126530,
+            "m_FileID": 126976,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127026,
+        "m_FileID": 127472,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,7 +179,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127342,
+            "m_FileID": 127788,
             "m_PathID": 0
         }
     ],

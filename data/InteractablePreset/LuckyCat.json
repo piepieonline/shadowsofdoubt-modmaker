@@ -2,7 +2,7 @@
     "presetName": "LuckyCat",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 58888,
+        "m_FileID": 58982,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 58868,
+        "m_FileID": 58962,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 58600,
+            "m_FileID": 58694,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14938,
+            "m_FileID": 15000,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13658,
+        "m_FileID": 13720,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,21 +183,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12758,
+            "m_FileID": 12820,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12896,
+            "m_FileID": 12958,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13584,
+            "m_FileID": 13646,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13494,
+            "m_FileID": 13556,
             "m_PathID": 0
         }
     ],
@@ -214,11 +214,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 57606,
+                    "m_FileID": 57700,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 58850,
+                    "m_FileID": 58944,
                     "m_PathID": 0
                 }
             ],
@@ -230,7 +230,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 54398,
+                    "m_FileID": 54492,
                     "m_PathID": 0
                 }
             ],

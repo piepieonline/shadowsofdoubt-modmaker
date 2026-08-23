@@ -2,7 +2,7 @@
     "presetName": "WallLampBallroom",
     "spawnable": false,
     "prefab": {
-        "m_FileID": 39408,
+        "m_FileID": 39500,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 65698,
+        "m_FileID": 65792,
         "m_PathID": 0
     },
     "lightswitch": 0,
@@ -46,7 +46,7 @@
     "isMainLight": true,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 39430,
+        "m_FileID": 39522,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 23390,
+        "m_FileID": 23458,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 39432,
+            "m_FileID": 39524,
             "m_PathID": 0
         }
     ],

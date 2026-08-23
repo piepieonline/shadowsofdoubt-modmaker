@@ -4505,6 +4505,7 @@
       "Job_ThrowFood",
       "Job_VandalismHome",
       "KidnapperRansomCollection",
+      "KidnapperStillAtLarge",
       "Killer_AcceptCoverUp",
       "Killer_RejectCoverUp",
       "LastCalled",
@@ -6677,6 +6678,7 @@
       "knockOnDoor",
       "nonCombat",
       "nonCombatOrRestrained",
+      "nonCombatOrRestrainedOrDowned",
       "nonDialog",
       "none",
       "onlyAvailableInFastForward",
@@ -7196,6 +7198,7 @@
       "hospitalBed",
       "interestBook",
       "lightswitch",
+      "microcruncher",
       "none",
       "otherSecuritySystem",
       "padlock",
@@ -7372,6 +7375,7 @@
       "hospitalBed",
       "interestBook",
       "lightswitch",
+      "microcruncher",
       "none",
       "otherSecuritySystem",
       "padlock",
@@ -8717,7 +8721,8 @@
       "nonCombatOrRestrained",
       "validTransitionZone",
       "onlyIfRegularRotation",
-      "takePrintsFromBody"
+      "takePrintsFromBody",
+      "nonCombatOrRestrainedOrDowned"
     ],
     "idle": [
       "bargingDoor",

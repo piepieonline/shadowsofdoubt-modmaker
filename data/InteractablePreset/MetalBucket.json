@@ -2,7 +2,7 @@
     "presetName": "MetalBucket",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 67310,
+        "m_FileID": 67404,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 67312,
+        "m_FileID": 67406,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13812,
+            "m_FileID": 13874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 12878,
+        "m_FileID": 12940,
         "m_PathID": 0
     },
     "overrideMass": true,
@@ -179,21 +179,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13790,
+            "m_FileID": 13852,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17612,
+            "m_FileID": 17674,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13814,
+            "m_FileID": 13876,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13494,
+            "m_FileID": 13556,
             "m_PathID": 0
         }
     ],

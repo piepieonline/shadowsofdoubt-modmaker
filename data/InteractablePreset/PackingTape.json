@@ -2,7 +2,7 @@
     "presetName": "PackingTape",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 64230,
+        "m_FileID": 64324,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 64210,
+        "m_FileID": 64304,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 13934,
+        "m_FileID": 13996,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12874,
+            "m_FileID": 12936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13420,
+        "m_FileID": 13482,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,19 +179,19 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12708,
+            "m_FileID": 12770,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12714,
+            "m_FileID": 12776,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13410,
+            "m_FileID": 13472,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17746,
+            "m_FileID": 17808,
             "m_PathID": 0
         }
     ],
@@ -253,7 +253,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13430,
+        "m_FileID": 13492,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -320,7 +320,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 12866,
+        "m_FileID": 12928,
         "m_PathID": 0
     },
     "isInventoryItem": true,

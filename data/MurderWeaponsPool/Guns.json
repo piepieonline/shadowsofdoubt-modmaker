@@ -3,7 +3,7 @@
     "murderWeaponPool": [
         {
             "weapon": {
-                "m_FileID": 23028,
+                "m_FileID": 23096,
                 "m_PathID": 0
             },
             "chanceOfDroppingAtScene": 0.0,
@@ -16,7 +16,7 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 14258,
+                            "m_FileID": 14320,
                             "m_PathID": 0
                         }
                     ],
@@ -27,7 +27,7 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 48646,
+                            "m_FileID": 48740,
                             "m_PathID": 0
                         }
                     ],
@@ -38,7 +38,7 @@
         },
         {
             "weapon": {
-                "m_FileID": 38192,
+                "m_FileID": 38284,
                 "m_PathID": 0
             },
             "chanceOfDroppingAtScene": 0.0,
@@ -51,7 +51,7 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 14258,
+                            "m_FileID": 14320,
                             "m_PathID": 0
                         }
                     ],
@@ -62,7 +62,7 @@
         },
         {
             "weapon": {
-                "m_FileID": 33778,
+                "m_FileID": 33872,
                 "m_PathID": 0
             },
             "chanceOfDroppingAtScene": 0.0,
@@ -75,7 +75,7 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 14258,
+                            "m_FileID": 14320,
                             "m_PathID": 0
                         }
                     ],
@@ -86,7 +86,7 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 15252,
+                            "m_FileID": 15314,
                             "m_PathID": 0
                         }
                     ],
@@ -97,7 +97,7 @@
         },
         {
             "weapon": {
-                "m_FileID": 22788,
+                "m_FileID": 22856,
                 "m_PathID": 0
             },
             "chanceOfDroppingAtScene": 0.0,
@@ -110,7 +110,7 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 14258,
+                            "m_FileID": 14320,
                             "m_PathID": 0
                         }
                     ],
@@ -121,7 +121,7 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 15246,
+                            "m_FileID": 15308,
                             "m_PathID": 0
                         }
                     ],
@@ -132,7 +132,7 @@
         },
         {
             "weapon": {
-                "m_FileID": 28104,
+                "m_FileID": 28196,
                 "m_PathID": 0
             },
             "chanceOfDroppingAtScene": 0.0,
@@ -145,7 +145,7 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 14258,
+                            "m_FileID": 14320,
                             "m_PathID": 0
                         }
                     ],
@@ -156,7 +156,7 @@
         },
         {
             "weapon": {
-                "m_FileID": 48648,
+                "m_FileID": 48742,
                 "m_PathID": 0
             },
             "chanceOfDroppingAtScene": 0.0,
@@ -169,7 +169,7 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 14258,
+                            "m_FileID": 14320,
                             "m_PathID": 0
                         }
                     ],
@@ -180,7 +180,7 @@
                     "rule": 0,
                     "traitList": [
                         {
-                            "m_FileID": 15246,
+                            "m_FileID": 15308,
                             "m_PathID": 0
                         }
                     ],

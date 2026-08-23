@@ -7,4 +7,4 @@ Instructions for use found on the wiki.
 http-server -c-1 -S
 
 To add a new data type for online reference:
-Modify both `.gitignore` and `data/onlineTypes.json` to include it
+Modify the documentation generator onlineTypes

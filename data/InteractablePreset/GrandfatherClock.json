@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -136,7 +136,7 @@
             "switchState": 0,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 26356,
+                "m_FileID": 26428,
                 "m_PathID": 0
             },
             "isLoop": true,
@@ -402,7 +402,7 @@
         "m_PathID": 0
     },
     "hourlyChime": {
-        "m_FileID": 53140,
+        "m_FileID": 53234,
         "m_PathID": 0
     },
     "chimeEqualToHour": false,

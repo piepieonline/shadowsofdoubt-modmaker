@@ -2,7 +2,7 @@
     "presetName": "citizen",
     "subClass": "Citizen",
     "windowStyle": {
-        "m_FileID": 12812,
+        "m_FileID": 12874,
         "m_PathID": 0
     },
     "useDataKeys": true,
@@ -248,11 +248,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 39786,
+        "m_FileID": 39878,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 39784,
+        "m_FileID": 39876,
         "m_PathID": 0
     },
     "useInGamePhoto": true,

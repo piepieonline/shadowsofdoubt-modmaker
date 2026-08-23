@@ -73,7 +73,7 @@
     "enableLoiteringBehaviour": false,
     "menus": [
         {
-            "m_FileID": 31102,
+            "m_FileID": 31194,
             "m_PathID": 0
         }
     ],
@@ -81,15 +81,15 @@
     "previousFakeSalesRecords": 5,
     "requiredTraits": [
         {
-            "m_FileID": 17480,
+            "m_FileID": 17542,
             "m_PathID": 0
         },
         {
-            "m_FileID": 31100,
+            "m_FileID": 31192,
             "m_PathID": 0
         },
         {
-            "m_FileID": 30788,
+            "m_FileID": 30880,
             "m_PathID": 0
         }
     ],
@@ -111,11 +111,11 @@
         }
     ],
     "workHours": {
-        "m_FileID": 14112,
+        "m_FileID": 14174,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 26866,
+        "m_FileID": 26938,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": true,

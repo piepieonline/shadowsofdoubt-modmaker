@@ -2,7 +2,7 @@
     "presetName": "BBCard-LynntheSpin",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 29080,
+        "m_FileID": 29172,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 29078,
+        "m_FileID": 29170,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 27594,
+        "m_FileID": 27684,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12874,
+            "m_FileID": 12936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.20000000298023225,
     "physicsProfile": {
-        "m_FileID": 13420,
+        "m_FileID": 13482,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,21 +179,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12708,
+            "m_FileID": 12770,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13584,
+            "m_FileID": 13646,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12896,
+            "m_FileID": 12958,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12714,
+            "m_FileID": 12776,
             "m_PathID": 0
         }
     ],
@@ -254,7 +254,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13430,
+        "m_FileID": 13492,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -321,7 +321,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 13602,
+        "m_FileID": 13664,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -398,7 +398,7 @@
     "recordCreationTime": true,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 29060,
+        "m_FileID": 29152,
         "m_PathID": 0
     },
     "menuOverride": {

@@ -1,7 +1,7 @@
 {
     "presetName": "InsulinInjector",
     "itemPreset": {
-        "m_FileID": 43194,
+        "m_FileID": 43286,
         "m_PathID": 0
     },
     "canBeFavourite": false,
@@ -15,7 +15,7 @@
     "minimumWealth": 0.0,
     "mustFeatureTraits": [
         {
-            "m_FileID": 41384,
+            "m_FileID": 41476,
             "m_PathID": 0
         }
     ],

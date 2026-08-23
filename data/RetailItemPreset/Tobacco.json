@@ -1,7 +1,7 @@
 {
     "presetName": "Tobacco",
     "itemPreset": {
-        "m_FileID": 126946,
+        "m_FileID": 127392,
         "m_PathID": 0
     },
     "canBeFavourite": false,
@@ -15,15 +15,15 @@
     "minimumWealth": 0.0,
     "mustFeatureTraits": [
         {
-            "m_FileID": 127750,
+            "m_FileID": 128196,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127760,
+            "m_FileID": 128206,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127770,
+            "m_FileID": 128216,
             "m_PathID": 0
         }
     ],

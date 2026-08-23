@@ -2,7 +2,7 @@
     "presetName": "PoisonBottle",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 100236,
+        "m_FileID": 100418,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98144,
+        "m_FileID": 98304,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 98444,
+        "m_FileID": 98604,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126524,
+            "m_FileID": 126970,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127024,
+        "m_FileID": 127470,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -103,7 +103,7 @@
     "mass": 1.0,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 127018,
+        "m_FileID": 127464,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -115,7 +115,7 @@
     "shardEveryXPixels": 64,
     "overrideSpatterSettings": true,
     "spatterSimulation": {
-        "m_FileID": 127238,
+        "m_FileID": 127684,
         "m_PathID": 0
     },
     "spatterCountMultiplier": 0.30000001192092898,
@@ -179,17 +179,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127272,
+            "m_FileID": 127718,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 127302,
+            "m_FileID": 127748,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127262,
+            "m_FileID": 127708,
             "m_PathID": 0
         }
     ],
@@ -206,7 +206,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127742,
+                    "m_FileID": 128188,
                     "m_PathID": 0
                 }
             ],
@@ -263,7 +263,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126334,
+        "m_FileID": 126778,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -330,7 +330,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126406,
+        "m_FileID": 126850,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -407,7 +407,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 127186,
+        "m_FileID": 127632,
         "m_PathID": 0
     },
     "menuOverride": {

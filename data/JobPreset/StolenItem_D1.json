@@ -3,7 +3,7 @@
     "disabled": false,
     "caseName": "StolenItem",
     "jobPosting": {
-        "m_FileID": 14070,
+        "m_FileID": 14132,
         "m_PathID": 0
     },
     "subClass": "StolenItem",
@@ -57,23 +57,23 @@
     "changePerpDialogCompliancy": 2,
     "purpetratorMotives": [
         {
-            "m_FileID": 38016,
+            "m_FileID": 38108,
             "m_PathID": 0
         },
         {
-            "m_FileID": 56518,
+            "m_FileID": 56612,
             "m_PathID": 0
         },
         {
-            "m_FileID": 38464,
+            "m_FileID": 38556,
             "m_PathID": 0
         },
         {
-            "m_FileID": 49344,
+            "m_FileID": 49438,
             "m_PathID": 0
         },
         {
-            "m_FileID": 56526,
+            "m_FileID": 56620,
             "m_PathID": 0
         }
     ],
@@ -88,7 +88,7 @@
     "compatibleIntros": [
         {
             "preset": {
-                "m_FileID": 55184,
+                "m_FileID": 55278,
                 "m_PathID": 0
             },
             "frequency": 1
@@ -145,31 +145,31 @@
     ],
     "revengeObjectives": [
         {
-            "m_FileID": 56410,
+            "m_FileID": 56504,
             "m_PathID": 0
         },
         {
-            "m_FileID": 40784,
+            "m_FileID": 40876,
             "m_PathID": 0
         },
         {
-            "m_FileID": 42962,
+            "m_FileID": 43054,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14100,
+            "m_FileID": 14162,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14090,
+            "m_FileID": 14152,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14102,
+            "m_FileID": 14164,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14064,
+            "m_FileID": 14126,
             "m_PathID": 0
         }
     ],
@@ -179,7 +179,7 @@
             "findExisting": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 38016,
+                    "m_FileID": 38108,
                     "m_PathID": 0
                 }
             ],
@@ -195,7 +195,7 @@
             "disableOnDifficulties": [],
             "itemTag": 0,
             "spawnItem": {
-                "m_FileID": 56524,
+                "m_FileID": 56618,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -216,11 +216,11 @@
             "findExisting": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 38016,
+                    "m_FileID": 38108,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 49344,
+                    "m_FileID": 49438,
                     "m_PathID": 0
                 }
             ],
@@ -236,7 +236,7 @@
             "disableOnDifficulties": [],
             "itemTag": 0,
             "spawnItem": {
-                "m_FileID": 56516,
+                "m_FileID": 56610,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -257,11 +257,11 @@
             "findExisting": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 38016,
+                    "m_FileID": 38108,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56518,
+                    "m_FileID": 56612,
                     "m_PathID": 0
                 }
             ],
@@ -277,7 +277,7 @@
             "disableOnDifficulties": [],
             "itemTag": 0,
             "spawnItem": {
-                "m_FileID": 39988,
+                "m_FileID": 40080,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -298,11 +298,11 @@
             "findExisting": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 38016,
+                    "m_FileID": 38108,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 56526,
+                    "m_FileID": 56620,
                     "m_PathID": 0
                 }
             ],
@@ -318,7 +318,7 @@
             "disableOnDifficulties": [],
             "itemTag": 0,
             "spawnItem": {
-                "m_FileID": 46916,
+                "m_FileID": 47008,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -339,11 +339,11 @@
             "findExisting": true,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 38016,
+                    "m_FileID": 38108,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 38464,
+                    "m_FileID": 38556,
                     "m_PathID": 0
                 }
             ],
@@ -359,7 +359,7 @@
             "disableOnDifficulties": [],
             "itemTag": 0,
             "spawnItem": {
-                "m_FileID": 26152,
+                "m_FileID": 26224,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -517,7 +517,7 @@
     "compatibleHandIns": [
         {
             "preset": {
-                "m_FileID": 17144,
+                "m_FileID": 17206,
                 "m_PathID": 0
             },
             "frequency": 1
@@ -527,27 +527,27 @@
         {
             "name": "IntroCallHouseVisit",
             "dialog": {
-                "m_FileID": 56522,
+                "m_FileID": 56616,
                 "m_PathID": 0
             }
         },
         {
             "name": "HomeMeet",
             "dialog": {
-                "m_FileID": 29322,
+                "m_FileID": 29414,
                 "m_PathID": 0
             }
         },
         {
             "name": "TelephoneHandIn",
             "dialog": {
-                "m_FileID": 43210,
+                "m_FileID": 43302,
                 "m_PathID": 0
             }
         }
     ],
     "debugCopyFrom": {
-        "m_FileID": 14082,
+        "m_FileID": 14144,
         "m_PathID": 0
     }
 }

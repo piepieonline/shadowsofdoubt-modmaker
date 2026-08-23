@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 30374,
+        "m_FileID": 30466,
         "m_PathID": 0
     },
     "lightswitch": 0,
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 25752,
+        "m_FileID": 25820,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 36824,
+            "m_FileID": 36916,
             "m_PathID": 0
         }
     ],
@@ -186,7 +186,7 @@
             "onlyIfHome": false,
             "insertActions": [
                 {
-                    "m_FileID": 36826,
+                    "m_FileID": 36918,
                     "m_PathID": 0
                 }
             ]
@@ -196,7 +196,7 @@
             "ifSwitchBool": true,
             "ifCondition": 1,
             "ifGoal": {
-                "m_FileID": 33534,
+                "m_FileID": 33628,
                 "m_PathID": 0
             },
             "scope": 1,
@@ -206,7 +206,7 @@
             "onlyIfHome": false,
             "insertActions": [
                 {
-                    "m_FileID": 36826,
+                    "m_FileID": 36918,
                     "m_PathID": 0
                 }
             ]

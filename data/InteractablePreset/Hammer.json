@@ -2,7 +2,7 @@
     "presetName": "Hammer",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 104192,
+        "m_FileID": 104428,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97400,
+        "m_FileID": 97558,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97902,
+        "m_FileID": 98062,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126524,
+            "m_FileID": 126970,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127050,
+        "m_FileID": 127496,
         "m_PathID": 0
     },
     "overrideMass": true,
@@ -179,17 +179,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127282,
+            "m_FileID": 127728,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127352,
+            "m_FileID": 127798,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 127328,
+            "m_FileID": 127774,
             "m_PathID": 0
         }
     ],
@@ -206,11 +206,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127494,
+                    "m_FileID": 127940,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127528,
+                    "m_FileID": 127974,
                     "m_PathID": 0
                 }
             ],
@@ -267,7 +267,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126334,
+        "m_FileID": 126778,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -334,7 +334,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126420,
+        "m_FileID": 126864,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -372,7 +372,7 @@
     "chanceOfDroppedAngle": 0.0,
     "droppedAngleHeightBoost": 0.10000000149011612,
     "weapon": {
-        "m_FileID": 127808,
+        "m_FileID": 128254,
         "m_PathID": 0
     },
     "inventoryCarryItem": false,
@@ -411,7 +411,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 127212,
+        "m_FileID": 127658,
         "m_PathID": 0
     },
     "menuOverride": {

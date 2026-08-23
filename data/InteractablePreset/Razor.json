@@ -2,7 +2,7 @@
     "presetName": "Razor",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 55190,
+        "m_FileID": 55284,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 55188,
+        "m_FileID": 55282,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12874,
+            "m_FileID": 12936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 17206,
+        "m_FileID": 17268,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,13 +179,13 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13620,
+            "m_FileID": 13682,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13652,
+            "m_FileID": 13714,
             "m_PathID": 0
         }
     ],
@@ -202,7 +202,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 17272,
+                    "m_FileID": 17334,
                     "m_PathID": 0
                 }
             ],
@@ -232,19 +232,19 @@
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 13796,
+            "m_FileID": 13858,
             "m_PathID": 0
         },
         {
-            "m_FileID": 18510,
+            "m_FileID": 18572,
             "m_PathID": 0
         },
         {
-            "m_FileID": 16584,
+            "m_FileID": 16646,
             "m_PathID": 0
         },
         {
-            "m_FileID": 26058,
+            "m_FileID": 26130,
             "m_PathID": 0
         }
     ],
@@ -276,7 +276,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13430,
+        "m_FileID": 13492,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -343,7 +343,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 17444,
+        "m_FileID": 17506,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -381,7 +381,7 @@
     "chanceOfDroppedAngle": 0.0,
     "droppedAngleHeightBoost": 0.10000000149011612,
     "weapon": {
-        "m_FileID": 55194,
+        "m_FileID": 55288,
         "m_PathID": 0
     },
     "inventoryCarryItem": false,
@@ -401,29 +401,29 @@
     "takeWith": true,
     "putDownPositions": [
         {
-            "m_FileID": 13620,
+            "m_FileID": 13682,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12708,
+            "m_FileID": 12770,
             "m_PathID": 0
         }
     ],
     "backupPutDownPositions": [
         {
-            "m_FileID": 13584,
+            "m_FileID": 13646,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12896,
+            "m_FileID": 12958,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13410,
+            "m_FileID": 13472,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13494,
+            "m_FileID": 13556,
             "m_PathID": 0
         }
     ],
@@ -446,7 +446,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 55186,
+        "m_FileID": 55280,
         "m_PathID": 0
     },
     "menuOverride": {

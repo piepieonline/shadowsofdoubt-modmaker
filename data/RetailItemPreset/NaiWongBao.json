@@ -1,7 +1,7 @@
 {
     "presetName": "NaiWongBao",
     "itemPreset": {
-        "m_FileID": 48862,
+        "m_FileID": 48956,
         "m_PathID": 0
     },
     "canBeFavourite": true,
@@ -21,7 +21,7 @@
     "cantFeatureTrait": [],
     "preferredTraits": [
         {
-            "m_FileID": 30842,
+            "m_FileID": 30934,
             "m_PathID": 0
         }
     ],

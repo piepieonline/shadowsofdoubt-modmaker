@@ -2,7 +2,7 @@
     "presetName": "CallLogs",
     "subClass": "",
     "windowStyle": {
-        "m_FileID": 127856,
+        "m_FileID": 128302,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 98648,
+        "m_FileID": 98810,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 94548,
+        "m_FileID": 94654,
         "m_PathID": 0
     },
     "useInGamePhoto": false,

@@ -2,7 +2,7 @@
     "presetName": "PaintBrushCup",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 15598,
+        "m_FileID": 15660,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 15596,
+        "m_FileID": 15658,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14938,
+            "m_FileID": 15000,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 32674,
+        "m_FileID": 32766,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,11 +179,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13584,
+            "m_FileID": 13646,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12758,
+            "m_FileID": 12820,
             "m_PathID": 0
         }
     ],
@@ -201,7 +201,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 17734,
+                    "m_FileID": 17796,
                     "m_PathID": 0
                 }
             ],
@@ -244,7 +244,7 @@
     "ownedRule": 2,
     "overrideWithOnlyOwnedSpawnAtWork": true,
     "subSpawnClass": {
-        "m_FileID": 22588,
+        "m_FileID": 22656,
         "m_PathID": 0
     },
     "subSpawnPositions": [

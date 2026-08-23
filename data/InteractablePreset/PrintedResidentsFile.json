@@ -2,7 +2,7 @@
     "presetName": "PrintedResidentsFile",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 99902,
+        "m_FileID": 100076,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98656,
+        "m_FileID": 98818,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97520,
+        "m_FileID": 97678,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126528,
+            "m_FileID": 126974,
             "m_PathID": 0
         },
         {
-            "m_FileID": 126490,
+            "m_FileID": 126936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.20000000298023225,
     "physicsProfile": {
-        "m_FileID": 127028,
+        "m_FileID": 127474,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,15 +183,15 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127282,
+            "m_FileID": 127728,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127278,
+            "m_FileID": 127724,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127316,
+            "m_FileID": 127762,
             "m_PathID": 0
         }
     ],
@@ -253,7 +253,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126306,
+        "m_FileID": 126750,
         "m_PathID": 0
     },
     "locationIsParent": true,

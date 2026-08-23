@@ -2,7 +2,7 @@
     "presetName": "ClothesBasket",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 39466,
+        "m_FileID": 39558,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 39486,
+        "m_FileID": 39578,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13812,
+            "m_FileID": 13874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 12908,
+        "m_FileID": 12970,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,13 +179,13 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13792,
+            "m_FileID": 13854,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13784,
+            "m_FileID": 13846,
             "m_PathID": 0
         }
     ],
@@ -219,7 +219,7 @@
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 17328,
+            "m_FileID": 17390,
             "m_PathID": 0
         }
     ],

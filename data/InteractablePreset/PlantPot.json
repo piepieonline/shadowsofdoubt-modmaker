@@ -2,7 +2,7 @@
     "presetName": "PlantPot",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 49826,
+        "m_FileID": 49920,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 49828,
+        "m_FileID": 49922,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14938,
+            "m_FileID": 15000,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 32674,
+        "m_FileID": 32766,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,23 +179,23 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13584,
+            "m_FileID": 13646,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12896,
+            "m_FileID": 12958,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14474,
+            "m_FileID": 14536,
             "m_PathID": 0
         },
         {
-            "m_FileID": 16046,
+            "m_FileID": 16108,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12758,
+            "m_FileID": 12820,
             "m_PathID": 0
         }
     ],
@@ -213,7 +213,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 15654,
+                    "m_FileID": 15716,
                     "m_PathID": 0
                 }
             ],
@@ -225,7 +225,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 15666,
+                    "m_FileID": 15728,
                     "m_PathID": 0
                 }
             ],
@@ -237,7 +237,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 15668,
+                    "m_FileID": 15730,
                     "m_PathID": 0
                 }
             ],
@@ -280,7 +280,7 @@
     "ownedRule": 3,
     "overrideWithOnlyOwnedSpawnAtWork": true,
     "subSpawnClass": {
-        "m_FileID": 48754,
+        "m_FileID": 48848,
         "m_PathID": 0
     },
     "subSpawnPositions": [

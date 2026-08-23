@@ -2,7 +2,7 @@
     "presetName": "SmallCalibreEntryWound",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 105226,
+        "m_FileID": 105470,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97998,
+        "m_FileID": 98158,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 98564,
+        "m_FileID": 98726,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126522,
+            "m_FileID": 126968,
             "m_PathID": 0
         }
     ],
@@ -236,7 +236,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126326,
+        "m_FileID": 126770,
         "m_PathID": 0
     },
     "locationIsParent": false,

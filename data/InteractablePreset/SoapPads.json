@@ -2,7 +2,7 @@
     "presetName": "SoapPads",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 47706,
+        "m_FileID": 47798,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 47690,
+        "m_FileID": 47782,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13812,
+            "m_FileID": 13874,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14944,
+            "m_FileID": 15006,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13420,
+        "m_FileID": 13482,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,7 +183,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 25872,
+            "m_FileID": 25940,
             "m_PathID": 0
         }
     ],
@@ -201,7 +201,7 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 14184,
+                    "m_FileID": 14246,
                     "m_PathID": 0
                 }
             ],
@@ -258,7 +258,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13430,
+        "m_FileID": 13492,
         "m_PathID": 0
     },
     "locationIsParent": true,

@@ -2,7 +2,7 @@
     "presetName": "PurchasedTime",
     "subClass": "Time",
     "windowStyle": {
-        "m_FileID": 12812,
+        "m_FileID": 12874,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 37938,
+        "m_FileID": 38030,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 33982,
+        "m_FileID": 34076,
         "m_PathID": 0
     },
     "useInGamePhoto": false,
@@ -47,7 +47,7 @@
     "factSetup": [
         {
             "preset": {
-                "m_FileID": 31252,
+                "m_FileID": 31344,
                 "m_PathID": 0
             },
             "link": 3,

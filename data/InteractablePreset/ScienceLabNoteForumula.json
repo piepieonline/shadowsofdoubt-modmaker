@@ -2,7 +2,7 @@
     "presetName": "ScienceLabNoteForumula",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 14962,
+        "m_FileID": 15024,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 14954,
+        "m_FileID": 15016,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12804,
+        "m_FileID": 12866,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,11 +87,11 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14944,
+            "m_FileID": 15006,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14938,
+            "m_FileID": 15000,
             "m_PathID": 0
         }
     ],
@@ -183,29 +183,29 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 14012,
+            "m_FileID": 14074,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12708,
+            "m_FileID": 12770,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12896,
+            "m_FileID": 12958,
             "m_PathID": 0
         },
         {
-            "m_FileID": 23540,
+            "m_FileID": 23608,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 12714,
+            "m_FileID": 12776,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13494,
+            "m_FileID": 13556,
             "m_PathID": 0
         }
     ],
@@ -266,7 +266,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 66404,
+        "m_FileID": 66498,
         "m_PathID": 0
     },
     "locationIsParent": true,

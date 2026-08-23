@@ -4,7 +4,7 @@
     "disabled": false,
     "compatibleWith": [
         {
-            "m_FileID": 14904,
+            "m_FileID": 14966,
             "m_PathID": 0
         }
     ],
@@ -20,15 +20,15 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 32524,
+                    "m_FileID": 32616,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 37056,
+                    "m_FileID": 37148,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 16640,
+                    "m_FileID": 16702,
                     "m_PathID": 0
                 }
             ],
@@ -39,7 +39,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14908,
+                    "m_FileID": 14970,
                     "m_PathID": 0
                 }
             ],
@@ -51,7 +51,7 @@
         {
             "jobs": [
                 {
-                    "m_FileID": 40040,
+                    "m_FileID": 40132,
                     "m_PathID": 0
                 }
             ],
@@ -87,11 +87,11 @@
     "requiresSniperVantageAtHome": false,
     "weaponsPool": [
         {
-            "m_FileID": 14896,
+            "m_FileID": 14958,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14906,
+            "m_FileID": 14968,
             "m_PathID": 0
         }
     ],
@@ -119,11 +119,11 @@
         {
             "jobs": [
                 {
-                    "m_FileID": 17698,
+                    "m_FileID": 17760,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 40040,
+                    "m_FileID": 40132,
                     "m_PathID": 0
                 }
             ],
@@ -147,7 +147,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 32218,
+                    "m_FileID": 32310,
                     "m_PathID": 0
                 }
             ],
@@ -164,7 +164,7 @@
             "chanceRatio": 0,
             "itemTag": 0,
             "spawnItem": {
-                "m_FileID": 42186,
+                "m_FileID": 42278,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -185,7 +185,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 32218,
+                    "m_FileID": 32310,
                     "m_PathID": 0
                 }
             ],
@@ -202,7 +202,7 @@
             "chanceRatio": 0,
             "itemTag": 1,
             "spawnItem": {
-                "m_FileID": 42184,
+                "m_FileID": 42276,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -223,7 +223,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 32218,
+                    "m_FileID": 32310,
                     "m_PathID": 0
                 }
             ],
@@ -240,7 +240,7 @@
             "chanceRatio": 0,
             "itemTag": 2,
             "spawnItem": {
-                "m_FileID": 41132,
+                "m_FileID": 41224,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -261,7 +261,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 32218,
+                    "m_FileID": 32310,
                     "m_PathID": 0
                 }
             ],
@@ -298,7 +298,7 @@
     "graffiti": [
         {
             "preset": {
-                "m_FileID": 14900,
+                "m_FileID": 14962,
                 "m_PathID": 0
             },
             "pos": 1,
@@ -319,7 +319,7 @@
     "callingCardPool": [
         {
             "item": {
-                "m_FileID": 35528,
+                "m_FileID": 35622,
                 "m_PathID": 0
             },
             "origin": 0,
@@ -332,7 +332,7 @@
     ],
     "playerTaunts": [
         {
-            "m_FileID": 18398,
+            "m_FileID": 18460,
             "m_PathID": 0
         }
     ]

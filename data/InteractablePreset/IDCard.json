@@ -2,7 +2,7 @@
     "presetName": "IDCard",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 42152,
+        "m_FileID": 42244,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 42166,
+        "m_FileID": 42258,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 25752,
+        "m_FileID": 25820,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14944,
+            "m_FileID": 15006,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14938,
+            "m_FileID": 15000,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 14972,
+        "m_FileID": 15034,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -240,7 +240,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 27854,
+        "m_FileID": 27946,
         "m_PathID": 0
     },
     "locationIsParent": false,

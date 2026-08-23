@@ -2,7 +2,7 @@
     "presetName": "date",
     "subClass": "Date",
     "windowStyle": {
-        "m_FileID": 12812,
+        "m_FileID": 12874,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 23536,
+        "m_FileID": 23604,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 33982,
+        "m_FileID": 34076,
         "m_PathID": 0
     },
     "useInGamePhoto": false,

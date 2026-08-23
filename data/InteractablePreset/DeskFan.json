@@ -2,7 +2,7 @@
     "presetName": "DeskFan",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 27188,
+        "m_FileID": 27260,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 27214,
+        "m_FileID": 27286,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 26608,
+            "m_FileID": 26680,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13812,
+            "m_FileID": 13874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 27178,
+        "m_FileID": 27250,
         "m_PathID": 0
     },
     "overrideMass": true,
@@ -145,7 +145,7 @@
             "switchState": 0,
             "boolIs": true,
             "triggerAudio": {
-                "m_FileID": 27180,
+                "m_FileID": 27252,
                 "m_PathID": 0
             },
             "isLoop": true,
@@ -202,7 +202,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 14018,
+            "m_FileID": 14080,
             "m_PathID": 0
         }
     ],

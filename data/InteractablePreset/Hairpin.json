@@ -2,7 +2,7 @@
     "presetName": "Hairpin",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 104226,
+        "m_FileID": 104462,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98260,
+        "m_FileID": 98420,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 98502,
+        "m_FileID": 98664,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126536,
+            "m_FileID": 126982,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127026,
+        "m_FileID": 127472,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,23 +179,23 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127348,
+            "m_FileID": 127794,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127282,
+            "m_FileID": 127728,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127284,
+            "m_FileID": 127730,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127328,
+            "m_FileID": 127774,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127300,
+            "m_FileID": 127746,
             "m_PathID": 0
         }
     ],
@@ -213,7 +213,7 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 127748,
+                    "m_FileID": 128194,
                     "m_PathID": 0
                 }
             ],
@@ -225,11 +225,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127802,
+                    "m_FileID": 128248,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127806,
+                    "m_FileID": 128252,
                     "m_PathID": 0
                 }
             ],
@@ -241,15 +241,15 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127436,
+                    "m_FileID": 127882,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127752,
+                    "m_FileID": 128198,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127554,
+                    "m_FileID": 128000,
                     "m_PathID": 0
                 }
             ],
@@ -306,7 +306,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126334,
+        "m_FileID": 126778,
         "m_PathID": 0
     },
     "locationIsParent": true,

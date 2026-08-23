@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 15030,
+        "m_FileID": 15092,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 15024,
+            "m_FileID": 15086,
             "m_PathID": 0
         }
     ],
@@ -253,7 +253,7 @@
         "z": 0.0
     },
     "includeLock": {
-        "m_FileID": 25904,
+        "m_FileID": 25972,
         "m_PathID": 0
     },
     "lockOffset": {
@@ -263,7 +263,7 @@
     },
     "passwordSource": 0,
     "attemptedOpenSound": {
-        "m_FileID": 15028,
+        "m_FileID": 15090,
         "m_PathID": 0
     },
     "armLockOnClose": true,

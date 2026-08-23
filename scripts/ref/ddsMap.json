@@ -3611,6 +3611,9 @@
     "d827925a-2afd-4ad8-8cde-4ca0c163f01c": [
       "bc6e45cd-d01f-4fb3-88fa-a04f4851be97"
     ],
+    "ad75cfd4-3b83-40bd-b2ae-ade8e4d58951": [
+      "bc6e45cd-d01f-4fb3-88fa-a04f4851be97"
+    ],
     "4267c807-2e63-4f66-91ff-6d0f3f4d47de": [
       "bc6fabb0-8ae4-44a1-b1e0-c8305a575b89"
     ],
@@ -5516,13 +5519,10 @@
     ],
     "4a565816-336e-4826-9da4-52735b4277ad": [
       "032d8923-13ae-46fa-ad0c-f6fe2dbf38da",
-      "04babd63-31a9-4091-be1a-e9d2e8396c2e",
-      "13e29d76-2c9a-4b1d-9cd8-2de95888eb76",
       "1945d10f-98b8-46ac-86de-7e6a3cfad160",
       "428d043e-0db2-40a4-8404-4915b906544e",
       "50cc2c93-a516-4166-93b5-0ff10d0467e8",
       "58d45395-8e0d-4092-aa2b-ace5dd5839ae",
-      "c57a09f8-1e1d-4cfa-abb1-11cd106520e9",
       "d912634c-fe33-4b6a-8e6b-f9c226aa5cdc"
     ],
     "c9be9e2d-4cbf-48e3-b0c2-0dd7513f41c9": [
@@ -5576,11 +5576,6 @@
       "aca85aa7-2530-4a44-8f5f-8b2bcbce1875",
       "c57a09f8-1e1d-4cfa-abb1-11cd106520e9",
       "d912634c-fe33-4b6a-8e6b-f9c226aa5cdc"
-    ],
-    "86e89233-63fb-4967-a0c1-43cead873e7e": [
-      "04babd63-31a9-4091-be1a-e9d2e8396c2e",
-      "13e29d76-2c9a-4b1d-9cd8-2de95888eb76",
-      "c57a09f8-1e1d-4cfa-abb1-11cd106520e9"
     ],
     "f604bc5e-c6d8-4df5-ab2d-a2793bbd052b": [
       "051c8833-5fad-45ef-ae92-1fb529ce715a"
@@ -6144,7 +6139,6 @@
     ],
     "8aced51b-7c65-49d7-924c-b4b74fc1d719": [
       "13d5801c-023d-46d9-b0c0-6abd0dc9f10f",
-      "53a66771-3fa8-4898-b9dd-b0cf599c429b",
       "dfc3d39f-44c5-4576-be9e-8163c3e0fb08"
     ],
     "622eca37-1575-457c-9201-1f73eec1d94b": [
@@ -14211,6 +14205,12 @@
     "e3052dfd-3fa5-4a3c-874d-dbbcfc7c7195": [
       "ad5a54e4-c2cc-4eed-ada1-f39efe61d7cb"
     ],
+    "47637305-553d-49d1-bbf1-e0c7fefd5c34": [
+      "ad75cfd4-3b83-40bd-b2ae-ade8e4d58951"
+    ],
+    "02960663-d71d-4a55-ac2c-314329d8bf05": [
+      "ad75cfd4-3b83-40bd-b2ae-ade8e4d58951"
+    ],
     "7a24ccd3-4165-4773-9ecb-f53a21e458a1": [
       "ade619bd-18db-4347-af94-0da8a258a547"
     ],
@@ -20567,6 +20567,7 @@
     "ad49b989-400a-4f49-ba87-472f2532ae01": "Kidnapper_Money_Den_Details01",
     "ad49c491-7774-4c78-9277-51650987b2fd": "Ad_TheFields02",
     "ad5a54e4-c2cc-4eed-ada1-f39efe61d7cb": "stinkytofu",
+    "ad75cfd4-3b83-40bd-b2ae-ade8e4d58951": "Kidnapper_Not_Caught",
     "ade619bd-18db-4347-af94-0da8a258a547": "tissuebox",
     "ae00c44b-b715-45d0-b64b-d588dfc471a2": "FindWrittenNote",
     "ae285e46-697e-4767-a317-e4f9d43b976c": "GeneralColourTextArticles22",
@@ -21192,6 +21193,7 @@
     "0282c4d2-91f6-44d5-b55f-a6dc779293e6": "Credits are more commonly known ",
     "028ff0da-6830-47ff-8b9b-f047fe02d0dd": "Dear_talkingto.firs32",
     "029094f4-554f-4e9d-a495-4e487d1f5ce1": "Be careful, this is a rough neig",
+    "02960663-d71d-4a55-ac2c-314329d8bf05": "See you soon...",
     "029cf335-8edd-4cb8-ae61-a5f85d628ca0": "An_unknown_fingerpri",
     "029cf451-e0bf-4896-832f-fbbbec4a50ec": "Why you always gotta ask?",
     "02a71ec4-cf8d-4b02-9d2d-526769fe740b": "Alright, be quick. You get caugh",
@@ -22331,6 +22333,7 @@
     "47261add-ad23-40e5-94de-90020bf2b96c": "Go home will you?",
     "4744dc59-b44a-4daf-bacf-3177107d5944": "Get me out of here!\\r",
     "47482399-aa2b-485e-a423-fb4e4c0d72a6": "New Block 4",
+    "47637305-553d-49d1-bbf1-e0c7fefd5c34": "Thanks for the free money 'detec",
     "4790255f-3a68-4448-a2e7-c35b6c98f49c": "Get out of here, flthy creature!",
     "479ad5fc-9898-4fe5-b541-bfdbaac7b7a4": "I think |story.associate.firstna",
     "479e505c-f082-482e-9fec-7a24e3bf9377": "No._My_mother_chose_",
@@ -27171,6 +27174,7 @@
     "ad49b989-400a-4f49-ba87-472f2532ae01",
     "ad49c491-7774-4c78-9277-51650987b2fd",
     "ad5a54e4-c2cc-4eed-ada1-f39efe61d7cb",
+    "ad75cfd4-3b83-40bd-b2ae-ade8e4d58951",
     "ade619bd-18db-4347-af94-0da8a258a547",
     "ae00c44b-b715-45d0-b64b-d588dfc471a2",
     "ae285e46-697e-4767-a317-e4f9d43b976c",
@@ -27798,6 +27802,7 @@
     "0282c4d2-91f6-44d5-b55f-a6dc779293e6",
     "028ff0da-6830-47ff-8b9b-f047fe02d0dd",
     "029094f4-554f-4e9d-a495-4e487d1f5ce1",
+    "02960663-d71d-4a55-ac2c-314329d8bf05",
     "029cf335-8edd-4cb8-ae61-a5f85d628ca0",
     "029cf451-e0bf-4896-832f-fbbbec4a50ec",
     "02a71ec4-cf8d-4b02-9d2d-526769fe740b",
@@ -28937,6 +28942,7 @@
     "47261add-ad23-40e5-94de-90020bf2b96c",
     "4744dc59-b44a-4daf-bacf-3177107d5944",
     "47482399-aa2b-485e-a423-fb4e4c0d72a6",
+    "47637305-553d-49d1-bbf1-e0c7fefd5c34",
     "4790255f-3a68-4448-a2e7-c35b6c98f49c",
     "479ad5fc-9898-4fe5-b541-bfdbaac7b7a4",
     "479e505c-f082-482e-9fec-7a24e3bf9377",

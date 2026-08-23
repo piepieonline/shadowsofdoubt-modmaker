@@ -2,7 +2,7 @@
     "presetName": "FireExtinguisher",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 44818,
+        "m_FileID": 44910,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 44826,
+        "m_FileID": 44918,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13812,
+            "m_FileID": 13874,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14944,
+            "m_FileID": 15006,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 16472,
+        "m_FileID": 16534,
         "m_PathID": 0
     },
     "overrideMass": true,
@@ -183,17 +183,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13496,
+            "m_FileID": 13558,
             "m_PathID": 0
         },
         {
-            "m_FileID": 17746,
+            "m_FileID": 17808,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13494,
+            "m_FileID": 13556,
             "m_PathID": 0
         }
     ],
@@ -210,11 +210,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 15252,
+                    "m_FileID": 15314,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 22900,
+                    "m_FileID": 22968,
                     "m_PathID": 0
                 }
             ],
@@ -271,7 +271,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13430,
+        "m_FileID": 13492,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -415,7 +415,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 44810,
+        "m_FileID": 44902,
         "m_PathID": 0
     },
     "menuOverride": {

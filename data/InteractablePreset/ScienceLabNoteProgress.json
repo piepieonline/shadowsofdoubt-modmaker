@@ -2,7 +2,7 @@
     "presetName": "ScienceLabNoteProgress",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 14962,
+        "m_FileID": 15024,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 14954,
+        "m_FileID": 15016,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12804,
+        "m_FileID": 12866,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,18 +87,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 14944,
+            "m_FileID": 15006,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14938,
+            "m_FileID": 15000,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.20000000298023225,
     "physicsProfile": {
-        "m_FileID": 14972,
+        "m_FileID": 15034,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -183,21 +183,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 14012,
+            "m_FileID": 14074,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13606,
+            "m_FileID": 13668,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13410,
+            "m_FileID": 13472,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 12714,
+            "m_FileID": 12776,
             "m_PathID": 0
         }
     ],
@@ -214,7 +214,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14936,
+                    "m_FileID": 14998,
                     "m_PathID": 0
                 }
             ],
@@ -244,14 +244,14 @@
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 14960,
+            "m_FileID": 15022,
             "m_PathID": 0
         }
     ],
     "limitToCertainBuildings": true,
     "onlyInBuildings": [
         {
-            "m_FileID": 14968,
+            "m_FileID": 15030,
             "m_PathID": 0
         }
     ],
@@ -281,7 +281,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 14966,
+        "m_FileID": 15028,
         "m_PathID": 0
     },
     "locationIsParent": true,

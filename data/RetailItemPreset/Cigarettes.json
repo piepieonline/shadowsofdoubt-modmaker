@@ -1,7 +1,7 @@
 {
     "presetName": "Cigarettes",
     "itemPreset": {
-        "m_FileID": 126884,
+        "m_FileID": 127330,
         "m_PathID": 0
     },
     "canBeFavourite": false,
@@ -15,7 +15,7 @@
     "minimumWealth": 0.0,
     "mustFeatureTraits": [
         {
-            "m_FileID": 127770,
+            "m_FileID": 128216,
             "m_PathID": 0
         }
     ],

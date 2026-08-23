@@ -2,7 +2,7 @@
     "presetName": "HotelLight",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 49034,
+        "m_FileID": 49128,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -38,7 +38,7 @@
     "useNameShorthand": false,
     "useApartmentName": false,
     "isLight": {
-        "m_FileID": 29286,
+        "m_FileID": 29378,
         "m_PathID": 0
     },
     "lightswitch": 0,
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 22036,
+        "m_FileID": 22104,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 23390,
+        "m_FileID": 23458,
         "m_PathID": 0
     },
     "itemClass": 5,
@@ -89,7 +89,7 @@
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 14972,
+        "m_FileID": 15034,
         "m_PathID": 0
     },
     "overrideMass": false,

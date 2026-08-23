@@ -2,7 +2,7 @@
     "presetName": "AssortedBooks1",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 58804,
+        "m_FileID": 58898,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 58808,
+        "m_FileID": 58902,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 26128,
+        "m_FileID": 26200,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -75,11 +75,11 @@
     "apartmentPlacementMode": 1,
     "mustTouchFurniture": [
         {
-            "m_FileID": 58788,
+            "m_FileID": 58882,
             "m_PathID": 0
         },
         {
-            "m_FileID": 33222,
+            "m_FileID": 33316,
             "m_PathID": 0
         }
     ],
@@ -96,18 +96,18 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 58796,
+            "m_FileID": 58890,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14938,
+            "m_FileID": 15000,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 14972,
+        "m_FileID": 15034,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -192,7 +192,7 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 33232,
+            "m_FileID": 33326,
             "m_PathID": 0
         }
     ],
@@ -210,7 +210,7 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 15258,
+                    "m_FileID": 15320,
                     "m_PathID": 0
                 }
             ],
@@ -222,27 +222,27 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14558,
+                    "m_FileID": 14620,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 38462,
+                    "m_FileID": 38554,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 14570,
+                    "m_FileID": 14632,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 15256,
+                    "m_FileID": 15318,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 15264,
+                    "m_FileID": 15326,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 15260,
+                    "m_FileID": 15322,
                     "m_PathID": 0
                 }
             ],

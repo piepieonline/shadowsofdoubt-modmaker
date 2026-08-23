@@ -2,7 +2,7 @@
     "presetName": "InterestBookShelf",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 103704,
+        "m_FileID": 103932,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97434,
+        "m_FileID": 97592,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97800,
+        "m_FileID": 97958,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126496,
+            "m_FileID": 126942,
             "m_PathID": 0
         }
     ],
@@ -179,15 +179,15 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127328,
+            "m_FileID": 127774,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127282,
+            "m_FileID": 127728,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127278,
+            "m_FileID": 127724,
             "m_PathID": 0
         }
     ],
@@ -244,7 +244,7 @@
     "AIWillCorrectPosition": true,
     "useEvidence": false,
     "useSingleton": {
-        "m_FileID": 126340,
+        "m_FileID": 126784,
         "m_PathID": 0
     },
     "findEvidence": 0,

@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97902,
+        "m_FileID": 98062,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,11 +87,11 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126554,
+            "m_FileID": 127000,
             "m_PathID": 0
         },
         {
-            "m_FileID": 126550,
+            "m_FileID": 126996,
             "m_PathID": 0
         }
     ],
@@ -125,19 +125,19 @@
     "spatterCountMultiplier": 1.0,
     "overrideFurnitureSetting": true,
     "enterTransition": {
-        "m_FileID": 127068,
+        "m_FileID": 127514,
         "m_PathID": 0
     },
     "exitTransition": {
-        "m_FileID": 127070,
+        "m_FileID": 127516,
         "m_PathID": 0
     },
     "enterTransition2": {
-        "m_FileID": 127068,
+        "m_FileID": 127514,
         "m_PathID": 0
     },
     "exitTransition2": {
-        "m_FileID": 127070,
+        "m_FileID": 127516,
         "m_PathID": 0
     },
     "switchSFX": [],

@@ -2,7 +2,7 @@
     "presetName": "StreetCrimeScene",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 99648,
+        "m_FileID": 99818,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97938,
+        "m_FileID": 98098,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97902,
+        "m_FileID": 98062,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -89,7 +89,7 @@
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127042,
+        "m_FileID": 127488,
         "m_PathID": 0
     },
     "overrideMass": false,

@@ -4,7 +4,7 @@
     "disabled": false,
     "compatibleWith": [
         {
-            "m_FileID": 40022,
+            "m_FileID": 40114,
             "m_PathID": 0
         }
     ],
@@ -20,7 +20,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14256,
+                    "m_FileID": 14318,
                     "m_PathID": 0
                 }
             ],
@@ -31,7 +31,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 40030,
+                    "m_FileID": 40122,
                     "m_PathID": 0
                 }
             ],
@@ -42,7 +42,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 23472,
+                    "m_FileID": 23540,
                     "m_PathID": 0
                 }
             ],
@@ -53,7 +53,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 40032,
+                    "m_FileID": 40124,
                     "m_PathID": 0
                 }
             ],
@@ -64,7 +64,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14936,
+                    "m_FileID": 14998,
                     "m_PathID": 0
                 }
             ],
@@ -75,11 +75,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 12698,
+                    "m_FileID": 12760,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 12700,
+                    "m_FileID": 12762,
                     "m_PathID": 0
                 }
             ],
@@ -91,7 +91,7 @@
         {
             "jobs": [
                 {
-                    "m_FileID": 40040,
+                    "m_FileID": 40132,
                     "m_PathID": 0
                 }
             ],
@@ -127,7 +127,7 @@
     "requiresSniperVantageAtHome": false,
     "weaponsPool": [
         {
-            "m_FileID": 40028,
+            "m_FileID": 40120,
             "m_PathID": 0
         }
     ],
@@ -169,7 +169,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 40024,
+                    "m_FileID": 40116,
                     "m_PathID": 0
                 }
             ],
@@ -186,7 +186,7 @@
             "chanceRatio": 0,
             "itemTag": 0,
             "spawnItem": {
-                "m_FileID": 40026,
+                "m_FileID": 40118,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -207,7 +207,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 40024,
+                    "m_FileID": 40116,
                     "m_PathID": 0
                 }
             ],
@@ -224,7 +224,7 @@
             "chanceRatio": 0,
             "itemTag": 1,
             "spawnItem": {
-                "m_FileID": 40038,
+                "m_FileID": 40130,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -245,7 +245,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 40024,
+                    "m_FileID": 40116,
                     "m_PathID": 0
                 }
             ],
@@ -262,7 +262,7 @@
             "chanceRatio": 0,
             "itemTag": 2,
             "spawnItem": {
-                "m_FileID": 40034,
+                "m_FileID": 40126,
                 "m_PathID": 0
             },
             "vmailThread": "",
@@ -283,7 +283,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 40024,
+                    "m_FileID": 40116,
                     "m_PathID": 0
                 }
             ],
@@ -321,7 +321,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 40024,
+                    "m_FileID": 40116,
                     "m_PathID": 0
                 }
             ],
@@ -359,7 +359,7 @@
             "compatibleWithAllMotives": false,
             "compatibleWithMotives": [
                 {
-                    "m_FileID": 40024,
+                    "m_FileID": 40116,
                     "m_PathID": 0
                 }
             ],
@@ -397,7 +397,7 @@
     "callingCardPool": [],
     "playerTaunts": [
         {
-            "m_FileID": 40036,
+            "m_FileID": 40128,
             "m_PathID": 0
         }
     ]

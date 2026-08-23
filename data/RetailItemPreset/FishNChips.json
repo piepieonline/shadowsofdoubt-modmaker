@@ -1,7 +1,7 @@
 {
     "presetName": "FishNChips",
     "itemPreset": {
-        "m_FileID": 52776,
+        "m_FileID": 52870,
         "m_PathID": 0
     },
     "canBeFavourite": true,
@@ -18,11 +18,11 @@
     "mustFeatureTraits": [],
     "cantFeatureTrait": [
         {
-            "m_FileID": 30416,
+            "m_FileID": 30508,
             "m_PathID": 0
         },
         {
-            "m_FileID": 34360,
+            "m_FileID": 34454,
             "m_PathID": 0
         }
     ],

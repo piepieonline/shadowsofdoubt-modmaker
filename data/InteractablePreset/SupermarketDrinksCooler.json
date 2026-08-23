@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97902,
+        "m_FileID": 98062,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,11 +87,11 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126500,
+            "m_FileID": 126946,
             "m_PathID": 0
         },
         {
-            "m_FileID": 126562,
+            "m_FileID": 127008,
             "m_PathID": 0
         }
     ],
@@ -388,7 +388,7 @@
         "m_PathID": 0
     },
     "menuOverride": {
-        "m_FileID": 125216,
+        "m_FileID": 125660,
         "m_PathID": 0
     },
     "hourlyChime": {

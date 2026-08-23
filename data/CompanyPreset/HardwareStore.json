@@ -65,7 +65,7 @@
     "enableLoiteringBehaviour": true,
     "menus": [
         {
-            "m_FileID": 42964,
+            "m_FileID": 43056,
             "m_PathID": 0
         }
     ],
@@ -73,11 +73,11 @@
     "previousFakeSalesRecords": 10,
     "requiredTraits": [
         {
-            "m_FileID": 13512,
+            "m_FileID": 13574,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14420,
+            "m_FileID": 14482,
             "m_PathID": 0
         }
     ],
@@ -86,11 +86,11 @@
     "sellValueMultiplier": 0.5,
     "possibleUniformColours": [],
     "workHours": {
-        "m_FileID": 13700,
+        "m_FileID": 13762,
         "m_PathID": 0
     },
     "structure": {
-        "m_FileID": 26826,
+        "m_FileID": 26898,
         "m_PathID": 0
     },
     "controlsBuildingSurveillance": false,

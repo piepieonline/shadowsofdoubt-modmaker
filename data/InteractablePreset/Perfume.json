@@ -2,7 +2,7 @@
     "presetName": "Perfume",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 104246,
+        "m_FileID": 104482,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 97340,
+        "m_FileID": 97498,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 98444,
+        "m_FileID": 98604,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126524,
+            "m_FileID": 126970,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127024,
+        "m_FileID": 127470,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -103,7 +103,7 @@
     "mass": 1.0,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 127014,
+        "m_FileID": 127460,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -115,7 +115,7 @@
     "shardEveryXPixels": 64,
     "overrideSpatterSettings": true,
     "spatterSimulation": {
-        "m_FileID": 127236,
+        "m_FileID": 127682,
         "m_PathID": 0
     },
     "spatterCountMultiplier": 0.5,
@@ -179,17 +179,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127348,
+            "m_FileID": 127794,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 127260,
+            "m_FileID": 127706,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127282,
+            "m_FileID": 127728,
             "m_PathID": 0
         }
     ],
@@ -206,11 +206,11 @@
             "rule": 2,
             "traitList": [
                 {
-                    "m_FileID": 127776,
+                    "m_FileID": 128222,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127534,
+                    "m_FileID": 127980,
                     "m_PathID": 0
                 }
             ],
@@ -222,19 +222,19 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127452,
+                    "m_FileID": 127898,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127466,
+                    "m_FileID": 127912,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127460,
+                    "m_FileID": 127906,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127436,
+                    "m_FileID": 127882,
                     "m_PathID": 0
                 }
             ],
@@ -246,7 +246,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 127672,
+                    "m_FileID": 128118,
                     "m_PathID": 0
                 }
             ],
@@ -303,7 +303,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126336,
+        "m_FileID": 126780,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -370,7 +370,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126424,
+        "m_FileID": 126868,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -447,7 +447,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 127188,
+        "m_FileID": 127634,
         "m_PathID": 0
     },
     "menuOverride": {

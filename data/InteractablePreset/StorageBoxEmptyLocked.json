@@ -2,7 +2,7 @@
     "presetName": "StorageBoxEmptyLocked",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 101992,
+        "m_FileID": 102196,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98322,
+        "m_FileID": 98482,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97606,
+        "m_FileID": 97764,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126544,
+            "m_FileID": 126990,
             "m_PathID": 0
         }
     ],
@@ -179,29 +179,29 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127336,
+            "m_FileID": 127782,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 127304,
+            "m_FileID": 127750,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127302,
+            "m_FileID": 127748,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127270,
+            "m_FileID": 127716,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127276,
+            "m_FileID": 127722,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127330,
+            "m_FileID": 127776,
             "m_PathID": 0
         }
     ],
@@ -248,7 +248,7 @@
     "ownedRule": 2,
     "overrideWithOnlyOwnedSpawnAtWork": false,
     "subSpawnClass": {
-        "m_FileID": 127322,
+        "m_FileID": 127768,
         "m_PathID": 0
     },
     "subSpawnPositions": [
@@ -292,7 +292,7 @@
         "z": 0.0
     },
     "includeLock": {
-        "m_FileID": 127004,
+        "m_FileID": 127450,
         "m_PathID": 0
     },
     "lockOffset": {

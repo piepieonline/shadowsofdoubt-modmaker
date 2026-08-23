@@ -2,7 +2,7 @@
     "presetName": "PocketWatch",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 102810,
+        "m_FileID": 103030,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98204,
+        "m_FileID": 98364,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97884,
+        "m_FileID": 98044,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126524,
+            "m_FileID": 126970,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 127026,
+        "m_FileID": 127472,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,15 +179,15 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 127322,
+            "m_FileID": 127768,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127282,
+            "m_FileID": 127728,
             "m_PathID": 0
         },
         {
-            "m_FileID": 127328,
+            "m_FileID": 127774,
             "m_PathID": 0
         }
     ],
@@ -205,11 +205,11 @@
             "rule": 1,
             "traitList": [
                 {
-                    "m_FileID": 127658,
+                    "m_FileID": 128104,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 127678,
+                    "m_FileID": 128124,
                     "m_PathID": 0
                 }
             ],
@@ -333,7 +333,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 126412,
+        "m_FileID": 126856,
         "m_PathID": 0
     },
     "isInventoryItem": true,

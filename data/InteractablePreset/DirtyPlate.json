@@ -2,7 +2,7 @@
     "presetName": "DirtyPlate",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 54152,
+        "m_FileID": 54246,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 54156,
+        "m_FileID": 54250,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12874,
+            "m_FileID": 12936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 32674,
+        "m_FileID": 32766,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -103,7 +103,7 @@
     "mass": 1.0,
     "breakable": true,
     "particleProfile": {
-        "m_FileID": 13586,
+        "m_FileID": 13648,
         "m_PathID": 0
     },
     "overrideShatterSettings": false,
@@ -179,11 +179,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 25896,
+            "m_FileID": 25964,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13584,
+            "m_FileID": 13646,
             "m_PathID": 0
         }
     ],
@@ -201,11 +201,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 14184,
+                    "m_FileID": 14246,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 12684,
+                    "m_FileID": 12746,
                     "m_PathID": 0
                 }
             ],
@@ -248,7 +248,7 @@
     "ownedRule": 3,
     "overrideWithOnlyOwnedSpawnAtWork": true,
     "subSpawnClass": {
-        "m_FileID": 48754,
+        "m_FileID": 48848,
         "m_PathID": 0
     },
     "subSpawnPositions": [
@@ -342,7 +342,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 12866,
+        "m_FileID": 12928,
         "m_PathID": 0
     },
     "isInventoryItem": true,

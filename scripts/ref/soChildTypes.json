@@ -15285,6 +15285,11 @@
       "Item2": false,
       "Item3": "Allow weapon selection after transition has finished"
     },
+    "holsterExceptions": {
+      "Item1": "FirstPersonItem",
+      "Item2": true,
+      "Item3": ""
+    },
     "playerXRecoilLookCurve": {
       "Item1": "AnimationCurve",
       "Item2": false,
@@ -21063,6 +21068,11 @@
       "Item1": "ProgressChange",
       "Item2": false,
       "Item3": ""
+    },
+    "OnUpdateValidity": {
+      "Item1": "UpdateValidity",
+      "Item2": false,
+      "Item3": ""
     }
   },
   "RevengeObjectiveName": {},
@@ -22759,6 +22769,11 @@
       "Item3": ""
     },
     "dialogPreset": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
+    "resolveQuestion": {
       "Item1": "String",
       "Item2": false,
       "Item3": ""
@@ -24979,6 +24994,11 @@
     },
     "poisoner": {
       "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "humiliated": {
+      "Item1": "Single",
       "Item2": false,
       "Item3": ""
     },

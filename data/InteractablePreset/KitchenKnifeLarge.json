@@ -2,7 +2,7 @@
     "presetName": "KitchenKnifeLarge",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 42000,
+        "m_FileID": 42092,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 56240,
+        "m_FileID": 56334,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 15842,
+        "m_FileID": 15904,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12874,
+            "m_FileID": 12936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 17206,
+        "m_FileID": 17268,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,17 +179,17 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13410,
+            "m_FileID": 13472,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 13606,
+            "m_FileID": 13668,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12714,
+            "m_FileID": 12776,
             "m_PathID": 0
         }
     ],
@@ -206,7 +206,7 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 28396,
+                    "m_FileID": 28488,
                     "m_PathID": 0
                 }
             ],
@@ -236,15 +236,15 @@
     "limitToCertainRooms": true,
     "onlyInRooms": [
         {
-            "m_FileID": 18484,
+            "m_FileID": 18546,
             "m_PathID": 0
         },
         {
-            "m_FileID": 15222,
+            "m_FileID": 15284,
             "m_PathID": 0
         },
         {
-            "m_FileID": 18684,
+            "m_FileID": 18746,
             "m_PathID": 0
         }
     ],
@@ -276,7 +276,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13430,
+        "m_FileID": 13492,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -343,7 +343,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 17444,
+        "m_FileID": 17506,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -381,7 +381,7 @@
     "chanceOfDroppedAngle": 0.0,
     "droppedAngleHeightBoost": 0.10000000149011612,
     "weapon": {
-        "m_FileID": 41998,
+        "m_FileID": 42090,
         "m_PathID": 0
     },
     "inventoryCarryItem": false,
@@ -401,33 +401,33 @@
     "takeWith": true,
     "putDownPositions": [
         {
-            "m_FileID": 13410,
+            "m_FileID": 13472,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12708,
+            "m_FileID": 12770,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12758,
+            "m_FileID": 12820,
             "m_PathID": 0
         }
     ],
     "backupPutDownPositions": [
         {
-            "m_FileID": 13584,
+            "m_FileID": 13646,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12896,
+            "m_FileID": 12958,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13494,
+            "m_FileID": 13556,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12714,
+            "m_FileID": 12776,
             "m_PathID": 0
         }
     ],
@@ -450,7 +450,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 56238,
+        "m_FileID": 56332,
         "m_PathID": 0
     },
     "menuOverride": {

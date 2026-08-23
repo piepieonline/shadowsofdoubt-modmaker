@@ -2,7 +2,7 @@
     "presetName": "TikaToast",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 60764,
+        "m_FileID": 60858,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 60748,
+        "m_FileID": 60842,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 45294,
+        "m_FileID": 45386,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12874,
+            "m_FileID": 12936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 14588,
+        "m_FileID": 14650,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,25 +179,25 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 14606,
+            "m_FileID": 14668,
             "m_PathID": 0
         },
         {
-            "m_FileID": 16140,
+            "m_FileID": 16202,
             "m_PathID": 0
         },
         {
-            "m_FileID": 14596,
+            "m_FileID": 14658,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 12708,
+            "m_FileID": 12770,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12714,
+            "m_FileID": 12776,
             "m_PathID": 0
         }
     ],
@@ -258,7 +258,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13430,
+        "m_FileID": 13492,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -325,7 +325,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 14610,
+        "m_FileID": 14672,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -348,11 +348,11 @@
     "destroyWhenAllConsumed": false,
     "useSameModelAsTrash": false,
     "trashItem": {
-        "m_FileID": 44578,
+        "m_FileID": 44670,
         "m_PathID": 0
     },
     "playerConsumeLoop": {
-        "m_FileID": 14578,
+        "m_FileID": 14640,
         "m_PathID": 0
     },
     "takeOneEvent": {

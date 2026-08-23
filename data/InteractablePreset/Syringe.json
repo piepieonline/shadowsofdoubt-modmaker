@@ -2,7 +2,7 @@
     "presetName": "Syringe",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 38930,
+        "m_FileID": 39022,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 72856,
+        "m_FileID": 72950,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 22792,
+        "m_FileID": 22860,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 12874,
+            "m_FileID": 12936,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 13658,
+        "m_FileID": 13720,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -179,21 +179,21 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 12708,
+            "m_FileID": 12770,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13620,
+            "m_FileID": 13682,
             "m_PathID": 0
         }
     ],
     "backupClasses": [
         {
-            "m_FileID": 12714,
+            "m_FileID": 12776,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12896,
+            "m_FileID": 12958,
             "m_PathID": 0
         }
     ],
@@ -210,11 +210,11 @@
             "rule": 0,
             "traitList": [
                 {
-                    "m_FileID": 41384,
+                    "m_FileID": 41476,
                     "m_PathID": 0
                 },
                 {
-                    "m_FileID": 40072,
+                    "m_FileID": 40164,
                     "m_PathID": 0
                 }
             ],
@@ -271,7 +271,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 13430,
+        "m_FileID": 13492,
         "m_PathID": 0
     },
     "locationIsParent": true,
@@ -338,7 +338,7 @@
     "overrideMaxDynamicFingerprints": false,
     "maxDynamicFingerprints": 8,
     "fpsItem": {
-        "m_FileID": 17444,
+        "m_FileID": 17506,
         "m_PathID": 0
     },
     "isInventoryItem": true,
@@ -376,7 +376,7 @@
     "chanceOfDroppedAngle": 0.0,
     "droppedAngleHeightBoost": 0.10000000149011612,
     "weapon": {
-        "m_FileID": 38940,
+        "m_FileID": 39032,
         "m_PathID": 0
     },
     "inventoryCarryItem": false,
@@ -396,25 +396,25 @@
     "takeWith": true,
     "putDownPositions": [
         {
-            "m_FileID": 13620,
+            "m_FileID": 13682,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12708,
+            "m_FileID": 12770,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13410,
+            "m_FileID": 13472,
             "m_PathID": 0
         }
     ],
     "backupPutDownPositions": [
         {
-            "m_FileID": 12714,
+            "m_FileID": 12776,
             "m_PathID": 0
         },
         {
-            "m_FileID": 12896,
+            "m_FileID": 12958,
             "m_PathID": 0
         }
     ],
@@ -437,7 +437,7 @@
     "recordCreationTime": false,
     "musicTracks": [],
     "retailItem": {
-        "m_FileID": 62232,
+        "m_FileID": 62326,
         "m_PathID": 0
     },
     "menuOverride": {

@@ -2,7 +2,7 @@
     "presetName": "PlasticStool",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 36130,
+        "m_FileID": 36222,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 36134,
+        "m_FileID": 36226,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 12860,
+        "m_FileID": 12922,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,14 +87,14 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 13812,
+            "m_FileID": 13874,
             "m_PathID": 0
         }
     ],
     "onlyIllegalIfInNonPublic": true,
     "rangeModifier": 0.0,
     "physicsProfile": {
-        "m_FileID": 17864,
+        "m_FileID": 17926,
         "m_PathID": 0
     },
     "overrideMass": false,
@@ -121,19 +121,19 @@
     "spatterCountMultiplier": 1.0,
     "overrideFurnitureSetting": true,
     "enterTransition": {
-        "m_FileID": 25586,
+        "m_FileID": 25654,
         "m_PathID": 0
     },
     "exitTransition": {
-        "m_FileID": 15810,
+        "m_FileID": 15872,
         "m_PathID": 0
     },
     "enterTransition2": {
-        "m_FileID": 25586,
+        "m_FileID": 25654,
         "m_PathID": 0
     },
     "exitTransition2": {
-        "m_FileID": 15810,
+        "m_FileID": 15872,
         "m_PathID": 0
     },
     "switchSFX": [],
@@ -179,11 +179,11 @@
     "recognitionRange": 5.0,
     "subObjectClasses": [
         {
-            "m_FileID": 13790,
+            "m_FileID": 13852,
             "m_PathID": 0
         },
         {
-            "m_FileID": 13494,
+            "m_FileID": 13556,
             "m_PathID": 0
         }
     ],

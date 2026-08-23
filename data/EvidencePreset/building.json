@@ -2,7 +2,7 @@
     "presetName": "building",
     "subClass": "Building",
     "windowStyle": {
-        "m_FileID": 12812,
+        "m_FileID": 12874,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -33,11 +33,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 44192,
+        "m_FileID": 44284,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 49994,
+        "m_FileID": 50088,
         "m_PathID": 0
     },
     "useInGamePhoto": false,

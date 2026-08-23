@@ -2,7 +2,7 @@
     "presetName": "SaleNote",
     "subClass": "SalesNote",
     "windowStyle": {
-        "m_FileID": 127854,
+        "m_FileID": 128300,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 98394,
+        "m_FileID": 98554,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 94548,
+        "m_FileID": 94654,
         "m_PathID": 0
     },
     "useInGamePhoto": false,

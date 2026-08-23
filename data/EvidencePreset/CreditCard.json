@@ -2,7 +2,7 @@
     "presetName": "CreditCard",
     "subClass": "",
     "windowStyle": {
-        "m_FileID": 127862,
+        "m_FileID": 128308,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,15 +17,15 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 97520,
+        "m_FileID": 97678,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 94548,
+        "m_FileID": 94654,
         "m_PathID": 0
     },
-    "useInGamePhoto": true,
-    "useWriter": true,
+    "useInGamePhoto": false,
+    "useWriter": false,
     "relativeCamPhotoPos": {
         "x": 0.0,
         "y": 0.30000001192092898,
@@ -47,7 +47,7 @@
     "factSetup": [
         {
             "preset": {
-                "m_FileID": 126344,
+                "m_FileID": 126788,
                 "m_PathID": 0
             },
             "link": 1,

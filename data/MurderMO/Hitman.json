@@ -4,7 +4,7 @@
     "disabled": false,
     "compatibleWith": [
         {
-            "m_FileID": 41482,
+            "m_FileID": 41574,
             "m_PathID": 0
         }
     ],
@@ -46,7 +46,7 @@
     "requiresSniperVantageAtHome": false,
     "weaponsPool": [
         {
-            "m_FileID": 33780,
+            "m_FileID": 33874,
             "m_PathID": 0
         }
     ],

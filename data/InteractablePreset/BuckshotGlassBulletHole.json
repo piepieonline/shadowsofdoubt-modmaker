@@ -2,7 +2,7 @@
     "presetName": "BuckshotGlassBulletHole",
     "spawnable": true,
     "prefab": {
-        "m_FileID": 102318,
+        "m_FileID": 102526,
         "m_PathID": 0
     },
     "prefabLocalEuler": {
@@ -46,7 +46,7 @@
     "isMainLight": false,
     "forceIncludeOnStreetLightLayer": false,
     "staticImage": {
-        "m_FileID": 98500,
+        "m_FileID": 98662,
         "m_PathID": 0
     },
     "imagePos": {
@@ -65,7 +65,7 @@
         "m_PathID": 0
     },
     "iconOverride": {
-        "m_FileID": 97338,
+        "m_FileID": 97496,
         "m_PathID": 0
     },
     "itemClass": 4,
@@ -87,7 +87,7 @@
     },
     "actionsPreset": [
         {
-            "m_FileID": 126522,
+            "m_FileID": 126968,
             "m_PathID": 0
         }
     ],
@@ -236,7 +236,7 @@
     },
     "findEvidence": 0,
     "spawnEvidence": {
-        "m_FileID": 126250,
+        "m_FileID": 126694,
         "m_PathID": 0
     },
     "locationIsParent": true,

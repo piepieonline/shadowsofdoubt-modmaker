@@ -2,7 +2,7 @@
     "presetName": "ScienceLabNoteList",
     "subClass": "",
     "windowStyle": {
-        "m_FileID": 12812,
+        "m_FileID": 12874,
         "m_PathID": 0
     },
     "useDataKeys": false,
@@ -17,11 +17,11 @@
     "forceWorldInteraction": false,
     "useWindowFocusMode": false,
     "iconSpriteLarge": {
-        "m_FileID": 12804,
+        "m_FileID": 12866,
         "m_PathID": 0
     },
     "defaultNullImage": {
-        "m_FileID": 12806,
+        "m_FileID": 12868,
         "m_PathID": 0
     },
     "useInGamePhoto": false,
@@ -47,7 +47,7 @@
     "factSetup": [
         {
             "preset": {
-                "m_FileID": 12810,
+                "m_FileID": 12872,
                 "m_PathID": 0
             },
             "link": 5,
