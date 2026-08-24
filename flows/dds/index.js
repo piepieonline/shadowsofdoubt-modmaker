@@ -1,0 +1,378 @@
+const DUMMY_KEYS = {
+    'LOCALISATION_DUMMY_KEY': '_ENG Localisation_',
+    'NEWSPAPER_DUMMY_KEY': '_Newspaper Article Configuration_'
+};
+
+const LOCALISATION_MISSING_STRING = 'MISSING GUID IN dds.csv';
+
+const GUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+async function initAndLoad(path) {
+    window.stringMapping = {};
+    window.moddedStringMapping = {};
+    await loadI18n();
+    await loadFile(path, 0);
+}
+
+async function loadI18n() {
+    async function loadStringsFile(handle, path) {
+        return (await (await (await getFile(handle, path)).getFile()).text()).split('\n').reduce((map, val) => {
+            var lineContent = val.split(',');
+
+            // Sanity Check each line
+            if (lineContent.length < 7) return map;
+
+            var guid = lineContent[0].replaceAll('"', '');
+            var message = lineContent[2];
+
+            if (message?.startsWith('"') && !message.endsWith('"')) {
+                var i = 3;
+                do {
+                    message += "," + lineContent[i];
+                    i++;
+                } while (!lineContent[i - 1].endsWith('"'))
+            }
+
+            map[guid] = { text: message, source: handle === window.dirHandleStreamingAssets ? 'StreamingAssets' : 'Mod' };
+            return map;
+        }, {});
+    }
+
+    window.stringMapping = await loadStringsFile(window.dirHandleStreamingAssets, ['Strings', 'English', 'DDS', 'dds.blocks.csv']);
+
+    // Try to load the existing mod DDS file. Just skip if it's missing
+    try
+    {
+        if (window.selectedMod != null) {
+            window.moddedStringMapping = await loadStringsFile(window.selectedMod.ddsStrings, ['dds.blocks.csv']);
+        }
+    }
+    catch
+    {
+        moddedStringMapping = {};
+    }
+}
+
+async function loadFile(path, thisTreeCount, parentData = null, openTheseIds = null) {
+    var data = null;
+    var fileType;
+    
+    var vanillaDataFile = await (await (await tryGetFile(window.dirHandleStreamingAssets, path.split('/')))?.getFile())?.text();
+    var patchDataFile = window.selectedMod != null ? (await (await (await tryGetFile(window.selectedMod.baseFolder, (path + '_patch').split('/')))?.getFile())?.text()) : null;
+    
+    if (vanillaDataFile != null) {
+        data = JSON.parse(vanillaDataFile);
+        if (patchDataFile != null) {
+            data = jsonpatch.applyPatch(data, JSON.parse(patchDataFile)).newDocument;
+        }
+    } else {
+        data = JSON.parse(await (await (await tryGetFile(window.selectedMod.baseFolder, path.split('/')))?.getFile())?.text());
+    }
+    
+    // Show actual text
+    createDummyKeys(data);
+    
+    // Create json-tree
+    var treeEle = addTreeElement(thisTreeCount, document.getElementById('trees'), { path, name: data.name }, { copySource, useAsTemplate, save })
+    var tree = jsonTree.create(data, treeEle);
+    runTreeSetup();
+
+    let fileName = path.split('/').at(-1);
+    if (['tree', 'msg', 'block'].includes(fileName.split('.')[1]) && fileName.split('.')[0] != data.id) {
+        alert('Filename doesn\'t match id! File will not work in game!');
+    }
+
+    if(path.endsWith(".tree")) {
+        fileType = 'tree';
+        let validMessageId = data.messages.find(msg => GUID_PATTERN.test(msg.msgID))?.msgID;
+
+        if(openTheseIds) {
+                
+        }
+
+        if(validMessageId)
+            await loadFile(`DDS/Messages/${validMessageId}.msg`, 1, data)
+    } else if(path.endsWith(".msg")) {
+        fileType = 'message';
+        let validBlockId = data.blocks.find(block => GUID_PATTERN.test(block.blockID))?.blockID;
+        if(validBlockId)
+            await loadFile(`DDS/Blocks/${validBlockId}.block`, 2, data)
+    } else if(path.endsWith('.block')) {
+        fileType = 'block';
+    }
+
+    function createDummyKeys(data) {
+        function createDummyLocalisationKey(obj, id) {
+            let value = window.moddedStringMapping[id]?.text || window.stringMapping[id]?.text || LOCALISATION_MISSING_STRING;
+
+            if (value.startsWith('"')) {
+                value = value.substring(1, value.length - 1);
+            }
+
+            obj[DUMMY_KEYS.LOCALISATION_DUMMY_KEY] = value;
+        }
+
+        if (path.includes('Blocks')) {
+            createDummyLocalisationKey(data, data.id);
+            for (var i = 0; i < data.replacements.length; i++) {
+                createDummyLocalisationKey(data.replacements[i], data.replacements[i].replaceWithID);
+            }
+        }
+
+        if (parentData?.treeType == 3) { // Newspaper
+            data[DUMMY_KEYS.NEWSPAPER_DUMMY_KEY] = data.id;
+        }
+        return data;
+    }
+
+    async function modifyTreeElement(jsonPointer, newValue) {
+        data = jsonpatch.applyPatch(data, [
+            {
+                op: 'replace',
+                path: jsonPointer,
+                value: newValue
+            }
+        ]).newDocument;
+        data = createDummyKeys(data);
+        tree.loadData(data);
+        runTreeSetup();
+        await save();
+    }
+
+    async function runTreeSetup() {
+        // Auto-expand the useful keys
+        let expandedNodes = ['messages', 'blocks', 'replacements']
+        tree.expand(function (node) {
+            if (expandedNodes.includes(node.label)) {
+                node.childNodes.forEach(child => child.expand());
+                return true;
+            }
+        });
+
+        // Links for trees and blocks
+        tree.findAndHandle(item => {
+            return ['msgID', 'blockID', DUMMY_KEYS.NEWSPAPER_DUMMY_KEY].includes(item.label);
+        }, async item => {
+            var ele = item.el.querySelector('.jsontree_value_string');
+            const guid = ele.innerText.replace(/"/g, "");
+
+            ele.classList.add('link-element')
+
+            if(item.label == DUMMY_KEYS.NEWSPAPER_DUMMY_KEY) {
+                await createFileIfNotExisting('newspaper', guid);
+            }
+
+            ele.addEventListener('click', () => {
+                switch (item.label) {
+                    case 'msgID':
+                        loadFile(`DDS/Messages/${guid}.msg`, 1, data);
+                        break;
+                    case 'blockID':
+                        loadFile(`DDS/Blocks/${guid}.block`, 2, data);
+                        break;
+                    case DUMMY_KEYS.NEWSPAPER_DUMMY_KEY:
+                        loadFile(`DDS/Messages/${guid}.newspaper`, 2, data);
+                        break;
+                }
+            });
+        });
+
+        // Editing operations
+
+        // Simple types, direct editing and enums
+        tree.findAndHandle(item => {
+            return !item.isComplex;
+        }, item => {
+            var ele = item.el.querySelector('.jsontree_value');
+
+            if (window.enums[item.label]?.length > 0) {
+                createEnumSelectElement(
+                    item.el.querySelector('.jsontree_value'),
+                    window.enums[item.label],
+                    ele.innerText
+                ).addEventListener('change', async (e) => {
+                    await modifyTreeElement(getJSONPointer(item), parseInt(e.target.value));
+                });
+            } else {
+                ele.addEventListener('contextmenu', async (e) => {
+                    e.preventDefault();
+
+                    if (!window.selectedMod) {
+                        alert('Please select a mod to save in first');
+                        throw 'Please select a mod to save in first';
+                    }
+
+                    let previousValue = item.el.querySelector('.jsontree_value').innerText;
+
+                    // If it's a string, auto-handle quotes
+                    if (item.type == 'string') {
+                        previousValue = previousValue.substring(1, previousValue.length - 1);
+
+                        // Double quotes
+                        if (previousValue.startsWith('"')) {
+                            previousValue = previousValue.substring(1, previousValue.length - 1);
+                        }
+                    }
+
+                    let res = prompt('Enter new value', previousValue);
+
+                    if (res === null) {
+                        return;
+                    }
+
+                    if ((item.type == 'string' && res != 'null' && res !== null)) {
+                        res = makeCSVSafe(res);
+                    }
+
+                    let parsed = JSON.parse(res);
+                    if (item.label != DUMMY_KEYS.LOCALISATION_DUMMY_KEY) {
+                        if (parsed || parsed === false || parsed === 0 || parsed === '' || res === 'null') {
+                            await modifyTreeElement(getJSONPointer(item), parsed);
+                        }
+                    } else {
+                        item.parent.findChildren(node => ['id', 'replaceWithID'].includes(node.label), async node => {
+                            let guidString = node.el.querySelector('.jsontree_value').innerText;
+                            guidString = guidString.substring(1, guidString.length - 1);
+
+                            await addOrModifyStrings(guidString, parsed);
+
+                            // Visually update the value, since we aren't changing the tree
+                            item.el.querySelector('.jsontree_value').innerText = parsed.startsWith('"') ? parsed : '"' + parsed + '"';
+
+                            await loadI18n();
+                        });
+                    }
+                });
+            }
+        });
+
+        // Removing element
+        tree.findAndHandle(item => {
+            return item.parent.type === 'array';
+        }, item => {
+            var ele = item.el.querySelector('.jsontree_label');
+            ele.addEventListener('contextmenu', async (e) => {
+                e.preventDefault();
+
+                if (!window.selectedMod) {
+                    alert('Please select a mod to save in first');
+                    throw 'Please select a mod to save in first';
+                }
+
+                if (confirm('Remove Element?')) {
+                    data = jsonpatch.applyPatch(data, [
+                        {
+                            op: 'remove',
+                            path: getJSONPointer(item)
+                        }
+                    ]).newDocument;
+                    data = createDummyKeys(data);
+                    tree.loadData(data);
+                    runTreeSetup();
+                    await save();
+                }
+            });
+        });
+
+        // Adding element
+        tree.findAndHandle(item => {
+            return item.type === 'array';
+        }, item => {
+            var ele = item.el.querySelector('.jsontree_label');
+            ele.addEventListener('contextmenu', async (e) => {
+                e.preventDefault();
+
+                if (!window.selectedMod) {
+                    alert('Please select a mod to save in first');
+                    throw 'Please select a mod to save in first';
+                }
+
+                if (confirm('Add Element?')) {
+                    let newContent = await getTemplateForItem(item);
+
+                    if (newContent === null) return;
+
+                    data = jsonpatch.applyPatch(data, [
+                        {
+                            op: 'add',
+                            path: getJSONPointer(item) + '/-',
+                            value: newContent
+                        }
+                    ]).newDocument;
+                    data = createDummyKeys(data);
+                    tree.loadData(data);
+                    runTreeSetup();
+                    await save();
+                }
+            });
+        });
+    }
+
+    async function copySource() {
+        navigator.clipboard.writeText(getSaveSafeJSON());
+    }
+
+    async function useAsTemplate() {
+        newFile(fileType, data);
+    }
+
+    async function save(force) {
+        if (!window.selectedMod) {
+            alert('Please select a mod to save in first');
+            throw 'Please select a mod to save in first';
+        }
+
+        if (!window.savingEnabled && !force) return;
+
+        if (vanillaDataFile) {
+            // Save patches of vanilla files
+            writeFile(await tryGetFile(window.selectedMod.baseFolder, (path + '_patch').split('/'), true), JSON.stringify(jsonpatch.compare(JSON.parse(vanillaDataFile), JSON.parse(getSaveSafeJSON()))), false);
+
+        } else {
+            // Save entire custom files
+            writeFile(await tryGetFile(window.selectedMod.baseFolder, path.split('/'), true), getSaveSafeJSON(), false);
+        }
+    }
+
+    function getSaveSafeJSON() {
+        return JSON.stringify(data, (key, value) => (Object.keys(DUMMY_KEYS).includes(key) ? undefined : value), 2);
+    }
+}
+
+async function getTemplateForItem(item) {
+    switch (item.label) {
+        case 'messages':
+            let message = cloneTemplate('treeMessage');
+            message.msgID = prompt(`Existing GUID (Or cancel to create a new file)`) || await createNewFile('message');
+            message.instanceID = crypto.randomUUID();
+            return message;
+        case 'links':
+            let treeMessageLinks = cloneTemplate('treeMessageLinks');
+            treeMessageLinks.to = prompt(`Existing instanceID`) || '';
+            treeMessageLinks.from = item.parent.childNodes.find(node => node.label == 'instanceID').el.querySelector('.jsontree_value').innerText.replaceAll('"', '');
+            return treeMessageLinks;
+        case 'traits':
+            return prompt(`Trait name`) || null;
+        case 'blocks':
+            let block = cloneTemplate('messageBlock');
+            block.blockID = prompt(`Existing GUID (Or cancel to create a new file)`) || await createNewFile('block');
+            block.instanceID = crypto.randomUUID();
+            return block;
+        case 'replacements':
+            let replacement = cloneTemplate('blockReplacement');
+            let guid = prompt(`Existing GUID (Or cancel to create a new file)`);
+            if (guid) {
+                replacement.replaceWithID = guid;
+            } else {
+                replacement.replaceWithID = crypto.randomUUID();
+                await addOrModifyStrings(replacement.replaceWithID, prompt(`English Line`));
+            }
+            return replacement;
+        case 'jobs':
+            return prompt(`Job name`) || null;
+        case 'triggers':
+            return prompt(`Trigger index`) || null;
+        default:
+            return null;
+    }
+}
