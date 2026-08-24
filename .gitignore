@@ -1,0 +1,17 @@
+# Local HTTPS certs for `http-server -c-1 -S` (File System Access API needs a secure context)
+cert.pem
+key.pem
+
+# Editors
+.idea
+.vscode/*
+!.vscode/settings.json
+.DS_Store
+
+# Working notes / plan file, annotated in place
+.local/
+
+# Playwright (lands in Phase 1)
+node_modules/
+test-results/
+playwright-report/

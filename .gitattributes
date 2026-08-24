@@ -1,0 +1,18 @@
+# Both source repos were entirely LF at import time; keep it that way.
+* text=auto eol=lf
+
+*.js   text eol=lf
+*.json text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.svg  text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+
+*.png binary
+*.ico binary
+
+# Generated reference data from ShadowsOfDoubtMods/DocumentationGenerator.
+# Multi-MB single-line JSON; diffing it is never useful.
+flows/*/ref/*.json -diff linguist-generated
+data/**/*.json     -diff linguist-generated
