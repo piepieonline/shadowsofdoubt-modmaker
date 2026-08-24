@@ -1,0 +1,657 @@
+{
+    "presetName": "InvestigateAffair_D1",
+    "disabled": false,
+    "caseName": "InvestigateAffair",
+    "jobPosting": {
+        "m_FileID": 14132,
+        "m_PathID": 0
+    },
+    "subClass": "",
+    "allowSyncDiskRewards": true,
+    "allowBlackMarketSyncDiskRewards": true,
+    "physicalRewardLocation": 1,
+    "generateHidingLocation": false,
+    "socialCreditLevelMinSpawnFrequency": {
+        "serializedVersion": "2",
+        "m_Curve": [
+            {
+                "serializedVersion": "3",
+                "time": 0.0,
+                "value": 1.0,
+                "inSlope": 0.0,
+                "outSlope": 0.0,
+                "weightedMode": 0,
+                "inWeight": 0.0,
+                "outWeight": 0.0
+            },
+            {
+                "serializedVersion": "3",
+                "time": 1.0,
+                "value": 1.0,
+                "inSlope": 0.0,
+                "outSlope": 0.0,
+                "weightedMode": 0,
+                "inWeight": 0.0,
+                "outWeight": 0.0
+            }
+        ],
+        "m_PreInfinity": 2,
+        "m_PostInfinity": 2,
+        "m_RotationOrder": 4
+    },
+    "activePerCitizen": 0.009999999776482582,
+    "maxJobs": 3,
+    "immediatePostCountThreshold": 2,
+    "difficultyTag": 0,
+    "changePosterDialogCompliancy": 1,
+    "changePerpDialogCompliancy": 2,
+    "purpetratorMotives": [
+        {
+            "m_FileID": 61644,
+            "m_PathID": 0
+        }
+    ],
+    "penaltyForPurpAndPosterSameBuilding": 0,
+    "startingScenarios": [
+        {
+            "name": "To the point",
+            "dds": "680a49c9-7175-4b99-8a35-d07c979cd35e",
+            "leads": []
+        },
+        {
+            "name": "More personal",
+            "dds": "36d27554-3985-4f0d-8c1e-d80c0454f145",
+            "leads": []
+        }
+    ],
+    "compatibleIntros": [
+        {
+            "preset": {
+                "m_FileID": 54548,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        }
+    ],
+    "leadPoolData": 1,
+    "createFactsOnInformationAcquisition": [
+        {
+            "factPreset": {
+                "m_FileID": 43456,
+                "m_PathID": 0
+            },
+            "from": 2,
+            "to": 3,
+            "overrideFromKeys": false,
+            "fromKeys": [
+                0
+            ],
+            "featureKeysFromLeadPool": false,
+            "overrideToKeys": true,
+            "toKeys": [],
+            "featureKeysFromLeadPoolTo": true
+        }
+    ],
+    "informationAcquisitionLeads": [
+        {
+            "leadEvidence": 1,
+            "keys": [
+                0,
+                14,
+                1
+            ],
+            "useKeyFromLeadPool": false,
+            "autoPin": true,
+            "addDialogOptions": [],
+            "factsReveal": [
+                "PostedBy",
+                "LivesAt"
+            ],
+            "mergeKeys": [
+                0,
+                14,
+                1
+            ],
+            "discoveryApplication": [
+                0,
+                1
+            ]
+        },
+        {
+            "leadEvidence": 2,
+            "keys": [
+                0,
+                14
+            ],
+            "useKeyFromLeadPool": false,
+            "autoPin": true,
+            "addDialogOptions": [],
+            "factsReveal": [
+                "IsInRelationshipWith",
+                "LivesAt"
+            ],
+            "mergeKeys": [
+                0,
+                14
+            ],
+            "discoveryApplication": [
+                0,
+                1
+            ]
+        },
+        {
+            "leadEvidence": 4,
+            "keys": [
+                0,
+                36
+            ],
+            "useKeyFromLeadPool": false,
+            "autoPin": true,
+            "addDialogOptions": [],
+            "factsReveal": [],
+            "mergeKeys": [],
+            "discoveryApplication": [
+                0
+            ]
+        },
+        {
+            "leadEvidence": 3,
+            "keys": [],
+            "useKeyFromLeadPool": true,
+            "autoPin": true,
+            "addDialogOptions": [],
+            "factsReveal": [],
+            "mergeKeys": [],
+            "discoveryApplication": []
+        }
+    ],
+    "revengeObjectives": [
+        {
+            "m_FileID": 43054,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 14164,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 14152,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 14162,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 17216,
+            "m_PathID": 0
+        }
+    ],
+    "spawnItems": [
+        {
+            "name": "Cheaters letter work",
+            "findExisting": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 61644,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": false,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": true,
+            "orGroup": 0,
+            "chanceRatio": 4,
+            "disableOnDifficulties": [],
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 16316,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 5,
+            "belongsTo": 3,
+            "writer": 2,
+            "receiver": 3,
+            "security": 1,
+            "priority": 3,
+            "ownershipRule": 3
+        },
+        {
+            "name": "Cheaters letter home",
+            "findExisting": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 61644,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": false,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": true,
+            "orGroup": 0,
+            "chanceRatio": 4,
+            "disableOnDifficulties": [],
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 16316,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 4,
+            "belongsTo": 3,
+            "writer": 2,
+            "receiver": 3,
+            "security": 1,
+            "priority": 3,
+            "ownershipRule": 3
+        },
+        {
+            "name": "Cheaters poem work",
+            "findExisting": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 61644,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": false,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 1,
+            "useOrGroup": true,
+            "orGroup": 1,
+            "chanceRatio": 4,
+            "disableOnDifficulties": [],
+            "itemTag": 1,
+            "spawnItem": {
+                "m_FileID": 48766,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 3,
+            "belongsTo": 2,
+            "writer": 2,
+            "receiver": 3,
+            "security": 1,
+            "priority": 3,
+            "ownershipRule": 3
+        },
+        {
+            "name": "Cheaters poem home",
+            "findExisting": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 61644,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": false,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 1,
+            "useOrGroup": true,
+            "orGroup": 1,
+            "chanceRatio": 1,
+            "disableOnDifficulties": [],
+            "itemTag": 1,
+            "spawnItem": {
+                "m_FileID": 48766,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 2,
+            "belongsTo": 2,
+            "writer": 0,
+            "receiver": 3,
+            "security": 1,
+            "priority": 3,
+            "ownershipRule": 3
+        },
+        {
+            "name": "Flowers",
+            "findExisting": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 61644,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": false,
+            "chance": 0.0,
+            "useTraits": true,
+            "traitModifiers": [
+                {
+                    "who": 3,
+                    "rule": 2,
+                    "traitList": [
+                        {
+                            "m_FileID": 14972,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": true,
+                    "chanceModifier": 1.0
+                }
+            ],
+            "useIf": false,
+            "ifTag": 1,
+            "useOrGroup": false,
+            "orGroup": 1,
+            "chanceRatio": 4,
+            "disableOnDifficulties": [],
+            "itemTag": 2,
+            "spawnItem": {
+                "m_FileID": 47380,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 4,
+            "belongsTo": 3,
+            "writer": 2,
+            "receiver": 3,
+            "security": 1,
+            "priority": 3,
+            "ownershipRule": 2
+        }
+    ],
+    "resolveQuestions": [
+        {
+            "name": "Who is the partner of |poster.name| cheating with?",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 0,
+            "automaticAnswers": [
+                3
+            ],
+            "tag": 0,
+            "icon": 4,
+            "rewardRange": {
+                "x": 200.0,
+                "y": 300.0
+            },
+            "penaltyRange": {
+                "x": 50.0,
+                "y": 100.0
+            },
+            "isOptional": false,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        },
+        {
+            "name": "Can you provide evidence of infidelity?",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 2,
+            "automaticAnswers": [
+                19,
+                20,
+                21
+            ],
+            "tag": 0,
+            "icon": 7,
+            "rewardRange": {
+                "x": 100.0,
+                "y": 200.0
+            },
+            "penaltyRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "isOptional": true,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        },
+        {
+            "name": "Can you provide a photo of the cheater?",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 2,
+            "automaticAnswers": [
+                12
+            ],
+            "tag": 3,
+            "icon": 30,
+            "rewardRange": {
+                "x": 100.0,
+                "y": 150.0
+            },
+            "penaltyRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "isOptional": true,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        },
+        {
+            "name": "Where does the cheater live?",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 1,
+            "automaticAnswers": [
+                6
+            ],
+            "tag": 2,
+            "icon": 14,
+            "rewardRange": {
+                "x": 50.0,
+                "y": 100.0
+            },
+            "penaltyRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "isOptional": true,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        },
+        {
+            "name": "revenge",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 3,
+            "automaticAnswers": [],
+            "tag": 3,
+            "icon": 26,
+            "rewardRange": {
+                "x": 200.0,
+                "y": 300.0
+            },
+            "penaltyRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "isOptional": true,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 3,
+            "location": 4,
+            "revengeObjective": "",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        }
+    ],
+    "additional": [
+        {
+            "name": "Home Investigation",
+            "elementType": 11,
+            "dialogReference": "",
+            "tagReference": 0,
+            "spawnItems": [],
+            "enableUpdateWhileTalking": false,
+            "objectiveDelay": 0.0,
+            "validItems": [],
+            "validFurniture": [],
+            "disableOnDifficulties": [],
+            "onlyCompativleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "triggerFailIfItemDestroyed": []
+        }
+    ],
+    "compatibleHandIns": [
+        {
+            "preset": {
+                "m_FileID": 14158,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        }
+    ],
+    "dialogReferences": [
+        {
+            "name": "IntroMeetUpSpecific1",
+            "dialog": {
+                "m_FileID": 14154,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroMeetUpSpecific2",
+            "dialog": {
+                "m_FileID": 61648,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "DirectHandIn",
+            "dialog": {
+                "m_FileID": 41014,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "TelephoneHandIn",
+            "dialog": {
+                "m_FileID": 14146,
+                "m_PathID": 0
+            }
+        }
+    ],
+    "debugCopyFrom": {
+        "m_FileID": 14144,
+        "m_PathID": 0
+    }
+}

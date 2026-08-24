@@ -1,0 +1,81 @@
+{
+    "presetName": "BluntObjects",
+    "murderWeaponPool": [
+        {
+            "weapon": {
+                "m_FileID": 28258,
+                "m_PathID": 0
+            },
+            "chanceOfDroppingAtScene": 0.800000011920929,
+            "randomScoreRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "traitModifiers": [
+                {
+                    "rule": 0,
+                    "traitList": [
+                        {
+                            "m_FileID": 25454,
+                            "m_PathID": 0
+                        },
+                        {
+                            "m_FileID": 38652,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": false,
+                    "scoreModifier": 6.0
+                }
+            ]
+        },
+        {
+            "weapon": {
+                "m_FileID": 43058,
+                "m_PathID": 0
+            },
+            "chanceOfDroppingAtScene": 0.4950000047683716,
+            "randomScoreRange": {
+                "x": 0.0,
+                "y": 1.0
+            },
+            "traitModifiers": [
+                {
+                    "rule": 0,
+                    "traitList": [
+                        {
+                            "m_FileID": 13574,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": false,
+                    "scoreModifier": 5.0
+                }
+            ]
+        },
+        {
+            "weapon": {
+                "m_FileID": 50096,
+                "m_PathID": 0
+            },
+            "chanceOfDroppingAtScene": 0.0,
+            "randomScoreRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "traitModifiers": [
+                {
+                    "rule": 0,
+                    "traitList": [
+                        {
+                            "m_FileID": 22800,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": false,
+                    "scoreModifier": 6.0
+                }
+            ]
+        }
+    ]
+}

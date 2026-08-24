@@ -1,0 +1,271 @@
+{
+    "presetName": "Photograph_D5",
+    "disabled": false,
+    "caseName": "Photograph",
+    "jobPosting": {
+        "m_FileID": 14132,
+        "m_PathID": 0
+    },
+    "subClass": "",
+    "allowSyncDiskRewards": true,
+    "allowBlackMarketSyncDiskRewards": true,
+    "physicalRewardLocation": 1,
+    "generateHidingLocation": false,
+    "socialCreditLevelMinSpawnFrequency": {
+        "serializedVersion": "2",
+        "m_Curve": [
+            {
+                "serializedVersion": "3",
+                "time": 0.0,
+                "value": 0.0,
+                "inSlope": 0.0,
+                "outSlope": 0.0,
+                "weightedMode": 0,
+                "inWeight": 0.0,
+                "outWeight": 0.0
+            },
+            {
+                "serializedVersion": "3",
+                "time": 4.0,
+                "value": 1.0,
+                "inSlope": 0.7080811262130737,
+                "outSlope": -0.26992520689964297,
+                "weightedMode": 0,
+                "inWeight": 0.05117291212081909,
+                "outWeight": 0.06801477074623108
+            },
+            {
+                "serializedVersion": "3",
+                "time": 10.0,
+                "value": 0.5,
+                "inSlope": 0.0,
+                "outSlope": 0.0,
+                "weightedMode": 0,
+                "inWeight": 0.0,
+                "outWeight": 0.0
+            }
+        ],
+        "m_PreInfinity": 2,
+        "m_PostInfinity": 2,
+        "m_RotationOrder": 4
+    },
+    "activePerCitizen": 0.009999999776482582,
+    "maxJobs": 8,
+    "immediatePostCountThreshold": 2,
+    "difficultyTag": 8,
+    "changePosterDialogCompliancy": 0,
+    "changePerpDialogCompliancy": 2,
+    "purpetratorMotives": [
+        {
+            "m_FileID": 25750,
+            "m_PathID": 0
+        }
+    ],
+    "penaltyForPurpAndPosterSameBuilding": 0,
+    "startingScenarios": [
+        {
+            "name": "Photograph",
+            "dds": "675d2695-7471-4fc8-8989-fea12d35d120",
+            "leads": []
+        }
+    ],
+    "compatibleIntros": [
+        {
+            "preset": {
+                "m_FileID": 14124,
+                "m_PathID": 0
+            },
+            "frequency": 0
+        },
+        {
+            "preset": {
+                "m_FileID": 14160,
+                "m_PathID": 0
+            },
+            "frequency": 0
+        },
+        {
+            "preset": {
+                "m_FileID": 14120,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        },
+        {
+            "preset": {
+                "m_FileID": 14140,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        },
+        {
+            "preset": {
+                "m_FileID": 14136,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        }
+    ],
+    "leadPoolData": 4,
+    "createFactsOnInformationAcquisition": [
+        {
+            "factPreset": {
+                "m_FileID": 14156,
+                "m_PathID": 0
+            },
+            "from": 13,
+            "to": 2,
+            "overrideFromKeys": false,
+            "fromKeys": [],
+            "featureKeysFromLeadPool": false,
+            "overrideToKeys": true,
+            "toKeys": [],
+            "featureKeysFromLeadPoolTo": true
+        }
+    ],
+    "informationAcquisitionLeads": [
+        {
+            "leadEvidence": 2,
+            "keys": [],
+            "useKeyFromLeadPool": true,
+            "autoPin": true,
+            "addDialogOptions": [],
+            "factsReveal": [],
+            "mergeKeys": [],
+            "discoveryApplication": []
+        }
+    ],
+    "revengeObjectives": [],
+    "spawnItems": [],
+    "resolveQuestions": [
+        {
+            "name": "Take a photo of the target",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 2,
+            "automaticAnswers": [
+                11
+            ],
+            "tag": 0,
+            "icon": 30,
+            "rewardRange": {
+                "x": 300.0,
+                "y": 400.0
+            },
+            "penaltyRange": {
+                "x": 50.0,
+                "y": 50.0
+            },
+            "isOptional": false,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        }
+    ],
+    "additional": [
+        {
+            "name": "Has camera",
+            "elementType": 7,
+            "dialogReference": "",
+            "tagReference": 0,
+            "spawnItems": [],
+            "enableUpdateWhileTalking": false,
+            "objectiveDelay": 0.0,
+            "validItems": [],
+            "validFurniture": [],
+            "disableOnDifficulties": [],
+            "onlyCompativleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "triggerFailIfItemDestroyed": []
+        }
+    ],
+    "compatibleHandIns": [
+        {
+            "preset": {
+                "m_FileID": 14158,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        }
+    ],
+    "dialogReferences": [
+        {
+            "name": "IntroCall",
+            "dialog": {
+                "m_FileID": 15238,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroAskStaff",
+            "dialog": {
+                "m_FileID": 25746,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroAskStaffPhoto",
+            "dialog": {
+                "m_FileID": 14130,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroGooseChase1",
+            "dialog": {
+                "m_FileID": 14166,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroGooseChase2",
+            "dialog": {
+                "m_FileID": 25752,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroMeetUpSpecific1",
+            "dialog": {
+                "m_FileID": 14154,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "IntroMeetUpSpecific2",
+            "dialog": {
+                "m_FileID": 25748,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "TelephoneHandIn",
+            "dialog": {
+                "m_FileID": 14146,
+                "m_PathID": 0
+            }
+        }
+    ],
+    "debugCopyFrom": {
+        "m_FileID": 14144,
+        "m_PathID": 0
+    }
+}

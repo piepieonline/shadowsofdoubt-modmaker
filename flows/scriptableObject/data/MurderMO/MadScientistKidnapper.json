@@ -1,0 +1,785 @@
+{
+    "presetName": "MadScientistKidnapper",
+    "notes": "Kills people above them in their company they do not respect",
+    "disabled": false,
+    "compatibleWith": [
+        {
+            "m_FileID": 56628,
+            "m_PathID": 0
+        }
+    ],
+    "baseDifficulty": 1,
+    "maximumPotentialScore": 65.0,
+    "updateThis": false,
+    "pickRandomScoreRange": {
+        "x": 0.0,
+        "y": 15.0
+    },
+    "murdererTraitModifiers": [
+        {
+            "rule": 0,
+            "traitList": [
+                {
+                    "m_FileID": 15590,
+                    "m_PathID": 0
+                }
+            ],
+            "mustPassForApplication": false,
+            "scoreModifier": 10.0
+        },
+        {
+            "rule": 0,
+            "traitList": [
+                {
+                    "m_FileID": 42290,
+                    "m_PathID": 0
+                },
+                {
+                    "m_FileID": 15308,
+                    "m_PathID": 0
+                }
+            ],
+            "mustPassForApplication": false,
+            "scoreModifier": 10.0
+        }
+    ],
+    "murdererJobModifiers": [],
+    "murdererCompanyModifiers": [],
+    "useMurdererSocialClassRange": true,
+    "murdererClassRange": {
+        "x": 0.0,
+        "y": 0.25
+    },
+    "murdererClassRangeBoost": 20,
+    "useHexaco": true,
+    "hexaco": {
+        "outputMin": 0,
+        "outputMax": 10,
+        "enableFeminineMasculine": false,
+        "feminineMasculine": 0,
+        "enableHumility": false,
+        "humility": 0,
+        "enableEmotionality": false,
+        "emotionality": 0,
+        "enableExtraversion": false,
+        "extraversion": 0,
+        "enableAgreeableness": true,
+        "agreeableness": 0,
+        "enableConscientiousness": true,
+        "conscientiousness": 8,
+        "enableCreativity": false,
+        "creativity": 0
+    },
+    "requiresSniperVantageAtHome": false,
+    "weaponsPool": [
+        {
+            "m_FileID": 14974,
+            "m_PathID": 0
+        }
+    ],
+    "blockDroppingWeapons": true,
+    "allowAnywhere": false,
+    "allowHome": false,
+    "allowWork": false,
+    "allowPublic": false,
+    "allowStreets": false,
+    "allowDen": true,
+    "denFurniture": [
+        {
+            "m_FileID": 40936,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 59336,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 64432,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 34074,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 37218,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 59020,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 64438,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 62344,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 40690,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 34074,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 62108,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 64424,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 58748,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 54324,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 64430,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 16326,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 53886,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 61142,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 42076,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 39942,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 64440,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 64440,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 63122,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 22970,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 64444,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 58408,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 61142,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 61142,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 53842,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 42190,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 59336,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 59336,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 62108,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 62108,
+            "m_PathID": 0
+        }
+    ],
+    "denStyleOverride": [
+        {
+            "m_FileID": 12714,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 12712,
+            "m_PathID": 0
+        }
+    ],
+    "denItems": [
+        {
+            "m_FileID": 35710,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 18862,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 16870,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 18862,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 16870,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 24234,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 56524,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 46766,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 48828,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 44924,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 17548,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 29252,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 36200,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 15014,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 19964,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 29240,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 29238,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 48254,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 17600,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 16392,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 43294,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 64442,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 24412,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 13696,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 48254,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 14544,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 43290,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 30966,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 35710,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 27262,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 25610,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 25610,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 41026,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 64428,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 45010,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 47796,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 14498,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 43058,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 51792,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 13856,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 54512,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 34468,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 59872,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 51672,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 64436,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 15172,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 35246,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 35306,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 35190,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 28536,
+            "m_PathID": 0
+        }
+    ],
+    "acquaintedSuitabilityBoost": 5,
+    "attractedToSuitabilityBoost": 0,
+    "likeSuitabilityBoost": -2,
+    "sameWorkplaceBoost": 1,
+    "murdererIsTenantBoost": -1,
+    "victimRandomScoreRange": {
+        "x": 0.0,
+        "y": 2.0
+    },
+    "victimTraitModifiers": [
+        {
+            "rule": 0,
+            "traitList": [
+                {
+                    "m_FileID": 31192,
+                    "m_PathID": 0
+                }
+            ],
+            "mustPassForApplication": false,
+            "scoreModifier": 5.0
+        }
+    ],
+    "victimJobModifiers": [],
+    "victimCompanyModifiers": [],
+    "useVictimSocialClassRange": true,
+    "victimClassRange": {
+        "x": 0.6000000238418579,
+        "y": 1.0
+    },
+    "victimClassRangeBoost": 10,
+    "monkierDDSMessageList": "a36b5554-a36f-4147-b556-9f0eac81c287",
+    "confessionalDDSResponses": [
+        "25a97062-4f87-43cb-9093-622e9467ddbd"
+    ],
+    "MOleads": [
+        {
+            "name": "VMAIL: Kidnapper_Science_Notice",
+            "compatibleWithAllMotives": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 56630,
+                    "m_PathID": 0
+                }
+            ],
+            "spawnOnPhase": 1,
+            "tryToSpawnWithEachNewMurder": false,
+            "belongsTo": 0,
+            "chance": 0.5,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": false,
+            "orGroup": 0,
+            "chanceRatio": 0,
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 0,
+                "m_PathID": 0
+            },
+            "vmailThread": "03963c43-e05d-4546-9532-d967a0479344",
+            "vmailProgressThreshold": {
+                "x": 999.0,
+                "y": 999.0
+            },
+            "writer": 2,
+            "receiver": 4,
+            "vmailOtherParticipants": [],
+            "where": 0,
+            "security": 0,
+            "priority": 0,
+            "ownershipRule": 0
+        },
+        {
+            "name": "VMAIL: Kidnapper_Science_Retired_Speaki",
+            "compatibleWithAllMotives": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 56630,
+                    "m_PathID": 0
+                }
+            ],
+            "spawnOnPhase": 1,
+            "tryToSpawnWithEachNewMurder": false,
+            "belongsTo": 0,
+            "chance": 0.5,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": false,
+            "orGroup": 0,
+            "chanceRatio": 0,
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 0,
+                "m_PathID": 0
+            },
+            "vmailThread": "5d623ab3-b33d-4b75-9267-010a9d37bde0",
+            "vmailProgressThreshold": {
+                "x": 999.0,
+                "y": 999.0
+            },
+            "writer": 2,
+            "receiver": 4,
+            "vmailOtherParticipants": [],
+            "where": 0,
+            "security": 0,
+            "priority": 0,
+            "ownershipRule": 0
+        },
+        {
+            "name": "VMAIL: Kidnapper_Science_Work_Subjects",
+            "compatibleWithAllMotives": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 56630,
+                    "m_PathID": 0
+                }
+            ],
+            "spawnOnPhase": 1,
+            "tryToSpawnWithEachNewMurder": false,
+            "belongsTo": 0,
+            "chance": 0.5,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": false,
+            "orGroup": 0,
+            "chanceRatio": 0,
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 0,
+                "m_PathID": 0
+            },
+            "vmailThread": "8fbf9866-3961-4f1e-a2c5-37f06276a070",
+            "vmailProgressThreshold": {
+                "x": 999.0,
+                "y": 999.0
+            },
+            "writer": 2,
+            "receiver": 6,
+            "vmailOtherParticipants": [],
+            "where": 0,
+            "security": 0,
+            "priority": 0,
+            "ownershipRule": 0
+        },
+        {
+            "name": "VMAIL: Kidnapper_Science-Retired_Fan",
+            "compatibleWithAllMotives": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 56630,
+                    "m_PathID": 0
+                }
+            ],
+            "spawnOnPhase": 1,
+            "tryToSpawnWithEachNewMurder": false,
+            "belongsTo": 0,
+            "chance": 0.5,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": false,
+            "orGroup": 0,
+            "chanceRatio": 0,
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 0,
+                "m_PathID": 0
+            },
+            "vmailThread": "0efe85e5-e1cc-4bdf-b6ea-9e5e20f98e46",
+            "vmailProgressThreshold": {
+                "x": 999.0,
+                "y": 999.0
+            },
+            "writer": 2,
+            "receiver": 3,
+            "vmailOtherParticipants": [],
+            "where": 0,
+            "security": 0,
+            "priority": 0,
+            "ownershipRule": 0
+        },
+        {
+            "name": "(A) Diary",
+            "compatibleWithAllMotives": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 56630,
+                    "m_PathID": 0
+                }
+            ],
+            "spawnOnPhase": 1,
+            "tryToSpawnWithEachNewMurder": false,
+            "belongsTo": 2,
+            "chance": 0.800000011920929,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": false,
+            "orGroup": 0,
+            "chanceRatio": 0,
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 64434,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 999.0,
+                "y": 999.0
+            },
+            "writer": 2,
+            "receiver": 0,
+            "vmailOtherParticipants": [],
+            "where": 2,
+            "security": 0,
+            "priority": 0,
+            "ownershipRule": 3
+        },
+        {
+            "name": "(B) Science Notes",
+            "compatibleWithAllMotives": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 56630,
+                    "m_PathID": 0
+                }
+            ],
+            "spawnOnPhase": 1,
+            "tryToSpawnWithEachNewMurder": false,
+            "belongsTo": 2,
+            "chance": 0.699999988079071,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": false,
+            "orGroup": 0,
+            "chanceRatio": 0,
+            "itemTag": 1,
+            "spawnItem": {
+                "m_FileID": 39736,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 999.0,
+                "y": 999.0
+            },
+            "writer": 2,
+            "receiver": 0,
+            "vmailOtherParticipants": [],
+            "where": 2,
+            "security": 0,
+            "priority": 0,
+            "ownershipRule": 3
+        },
+        {
+            "name": "(C) Den Details",
+            "compatibleWithAllMotives": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 56630,
+                    "m_PathID": 0
+                }
+            ],
+            "spawnOnPhase": 1,
+            "tryToSpawnWithEachNewMurder": false,
+            "belongsTo": 2,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": false,
+            "orGroup": 0,
+            "chanceRatio": 0,
+            "itemTag": 2,
+            "spawnItem": {
+                "m_FileID": 54120,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 999.0,
+                "y": 999.0
+            },
+            "writer": 2,
+            "receiver": 0,
+            "vmailOtherParticipants": [],
+            "where": 2,
+            "security": 2,
+            "priority": 0,
+            "ownershipRule": 3
+        },
+        {
+            "name": "(D) Science Report",
+            "compatibleWithAllMotives": false,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 56630,
+                    "m_PathID": 0
+                }
+            ],
+            "spawnOnPhase": 1,
+            "tryToSpawnWithEachNewMurder": false,
+            "belongsTo": 2,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": false,
+            "orGroup": 0,
+            "chanceRatio": 0,
+            "itemTag": 3,
+            "spawnItem": {
+                "m_FileID": 59966,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 999.0,
+                "y": 999.0
+            },
+            "writer": 2,
+            "receiver": 0,
+            "vmailOtherParticipants": [],
+            "where": 5,
+            "security": 0,
+            "priority": 0,
+            "ownershipRule": 3
+        }
+    ],
+    "graffiti": [],
+    "callingCardPool": [],
+    "playerTaunts": [
+        {
+            "m_FileID": 15920,
+            "m_PathID": 0
+        }
+    ]
+}

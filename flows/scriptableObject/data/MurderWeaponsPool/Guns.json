@@ -1,0 +1,193 @@
+{
+    "presetName": "Guns",
+    "murderWeaponPool": [
+        {
+            "weapon": {
+                "m_FileID": 23096,
+                "m_PathID": 0
+            },
+            "chanceOfDroppingAtScene": 0.0,
+            "randomScoreRange": {
+                "x": 0.0,
+                "y": 1.0
+            },
+            "traitModifiers": [
+                {
+                    "rule": 0,
+                    "traitList": [
+                        {
+                            "m_FileID": 14320,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": false,
+                    "scoreModifier": 2.0
+                },
+                {
+                    "rule": 0,
+                    "traitList": [
+                        {
+                            "m_FileID": 48740,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": false,
+                    "scoreModifier": 3.0
+                }
+            ]
+        },
+        {
+            "weapon": {
+                "m_FileID": 38284,
+                "m_PathID": 0
+            },
+            "chanceOfDroppingAtScene": 0.0,
+            "randomScoreRange": {
+                "x": 0.0,
+                "y": 1.0
+            },
+            "traitModifiers": [
+                {
+                    "rule": 0,
+                    "traitList": [
+                        {
+                            "m_FileID": 14320,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": false,
+                    "scoreModifier": 5.0
+                }
+            ]
+        },
+        {
+            "weapon": {
+                "m_FileID": 33872,
+                "m_PathID": 0
+            },
+            "chanceOfDroppingAtScene": 0.0,
+            "randomScoreRange": {
+                "x": 0.0,
+                "y": 1.0
+            },
+            "traitModifiers": [
+                {
+                    "rule": 0,
+                    "traitList": [
+                        {
+                            "m_FileID": 14320,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": false,
+                    "scoreModifier": 4.0
+                },
+                {
+                    "rule": 0,
+                    "traitList": [
+                        {
+                            "m_FileID": 15314,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": false,
+                    "scoreModifier": 2.0
+                }
+            ]
+        },
+        {
+            "weapon": {
+                "m_FileID": 22856,
+                "m_PathID": 0
+            },
+            "chanceOfDroppingAtScene": 0.0,
+            "randomScoreRange": {
+                "x": 0.0,
+                "y": 1.0
+            },
+            "traitModifiers": [
+                {
+                    "rule": 0,
+                    "traitList": [
+                        {
+                            "m_FileID": 14320,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": false,
+                    "scoreModifier": 5.0
+                },
+                {
+                    "rule": 0,
+                    "traitList": [
+                        {
+                            "m_FileID": 15308,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": false,
+                    "scoreModifier": 1.0
+                }
+            ]
+        },
+        {
+            "weapon": {
+                "m_FileID": 28196,
+                "m_PathID": 0
+            },
+            "chanceOfDroppingAtScene": 0.0,
+            "randomScoreRange": {
+                "x": 0.0,
+                "y": 1.0
+            },
+            "traitModifiers": [
+                {
+                    "rule": 0,
+                    "traitList": [
+                        {
+                            "m_FileID": 14320,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": false,
+                    "scoreModifier": 5.0
+                }
+            ]
+        },
+        {
+            "weapon": {
+                "m_FileID": 48742,
+                "m_PathID": 0
+            },
+            "chanceOfDroppingAtScene": 0.0,
+            "randomScoreRange": {
+                "x": 0.0,
+                "y": 1.0
+            },
+            "traitModifiers": [
+                {
+                    "rule": 0,
+                    "traitList": [
+                        {
+                            "m_FileID": 14320,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": false,
+                    "scoreModifier": 5.0
+                },
+                {
+                    "rule": 0,
+                    "traitList": [
+                        {
+                            "m_FileID": 15308,
+                            "m_PathID": 0
+                        }
+                    ],
+                    "mustPassForApplication": false,
+                    "scoreModifier": 1.0
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,480 @@
+{
+  "": {
+    "global": false,
+    "containedScopes": {},
+    "containedValues": []
+  },
+  "citizen": {
+    "global": false,
+    "containedScopes": {
+      "job": "job",
+      "home": "location",
+      "receiver": "citizen",
+      "a": "citizen",
+      "b": "citizen",
+      "c": "citizen",
+      "d": "citizen",
+      "partner": "citizen",
+      "paramour": "citizen",
+      "doctor": "citizen",
+      "friend": "citizen",
+      "enemy": "citizen",
+      "neighbour": "citizen",
+      "landlord": "citizen",
+      "faveatery": "location",
+      "favrecreation": "location",
+      "group1": "group",
+      "group2": "group",
+      "murder": "murder",
+      "sidejob": "sidejob",
+      "sightinglocation": "location",
+      "sightingtime": "time",
+      "sightingclosest": "location",
+      "location": "location",
+      "den": "location",
+      "interactionitem": "object",
+      "currentgroup": "group"
+    },
+    "containedValues": [
+      "name",
+      "fullname",
+      "firstname",
+      "surname",
+      "casualname",
+      "formalname",
+      "initial",
+      "initials",
+      "gender",
+      "build",
+      "haircolour",
+      "hairtype",
+      "eyecolour",
+      "age",
+      "agegroup",
+      "height",
+      "passcode",
+      "passcode1",
+      "passcode2",
+      "passcode3",
+      "passcode4",
+      "relnoun",
+      "noungeneral",
+      "nounlover",
+      "curse",
+      "heshe",
+      "himher",
+      "hishers",
+      "birthgender",
+      "dateofbirth",
+      "birthweight",
+      "favitem1",
+      "favitem2",
+      "acquaintance",
+      "namecipher",
+      "killernamecipher",
+      "investigateroom",
+      "investigateobject",
+      "tamperedobject",
+      "heightcm",
+      "weightkg",
+      "shoesize",
+      "shoetype",
+      "bloodtype",
+      "interest",
+      "affliction",
+      "signature",
+      "sightingdirection",
+      "hotelroombuilding",
+      "hotelroomnumber",
+      "hotelroomcost",
+      "hotelbill"
+    ]
+  },
+  "object": {
+    "global": false,
+    "containedScopes": {
+      "owner": "citizen",
+      "writer": "citizen",
+      "receiver": "citizen",
+      "other": "citizen",
+      "location": "location",
+      "purchasedfrom": "company",
+      "purchasedtime": "time",
+      "sidejob": "sidejob",
+      "lastcall": "object",
+      "lastcalltime": "time",
+      "group": "group",
+      "forsale": "location"
+    },
+    "containedValues": [
+      "name",
+      "purchasedprice",
+      "telephone",
+      "summary",
+      "purchaseditems",
+      "lostitemtype",
+      "lostitembuilding",
+      "lostitemreward",
+      "lostitemfloorx",
+      "lostitemfloory"
+    ]
+  },
+  "time": {
+    "global": false,
+    "containedScopes": {},
+    "containedValues": [
+      "timeofday",
+      "time",
+      "time24",
+      "time12",
+      "day",
+      "date",
+      "datelong",
+      "year",
+      "time12rounded15"
+    ]
+  },
+  "evidence": {
+    "global": false,
+    "containedScopes": {
+      "object": "object",
+      "timefrom": "time",
+      "timeto": "time",
+      "writer": "citizen",
+      "receiver": "citizen",
+      "belongsto": "citizen",
+      "telephonefrom": "object",
+      "telephoneto": "object"
+    },
+    "containedValues": [
+      "name",
+      "note",
+      "date",
+      "duration"
+    ]
+  },
+  "city": {
+    "global": true,
+    "containedScopes": {
+      "time": "time",
+      "player": "citizen",
+      "weaponsdealer": "citizen"
+    },
+    "containedValues": [
+      "name",
+      "population",
+      "unemployment",
+      "homeless",
+      "currency",
+      "hotelcostupper",
+      "hotelcostlower"
+    ]
+  },
+  "company": {
+    "global": false,
+    "containedScopes": {
+      "location": "location",
+      "owner": "citizen",
+      "receptionist": "citizen",
+      "security": "citizen",
+      "janitor": "citizen",
+      "employee": "citizen"
+    },
+    "containedValues": [
+      "name",
+      "openhours",
+      "opendays",
+      "item1",
+      "item2",
+      "item3",
+      "item4",
+      "item5",
+      "item6",
+      "item7",
+      "item8",
+      "item9",
+      "item10",
+      "loansharkloan",
+      "loansharkextra",
+      "loansharkpayment",
+      "loansharkdebt",
+      "loansharknextdue"
+    ]
+  },
+  "job": {
+    "global": false,
+    "containedScopes": {
+      "employee": "citizen",
+      "employer": "company"
+    },
+    "containedValues": [
+      "title",
+      "salary",
+      "hours",
+      "start",
+      "end"
+    ]
+  },
+  "sidejob": {
+    "global": false,
+    "containedScopes": {
+      "poster": "citizen",
+      "purp": "citizen",
+      "posttime": "time",
+      "post": "object",
+      "callphone": "object",
+      "calltime": "time",
+      "stolenitem": "object",
+      "stolentimefrom": "time",
+      "stolentimeto": "time",
+      "submission": "location",
+      "meet": "object",
+      "extraperson1": "citizen"
+    },
+    "containedValues": [
+      "reward",
+      "type",
+      "motive",
+      "fakenumber",
+      "revengeamount",
+      "meetitem",
+      "stolenitemroom",
+      "secretlocation"
+    ]
+  },
+  "location": {
+    "global": false,
+    "containedScopes": {
+      "company": "company",
+      "owner": "citizen",
+      "landlord": "citizen",
+      "group1": "group",
+      "group2": "group",
+      "group3": "group",
+      "group4": "group",
+      "inhabitant": "citizen",
+      "management": "company"
+    },
+    "containedValues": [
+      "name",
+      "building",
+      "street",
+      "passcode",
+      "telephone",
+      "type",
+      "floor",
+      "landvalue",
+      "price",
+      "bedrooms",
+      "floor",
+      "sqm",
+      "password"
+    ]
+  },
+  "group": {
+    "global": false,
+    "containedScopes": {
+      "leader": "citizen",
+      "member2": "citizen",
+      "member3": "citizen",
+      "member4": "citizen",
+      "member5": "citizen",
+      "member6": "citizen",
+      "member7": "citizen",
+      "member8": "citizen",
+      "meetingplace": "location",
+      "nextmeetingtime": "time"
+    },
+    "containedValues": [
+      "name",
+      "time",
+      "days"
+    ]
+  },
+  "story": {
+    "global": true,
+    "containedScopes": {
+      "associate": "citizen",
+      "kidnapper": "citizen",
+      "notewriter": "citizen",
+      "restaurant": "location",
+      "workplace": "location",
+      "meettime": "time",
+      "routeraddress": "location",
+      "bar": "location",
+      "redgummeet": "location",
+      "playersapartment": "location",
+      "weaponsdealer": "company",
+      "flophouse": "location",
+      "flophouseowner": "citizen"
+    },
+    "containedValues": [
+      "lockpicksneeded",
+      "partnerfirstname",
+      "partnerfullname"
+    ]
+  },
+  "killer": {
+    "global": true,
+    "containedScopes": {
+      "lastmurder": "murder",
+      "nextmurder": "murder",
+      "location": "location"
+    },
+    "containedValues": [
+      "moniker",
+      "cleanupreward"
+    ]
+  },
+  "murder": {
+    "global": false,
+    "containedScopes": {
+      "victim": "citizen",
+      "killer": "citizen",
+      "weapon": "object",
+      "location": "location",
+      "time": "time",
+      "discovercitizen": "citizen",
+      "discovertime": "time",
+      "evidence1": "object",
+      "evidence2": "object",
+      "callingcard": "object",
+      "timefrom": "time",
+      "timeto": "time",
+      "kidnapkilltime": "time",
+      "kidnapmeetlocation": "location",
+      "kidnapmeettime": "time"
+    },
+    "containedValues": [
+      "moniker",
+      "method",
+      "adverb",
+      "message",
+      "methodnoadverb",
+      "ransom",
+      "ransomlocation",
+      "kidnaphoursgiven",
+      "ransomphone"
+    ]
+  },
+  "controls": {
+    "global": true,
+    "containedScopes": {},
+    "containedValues": [
+      "movehorizontal",
+      "movevertical",
+      "lookhorizontal",
+      "lookvertical",
+      "sprint",
+      "crouch",
+      "jump",
+      "leanleft",
+      "leanright",
+      "caseboard",
+      "primary",
+      "secondary",
+      "alternative",
+      "scrollaxisup",
+      "scrollaxisdown",
+      "map",
+      "flashlight",
+      "nearestinteractable",
+      "notebook",
+      "navigateup",
+      "navigatedown",
+      "navigateleft",
+      "navigateright",
+      "selectleft",
+      "selectright",
+      "select",
+      "back",
+      "weaponselect",
+      "caseboardzoomaxis",
+      "moveevidenceaxisx",
+      "moveevidenceaxisy",
+      "contentmoveaxisx",
+      "contentmoveaxisy",
+      "menu",
+      "movehorizontal_icon",
+      "movevertical_icon",
+      "lookhorizontal_icon",
+      "lookvertical_icon",
+      "sprint_icon",
+      "crouch_icon",
+      "jump_icon",
+      "leanleft_icon",
+      "leanright_icon",
+      "caseboard_icon",
+      "primary_icon",
+      "secondary_icon",
+      "alternative_icon",
+      "scrollaxisup_icon",
+      "scrollaxisdown_icon",
+      "map_icon",
+      "flashlight_icon",
+      "nearestinteractable_icon",
+      "notebook_icon",
+      "navigateup_icon",
+      "navigatedown_icon",
+      "navigateleft_icon",
+      "navigateright_icon",
+      "selectleft_icon",
+      "selectright_icon",
+      "select_icon",
+      "back_icon",
+      "weaponselect_icon",
+      "caseboardzoomaxis_icon",
+      "moveevidenceaxisx_icon",
+      "moveevidenceaxisy_icon",
+      "contentmoveaxisx_icon",
+      "contentmoveaxisy_icon",
+      "menu_icon"
+    ]
+  },
+  "random": {
+    "global": true,
+    "containedScopes": {
+      "citizen": "citizen",
+      "address": "location",
+      "street": "location",
+      "residence": "location",
+      "park": "location",
+      "company": "company",
+      "eatery": "company",
+      "shop": "company",
+      "industrial": "company",
+      "diner": "company",
+      "bar": "company",
+      "launderette": "company",
+      "syncclinic": "company",
+      "police": "company",
+      "hospital": "company",
+      "weaponsdealer": "company",
+      "blackmarkettrader": "company",
+      "loanshark": "company",
+      "blackmarketsyncclinic": "company",
+      "gamblingden": "company",
+      "hotel": "company"
+    },
+    "containedValues": [
+      "fullname",
+      "casualname",
+      "number5",
+      "number10",
+      "number20",
+      "number50",
+      "number100"
+    ]
+  },
+  "syncdisk": {
+    "global": false,
+    "containedScopes": {},
+    "containedValues": [
+      "value",
+      "upgradevale",
+      "value%",
+      "upgradevale%",
+      "uninstallcost"
+    ]
+  }
+}

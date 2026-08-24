@@ -1,0 +1,553 @@
+{
+    "presetName": "StolenItem_D1",
+    "disabled": false,
+    "caseName": "StolenItem",
+    "jobPosting": {
+        "m_FileID": 14132,
+        "m_PathID": 0
+    },
+    "subClass": "StolenItem",
+    "allowSyncDiskRewards": false,
+    "allowBlackMarketSyncDiskRewards": true,
+    "physicalRewardLocation": 3,
+    "generateHidingLocation": false,
+    "socialCreditLevelMinSpawnFrequency": {
+        "serializedVersion": "2",
+        "m_Curve": [
+            {
+                "serializedVersion": "3",
+                "time": 0.0,
+                "value": 0.0,
+                "inSlope": 0.0,
+                "outSlope": 0.0,
+                "weightedMode": 0,
+                "inWeight": 0.0,
+                "outWeight": 0.0
+            },
+            {
+                "serializedVersion": "3",
+                "time": 2.0,
+                "value": 1.0,
+                "inSlope": 1.0083591938018799,
+                "outSlope": -0.1134423315525055,
+                "weightedMode": 0,
+                "inWeight": 0.09521204233169556,
+                "outWeight": 0.0547521710395813
+            },
+            {
+                "serializedVersion": "3",
+                "time": 10.0,
+                "value": 0.5,
+                "inSlope": 0.0,
+                "outSlope": 0.0,
+                "weightedMode": 0,
+                "inWeight": 0.0,
+                "outWeight": 0.0
+            }
+        ],
+        "m_PreInfinity": 2,
+        "m_PostInfinity": 2,
+        "m_RotationOrder": 4
+    },
+    "activePerCitizen": 0.009999999776482582,
+    "maxJobs": 8,
+    "immediatePostCountThreshold": 2,
+    "difficultyTag": 1,
+    "changePosterDialogCompliancy": 1,
+    "changePerpDialogCompliancy": 2,
+    "purpetratorMotives": [
+        {
+            "m_FileID": 38108,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 56612,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 38556,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 49438,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 56620,
+            "m_PathID": 0
+        }
+    ],
+    "penaltyForPurpAndPosterSameBuilding": 0,
+    "startingScenarios": [
+        {
+            "name": "Stolen from home",
+            "dds": "1a7fedfc-717a-417d-a4d5-fb371dae3cf1",
+            "leads": []
+        }
+    ],
+    "compatibleIntros": [
+        {
+            "preset": {
+                "m_FileID": 55278,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        }
+    ],
+    "leadPoolData": 0,
+    "createFactsOnInformationAcquisition": [],
+    "informationAcquisitionLeads": [
+        {
+            "leadEvidence": 1,
+            "keys": [
+                0,
+                14
+            ],
+            "useKeyFromLeadPool": false,
+            "autoPin": true,
+            "addDialogOptions": [],
+            "factsReveal": [
+                "LivesAt"
+            ],
+            "mergeKeys": [
+                0,
+                14
+            ],
+            "discoveryApplication": [
+                0
+            ]
+        },
+        {
+            "leadEvidence": 4,
+            "keys": [
+                0,
+                14
+            ],
+            "useKeyFromLeadPool": false,
+            "autoPin": true,
+            "addDialogOptions": [],
+            "factsReveal": [],
+            "mergeKeys": [],
+            "discoveryApplication": []
+        },
+        {
+            "leadEvidence": 21,
+            "keys": [
+                0
+            ],
+            "useKeyFromLeadPool": false,
+            "autoPin": true,
+            "addDialogOptions": [],
+            "factsReveal": [],
+            "mergeKeys": [],
+            "discoveryApplication": []
+        }
+    ],
+    "revengeObjectives": [
+        {
+            "m_FileID": 56504,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 40876,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 43054,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 14162,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 14152,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 14164,
+            "m_PathID": 0
+        },
+        {
+            "m_FileID": 14126,
+            "m_PathID": 0
+        }
+    ],
+    "spawnItems": [
+        {
+            "name": "Jade Necklace",
+            "findExisting": true,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 38108,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": false,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": true,
+            "orGroup": 0,
+            "chanceRatio": 1,
+            "disableOnDifficulties": [],
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 56618,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 0,
+            "belongsTo": 1,
+            "writer": 0,
+            "receiver": 0,
+            "security": 3,
+            "priority": 3,
+            "ownershipRule": 3
+        },
+        {
+            "name": "Chateau d'Arc",
+            "findExisting": true,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 38108,
+                    "m_PathID": 0
+                },
+                {
+                    "m_FileID": 49438,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": false,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": true,
+            "orGroup": 0,
+            "chanceRatio": 1,
+            "disableOnDifficulties": [],
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 56610,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 0,
+            "belongsTo": 1,
+            "writer": 0,
+            "receiver": 0,
+            "security": 3,
+            "priority": 3,
+            "ownershipRule": 3
+        },
+        {
+            "name": "George Scott Card",
+            "findExisting": true,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 38108,
+                    "m_PathID": 0
+                },
+                {
+                    "m_FileID": 56612,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": false,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": true,
+            "orGroup": 0,
+            "chanceRatio": 1,
+            "disableOnDifficulties": [],
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 40080,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 0,
+            "belongsTo": 1,
+            "writer": 0,
+            "receiver": 0,
+            "security": 3,
+            "priority": 3,
+            "ownershipRule": 3
+        },
+        {
+            "name": "Kolobs Space Blaster",
+            "findExisting": true,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 38108,
+                    "m_PathID": 0
+                },
+                {
+                    "m_FileID": 56620,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": false,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": true,
+            "orGroup": 0,
+            "chanceRatio": 1,
+            "disableOnDifficulties": [],
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 47008,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 0,
+            "belongsTo": 1,
+            "writer": 0,
+            "receiver": 0,
+            "security": 3,
+            "priority": 3,
+            "ownershipRule": 3
+        },
+        {
+            "name": "Claw of the Fathoms First Edition",
+            "findExisting": true,
+            "compatibleWithMotives": [
+                {
+                    "m_FileID": 38108,
+                    "m_PathID": 0
+                },
+                {
+                    "m_FileID": 38556,
+                    "m_PathID": 0
+                }
+            ],
+            "compatibleWithAllMotives": false,
+            "chance": 1.0,
+            "useTraits": false,
+            "traitModifiers": [],
+            "useIf": false,
+            "ifTag": 0,
+            "useOrGroup": true,
+            "orGroup": 0,
+            "chanceRatio": 1,
+            "disableOnDifficulties": [],
+            "itemTag": 0,
+            "spawnItem": {
+                "m_FileID": 26224,
+                "m_PathID": 0
+            },
+            "vmailThread": "",
+            "vmailProgressThreshold": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "where": 0,
+            "belongsTo": 1,
+            "writer": 0,
+            "receiver": 0,
+            "security": 3,
+            "priority": 3,
+            "ownershipRule": 3
+        }
+    ],
+    "resolveQuestions": [
+        {
+            "name": "Recover my |stolenitem.name| and place it in my mailbox",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 4,
+            "automaticAnswers": [],
+            "tag": 1,
+            "icon": 32,
+            "rewardRange": {
+                "x": 500.0,
+                "y": 600.0
+            },
+            "penaltyRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "isOptional": false,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "Recover my |stolenitem.name| and place it in my mailbox",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        },
+        {
+            "name": "Who stole my |stolenitem.name|?",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 0,
+            "automaticAnswers": [
+                2
+            ],
+            "tag": 2,
+            "icon": 4,
+            "rewardRange": {
+                "x": 300.0,
+                "y": 400.0
+            },
+            "penaltyRange": {
+                "x": 100.0,
+                "y": 150.0
+            },
+            "isOptional": true,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 0,
+            "location": 0,
+            "revengeObjective": "",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        },
+        {
+            "name": "revenge",
+            "displayObjective": true,
+            "displayOnlyAtPhase": false,
+            "displayAtPhase": 0,
+            "objectiveDelay": 0.0,
+            "onlyCompatibleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "inputType": 3,
+            "automaticAnswers": [],
+            "tag": 3,
+            "icon": 26,
+            "rewardRange": {
+                "x": 200.0,
+                "y": 300.0
+            },
+            "penaltyRange": {
+                "x": 0.0,
+                "y": 0.0
+            },
+            "isOptional": true,
+            "useAlternateName": false,
+            "useName": 2,
+            "target": 2,
+            "location": 2,
+            "revengeObjective": "",
+            "revengeObjTarget": -1,
+            "revengeObjLoc": -1,
+            "revengeObjPassed": 0.0,
+            "completedRevenge": false,
+            "input": "",
+            "inputtedEvidence": "",
+            "correctAnswers": [],
+            "progress": 0.0,
+            "reward": 0,
+            "penalty": 0,
+            "isValid": false,
+            "isCorrect": false
+        }
+    ],
+    "additional": [
+        {
+            "name": "Recover my |stolenitem.name| and place it in my mailbox",
+            "elementType": 22,
+            "dialogReference": "",
+            "tagReference": 0,
+            "spawnItems": [],
+            "enableUpdateWhileTalking": false,
+            "objectiveDelay": 0.0,
+            "validItems": [],
+            "validFurniture": [],
+            "disableOnDifficulties": [],
+            "onlyCompativleWithIntros": [],
+            "onlyCompatibleWithHandIns": [],
+            "triggerFailIfItemDestroyed": []
+        }
+    ],
+    "compatibleHandIns": [
+        {
+            "preset": {
+                "m_FileID": 17206,
+                "m_PathID": 0
+            },
+            "frequency": 1
+        }
+    ],
+    "dialogReferences": [
+        {
+            "name": "IntroCallHouseVisit",
+            "dialog": {
+                "m_FileID": 56616,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "HomeMeet",
+            "dialog": {
+                "m_FileID": 29414,
+                "m_PathID": 0
+            }
+        },
+        {
+            "name": "TelephoneHandIn",
+            "dialog": {
+                "m_FileID": 43302,
+                "m_PathID": 0
+            }
+        }
+    ],
+    "debugCopyFrom": {
+        "m_FileID": 14144,
+        "m_PathID": 0
+    }
+}
