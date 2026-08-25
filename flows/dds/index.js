@@ -1,22 +1,33 @@
-const DUMMY_KEYS = {
+import { getFile, readFileContent, tryGetFile } from '../../core/fs.js';
+import { assertModSelected, shouldSave, toSaveSafeJSON, writeWholeFile, writePatchAgainstVanilla } from '../../core/persistence.js';
+import { createEditLoop } from '../../core/document.js';
+import { decorateValueNodes, NodeKind } from '../../core/valueNodes.js';
+import { createTextEditor, createSelectEditor, parseEditedValue, renderedValue, setValue } from '../../core/valueEditors.js';
+import { getJSONPointer } from '../../core/jsonPointer.js';
+import { GUID_PATTERN } from '../../core/guid.js';
+import { addTreeElement } from './scripts/jsonTreeAdditions.js';
+import { cloneTemplate, createNewFile, createFileIfNotExisting, addOrModifyStrings, ddsContentFolder, modPath } from './scripts/modFileManager.js';
+import { DDS_BLOCKS_VIRTUAL, readManifest, stringsFileHandle, toReal } from './scripts/ddsManifest.js';
+import { newFile, refreshPanel } from './scripts/ui.js';
+
+export const DUMMY_KEYS = {
     'LOCALISATION_DUMMY_KEY': '_ENG Localisation_',
     'NEWSPAPER_DUMMY_KEY': '_Newspaper Article Configuration_'
 };
 
-const LOCALISATION_MISSING_STRING = 'MISSING GUID IN dds.csv';
+export const LOCALISATION_MISSING_STRING = 'MISSING GUID IN dds.csv';
 
-const GUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-async function initAndLoad(path) {
+export async function initAndLoad(path) {
     window.stringMapping = {};
     window.moddedStringMapping = {};
     await loadI18n();
     await loadFile(path, 0);
 }
 
-async function loadI18n() {
-    async function loadStringsFile(handle, path) {
-        return (await (await (await getFile(handle, path)).getFile()).text()).split('\n').reduce((map, val) => {
+export async function loadI18n() {
+    function parseStringsFile(csv, source) {
+        return (csv ?? '').split('\n').reduce((map, val) => {
             var lineContent = val.split(',');
 
             // Sanity Check each line
@@ -33,32 +44,46 @@ async function loadI18n() {
                 } while (!lineContent[i - 1].endsWith('"'))
             }
 
-            map[guid] = { text: message, source: handle === window.dirHandleStreamingAssets ? 'StreamingAssets' : 'Mod' };
+            map[guid] = { text: message, source };
             return map;
         }, {});
     }
 
-    window.stringMapping = await loadStringsFile(window.dirHandleStreamingAssets, ['Strings', 'English', 'DDS', 'dds.blocks.csv']);
+    window.stringMapping = parseStringsFile(
+        await readFileContent(await getFile(window.dirHandleStreamingAssets, ['Strings', 'English', 'DDS', 'dds.blocks.csv'])),
+        'StreamingAssets'
+    );
 
-    // Try to load the existing mod DDS file. Just skip if it's missing
+    // Try to load the existing mod DDS file. Just skip if it's missing -- which now
+    // includes a manifest pointing at a file that is not there.
     try
     {
         if (window.selectedMod != null) {
-            window.moddedStringMapping = await loadStringsFile(window.selectedMod.ddsStrings, ['dds.blocks.csv']);
+            // The mod decides where its block text lives, so follow the manifest to it
+            // rather than assuming the folder the game reads it from.
+            const ddsFolder = await ddsContentFolder(window.selectedMod.baseFolder);
+            const manifest = await readManifest(ddsFolder);
+            const handle = await stringsFileHandle(ddsFolder, toReal(manifest, DDS_BLOCKS_VIRTUAL), false);
+
+            window.moddedStringMapping = handle
+                ? parseStringsFile(await readFileContent(handle), 'Mod')
+                : {};
         }
     }
     catch
     {
-        moddedStringMapping = {};
+        // Was an implicit global, which resolved to window.moddedStringMapping in a
+        // classic script but throws under module strict mode.
+        window.moddedStringMapping = {};
     }
 }
 
-async function loadFile(path, thisTreeCount, parentData = null, openTheseIds = null) {
+export async function loadFile(path, thisTreeCount, parentData = null, openTheseIds = null) {
     var data = null;
     var fileType;
     
     var vanillaDataFile = await (await (await tryGetFile(window.dirHandleStreamingAssets, path.split('/')))?.getFile())?.text();
-    var patchDataFile = window.selectedMod != null ? (await (await (await tryGetFile(window.selectedMod.baseFolder, (path + '_patch').split('/')))?.getFile())?.text()) : null;
+    var patchDataFile = window.selectedMod != null ? (await (await (await tryGetFile(window.selectedMod.baseFolder, modPath(path + '_patch')))?.getFile())?.text()) : null;
     
     if (vanillaDataFile != null) {
         data = JSON.parse(vanillaDataFile);
@@ -66,7 +91,7 @@ async function loadFile(path, thisTreeCount, parentData = null, openTheseIds = n
             data = jsonpatch.applyPatch(data, JSON.parse(patchDataFile)).newDocument;
         }
     } else {
-        data = JSON.parse(await (await (await tryGetFile(window.selectedMod.baseFolder, path.split('/')))?.getFile())?.text());
+        data = JSON.parse(await (await (await tryGetFile(window.selectedMod.baseFolder, modPath(path)))?.getFile())?.text());
     }
     
     // Show actual text
@@ -75,6 +100,15 @@ async function loadFile(path, thisTreeCount, parentData = null, openTheseIds = n
     // Create json-tree
     var treeEle = addTreeElement(thisTreeCount, document.getElementById('trees'), { path, name: data.name }, { copySource, useAsTemplate, save })
     var tree = jsonTree.create(data, treeEle);
+
+    const updateTree = createEditLoop({
+        tree,
+        getData: () => data,
+        setData: (next) => { data = createDummyKeys(next); },
+        onRebuild: () => runTreeSetup(),
+        save: () => save(),
+    });
+
     runTreeSetup();
 
     let fileName = path.split('/').at(-1);
@@ -126,17 +160,7 @@ async function loadFile(path, thisTreeCount, parentData = null, openTheseIds = n
     }
 
     async function modifyTreeElement(jsonPointer, newValue) {
-        data = jsonpatch.applyPatch(data, [
-            {
-                op: 'replace',
-                path: jsonPointer,
-                value: newValue
-            }
-        ]).newDocument;
-        data = createDummyKeys(data);
-        tree.loadData(data);
-        runTreeSetup();
-        await save();
+        await updateTree([{ op: 'replace', path: jsonPointer, value: newValue }]);
     }
 
     async function runTreeSetup() {
@@ -149,101 +173,50 @@ async function loadFile(path, thisTreeCount, parentData = null, openTheseIds = n
             }
         });
 
-        // Links for trees and blocks
+        // A newspaper tree names an article that is configured in a file of its own,
+        // which is written the first time the tree is opened rather than on save.
         tree.findAndHandle(item => {
-            return ['msgID', 'blockID', DUMMY_KEYS.NEWSPAPER_DUMMY_KEY].includes(item.label);
+            return item.label === DUMMY_KEYS.NEWSPAPER_DUMMY_KEY;
         }, async item => {
-            var ele = item.el.querySelector('.jsontree_value_string');
-            const guid = ele.innerText.replace(/"/g, "");
-
-            ele.classList.add('link-element')
-
-            if(item.label == DUMMY_KEYS.NEWSPAPER_DUMMY_KEY) {
-                await createFileIfNotExisting('newspaper', guid);
-            }
-
-            ele.addEventListener('click', () => {
-                switch (item.label) {
-                    case 'msgID':
-                        loadFile(`DDS/Messages/${guid}.msg`, 1, data);
-                        break;
-                    case 'blockID':
-                        loadFile(`DDS/Blocks/${guid}.block`, 2, data);
-                        break;
-                    case DUMMY_KEYS.NEWSPAPER_DUMMY_KEY:
-                        loadFile(`DDS/Messages/${guid}.newspaper`, 2, data);
-                        break;
-                }
-            });
+            await createFileIfNotExisting('newspaper', renderedValue(item));
         });
 
         // Editing operations
 
-        // Simple types, direct editing and enums
-        tree.findAndHandle(item => {
-            return !item.isComplex;
-        }, item => {
-            var ele = item.el.querySelector('.jsontree_value');
+        // What kind of editor each value gets. This flow keys enums off the field
+        // name; anything else is edited as text.
+        decorateValueNodes(tree, {
+            resolveNode: (item, valueEl) => {
+                const options = window.enums[item.label];
+                if (options?.length > 0) {
+                    return { kind: NodeKind.ENUM, options, currentValue: valueEl.innerText };
+                }
 
-            if (window.enums[item.label]?.length > 0) {
-                createEnumSelectElement(
-                    item.el.querySelector('.jsontree_value'),
-                    window.enums[item.label],
-                    ele.innerText
-                ).addEventListener('change', async (e) => {
-                    await modifyTreeElement(getJSONPointer(item), parseInt(e.target.value));
-                });
-            } else {
-                ele.addEventListener('contextmenu', async (e) => {
-                    e.preventDefault();
-
-                    if (!window.selectedMod) {
-                        alert('Please select a mod to save in first');
-                        throw 'Please select a mod to save in first';
-                    }
-
-                    let previousValue = item.el.querySelector('.jsontree_value').innerText;
-
-                    // If it's a string, auto-handle quotes
-                    if (item.type == 'string') {
-                        previousValue = previousValue.substring(1, previousValue.length - 1);
-
-                        // Double quotes
-                        if (previousValue.startsWith('"')) {
-                            previousValue = previousValue.substring(1, previousValue.length - 1);
+                return {
+                    kind: NodeKind.TEXT,
+                    link: openTargetFor(item, valueEl),
+                    // The newspaper key is a way in to the article's own file rather
+                    // than part of this document: it is resolved on load and stripped
+                    // on save, so there is nothing here to edit.
+                    readOnly: item.label === DUMMY_KEYS.NEWSPAPER_DUMMY_KEY,
+                };
+            },
+            render: {
+                [NodeKind.ENUM]: (valueEl, item, node) => {
+                    createSelectEditor(
+                        valueEl, { options: node.options, selectedValue: node.currentValue },
+                        async (value) => {
+                            await modifyTreeElement(getJSONPointer(item), parseInt(value));
                         }
-                    }
-
-                    let res = prompt('Enter new value', previousValue);
-
-                    if (res === null) {
-                        return;
-                    }
-
-                    if ((item.type == 'string' && res != 'null' && res !== null)) {
-                        res = makeCSVSafe(res);
-                    }
-
-                    let parsed = JSON.parse(res);
-                    if (item.label != DUMMY_KEYS.LOCALISATION_DUMMY_KEY) {
-                        if (parsed || parsed === false || parsed === 0 || parsed === '' || res === 'null') {
-                            await modifyTreeElement(getJSONPointer(item), parsed);
-                        }
-                    } else {
-                        item.parent.findChildren(node => ['id', 'replaceWithID'].includes(node.label), async node => {
-                            let guidString = node.el.querySelector('.jsontree_value').innerText;
-                            guidString = guidString.substring(1, guidString.length - 1);
-
-                            await addOrModifyStrings(guidString, parsed);
-
-                            // Visually update the value, since we aren't changing the tree
-                            item.el.querySelector('.jsontree_value').innerText = parsed.startsWith('"') ? parsed : '"' + parsed + '"';
-
-                            await loadI18n();
-                        });
-                    }
-                });
-            }
+                    );
+                },
+                [NodeKind.TEXT]: (valueEl, item, node) => {
+                    const input = createTextEditor(
+                        valueEl, { readOnly: node.readOnly, link: node.link },
+                        (newValue) => commitValue(item, newValue, input)
+                    );
+                },
+            },
         });
 
         // Removing element
@@ -260,16 +233,7 @@ async function loadFile(path, thisTreeCount, parentData = null, openTheseIds = n
                 }
 
                 if (confirm('Remove Element?')) {
-                    data = jsonpatch.applyPatch(data, [
-                        {
-                            op: 'remove',
-                            path: getJSONPointer(item)
-                        }
-                    ]).newDocument;
-                    data = createDummyKeys(data);
-                    tree.loadData(data);
-                    runTreeSetup();
-                    await save();
+                    await updateTree([{ op: 'remove', path: getJSONPointer(item) }]);
                 }
             });
         });
@@ -292,19 +256,67 @@ async function loadFile(path, thisTreeCount, parentData = null, openTheseIds = n
 
                     if (newContent === null) return;
 
-                    data = jsonpatch.applyPatch(data, [
-                        {
-                            op: 'add',
-                            path: getJSONPointer(item) + '/-',
-                            value: newContent
-                        }
-                    ]).newDocument;
-                    data = createDummyKeys(data);
-                    tree.loadData(data);
-                    runTreeSetup();
-                    await save();
+                    await updateTree([{ op: 'add', path: getJSONPointer(item) + '/-', value: newContent }]);
                 }
             });
+        });
+    }
+
+    /**
+     * The document a GUID-valued field points at, as a ➥ beside its input.
+     *
+     * These were the value itself: the text carried `.link-element` and a click
+     * handler. An input cannot also be a link, so navigation moved out to a control of
+     * its own -- which is what the case flow already did for the GUIDs it shows.
+     */
+    function openTargetFor(item, valueEl) {
+        const guid = valueEl.innerText.replace(/"/g, '');
+
+        switch (item.label) {
+            case 'msgID':
+                return { title: 'Open this message', onClick: () => loadFile(`DDS/Messages/${guid}.msg`, 1, data) };
+            case 'blockID':
+                return { title: 'Open this block', onClick: () => loadFile(`DDS/Blocks/${guid}.block`, 2, data) };
+            case DUMMY_KEYS.NEWSPAPER_DUMMY_KEY:
+                return { title: 'Open this newspaper article', onClick: () => loadFile(`DDS/Messages/${guid}.newspaper`, 2, data) };
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Store an edited value. Called on blur, with whatever the input holds.
+     *
+     * The localisation key is a special case: it is resolved from dds.blocks.csv for
+     * display, so editing it writes to the CSV keyed by the block's GUID rather than
+     * patching the JSON.
+     *
+     * @returns false if nothing was stored, which puts the control back.
+     */
+    async function commitValue(item, typed, input) {
+        assertModSelected();
+
+        const edited = parseEditedValue(typed, { isString: item.type == 'string' });
+        if (!edited.ok) return false;
+
+        const { value: parsed, raw } = edited;
+
+        if (item.label != DUMMY_KEYS.LOCALISATION_DUMMY_KEY) {
+            if (parsed || parsed === false || parsed === 0 || parsed === '' || raw === 'null') {
+                await modifyTreeElement(getJSONPointer(item), parsed);
+            }
+            return;
+        }
+
+        item.parent.findChildren(node => ['id', 'replaceWithID'].includes(node.label), async node => {
+            await addOrModifyStrings(renderedValue(node), parsed);
+
+            // Show what was stored rather than what was typed: a line with a comma in
+            // it is quoted on the way into the CSV, and a correction made at the prompt
+            // is not in the control at all.
+            setValue(input, parsed);
+
+            await loadI18n();
         });
     }
 
@@ -316,30 +328,36 @@ async function loadFile(path, thisTreeCount, parentData = null, openTheseIds = n
         newFile(fileType, data);
     }
 
-    async function save(force) {
-        if (!window.selectedMod) {
-            alert('Please select a mod to save in first');
-            throw 'Please select a mod to save in first';
-        }
+    // Whether this document already exists in the mod. Editing base game content
+    // creates a patch file the first time it is saved, which the panel should show.
+    let existsInMod = vanillaDataFile ? patchDataFile != null : true;
 
-        if (!window.savingEnabled && !force) return;
+    async function save(force) {
+        assertModSelected();
+        if (!shouldSave(force)) return;
 
         if (vanillaDataFile) {
-            // Save patches of vanilla files
-            writeFile(await tryGetFile(window.selectedMod.baseFolder, (path + '_patch').split('/'), true), JSON.stringify(jsonpatch.compare(JSON.parse(vanillaDataFile), JSON.parse(getSaveSafeJSON()))), false);
-
+            // Base-game content: never modified, patched at load time by the DDS Loader.
+            await writePatchAgainstVanilla(
+                window.selectedMod.baseFolder, modPath(path + '_patch'), vanillaDataFile, getSaveSafeJSON());
         } else {
-            // Save entire custom files
-            writeFile(await tryGetFile(window.selectedMod.baseFolder, path.split('/'), true), getSaveSafeJSON(), false);
+            // Files this mod created have no vanilla counterpart.
+            await writeWholeFile(window.selectedMod.baseFolder, modPath(path), getSaveSafeJSON());
+        }
+
+        // Only on the first save: rescanning the folder on every edit is wasted work.
+        if (!existsInMod) {
+            existsInMod = true;
+            await refreshPanel();
         }
     }
 
     function getSaveSafeJSON() {
-        return JSON.stringify(data, (key, value) => (Object.keys(DUMMY_KEYS).includes(key) ? undefined : value), 2);
+        return toSaveSafeJSON(data, DUMMY_KEYS);
     }
 }
 
-async function getTemplateForItem(item) {
+export async function getTemplateForItem(item) {
     switch (item.label) {
         case 'messages':
             let message = cloneTemplate('treeMessage');
@@ -349,7 +367,9 @@ async function getTemplateForItem(item) {
         case 'links':
             let treeMessageLinks = cloneTemplate('treeMessageLinks');
             treeMessageLinks.to = prompt(`Existing instanceID`) || '';
-            treeMessageLinks.from = item.parent.childNodes.find(node => node.label == 'instanceID').el.querySelector('.jsontree_value').innerText.replaceAll('"', '');
+            // Read through renderedValue: by the time an element is added, the
+            // instanceID it links from is an input rather than text.
+            treeMessageLinks.from = renderedValue(item.parent.childNodes.find(node => node.label == 'instanceID'));
             return treeMessageLinks;
         case 'traits':
             return prompt(`Trait name`) || null;

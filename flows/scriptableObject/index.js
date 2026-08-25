@@ -1,9 +1,21 @@
-const DUMMY_KEYS = {
+import { tryGetFile } from '../../core/fs.js';
+import { assertModSelected, shouldSave, toSaveSafeJSON, writeWholeFile } from '../../core/persistence.js';
+import { createEditLoop } from '../../core/document.js';
+import { decorateValueNodes, NodeKind } from '../../core/valueNodes.js';
+import { getJSONPointer } from '../../core/jsonPointer.js';
+import { parseEditedValue } from '../../core/valueEditors.js';
+import { fastElement } from '../../core/dom.js';
+import { addTreeElement, deleteTree, createInputElement, createSOSelectElement, createEnumSelectElement } from './scripts/jsonTreeAdditions.js';
+import { cloneTemplate, createFileIfNotExisting, createOverrideIfNotExisting } from './scripts/modFileManager.js';
+import { setNewFileMode, updateNewFileCopyFrom } from './scripts/ui.js';
+import { NEW_SUFFIX } from './scripts/contentList.js';
+
+export const DUMMY_KEYS = {
     'LOCALISATION_DUMMY_KEY': '_ENG Localisation_',
     'NEWSPAPER_DUMMY_KEY': '_Newspaper Article Configuration_'
 };
 
-async function initAndLoad(path) {
+export async function initAndLoad(path) {
     let openWindows = document.querySelectorAll('.file-window');
     for(let i = openWindows.length - 1; i >= 0; i--) {
         deleteTree(openWindows[i]);
@@ -11,25 +23,42 @@ async function initAndLoad(path) {
     await loadFile(path, false);
 }
 
-async function loadFile(path, readOnly, type) {
-    loadFileFromFolder(path + '.sodso.json', window.selectedMod.baseFolder, readOnly, type);
+/**
+ * Open a file in the content folder by name. `suffix` says which of the two files
+ * that name can stand for; everything but the file panel means the mod's own asset.
+ */
+export async function loadFile(path, readOnly, type, suffix = NEW_SUFFIX) {
+    loadFileFromFolder(path + suffix, window.selectedMod.baseFolder, readOnly, type);
 }
 
-async function loadFileFromFolder(path, folderHandle, readOnly, type) {
+export async function loadFileFromFolder(path, folderHandle, readOnly, type) {
     let loadedFile = await tryGetFile(folderHandle, path.split('/'));
     let loadedFileContent = await (await (loadedFile)?.getFile())?.text();
     loadFileContent(path, loadedFileContent, readOnly, type);
 }
 
-async function loadFileFromOnlineRepo(path, type) {
-    fetch(`data/${path}`)
-    .then(res => res.text())
-    .then(text => {
-        loadFileContent(path, text, true, type);
-  });
+/**
+ * The base game assets shipped with this tool, for looking at without the game files.
+ *
+ * Resolved against this module rather than the page: these used to be fetched from
+ * `data/`, which was right while this flow was a site of its own and has pointed at
+ * nothing since it became a flow served from the repo root. The fetch 404ed and the
+ * error page was handed to JSON.parse.
+ */
+const ASSET_DATA = new URL('./data/', import.meta.url);
+
+export async function loadFileFromOnlineRepo(path, type) {
+    const response = await fetch(new URL(path, ASSET_DATA));
+
+    if (!response.ok) {
+        alert(`${path} is not among the base game assets included with this tool`);
+        return;
+    }
+
+    loadFileContent(path, await response.text(), true, type);
 }
 
-async function loadFileContent(path, loadedFile, readOnly, type) {
+export async function loadFileContent(path, loadedFile, readOnly, type) {
     if(!loadedFile) {
         alert(`${path} doesn't exist or is a vanilla asset - create it in the manifest first`);
         return;
@@ -38,7 +67,9 @@ async function loadFileContent(path, loadedFile, readOnly, type) {
     const isManifestFile = path === 'murdermanifest.sodso.json';
 
     // Manifest Frame
-    let DOMtarget = isManifestFile ? document.querySelector('#manifest_panel>div') : document.getElementById('trees');
+    // By id, not by position: the file list is a div in this panel too, and it now
+    // comes first.
+    let DOMtarget = isManifestFile ? document.getElementById('manifest_content_tree') : document.getElementById('trees');
 
     let treeEle = addTreeElement(path, DOMtarget, readOnly, { copySource, save, showSelectFieldsDialog });
 
@@ -62,6 +93,18 @@ async function loadFileContent(path, loadedFile, readOnly, type) {
 
     // Create json-tree
     var tree = jsonTree.create(data, treeEle);
+
+    // Declared here rather than inside runTreeSetup: runTreeSetup assigns
+    // tree.updateTree at its top, and runs repeatedly as the tree is rebuilt.
+    const updateTree = createEditLoop({
+        tree,
+        getData: () => data,
+        setData: (next) => { data = createDummyKeys(next); },
+        onRebuild: () => runTreeSetup(),
+        save: () => save(),
+        afterRebuild: () => markDefaultValues(),
+    });
+
     runTreeSetup();
     markDefaultValues();
 
@@ -179,101 +222,85 @@ async function loadFileContent(path, loadedFile, readOnly, type) {
             }
         });
 
-        // Editing operations
-        // Simple types, direct editing and enums
-        tree.findAndHandle(item => {
-            return !item.isComplex;
-        }, item => {
-            var ele = item.el.querySelector('.jsontree_value');
-            
-            var splitPath = [fileType, ...item.pathToItemSplit];
+        // What kind of editor each value gets. This flow walks the game's type
+        // layout, which can resolve a node to an enum, a reference to another
+        // ScriptableObject, or something the user must not edit.
+        decorateValueNodes(tree, {
+            resolveNode: (item, valueEl) => {
+                const splitPath = [fileType, ...item.pathToItemSplit];
+                let mappedType = mapSplitPath(splitPath);
 
-            var mappedType = mapSplitPath(splitPath);
-            
-            if(splitPath[splitPath.length - 1] === "copyFrom") {
-                mappedType = fileType;
-            }
+                // copyFrom points at another file of this same type.
+                if (splitPath.at(-1) === 'copyFrom') mappedType = fileType;
 
-            let currentValue = ele.innerText;
-            if(currentValue === "false") currentValue = 0;
-            if(currentValue === "true") currentValue = 1;
+                let currentValue = valueEl.innerText;
+                if (currentValue === 'false') currentValue = 0;
+                if (currentValue === 'true') currentValue = 1;
 
-            // TODO: Convert this into the if branch below
-            if (mappedType && window.enums[mappedType]?.length > 0) {
-                createEnumSelectElement(
-                    item.el.querySelector('.jsontree_value'),
-                    window.enums[mappedType],
-                    currentValue,
-                    false,
-                    readOnly,
-                    async (selectedIndex) => {
-                        await updateTree([
-                            {
+                if (mappedType && window.enums[mappedType]?.length > 0) {
+                    return { kind: NodeKind.ENUM, options: window.enums[mappedType], currentValue };
+                }
+                if (window.typeMap[mappedType]) {
+                    return { kind: NodeKind.REFERENCE, type: mappedType, currentValue };
+                }
+                if (mappedType === 'FileType') {
+                    return { kind: NodeKind.READ_ONLY };
+                }
+                // fileType names the document's own type and is set at creation.
+                return { kind: NodeKind.TEXT, readOnly: readOnly || splitPath.at(-1) === 'fileType' };
+            },
+            render: {
+                [NodeKind.ENUM]: (valueEl, item, node) => {
+                    createEnumSelectElement(
+                        valueEl, node.options, node.currentValue, false, readOnly,
+                        async (selectedIndex) => {
+                            await updateTree([{
                                 op: 'replace',
                                 path: getJSONPointer(item),
-                                value: parseInt(selectedIndex)
+                                value: parseInt(selectedIndex),
+                            }]);
+                        }
+                    );
+                },
+                [NodeKind.REFERENCE]: (valueEl, item, node) => {
+                    createSOSelectElement(
+                        valueEl, window.typeMap[node.type], node.currentValue, readOnly,
+                        async (selectedIndex, customValue) => {
+                            let value;
+                            if (selectedIndex == -1) {
+                                value = null;
+                            } else if (selectedIndex >= 0) {
+                                value = `REF:${node.type}|${window.typeMap[node.type][selectedIndex]}`;
+                            } else {
+                                value = `REF:${node.type}|${customValue}`;
                             }
-                        ]);
-                    }
-                );
-            } else if (window.typeMap[mappedType]) {
-                createSOSelectElement(
-                    item.el.querySelector('.jsontree_value'),
-                    window.typeMap[mappedType],
-                    currentValue,
-                    readOnly,
-                    async (selectedIndex, customValue) => {
-                        let replacementValue = item.el.querySelector('.jsontree_value');
-                        if(selectedIndex == -1)
-                        {
-                            replacementValue = null;
-                        }
-                        else if(selectedIndex >= 0)
-                        {
-                            replacementValue = `REF:${mappedType}|${window.typeMap[mappedType][selectedIndex]}`;
-                        }
-                        else
-                        {
-                            replacementValue = `REF:${mappedType}|${customValue}`;
-                        }
-                        await updateTree([
-                            {
+                            await updateTree([{
                                 op: 'replace',
                                 path: getJSONPointer(item),
-                                value: replacementValue
-                            }
-                        ]);
-                    }
-                );
-            } else if (mappedType === "FileType") {
-                // Do nothing, not editable
-            } else {
-                createInputElement(item.el.querySelector('.jsontree_value'), readOnly || splitPath.at(-1) === 'fileType', async (newValue) => {
-                    if (!window.selectedMod) {
-                        alert('Please select a mod to save in first');
-                        throw 'Please select a mod to save in first';
-                    }
+                                value,
+                            }]);
+                        }
+                    );
+                },
+                [NodeKind.TEXT]: (valueEl, item, node) => {
+                    createInputElement(valueEl, node.readOnly, async (typed) => {
+                        assertModSelected();
 
-                    if (newValue === null) {
-                        return;
-                    }
+                        // Returning false puts the control back: see createTextEditor.
+                        const edited = parseEditedValue(typed, { isString: item.type == 'string' });
+                        if (!edited.ok) return false;
 
-                    if ((item.type == 'string' && newValue != 'null' && newValue !== null)) {
-                        newValue = makeCSVSafe(newValue);
-                    }
-
-                    let parsed = JSON.parse(newValue);
-                    if (parsed || parsed === false || parsed === 0 || parsed === '' || newValue === 'null') {
-                        await updateTree([
-                            {
+                        const { value: parsed, raw } = edited;
+                        if (parsed || parsed === false || parsed === 0 || parsed === '' || raw === 'null') {
+                            await updateTree([{
                                 op: 'replace',
                                 path: getJSONPointer(item),
-                                value: parsed
-                            }
-                        ]);
-                    }
-                });
-            }
+                                value: parsed,
+                            }]);
+                        }
+                    });
+                },
+            },
         });
 
         if(!readOnly) {
@@ -337,34 +364,6 @@ async function loadFileContent(path, loadedFile, readOnly, type) {
             ]);
         }
 
-        async function updateTree(patch)
-        {
-            let openPaths = [];
-            tree.findAndHandle(item => {
-                return item.el.classList.contains('jsontree_node_expanded');
-            }, item => {
-                openPaths.push(item.pathToItem);
-            });
-
-            // Patch the data
-            data = jsonpatch.applyPatch(data, patch).newDocument;
-            data = createDummyKeys(data);
-            tree.loadData(data);
-
-            // Recreate the tree
-            runTreeSetup();
-            // Save the new data
-            await save();
-
-            // Reopen previously opened paths
-            tree.findAndHandle(item => {
-                return openPaths.includes(item.pathToItem);
-            }, item => {
-                item.expand();
-            });
-
-            markDefaultValues();
-        }
     }
 
     function calculatePathToItemGeneric(actualItem) {
@@ -396,20 +395,15 @@ async function loadFileContent(path, loadedFile, readOnly, type) {
     }
 
     async function save(force) {
-        if (!window.selectedMod) {
-            alert('Please select a mod to save in first');
-            throw 'Please select a mod to save in first';
-        }
-
-        // console.log(getSaveSafeJSON());
-        if (!window.savingEnabled && !force) return;
-        writeFile(await tryGetFile(window.selectedMod.baseFolder, (path).split('/'), true), getSaveSafeJSON(), false);
+        assertModSelected();
+        if (!shouldSave(force)) return;
+        await writeWholeFile(window.selectedMod.baseFolder, path.split('/'), getSaveSafeJSON());
     }
 
     async function showSelectFieldsDialog() {
         let fieldList = document.querySelector('#select-fields-modal-field-list');
         fieldList.replaceChildren();
-        document.querySelector('#select-fields-modal').setAttribute("open", null);
+        document.querySelector('#select-fields-modal').setAttribute("open", "");
 
         let hiddenFields = ['presetName', 'copyFrom', 'name', 'type'];
         let dataToShow = Object.keys(window.templates[data.fileType]).filter(el => !hiddenFields.includes(el));
@@ -483,7 +477,7 @@ async function loadFileContent(path, loadedFile, readOnly, type) {
     }
 
     function getSaveSafeJSON() {
-        return JSON.stringify(data, (key, value) => (Object.keys(DUMMY_KEYS).includes(key) ? undefined : value), 2);
+        return toSaveSafeJSON(data, DUMMY_KEYS);
     }
 
     function markDefaultValues()
@@ -500,12 +494,12 @@ async function loadFileContent(path, loadedFile, readOnly, type) {
     }
 }
 
-async function getTemplateForItem(templateName) {
+export async function getTemplateForItem(templateName) {
     let newTemplate = 'PLACEHOLDER';
 
     if(templateName === "FileType")
     {
-        let { name, type, copyFrom } = await showNewFilePopup();
+        let { name, type, copyFrom, mode } = await showNewFilePopup();
         closeNewFilePopup();
 
         if(name == null || type == null)
@@ -514,26 +508,45 @@ async function getTemplateForItem(templateName) {
             return null;
         }
 
-        await createFileIfNotExisting(name, type, window.selectedMod.baseFolder, (content) => {
-            content.name = name;
-            content.presetName = name;
-            content.type = type;
-            content.copyFrom = copyFrom ? `REF:${type}|${copyFrom}` : null;
-            return content;
-        });
+        // An override is named after the asset it overrides -- that pairing is the
+        // whole of what makes it an override -- so the dropdown names the file and
+        // the File Name field has no say in it.
+        const overriding = mode === 'override';
+        const fileName = overriding ? copyFrom : name;
 
-        return `REF:${name}`;
+        if (overriding) {
+            // Not a template: every field a patch carries is a field it overrides, so
+            // a new one carries as little as it can get away with.
+            await createOverrideIfNotExisting(fileName, type, window.selectedMod.baseFolder);
+        } else {
+            await createFileIfNotExisting(fileName, type, window.selectedMod.baseFolder, (content) => {
+                content.name = fileName;
+                content.presetName = fileName;
+                content.type = type;
+                content.copyFrom = copyFrom ? `REF:${type}|${copyFrom}` : null;
+                return content;
+            });
+        }
+
+        // The folder has a new file in it.
+        const { refreshPanel } = await import('./scripts/ui.js');
+        await refreshPanel();
+
+        return `REF:${fileName}`;
     }
 
     newTemplate = cloneTemplate(templateName);
     return newTemplate;
 }
 
-// Creates a promise that is pending while the new case model is open
-async function showNewCasePopup() {
-    let popupPromise = new Promise((resolve, reject) => {
-        window.newCasePromiseResolve = (modName, type, createDDSFolders) => resolve({ modName, type, createDDSFolders });
-        window.newCasePromiseReject = () => reject({ modName: null, type: null, createDDSFolders: null });
+/**
+ * Creates a promise that is pending while the new case modal is open, and resolves to
+ * null if it is dismissed. Dismissing used to leave the promise pending for good,
+ * which now matters: the caller has a folder waiting to be laid out.
+ */
+export async function showNewCasePopup() {
+    let popupPromise = new Promise((resolve) => {
+        window.newCasePromiseResolve = (type) => resolve(type == null ? null : { type });
     });
 
     document.querySelector('#new-case-modal').toggleAttribute('open', true);
@@ -541,37 +554,49 @@ async function showNewCasePopup() {
     return popupPromise;
 }
 
-function closeNewCasePopup() {
+export function cancelNewCasePopup() {
+    window.newCasePromiseResolve?.(null);
+    closeNewCasePopup();
+}
+
+export function closeNewCasePopup() {
     document.querySelector('#new-case-modal').toggleAttribute('open', false);
-    document.querySelector('#new-case-modal-case-name').value = '';
 }
 
 // Creates a promise that is pending while the new file model is open
-async function showNewFilePopup() {
+export async function showNewFilePopup() {
     let popupPromise = new Promise((resolve, reject) => {
-        window.newFilePromiseResolve = (name, type, copyFrom) => resolve({ name, type, copyFrom: (copyFrom === 'None' ? null : copyFrom) });
-        window.newFilePromiseReject = () => reject({ name: null, type: null, copyFrom: null });
+        window.newFilePromiseResolve = (name, type, copyFrom, mode) =>
+            resolve({ name, type, copyFrom: (copyFrom === 'None' ? null : copyFrom), mode });
+        window.newFilePromiseReject = () => reject({ name: null, type: null, copyFrom: null, mode: null });
     });
+
+    // Opening is the only point at which the file type is known to be settled, so the
+    // list is filled here rather than left empty until the type select is touched.
+    updateNewFileCopyFrom();
+    setNewFileMode('copy');
 
     document.querySelector('#new-file-modal').toggleAttribute('open', true);
 
     return popupPromise;
 }
 
-function closeNewFilePopup() {
+export function closeNewFilePopup() {
     document.querySelector('#new-file-modal').toggleAttribute('open', false);
     document.querySelector('#new-file-modal-file-name').value = '';
 }
 
-function deepReplace (obj, keyName, replacer) {
+export function deepReplace (obj, keyName, replacer) {
     if(obj.hasOwnProperty(keyName)) {
         return replacer(obj[keyName]);
     } else {
         let keys = Object.keys(obj);
-        for (ki = 0; ki < keys.length; ki++) {
+        // ki/i were undeclared, so they leaked to the global scope and would throw
+        // under module strict mode.
+        for (let ki = 0; ki < keys.length; ki++) {
             let key = keys[ki];
             if (Array.isArray(obj[keys[ki]])) {
-                for(i = 0; i < obj[key].length; i++) {
+                for (let i = 0; i < obj[key].length; i++) {
                     obj[key][i] = deepReplace(obj[key][i], keyName, replacer)
                 }
             } else if (typeof obj[key] === "object") {

@@ -1,125 +1,58 @@
-function addTreeElement(thisTreeCount, parentElement, fileData, editorCallbacks) {
+import { capitalizeFirstLetter } from '../../../core/strings.js';
+import { createTreeWindow, closeFromDepth, WindowPolicy } from '../../../core/treeWindow.js';
+
+/** These windows are levels of a drill-down: tree -> message -> block. */
+const WINDOW_POLICY = WindowPolicy.DRILLDOWN;
+export const WINDOW_DEPTHS = 3;
+
+const windowId = (depth) => `file-window-${depth}`;
+
+/** Map a file extension to the document type it represents. */
+const FILE_TYPES = { tree: 'tree', msg: 'message', block: 'block' };
+
+export function addTreeElement(thisTreeCount, parentElement, fileData, editorCallbacks) {
+    // Drill-down policy: opening a level closes it and everything below, because
+    // what is below only exists as a consequence of what is above.
     deleteTree(thisTreeCount);
 
-    const div = document.createElement("div");
-    div.id = "file-window-" + thisTreeCount;
-    div.className = "file-window";
-    parentElement.appendChild(div);
+    const [, fileId, extension] = fileData.path.match(/.*\/(.*)\.(\w+)/);
+    const fileType = FILE_TYPES[extension];
 
-    const jsontreeEle = document.createElement("div");
-    jsontreeEle.id = "jsontree-container_" + thisTreeCount;
-    jsontreeEle.className = "jsontree-container";
-    div.appendChild(jsontreeEle);
+    const { treeEl } = createTreeWindow({
+        id: windowId(thisTreeCount),
+        parent: parentElement,
+        // Recorded so the open set can be captured and restored across a flow switch.
+        attributes: { path: fileData.path },
+        title: `
+            <h2>${capitalizeFirstLetter(fileType)}: ${fileData.name}</h2>
+            <h3>${fileId}
+                <span class="copy-icon" title="Copy GUID">📄<span>📄</span></span>
+                <span class="fav-icon" title="Save to favourites"></span>
+            </h3>`,
+        actions: [
+            { label: 'Save', onClick: () => editorCallbacks.save(true) },
+            { label: 'Use As Template', onClick: editorCallbacks.useAsTemplate },
+            { label: 'Copy Source', onClick: editorCallbacks.copySource },
+            { label: 'Close', onClick: () => deleteTree(thisTreeCount) },
+        ],
+        onTitleReady: (titleEl) => {
+            titleEl.querySelector('.copy-icon').addEventListener('click', () => {
+                navigator.clipboard.writeText(fileId);
+            });
 
-    // Controls sit outside the tree element
-    const controlsEle = document.createElement("div");
-    controlsEle.className = "jsontree-container-controls";
-    // div.appendChild(controlsEle);
-
-    // Editor bar sits inside the tree
-    const editorBar = document.createElement("div");
-    editorBar.className = "editor-bar";
-    jsontreeEle.appendChild(editorBar);
-
-    const titleEle = document.createElement("div");
-    titleEle.className = "doc-title";
-    const fileNameData = fileData.path.match(/.*\/(.*)\.(\w+)/);
-    const fileId = fileNameData[1];
-    
-    let fileType;
-
-    switch(fileNameData[2])
-    {
-        case 'tree':
-            fileType = 'tree';
-            break;
-        case 'msg':
-            fileType = 'message';
-            break;
-        case 'block':
-            fileType = 'block';
-            break;
-    }
-
-    titleEle.innerHTML = `<h2>${capitalizeFirstLetter(fileType)}: ${fileData.name}</h2><h3>${fileId} <span class="copy-icon" title="Copy GUID">📄<span>📄</span></span><span class="fav-icon" title="Save to favourites"></span></h3>`;
-    editorBar.appendChild(titleEle);
-
-    // Copy GUID function
-    titleEle.querySelector('.copy-icon').addEventListener('click', () => {
-        navigator.clipboard.writeText(fileId);
-    });
-    
-    // Favourite function and icon
-    titleEle.querySelector('.fav-icon').innerText = JSON.parse(localStorage.getItem('favs')).find(ele => ele.guid === fileId) ? '❤' : '♡';
-    titleEle.querySelector('.fav-icon').addEventListener('click', () => {
-        const isNowFav = window.toggleFav(fileId, fileType);
-        titleEle.querySelector('.fav-icon').innerText = isNowFav ? '❤' : '♡';
+            const favIcon = titleEl.querySelector('.fav-icon');
+            const isFav = JSON.parse(localStorage.getItem('favs')).some((f) => f.guid === fileId);
+            favIcon.innerText = isFav ? '❤' : '♡';
+            favIcon.addEventListener('click', () => {
+                favIcon.innerText = window.toggleFav(fileId, fileType) ? '❤' : '♡';
+            });
+        },
     });
 
-
-    const closeCross = document.createElement("div");
-    closeCross.innerText = "❌";
-    closeCross.className = "close-button";
-    closeCross.addEventListener('click', () => {
-        deleteTree(thisTreeCount);
-    })
-    controlsEle.appendChild(closeCross);
-
-    const saveChanges = document.createElement("button");
-    saveChanges.innerText = "Save";
-    saveChanges.addEventListener('click', () => editorCallbacks.save(true))
-    editorBar.appendChild(saveChanges);
-
-    const useAsTemplate = document.createElement("button");
-    useAsTemplate.innerText = "Use As Template";
-    useAsTemplate.addEventListener('click', editorCallbacks.useAsTemplate)
-    editorBar.appendChild(useAsTemplate);
-
-    const copySource = document.createElement("button");
-    copySource.innerText = "Copy Source";
-    copySource.addEventListener('click', editorCallbacks.copySource)
-    editorBar.appendChild(copySource);
-
-    return jsontreeEle;
+    return treeEl;
 }
 
-function deleteTree(thisTreeCount) {
-    var i = thisTreeCount;
-    while(i < 3)
-    {
-        if(document.getElementById("file-window-" + i) != null)
-            document.getElementById("file-window-" + i)?.remove();
-        i++;
-    }
-}
-
-function getJSONPointer(node) {
-    if (node.isRoot) {
-        return "";
-    }
-
-    return getJSONPointer(node.parent) + "/" + node.label;
-}
-
-function createEnumSelectElement(domNode, options, selectedIndex) {
-    //Create and append select list
-    var selectList = document.createElement("select");
-    domNode.replaceChildren(selectList);
-
-    //Create and append the options
-    for (var i = 0; i < options.length; i++) {
-        var option = document.createElement("option");
-        
-        option.value = i;
-        option.text = options[i];
-        option.selected = i == selectedIndex;
-
-        selectList.appendChild(option);
-    }
-
-    return selectList;
-}
-
-function capitalizeFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
+/** Close this level and every level below it. */
+export function deleteTree(thisTreeCount) {
+    closeFromDepth(thisTreeCount, WINDOW_DEPTHS, windowId);
 }

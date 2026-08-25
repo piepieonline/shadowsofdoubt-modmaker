@@ -1,4 +1,11 @@
-/*I don't sort this sry*/
+/*
+ * jsonTree overrides for the DDS flow.
+ *
+ * Note: this file arrived as a copy of the case flow's rules, so it carried
+ * selectors that only ever matched that flow -- select2 (never loaded here) and
+ * .editor-bar h5 (this flow's titles are h2/h3). Those are removed, along with the
+ * editor bar rules, which core/chrome.css now owns for both flows.
+ */
 #trees {
     font-family:monospace;
     font-size: 14px;
@@ -24,7 +31,7 @@
     font-size: inherit;
 }
 
-.select2-dropdown input, #trees input, #trees select {
+#trees input, #trees select {
     padding: 2px 10px;
     height: 100%;
     margin-bottom: 5px;
@@ -36,45 +43,38 @@
     opacity: var(--pico-form-element-disabled-opacity);
 }
 
+/*
+ * A value with a control in it is laid out as a row: control, ➥, separator.
+ *
+ * Inline, that row breaks wherever it runs out of width, and a 36-character GUID in a
+ * 500px column is wide enough to do it -- leaving the ➥, or the comma after it, alone
+ * on the next line, reading as though it belonged to the following field. As flex
+ * items the control gives up the width instead, down to the min-width above, after
+ * which the value scrolls inside it.
+ *
+ * The wrapper is what this is applied to because jsonTree floats the label and leaves
+ * the wrapper to fill the rest of the row, so it already has exactly the width going
+ * spare -- and the separator lives inside it, after the value. A flex container still
+ * keeps clear of the float, which is what the wrapper's overflow was for.
+ *
+ * This flow only: the case flow's inputs fill their row rather than sizing to their
+ * content, and its columns are wide enough that none of this arises.
+ */
+#trees .jsontree_value-wrapper:has(> .jsontree_value > input, > .jsontree_value > select) {
+    display: flex;
+    align-items: center;
+}
+
+#trees .jsontree_value:has(> input, > select) {
+    display: flex;
+    align-items: center;
+    /* Overriding min-content, which is what stops a flex item shrinking by default. */
+    min-width: 0;
+}
+
 #trees > * {
     background: #c52f2110;
     border-radius: 5px;
-}
-
-#trees > .select2-container {
-    padding: 0;
-}
-
-.select2-dropdown {
-    font-family:monospace;
-    font-size: 14px;
-    color: black;
-}
-
-.select2 {
-    width: 90% !important;
-}
-
-#trees .select2-search__field {
-    width: 100%;
-}
-
-#trees .editor-bar button {
-    padding: 5px;
-    margin: 0 5px 0 0;
-    max-width: 150px;
-}
-
-#trees .editor-bar h5 {
-    padding: 0;
-    margin: 0;
-    margin-top: -15px;
-    font-size: 24px;
-}
-
-#trees .editor-bar ul, #trees .editor-bar li {
-    display: block;
-    padding: 5px 5px 0;
 }
 
 /*JSON tree's styles*/

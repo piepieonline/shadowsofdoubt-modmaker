@@ -1,160 +1,23 @@
 <!DOCTYPE html>
 <html lang="eng">
+
 <head>
-    <title>SoD DDS Editor</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon" />
-    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
-
+    <meta charset="utf-8" />
+    <title>SoD Mod Maker</title>
+    <!--
+        This flow used to be its own page. It now lives in the shell at the site root,
+        so this redirects and keeps any deep-link parameters intact. The modding wiki
+        links to the old DDS Viewer URL.
+    -->
     <script>
-        window.queryParams = Object.fromEntries(new URLSearchParams(location.search));
-
-        if (localStorage.getItem('favs') == null) localStorage.setItem('favs', '[]');
+        const params = new URLSearchParams(location.search);
+        params.set('flow', 'dds');
+        location.replace('../../index.html?' + params.toString());
     </script>
-
-    <script src="./libs/jsonTree/jsonTree.js"></script>
-    <script src="./libs/JSON-Patch/fast-json-patch.min.js"></script>
-
-    <script type="module" src="./scripts/loadRefs.js"></script>
-    <script src="./scripts/ref/templates.js"></script>
-    <script src="./scripts/ref/enums.js"></script>
-
-    <script src="./index.js"></script>
-    <script src="./scripts/ui.js"></script>
-    <script src="./scripts/htmlHelpers.js"></script>
-    <script src="./scripts/jsonTreeAdditions.js"></script>
-    <script src="./scripts/fileManager.js"></script>
-    <script src="./scripts/modFileManager.js"></script>
-
-    <link href="./libs/jsonTree/jsonTree.css" rel="stylesheet" />
-    <link href="./jsontree_overrides.css" rel="stylesheet" />
-    <link href="./libs/reset.css" rel="stylesheet" />
-    <link href="./style.css" rel="stylesheet" />
 </head>
 
 <body>
-    <div class="editor">
-        <div class="controls">
-            <select id="select-loaded-mod" onchange="updateSelectedMod()">
-
-            </select>
-            <button id="new-mod-button" onclick="newMod()">Create new mod folder</button>
-            <select id="select-guid-type"
-                onchange="document.getElementById('new-file-button').innerText = `New ${document.getElementById('select-guid-type').value}`">
-                <option value="tree">Tree</option>
-                <option value="message">Message</option>
-                <option value="block">Block</option>
-            </select>
-            <input id="path-to-read" placeholder="Path" value="74da6230-45ef-4bb4-8f2e-8f6840e56927" />
-            <button onclick="loadFromGUI()">Load</button>
-            <button id="new-file-button" onclick="newFile(document.getElementById('select-guid-type').value)">New tree</button>
-            <button id="saving-enabled-button" onclick="setSaving(!window.savingEnabled)">Disable Saving</button>
-            <button onclick="showBrowse()">Browse...</button>
-            <button onclick="showReverseSearch()">Reverse Search</button>
-            <button onclick="document.getElementById('help-modal').classList.toggle('hidden')">Help</button>
-        </div>
-        <div id="trees"></div>
-    </div>
-    <!-- Help modal. Mostly redirect to the wiki -->
-    <div id="help-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="close-button" onclick="document.getElementById('help-modal').classList.toggle('hidden')">
-                ❌
-            </div>
-            <h2>Help</h2>
-            <div>
-                This is a basic tool to help view and create (WIP) new text content for Shadows of Doubt, using the DDS
-                system. All content in SoD is comprised of 4 parts (Trees, Messages, Blocks, Strings, in that order).
-            </div>
-            <br />
-            <ul>
-                <li><b>Trees:</b> The top level objects, and contain things like the conversation name, participate info
-                    and a list of <b>messages</b></li>
-                <li><b>Messages:</b> Mid level objects containing a list of <b>blocks</b>, each of which and can be set
-                    to always appear, or choose one of multiple in a group (Random, or based on traits)</li>
-                <li><b>Blocks:</b> The lowest level, and generally act as a direct reference to a line in the
-                    <b>strings</b> file. However, simple random substitutions can also be made on this level
-                </li>
-                <li><b>Strings:</b> Where the actual text comes from, stored in one large CSV. Generally, each block ID
-                    has a equivalent line in the CSV. Presented here merged into <b>blocks</b> for clarity</li>
-            </ul>
-            <br />
-            <h2>How to use:</h2>
-            <p>Instructions for use can now be found on the <a
-                    href="https://shadowsofdoubtmodding.miraheze.org/wiki/DDS_System">wiki</a>.</p>
-            <br />
-            <h2>Community content project</h2>
-            <div>I've opened a community content project (<a
-                    href="https://github.com/piepieonline/ShadowsOfDoubtContent">https://github.com/piepieonline/ShadowsOfDoubtContent</a>)
-                in the hopes that we can create a bunch more flavour text as a brains trust.</div>
-        </div>
-    </div>
-    <!-- Browse modal, for searching trees/messages/blocks and favourites -->
-    <div id="fav-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="close-button" onclick="document.getElementById('fav-modal').classList.toggle('hidden')">
-                ❌
-            </div>
-            <h2>Browse...</h2>
-            <div class="controls">
-                <label>Type: 
-                    <select id="browse-type-select" onchange="updateBrowse()">
-                        <option value="trees">Trees</option>
-                        <option value="messages">Messages</option>
-                        <option value="blocks">Blocks</option>
-                        <option value="fav">Favourites</option>
-                    </select>
-                </label>
-                <input id="browse-typeahead" type="text" oninput="updateBrowseTypeahead()" placeholder="Search name or GUID..." />
-            </div>
-            <ul id="fav-list">
-
-            </ul>
-        </div>
-    </div>
-    <!-- Before you start loading modal -->
-    <div id="load-modal" class="modal">
-        <div class="modal-content">
-            <h2>Before you start</h2>
-            <p>We need to open two directories so the tool can operate normally. If you only want to read content and not save anything, you can cancel the second file dialog.</p>
-            <ul>
-                <li>StreamingAssets: This is the game folder (Generally something like ".\steamapps\common\Shadows of Doubt\") which we need to read base game content from. This is <strong>read-only</strong>.</li>
-                <li>A mod folder: This is your working folder, generally the same as the case editor. New files and vanilla patches are read by the DDS Loader from here. This is <strong>read-write</strong>.</li>
-            </ul>
-            <div style="text-align: center; margin-top: 30px;">
-                <button onclick="(async () => { await loadFromGUI(); document.getElementById('load-modal').classList.toggle('hidden'); })()">Select Folders</button>
-            </div>
-        </div>
-    </div>
-    <!-- Reverse search modal -->
-    <div id="rsearch-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="close-button" onclick="document.getElementById('rsearch-modal').classList.toggle('hidden')">
-                ❌
-            </div>
-            <h2>Reverse Search</h2>
-            <div class="controls">
-                <input id="rsearch-typeahead" type="text" oninput="updateRSearch()" placeholder="Search string content" />
-            </div>
-            <div class="rsearch-results-container">
-                <ul id="rsearch-text-list">
-    
-                </ul>
-                <table>
-                    <thead><tr><td>Top level occurrences:</td></tr></thead>
-                    <tbody id="rsearch-result-view">
-    
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <script>
-        if(window?.queryParams?.caseEditorLink === 'true') {
-            document.querySelector('#path-to-read').value = window.queryParams.documentId;
-            if(window.queryParams.documentType != 'unknown') document.querySelector('#select-guid-type').value = window.queryParams.documentType;
-        }
-        setSaving(true);
-    </script>
+    <p>Redirecting to <a href="../../index.html?flow=dds">the Mod Maker</a>&hellip;</p>
 </body>
 
 </html>

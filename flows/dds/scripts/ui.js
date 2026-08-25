@@ -1,32 +1,81 @@
-async function init() {
-    await getStreamingAssetsDir();
+import { GUID_PATTERN } from '../../../core/guid.js';
+import { loadVanillaStrings } from './fileManager.js';
+import { createNewFile } from './modFileManager.js';
+import { renderFilePanel } from '../../../core/filePanel.js';
+import { WINDOW_DEPTHS } from './jsonTreeAdditions.js';
+import { listContent, STRINGS_OPEN_AS } from './contentList.js';
+import { refreshManifestPanel } from './manifestPanel.js';
+import { initAndLoad, loadI18n, loadFile } from '../index.js';
+
+/**
+ * Pick up folders connected by the shell: load the vanilla strings and rebuild the
+ * mod list. Called on activation and whenever a folder changes.
+ */
+/** Load the vanilla strings once the game folder is connected. */
+export async function onFoldersConnected() {
+    if (window.dirHandleStreamingAssets) {
+        await loadVanillaStrings();
+    }
 }
 
-async function setIdAndLoad(id) {
+/**
+ * A content folder was chosen in the shell. Reload the strings, which merge the mod's
+ * own over the vanilla ones.
+ *
+ * Nothing is created here. Looking at a folder is not a reason to plant a DDS layout
+ * in it -- the folders appear when there is a document to put in them.
+ */
+export async function onModSelected(selection) {
+    if (window.dirHandleStreamingAssets) {
+        await loadI18n();
+    }
+
+    await refreshManifestPanel();
+    await refreshPanel();
+}
+
+/** Rebuild the left-hand list of what this mod contains. */
+export async function refreshPanel() {
+    renderFilePanel(
+        '#dds-file-list',
+        await listContent(window.selectedMod?.baseFolder ?? null),
+        openPanelEntry,
+        'Choose a mod and content folder to see what it contains.'
+    );
+}
+
+/**
+ * Open whatever was clicked in the panel.
+ *
+ * A strings file has no editor yet. It is still listed as a button, because it is a
+ * file of the mod's like any other and will open one when there is one.
+ */
+async function openPanelEntry(entry) {
+    if (entry.openAs === STRINGS_OPEN_AS) return;
+
+    await openDdsFile(entry.id, entry.openAs);
+}
+
+/**
+ * Open a document from the panel.
+ *
+ * A mod's own files are not in the generated reference data, so loadFromGUI cannot
+ * infer their type -- the panel knows it and sets it here.
+ */
+export async function openDdsFile(id, type) {
+    // Only when the caller knows: loadFromGUI recognises base game GUIDs itself, and
+    // a type of null would leave the select on something meaningless.
+    if (type) document.getElementById('select-guid-type').value = type;
+    await setIdAndLoad(id);
+}
+
+export async function setIdAndLoad(id) {
     document.getElementById('path-to-read').value = id;
     loadFromGUI();
 }
 
-async function loadFromGUI() {
-    if (window.dirHandleStreamingAssets == null) {
-        await init();
-    }
-
-    if (window.dirHandleModDir == null) {
-        try {
-            await getModDir();
-            window.loadedMods = await refreshModList();
-            window.selectedMod = null;
-
-            updateSelect('select-loaded-mod', ['None', ...window.loadedMods.map(mod => mod.modName)]);
-            if (window?.queryParams?.selectedMod && window.queryParams.selectedMod != "") {
-                document.getElementById('select-loaded-mod').value = window.queryParams.selectedMod;
-                updateSelectedMod();
-            }
-        }
-        catch { }
-    }
-
+export async function loadFromGUI() {
+    // Folders are connected by the shell before any flow runs, so this only loads.
     let fileID = document.getElementById('path-to-read').value;
 
     if (!GUID_PATTERN.test(fileID)) {
@@ -52,37 +101,7 @@ async function loadFromGUI() {
     await initAndLoad(prefix + fileID + postfix);
 }
 
-async function updateSelectedMod() {
-    window.selectedMod = window.loadedMods.find(mod => mod.modName == document.getElementById('select-loaded-mod').value);
-
-    if (window.selectedMod != null && window.savingEnabled) {
-        await openModFolder(window.selectedMod.modName, true);
-    }
-
-    loadI18n();
-}
-
-async function newMod() {
-    if (window.dirHandleStreamingAssets == null || window.dirHandleModDir == null) {
-        alert('Please load StreamingAssets and a parent mod folder first');
-        throw 'Please load StreamingAssets and a parent mod folder first';
-    }
-
-    let modName = prompt('Enter a new mod name');
-
-    if (modName == null)
-        return;
-
-    await openModFolder(modName, true);
-
-    window.loadedMods = await refreshModList();
-    updateSelect('select-loaded-mod', ['None', ...window.loadedMods.map(mod => mod.modName)]);
-    window.selectedMod = window.loadedMods.filter(mod => mod.modName == modName)[0];
-    document.getElementById('select-loaded-mod').value = modName;
-    updateSelectedMod();
-}
-
-async function newFile(type, templateData) {
+export async function newFile(type, templateData) {
     if (window.selectedMod == null) {
         alert('Please select a mod to edit first');
         throw 'Please select a mod to edit first';
@@ -94,23 +113,30 @@ async function newFile(type, templateData) {
     document.getElementById('select-guid-type').value = type;
 
     await loadFromGUI();
+    await refreshPanel();
 }
 
-function setSaving(saving) {
-    window.savingEnabled = saving;
-
-    let ele = document.getElementById('saving-enabled-button');
-    ele.classList.toggle('saving-disabled');
-    ele.innerText = saving ? 'Disable Saving' : 'Enable Saving';
+/** Pico dialogs: open/close via the `open` property rather than a class. */
+export function openModal(selector) {
+    document.querySelector(selector).setAttribute('open', '');
 }
 
-function showBrowse() {
+export function closeModal(selector) {
+    document.querySelector(selector).removeAttribute('open');
+}
+
+export function showHelp() {
+    openModal('#help-modal');
+}
+
+
+export function showBrowse() {
     updateBrowse();
     updateBrowseTypeahead();
-    document.getElementById('fav-modal').classList.toggle('hidden')
+    openModal('#fav-modal');
 }
 
-function updateBrowse() {
+export function updateBrowse() {
     const browseTypeSelector = document.querySelector('#browse-type-select');
     const browseList = document.querySelector('#fav-list');
 
@@ -132,7 +158,7 @@ function updateBrowse() {
     ).join('');
 }
 
-function updateBrowseTypeahead() {
+export function updateBrowseTypeahead() {
     const browseTypeAheadSelector = document.querySelector('#browse-typeahead');
     const browseList = document.querySelector('#fav-list');
 
@@ -174,8 +200,8 @@ window.toggleFav = (guid, type) => {
     return !currentFav;
 }
 
-function showReverseSearch() {
-    document.getElementById('rsearch-modal').classList.toggle('hidden');
+export function showReverseSearch() {
+    openModal('#rsearch-modal');
 }
 
 window.createRSearchList = () => {
@@ -209,7 +235,7 @@ window.createRSearchList = () => {
     });
 }
 
-function updateRSearch() {
+export function updateRSearch() {
     const rsearchTypeaheadValue = document.querySelector('#rsearch-typeahead').value.toLocaleLowerCase();
     const researchList = document.querySelector('#rsearch-text-list').querySelectorAll('li');
 
@@ -229,7 +255,7 @@ function updateRSearch() {
     });
 }
 
-function updateRSearchResultsTable(blockId) {
+export function updateRSearchResultsTable(blockId) {
     // .rsearch-result-view
 
     var cells = '';
@@ -292,4 +318,33 @@ function updateRSearchResultsTable(blockId) {
             setIdAndLoad(liEle.getAttribute('x-guid'));
         });
     })
+}
+
+
+/**
+ * What is open, so it can be put back after a trip to another editor.
+ *
+ * The three windows are levels of one drill-down, so their depth is part of the
+ * state -- reopening only the top level would rebuild the cascade from its first
+ * message and block, which is not necessarily where you were.
+ */
+export function captureSession() {
+    const open = [];
+
+    for (let depth = 0; depth < WINDOW_DEPTHS; depth++) {
+        const path = document.getElementById(`file-window-${depth}`)?.getAttribute('path');
+        if (path) open.push({ depth, path });
+    }
+
+    return open;
+}
+
+export async function restoreSession(open) {
+    if (!open?.length) return;
+
+    // Shallowest first: opening a level cascades into the ones below it, so each
+    // deeper entry then puts back what was actually there.
+    for (const { depth, path } of [...open].sort((a, b) => a.depth - b.depth)) {
+        await loadFile(path, depth);
+    }
 }

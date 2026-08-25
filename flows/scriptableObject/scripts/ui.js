@@ -1,12 +1,21 @@
-// Autosaving INIT
-document.addEventListener("DOMContentLoaded", () => {
-	setSaving(JSON.parse(localStorage.getItem('SOD_MurderCaseBuilder_Autosave')) ?? true);
-	document.querySelector('#new-file-modal-file-type').innerHTML = document.querySelector('#asset-model-type-list').innerHTML;
+import { selectFolder } from '../../../core/folders.js';
 
-	if(!window.localStorage.getItem('SOD_MurderCaseBuilder_SpoilerWarningDismissed')) {
-		document.querySelector('#spoiler-warning-modal').setAttribute("open", null);
-		document.querySelector('#before-you-start-modal').removeAttribute("open");
-	}
+import { scaffoldCase } from './modFileManager.js';
+import { renderFilePanel } from '../../../core/filePanel.js';
+import { listContent } from './contentList.js';
+import { initAndLoad, loadFile, loadFileFromFolder, loadFileFromOnlineRepo, showNewCasePopup, closeNewCasePopup } from '../index.js';
+
+// Autosaving INIT
+/**
+ * Startup for this flow.
+ *
+ * Was a DOMContentLoaded handler, which no longer works in the shell: the flow's
+ * markup is mounted on activation, which can be after the document has finished
+ * parsing, and the handler would run against markup that is not there yet -- or not
+ * run at all.
+ */
+export function startFlow() {
+	document.querySelector('#new-file-modal-file-type').innerHTML = document.querySelector('#asset-model-type-list').innerHTML;
 
 	if(window.queryParams.viewOnly) {
 		enableAssetOnlyMode(window.queryParams.openDefaultFiles);
@@ -22,15 +31,15 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 		catch {}
 	}
-});
+}
 
 //Manifest Panel
-function toggleManifestPanel() {
+export function toggleManifestPanel() {
 	document.querySelector('#manifest_panel .jsontree-container').classList.toggle("hidden");
 	document.querySelector('#manifest_panel .files-order').classList.toggle("hidden");
 }
 
-function shareOpen() {
+export function shareOpen() {
 	let openFiles = [...document.querySelectorAll('.file-window')].map(el => el.getAttribute('path').split('.')[0]).map(file => ({
 		type: file.split('/')[0],
 		name: file.split('/')[1]
@@ -42,101 +51,79 @@ function shareOpen() {
 }
 
 // Assets loading
-async function loadFromGUI() {
-	if (window.dirHandleModDir == null) {
-		try {
-			await getModDir();
-			window.loadedMods = await refreshModList();
-			window.selectedMod = null;
+/**
+ * Pick up folders connected by the shell and rebuild the mod list. Called on
+ * activation and whenever a folder changes.
+ */
+/**
+ * Having somewhere to write is what editing mode means. This is also the only way
+ * back out of the view-only mode a shared link opens in -- the "Enable Editing Mode"
+ * button that used to do it did nothing this does not, and the header has no room
+ * for a control that duplicates connecting a folder.
+ */
+export async function onFoldersConnected() {
+	toggleEditMode(Boolean(window.dirHandleModDir));
+}
 
-			updateSelect('select-loaded-mod', ['None', ...window.loadedMods.map(mod => mod.modName)]);
-		}
-		catch { }
-	}
+/** A content folder was chosen in the shell: show its manifest and its files. */
+export async function onModSelected(selection) {
+	document.getElementById('manifest_content_tree').replaceChildren();
 
-	if(window.selectedMod != null) {
+	if (selection) {
 		await initAndLoad('murdermanifest');
 	}
 
-	toggleEditMode(true);
-
-	document.querySelector('#before-you-start-modal').removeAttribute("open");
-	// updateFavButton();
+	await refreshPanel();
 }
 
-async function enableAssetOnlyMode(skipAssetModel) {
+/** Rebuild the left-hand list of everything in the folder, grouped by type. */
+export async function refreshPanel() {
+	renderFilePanel(
+		'#so-file-list',
+		await listContent(window.selectedMod?.baseFolder ?? null),
+		(entry) => loadFile(entry.id, false, entry.openAs, entry.suffix),
+		'Choose a mod and content folder to see what it contains.'
+	);
+}
+
+export async function enableAssetOnlyMode(skipAssetModel) {
 	toggleEditMode(false);
-	document.querySelector('#before-you-start-modal').removeAttribute("open");
 	if(!skipAssetModel)
 		document.querySelector('#asset-explorer-modal').toggleAttribute('open')
 }
 
-async function toggleEditMode(editingMode) {
+export async function toggleEditMode(editingMode) {
 	document.getElementById('manifest_panel').classList.toggle('hidden', !editingMode)
 	document.getElementById('files-section-container').classList.toggle('file-section-edit-mode', editingMode)
 	document.getElementById('editing-mode-control-group').classList.toggle('hidden', !editingMode)
 	document.getElementById('viewing-mode-control-group').classList.toggle('hidden', editingMode)
 }
 
-function dismissSpoilerWarning() {
-	window.localStorage.setItem('SOD_MurderCaseBuilder_SpoilerWarningDismissed', true);
-	document.querySelector('#spoiler-warning-modal').removeAttribute("open");
-	document.querySelector('#before-you-start-modal').setAttribute("open", null);
-}
 
 // Murder loading
-async function updateSelectedMod() {
-	document.querySelector('#manifest_panel>div').replaceChildren();
-	window.selectedMod = window.loadedMods.find(mod => mod.modName == document.getElementById('select-loaded-mod').value);
-
-	if(window.selectedMod != null) {
-		await initAndLoad('murdermanifest');
-	}
-}
-
-async function newMod() {
-	if (window.dirHandleModDir == null) {
-		alert('Please load a parent mod folder first');
-		throw 'Please load a parent mod folder first';
-	}
-
-	let {modName, type, createDDSFolders } = await showNewCasePopup();
+/**
+ * The shell is about to create a content folder: ask what kind of case goes in it, and
+ * answer with how to lay it out.
+ *
+ * A case is a manifest plus, usually, the preset it revolves around. The folder itself
+ * and its name are the shell's, so this only asks what it alone knows.
+ */
+export async function newContent(name) {
+	const chosen = await showNewCasePopup();
 	closeNewCasePopup();
 
-	if (modName == null)
-		return;
+	if (!chosen) return null;
 
-	await openModFolder(modName, true, type, createDDSFolders);
-
-	window.loadedMods = await refreshModList();
-	updateSelect('select-loaded-mod', ['None', ...window.loadedMods.map(mod => mod.modName)]);
-	window.selectedMod = window.loadedMods.filter(mod => mod.modName == modName)[0];
-	document.getElementById('select-loaded-mod').value = modName;
-	updateSelectedMod();
+	return (folder) => scaffoldCase(folder, name, chosen.type);
 }
 
-function setSaving(saving) {
-	window.savingEnabled = saving;
-	localStorage.setItem('SOD_MurderCaseBuilder_Autosave', saving)
-
-	let ele = document.getElementById('autosaving_switch');
-	if(saving)
-	{
-		ele.toggleAttribute('checked');
-	}
-	else
-	{
-		ele.removeAttribute('checked');
-	}
-}
-
-function toggleDefaultValues() {
+export function toggleDefaultValues() {
 	document.querySelectorAll('.default-value-node').forEach(ele => {
 		ele.classList.toggle('hidden-default-value-node');
 	});
 }
 
-function updateAssetModel(rebuildList, hasLocalFiles) {
+export function updateAssetModel(rebuildList, hasLocalFiles) {
 	let typeListEle = document.getElementById('asset-model-type-list');
 	
 	if(rebuildList)
@@ -185,18 +172,52 @@ function updateAssetModel(rebuildList, hasLocalFiles) {
 	assetList.classList.toggle('asset-loaded-link', window.dirHandleExportedSOPath || window.onlineTypes.includes(typeListEle.value))
 }
 
-function updateNewFileCopyFrom() {
+export function updateNewFileCopyFrom() {
 	let type = document.querySelector('#new-file-modal-file-type').value;
 	let ele = document.querySelector('#new-file-modal-copy-from');
 	ele.replaceChildren();
-	['None', ...window.typeMap[type]?.sort()].forEach(SO => {
+	// The type select is filled from the asset model list, which can name types the
+	// map has nothing for. Spreading undefined there threw and left the list empty.
+	['None', ...(window.typeMap[type]?.sort() ?? [])].forEach(SO => {
 		var option = document.createElement("option");
 		option.text = SO;
 		ele.appendChild(option);
 	});
+	// Repopulating drops the selection back to None, which the mode may not allow.
+	updateNewFileSubmitState();
 }
 
-function updateSelectAllCopyFrom() {
+/** Which half of the new file dialog's Copy From / Override choice is selected. */
+export function newFileMode() {
+	return document.querySelector('.new-file-mode button[aria-pressed="true"]')?.dataset.mode ?? 'copy';
+}
+
+/**
+ * Copy From / Override. An override is named after the asset it overrides, so the
+ * File Name field is not the mod author's to fill in while Override is selected.
+ */
+export function setNewFileMode(mode) {
+	document
+		.querySelectorAll('.new-file-mode button')
+		.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.mode === mode)));
+
+	let fileName = document.querySelector('#new-file-modal-file-name');
+	fileName.disabled = mode === 'override';
+	fileName.title = fileName.disabled ? 'An override takes the name of the file it overrides' : '';
+
+	updateNewFileSubmitState();
+}
+
+/** Overriding needs a file to override, so None leaves nothing to create. */
+export function updateNewFileSubmitState() {
+	let overriding = newFileMode() === 'override';
+	let submit = document.querySelector('#new-file-modal-submit');
+
+	submit.disabled = overriding && document.querySelector('#new-file-modal-copy-from').value === 'None';
+	submit.title = submit.disabled ? 'Choose the file to override' : '';
+}
+
+export function updateSelectAllCopyFrom() {
 	let checked = document.querySelector('#select-fields-modal-select-all').checked;
 	document
 		.querySelector('#select-fields-modal-field-list')
@@ -206,10 +227,30 @@ function updateSelectAllCopyFrom() {
 		});
 }
 
-async function loadExportedSOs() {
-	let exportedSOPath = await idbKeyval.get('ExportedSOPath');
-	let options = exportedSOPath ? { startIn: exportedSOPath, mode: 'read' } : { mode: 'read' };
-	window.dirHandleExportedSOPath = await window.showDirectoryPicker(options);
-	await idbKeyval.set('ExportedSOPath', window.dirHandleExportedSOPath);
-	updateAssetModel(true, true);
+export async function loadExportedSOs() {
+	// One of the shared folders now, so it is remembered and reconnected like the rest.
+	if (await selectFolder('exportedSOs')) {
+		updateAssetModel(true, true);
+	}
+}
+
+
+/**
+ * What is open, so it can be put back after a trip to another editor.
+ *
+ * Only the tree area: the manifest panel reopens itself when the content folder is
+ * applied, and is not something you can close.
+ */
+export function captureSession() {
+	return [...document.querySelectorAll('#trees .file-window')]
+		.map((el) => el.getAttribute('path'))
+		.filter(Boolean);
+}
+
+export async function restoreSession(paths) {
+	if (!paths?.length || !window.selectedMod) return;
+
+	for (const path of paths) {
+		await loadFileFromFolder(path, window.selectedMod.baseFolder, false);
+	}
 }

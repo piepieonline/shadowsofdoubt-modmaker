@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="eng">
+
+<head>
+    <title>SoD Mod Maker</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+
+    <script>
+        window.queryParams = Object.fromEntries(new URLSearchParams(location.search));
+
+        if (localStorage.getItem('favs') == null) localStorage.setItem('favs', '[]');
+    </script>
+
+    <!-- Searching in select. Used by the ScriptableObject flow's reference picker;
+         loaded for every flow because they are classic scripts and cheap from cache.
+         Dropping select2 removes this. -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
+
+    <script src="./libs/jsonTree/jsonTree.js"></script>
+    <script src="./libs/JSON-Patch/fast-json-patch.min.js"></script>
+
+    <script type="module" src="./main.js"></script>
+
+    <link href="./libs/jsonTree/jsonTree.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.red.min.css" />
+    <link href="./core/chrome.css" rel="stylesheet" />
+</head>
+
+<body>
+    <nav class="shell-nav compact-controls">
+        <ul>
+            <li><strong>SoD Mod Maker</strong></li>
+        </ul>
+        <ul>
+            <li>
+                <label>
+                    Mod
+                    <select id="select-mod" aria-label="Choose a mod"></select>
+                </label>
+            </li>
+            <li>
+                <label>
+                    Content
+                    <select id="select-content" aria-label="Choose a content folder within the mod"></select>
+                </label>
+            </li>
+            <li>
+                <!-- data-needs-mod: nothing to create a folder in until a mod is
+                     chosen. See core/newContent.js. -->
+                <button id="new-content" data-needs-mod disabled
+                    title="Create a content folder in this mod">New content</button>
+            </li>
+            <li>
+                <label>
+                    Editing
+                    <select id="flow-picker" aria-label="Choose what to edit"></select>
+                </label>
+            </li>
+            <!-- One switch for everything. Both flows used to carry their own, and the
+                 DDS one forced itself back on at every start. -->
+            <li>
+                <label>
+                    <input type="checkbox" role="switch" id="autosave-switch" />
+                    Autosaving
+                </label>
+            </li>
+            <li>
+                <button id="folders-open" class="secondary">Folders</button>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- The active flow's markup is cloned in here. Only one flow is ever mounted:
+         the two share element ids (#trees, #help-modal), so having
+         both in the document at once would break getElementById for whichever came
+         second. -->
+    <main id="flow-root" aria-busy="true"></main>
+
+    <!-- Spoiler warning, dev requested, do not remove. Applies to the whole tool, so
+         it lives in the shell rather than in one flow. -->
+    <dialog id="spoiler-warning-modal">
+        <article>
+            <header>
+                <h5><strong>SPOILER WARNING</strong></h5>
+            </header>
+            <h6>Working on mods comes with an inherent risk of spoilers.</h6>
+            <small>
+                <p>
+                    Using this tool will almost certainly result in spoilers for how Shadows Of Doubt works.
+                    This is doubly true if you browse existing game assets with the Asset Explorer.
+                </p>
+            </small>
+            <button id="spoiler-accept" style="width: 100%">I accept the risk of spoilers</button>
+        </article>
+    </dialog>
+
+    <!-- Every folder the app uses, in one place. Replaces the two flows' separate
+         startup dialogs, which each asked only for what that flow needed and neither
+         showed what had already been chosen. -->
+    <dialog id="folders-modal">
+        <article>
+            <header>
+                <h5><strong>Folders</strong></h5>
+            </header>
+            <small>
+                <p>
+                    These are shared by everything you edit here — pick them once. They stay connected when you
+                    switch what you are editing.
+                </p>
+            </small>
+            <ul id="folders-list"></ul>
+            <small id="folders-missing" class="folders-missing" hidden></small>
+            <button id="folders-continue" style="width: 100%">Continue</button>
+        </article>
+    </dialog>
+
+    <template id="flow-template-dds">
+            <div class="editor flow-container">
+                <!-- Same three slots as the case flow's bar: see .flow-bar. -->
+                <nav class="flow-bar compact-controls">
+                    <ul>
+                        <li><a href="#" onclick="event.preventDefault();showBrowse()">Browse...</a></li>
+                        <li><a href="#" onclick="event.preventDefault();showReverseSearch()">Reverse Search</a></li>
+                    </ul>
+                    <ul>
+                        <li>
+                            <div role="group">
+                                <select id="select-guid-type"
+                                    onchange="document.getElementById('new-file-button').innerText = `Add new ${document.getElementById('select-guid-type').value}`">
+                                    <option value="tree">Tree</option>
+                                    <option value="message">Message</option>
+                                    <option value="block">Block</option>
+                                </select>
+                                <input id="path-to-read" placeholder="Path" value="74da6230-45ef-4bb4-8f2e-8f6840e56927" />
+                                <button onclick="loadFromGUI()">Load</button>
+                            </div>
+                        </li>
+                    </ul>
+                    <ul>
+                        <li><a href="#" onclick="event.preventDefault();showHelp()">Help</a></li>
+                    </ul>
+                </nav>
+                <!-- Panel and trees share the forced light palette: jsonTree hardcodes
+                     dark text colours, so the whole workspace is light regardless of
+                     the system theme. -->
+                <div class="dds-workspace" data-theme="light">
+                    <aside id="dds-file-panel">
+                        <!-- The type comes from the select in the nav, which the Load
+                             group uses for the same purpose. -->
+                        <button id="new-file-button" data-needs-content disabled
+                            onclick="newFile(document.getElementById('select-guid-type').value)">Add new tree</button>
+
+                        <header>
+                            <strong>Mod content</strong>
+                        </header>
+                        <div id="dds-file-list"></div>
+
+                        <!-- Only for a mod that has a ddsmanifest; hidden otherwise, so
+                             the app is never the reason a mod gains one. Last, because
+                             what the loader is told matters less than what is there. -->
+                        <article id="dds-manifest-panel" class="hidden">
+                            <hr />
+                            <header>
+                                <strong>Manifest</strong>
+                                <label>
+                                    <input type="checkbox" role="switch" onclick="toggleDdsManifestPanel()" />
+                                    Show full manifest
+                                </label>
+                            </header>
+                            <div class="files-order">
+                                <ul></ul>
+                            </div>
+                            <div class="manifest-source hidden"></div>
+                        </article>
+                    </aside>
+                    <div id="trees"></div>
+                </div>
+            </div>
+
+            <!-- Help modal. Mostly redirect to the wiki -->
+            <dialog id="help-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" class="close-button" onclick="closeModal('#help-modal')"></button>
+                        <h5><strong>Help</strong></h5>
+                    </header>
+                    <small>
+                        <p>
+                            This is a basic tool to help view and create (WIP) new text content for Shadows of Doubt, using the
+                            DDS system. All content in SoD is comprised of 4 parts (Trees, Messages, Blocks, Strings, in that
+                            order).
+                        </p>
+                        <ul>
+                            <li><b>Trees:</b> The top level objects, and contain things like the conversation name, participate
+                                info and a list of <b>messages</b></li>
+                            <li><b>Messages:</b> Mid level objects containing a list of <b>blocks</b>, each of which and can be
+                                set to always appear, or choose one of multiple in a group (Random, or based on traits)</li>
+                            <li><b>Blocks:</b> The lowest level, and generally act as a direct reference to a line in the
+                                <b>strings</b> file. However, simple random substitutions can also be made on this level
+                            </li>
+                            <li><b>Strings:</b> Where the actual text comes from, stored in one large CSV. Generally, each block
+                                ID has a equivalent line in the CSV. Presented here merged into <b>blocks</b> for clarity</li>
+                        </ul>
+                        <h6>How to use:</h6>
+                        <p>Instructions for use can now be found on the <a
+                                href="https://shadowsofdoubtmodding.miraheze.org/wiki/DDS_System">wiki</a>.</p>
+                        <h6>Community content project</h6>
+                        <p>I've opened a community content project (<a
+                                href="https://github.com/piepieonline/ShadowsOfDoubtContent">ShadowsOfDoubtContent</a>) in the
+                            hopes that we can create a bunch more flavour text as a brains trust.</p>
+                    </small>
+                </article>
+            </dialog>
+
+            <!-- Browse modal, for searching trees/messages/blocks and favourites -->
+            <dialog id="fav-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" class="close-button" onclick="closeModal('#fav-modal')"></button>
+                        <h5><strong>Browse...</strong></h5>
+                    </header>
+                    <div class="controls">
+                        <label>Type:
+                            <select id="browse-type-select" onchange="updateBrowse()">
+                                <option value="trees">Trees</option>
+                                <option value="messages">Messages</option>
+                                <option value="blocks">Blocks</option>
+                                <option value="fav">Favourites</option>
+                            </select>
+                        </label>
+                        <input id="browse-typeahead" type="text" oninput="updateBrowseTypeahead()"
+                            placeholder="Search name or GUID..." />
+                    </div>
+                    <ul id="fav-list"></ul>
+                </article>
+            </dialog>
+
+    
+            <!-- Reverse search modal -->
+            <dialog id="rsearch-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" class="close-button"
+                            onclick="closeModal('#rsearch-modal')"></button>
+                        <h5><strong>Reverse Search</strong></h5>
+                    </header>
+                    <div class="controls">
+                        <input id="rsearch-typeahead" type="text" oninput="updateRSearch()"
+                            placeholder="Search string content" />
+                    </div>
+                    <div class="rsearch-results-container">
+                        <ul id="rsearch-text-list"></ul>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <td>Top level occurrences:</td>
+                                </tr>
+                            </thead>
+                            <tbody id="rsearch-result-view"></tbody>
+                        </table>
+                    </div>
+                </article>
+            </dialog>
+    </template>
+
+    <template id="flow-template-scriptableObject">
+            <main class="flow-container" id="main-container">
+                <!-- Same three slots as the DDS flow's bar: see .flow-bar. The two
+                     mode groups share the centre one, since only ever one of them is
+                     shown -- toggleEditMode hides the other. -->
+                <nav class="flow-bar compact-controls">
+                    <ul>
+                        <li><a href="#" onclick="event.preventDefault();document.querySelector('#asset-explorer-modal').toggleAttribute('open')">Asset Explorer</a></li>
+                    </ul>
+                    <ul>
+                        <li id="editing-mode-control-group">
+                            <label>
+                                <input type="checkbox" role="switch" onclick="toggleDefaultValues()"/>
+                                Hide default values
+                            </label>
+                        </li>
+                        <li id="viewing-mode-control-group">
+                            <button class="secondary" onclick="shareOpen()">Share Open Files</button>
+                        </li>
+                    </ul>
+                    <ul>
+                        <li><a href="#" onclick="event.preventDefault();document.querySelector('#help-modal').toggleAttribute('open')">Help</a></li>
+                    </ul>
+                </nav>
+
+                <article data-theme="light">
+                    <section id="files-section-container">
+                        <article id="manifest_panel">
+                            <button id="manifest_add_item_button" data-needs-content disabled
+                                style="width: 100%; margin-bottom: 0.5rem">Add new file</button>
+
+                            <!-- Everything in the folder, not just what the manifest
+                                 references. Same panel the DDS flow uses. -->
+                            <header><strong>All files</strong></header>
+                            <div id="so-file-list"></div>
+
+                            <!-- The manifest last: what the loader is told, below what
+                                 is actually there. -->
+                            <hr />
+                            <header>
+                                <label>
+                                    <input name="terms" type="checkbox" role="switch" onclick="toggleManifestPanel()"/>
+                                    Show full Manifest
+                                </label>
+                            </header>
+                            <div id="manifest_content_tree">
+                                <!-- And here be panels for manifest and file list -->
+                            </div>
+                        </article>
+                        <div class="trees_wrapper">
+                            <div id="trees"></div>
+                        </div>
+                        <!-- Back when done -->
+                        <!--<article id="main_file_tree"></article>-->
+                        <!--<article id="preview_files"></article>-->
+                    </section>
+                    <!--<section>
+                        <center><h3>Choose a Murder or create a new one.</h3></center>
+                    </section>-->
+
+                    <footer>
+                        <center><small>
+                            <div class="page-version-info">
+                                {{ site.github.build_revision }}
+                            </div>
+                        </small></center>
+                    </footer>
+                </article>
+            </main>
+
+            <!-- Modals -->
+
+    
+                <dialog id="help-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" onclick="document.querySelector('#help-modal').toggleAttribute('open')"></button>
+                        <h5>
+                            <strong>Help</strong>
+                        </h5>
+                    </header>
+                    <small>
+                        <p>
+                            This is a basic tool to help view and create new ScriptableObjects for Shadows of Doubt, with a specific focus on creating new murder cases.
+                        </p>
+                        <ul>
+                            <li><b>murdermanifest:</b> Tells the mod which files need to be loaded and which order</li>
+                            <li><b>MurderMO:</b> Contains the meat of a Murder, at minimum every new murder case type will have one</li>
+                        </ul>
+                        <h6>How to use:</h6>
+                        <p>Instructions for use can be found on the <a href="https://github.com/piepieonline/ShadowsOfDoubt-CaseEditor/wiki">wiki</a>.</p>
+                    </small>
+                </article>
+            </dialog>
+
+            <!-- Asset explorer. Right now everyone can browse the names, hopefully can add extracts one day -->
+            <dialog id="asset-explorer-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" onclick="document.querySelector('#asset-explorer-modal').toggleAttribute('open')"></button>
+                        <h5>
+                            <strong>Shadows Of Doubt: ScriptableObjects</strong>
+                        </h5>
+                    </header>
+                    <select id="asset-model-type-list" onchange="updateAssetModel(false)"></select>
+                    <small style="overflow: auto; height: 50vh">
+                        <table>
+                            <tbody id="asset-model-asset-list"></tbody>
+                        </table>
+                    </small>
+                    <button onclick="loadExportedSOs()" class="secondary" style="width: 100%">Load local exported ScriptableObjects</button>
+                </article>
+            </dialog>
+    
+            <!-- Select overrides modal -->
+            <dialog id="select-fields-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" onclick="document.querySelector('#select-fields-modal').removeAttribute('open')"></button>
+                        <h5>
+                            <strong>Select fields to override</strong>
+                        </h5>
+                    </header>
+                    <small>
+                        <p>Fields selected here will be overridden from the copyFrom base. Warning: Unselecting a field will reset it's value to the default.</p>
+                        <label><input type="checkbox" id="select-fields-modal-select-all" onchange="updateSelectAllCopyFrom()"/> (De)Select all</label>
+                        <ul id="select-fields-modal-field-list">
+                            <li>field 1</li>
+                        </ul>
+                    </small>
+                    <button id="select-fields-submit-button" style="width: 100%">Select Fields</button>
+                </article>
+            </dialog>
+
+            <!-- New file, includes type, copyFrom and name -->
+            <dialog id="new-file-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" onclick="document.querySelector('#new-file-modal').toggleAttribute('open')"></button>
+                        <h5>
+                            <strong>New File</strong>
+                        </h5>
+                    </header>
+                    <form onsubmit="event.preventDefault();newFilePromiseResolve(this['new-file-modal-file-name'].value,this['new-file-modal-file-type'].value, this['new-file-modal-copy-from'].value, newFileMode())">
+                        <label>
+                            File Name
+                            <input id="new-file-modal-file-name">
+                        </label>
+                        <label>
+                            File Type
+                            <select id="new-file-modal-file-type" onchange="updateNewFileCopyFrom()">
+                                <option value="MurderMO">File for new Murder Case</option>
+                                <option value="InteractablePreset">File for new Interactable</option>
+                                <option value="EvidencePreset">File for new Evidence</option>
+                            </select>
+                        </label>
+                        <!-- Copy From and Override are the two halves of one choice, so they
+                             sit side by side. The list below is whichever half is selected,
+                             which is why it carries no label of its own. -->
+                        <div class="new-file-mode" role="group">
+                            <button type="button" data-mode="copy" aria-pressed="true"
+                                onclick="setNewFileMode('copy')">Copy From</button>
+                            <button type="button" data-mode="override" aria-pressed="false"
+                                onclick="setNewFileMode('override')">Override</button>
+                        </div>
+                        <select id="new-file-modal-copy-from" aria-label="File to copy from or override"
+                            onchange="updateNewFileSubmitState()">
+                            <option value="None">None</option>
+                        </select>
+                        <button id="new-file-modal-submit" type="submit" style="width: 100%">Create File</button>
+                    </form>
+                </article>
+            </dialog>
+
+            <!-- New case dialog: Murder/Side Job/Other. The name and the folder itself
+                 come from the shell's New content button, and DDS folders are made when
+                 there is DDS content to put in them. -->
+            <dialog id="new-case-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" onclick="cancelNewCasePopup()"></button>
+                        <h5>
+                            <strong>New Case</strong>
+                        </h5>
+                    </header>
+                    <form onsubmit="event.preventDefault();newCasePromiseResolve(this['new-case-modal-case-type'].value)">
+                        <label>
+                            File Type
+                            <select id="new-case-modal-case-type">
+                                <option value="MurderMO">Murder</option>
+                                <option value="JobPreset">Side Job</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </label>
+                        <button type="submit" style="width: 100%">Create Case</button>
+                    </form>
+                </article>
+            </dialog>
+    </template>
+</body>
+
+</html>

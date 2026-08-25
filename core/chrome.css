@@ -1,0 +1,368 @@
+/*
+ * Chrome shared by both flows, on top of PicoCSS.
+ */
+
+/*
+ * Pico follows prefers-color-scheme, but libs/jsonTree hardcodes dark text colours
+ * (#000, #025900, #000E59, #600100). On a dark background those are unreadable, so
+ * anything rendering a tree forces the light palette. Fixing jsonTree's colours to
+ * be theme-aware would be the better answer, but it is a vendored library and both
+ * flows already depend on its exact palette.
+ */
+[data-theme="light"] .jsontree-container {
+    color-scheme: light;
+}
+
+/*
+ * Compact toolbar. Pico sizes form controls for comfortable full-width forms, which
+ * is too heavy for a dense horizontal toolbar -- controls wrapped onto two lines and
+ * crowded out the tree area.
+ */
+.compact-controls {
+    --pico-form-element-spacing-vertical: 0.35rem;
+    --pico-form-element-spacing-horizontal: 0.6rem;
+
+    button, select, input, label {
+        font-size: 0.8rem;
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+
+    button {
+        padding: 0.35rem 0.7rem;
+    }
+
+    /* Switches read as oversized next to smaller controls. */
+    input[type="checkbox"][role="switch"] {
+        height: 1.1em;
+        width: 2.1em;
+    }
+}
+
+/*
+ * Shell layout. The flow area fills whatever the nav leaves, so flows size
+ * themselves against their container rather than guessing the chrome's height.
+ */
+html, body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+.shell-nav {
+    flex: none;
+    padding: 0 1rem;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+
+    /* The nav carries two selects, two buttons and a switch. Left to wrap, the brand
+       breaks over two lines and makes the whole bar taller than the controls need. */
+    > ul:first-child {
+        white-space: nowrap;
+    }
+
+    /* Pico gives nav's last <ul> a negative right margin to offset its li padding,
+       which pushes content past the nav's own padding and off screen. */
+    > ul:last-child {
+        margin-right: 0;
+    }
+
+    label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0;
+    }
+
+    #flow-picker {
+        min-width: 200px;
+        max-width: 280px;
+    }
+}
+
+#flow-root {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/*
+ * The gutter both flows sit in. A thin margin rather than a reading-width column:
+ * these are editors showing several trees side by side, so Pico's .container
+ * breakpoints (1450px at the widest) leave far too much of a wide screen unused.
+ *
+ * The case flow used to toggle this width behind an expand button and the DDS flow
+ * ran edge to edge; one rule now gives both the same frame.
+ *
+ * width is explicit because auto inline margins stop a flex item stretching to its
+ * container, which would otherwise shrink these to fit their content.
+ */
+.flow-container {
+    width: 100%;
+    max-width: calc(100% - 100px);
+    margin-inline: auto;
+}
+
+/*
+ * The per-flow toolbar, one line directly under the shell nav. Both flows lay it out
+ * the same way: text links into this flow's modals on the left, whatever it loads
+ * documents with in the centre, Help on the right.
+ *
+ * Neither carries a title any more. The shell names the app and the picker beside it
+ * names the editor, so "SoD DDS Editor" and "SoD Case Editor" were saying it a second
+ * time and pushing the controls onto a second line.
+ */
+.flow-bar {
+    /* Pico lays nav out with space-between, which only centres the middle group when
+       the two sides happen to be the same width. Equal outer tracks keep it put. */
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0;
+
+    > ul {
+        margin: 0;
+        padding: 0;
+        gap: 1rem;
+        align-items: center;
+        min-width: 0;
+
+        /* Pico offsets the outer lists by their li padding, which there is none of
+           here -- left as-is the outer groups hang outside the flow's gutter. Matched
+           on :first/:last-of-type because that is how Pico applies it, and a plain
+           `> ul` loses to it on specificity. */
+        &:first-of-type, &:last-of-type {
+            margin: 0;
+        }
+    }
+
+    > ul:nth-child(2) {
+        justify-content: center;
+    }
+
+    > ul:last-child {
+        justify-content: flex-end;
+    }
+
+    li {
+        padding: 0.4rem 0;
+    }
+
+    /* The links are navigation, not actions: no button chrome, and they stay on one
+       line so the centre group keeps the width it needs. */
+    a {
+        white-space: nowrap;
+    }
+
+    /* Pico stacks a switch above its text, which is a second line of its own. */
+    label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0;
+    }
+}
+
+/*
+ * Editor bar. Both flows build this through core/treeWindow.js createTreeWindow, so
+ * it is styled once here rather than drifting between two stylesheets as it did
+ * before. Title and actions are centred in the panel.
+ */
+.editor-bar {
+    padding-top: 0.5rem;
+}
+
+.editor-bar > ul {
+    /* Pico lays nav > ul out as a flex row; these are stacked rows. */
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.editor-bar > ul > li {
+    display: block;
+    padding: 0.2rem 0.5rem;
+    text-align: center;
+}
+
+.editor-bar .jsontree-editor-bar-button-group {
+    /* role=group is inline-flex, so this centres the row rather than the text. */
+    margin: 0 auto;
+    width: fit-content;
+}
+
+.editor-bar button {
+    margin: 0;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    max-width: none;
+}
+
+.doc-title {
+    margin: 0.25rem 0 0.5rem;
+
+    h2 {
+        font-size: 1.25rem;
+        margin-bottom: 0.15rem;
+    }
+
+    /* Holds a 36-character GUID plus the copy and favourite icons; at 1rem the
+       icons wrap onto their own line in a minimum-width panel. */
+    h3 {
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
+    }
+
+    /* The case flow titles documents by path, which can be long. */
+    h5 {
+        margin: 0;
+        font-size: 1.25rem;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+}
+
+/* Its own row, so it is free to be as wide as its label needs. */
+.jsontree-editor-bar-field-select-button {
+    min-width: 300px;
+}
+
+/*
+ * The ➥ beside a value that points at another document.
+ *
+ * Now that values are inputs, this is the whole of the way into what one names, so it
+ * has to read as a control. The monospace stack the trees are set in draws U+27A5 at
+ * a fraction of its em box -- a few red pixels, easily missed -- so it is set in a
+ * font that has the glyph and sized against the row rather than inheriting.
+ */
+.open-target {
+    font-family: system-ui, sans-serif;
+    font-size: 1.2em;
+    line-height: 1;
+    padding: 0 0.3em;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+/* Applied per-item by list typeaheads. Used by both flows. */
+.hidden {
+    display: none !important;
+}
+
+/* The new file modal's Copy From / Override choice: two halves of one control, so
+   they share an edge and only the selected half is filled in. */
+.new-file-mode {
+    margin-bottom: var(--pico-spacing);
+
+    button {
+        width: 50%;
+        margin-bottom: 0;
+    }
+
+    button[aria-pressed="false"] {
+        background-color: transparent;
+        color: var(--pico-primary);
+    }
+}
+
+/* The shared folders modal. */
+#folders-modal article {
+    max-width: 720px;
+}
+
+#folders-list {
+    padding: 0;
+    margin: 0 0 1rem;
+}
+
+.folder-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    list-style: none;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+
+    button {
+        flex: none;
+        margin: 0;
+        width: auto;
+    }
+
+    /* Connected folders read as settled; anything outstanding stands out. */
+    &[data-state="connected"] .folder-status {
+        color: var(--pico-ins-color);
+    }
+
+    &[data-state="pending"] .folder-status {
+        color: var(--pico-del-color);
+    }
+}
+
+.folders-missing {
+    display: block;
+    margin-bottom: 0.75rem;
+    color: var(--pico-del-color);
+}
+
+/* The active flow needs a folder that is not set. */
+#folders-open[data-folders-missing]::after {
+    content: " !";
+    font-weight: bold;
+}
+
+/* The file panel, shared by both flows. */
+.file-panel-category {
+    margin-bottom: 0.5rem;
+
+    summary {
+        cursor: pointer;
+        font-size: 0.85rem;
+    }
+}
+
+.file-panel-entries {
+    padding: 0.25rem 0 0;
+    margin: 0;
+    list-style: none;
+}
+
+.file-panel-entry {
+    margin-bottom: 0.2rem;
+
+    button {
+        width: 100%;
+        text-align: left;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        margin: 0;
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+}
+
+.file-panel-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Base game content the mod overrides, rather than content it adds. */
+.file-panel-tag {
+    flex: none;
+    opacity: 0.7;
+}
+
+.file-panel-empty {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}

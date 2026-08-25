@@ -1,77 +1,128 @@
-
+/*
+ * Layout for the DDS flow. Sizes against its container rather than the viewport:
+ * the shell nav sits above it, so any 100vh arithmetic here would be wrong.
+ *
+ * Layout for the DDS flow. Chrome and modals come from PicoCSS; this file only
+ * covers the tree columns and the bits Pico has no opinion about.
+ */
 
 .editor {
-    .controls {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Layout is shared (.flow-bar); this is only what the Load group needs. Horizontal
+   spacing comes from the shared .flow-container gutter. */
+.editor > .flow-bar {
+    margin-bottom: 0;
+
+    #select-guid-type {
+        min-width: 110px;
+    }
+
+    #path-to-read {
+        min-width: 300px;
         text-align: center;
-        margin-top: 5px;
+    }
 
-        #select-loaded-mod {
-            min-width: 100px;
-            max-width: fit-content;
-        }
+    /* Pico stretches form controls to full width by default, which breaks a
+       horizontal toolbar. The group carries a form field's bottom margin as well,
+       which is a blank line under the bar and the reason this one used to stand
+       half again as tall as the case flow's. */
+    select, input, button, [role="group"] {
+        margin-bottom: 0;
+        width: auto;
+        white-space: nowrap;
+    }
 
-        #select-guid-type {
-            width: 100px;
-        }
-
-        #path-to-read {
-            width: 280px;
-            text-align: center;
-        }
+    /* What is left of the height difference is the padding Pico gives a form control
+       inside a role=group, which does not follow --pico-form-element-spacing-vertical.
+       The bar is one line of controls, not a form, so it is sized to its text: this
+       brings the row to the height of the case flow's, which is a line of links.
+       padding-block only, to leave the select room for its arrow. */
+    select, input, button {
+        padding-block: 0.15rem;
+        line-height: 1.4;
     }
 }
 
-#trees {
-    margin-top: 10px;
-    padding: 0 50px;
+/* Panel on the left, trees filling the rest -- the case flow's shape. */
+.dds-workspace {
+    flex: 1;
+    min-height: 0;
     display: flex;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    background: var(--pico-background-color);
+}
+
+#dds-file-panel {
+    flex: none;
+    width: 260px;
+    overflow-y: auto;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+    padding: 0.75rem;
+
+    header {
+        margin-bottom: 0.5rem;
+    }
+}
+
+
+#trees {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    padding: 0;
+    gap: 1rem;
+    align-items: flex-start;
+    gap: 1rem;
+    /* Three columns at their minimum width exceed most viewports. Scroll the tree
+       area rather than the document, so window controls stay reachable. */
+    overflow-x: auto;
 }
 
 .file-window {
     display: inline-flex;
-    border: 1px solid;
-    height: calc(100vh - 41px);
+    color: var(--pico-color);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    height: 100%;
     position: relative;
     white-space: initial;
-    min-width: min(550px, max(500px, calc(100vw/3)));
+    min-width: min(550px, max(500px, calc(100vw / 3)));
 }
 
 .file-window:nth-child(3) {
     flex-grow: 1;
 }
 
+/*
+ * #trees forces data-theme="light" because libs/jsonTree hardcodes dark text
+ * colours, but nothing paints a background on a bare div -- the case flow gets one
+ * from Pico's <article>. Without this the trees are dark-on-dark under a dark
+ * system theme.
+ *
+ * jsontree_overrides.css sets `#trees > * { background: #c52f2110 }`, a translucent
+ * red tint, and out-specifies a plain .file-window rule. Layer that tint over the
+ * light card colour rather than letting it sit on the dark page background.
+ */
+#trees > .file-window {
+    background: linear-gradient(#c52f2110, #c52f2110), var(--pico-card-background-color);
+}
+
 .jsontree-container {
-    height: calc(100vh - 41px);
+    height: 100%;
     resize: horizontal;
     overflow: auto;
     position: relative;
     white-space: initial;
     flex-grow: 1;
-}
-
-#saving-enabled-button {
-    background-color: lightcoral;
-}
-
-#saving-enabled-button.saving-disabled { 
-    background-color: lightgreen;
-}
-
-.editor-bar {
-    text-align: center;
-}
-
-.doc-title {
-    margin: 10px 0;
-
-    h2 {
-        font-size: 20px;
-        margin-bottom: 5px;
-    }
-
-    h3 {
-        font-size: 18px;
-    }
+    padding: 0 0.5rem;
 }
 
 .copy-icon {
@@ -96,16 +147,9 @@
     cursor: pointer;
 }
 
-.close-button {
-    position: absolute;
-    top: 8px;
-    right: 3px;
-    cursor: pointer;
-}
-
 .link-element {
-    cursor: pointer;  
-    color: blue;
+    cursor: pointer;
+    color: var(--pico-primary);
     text-decoration: underline;
     font-family: monospace;
 
@@ -114,125 +158,46 @@
     }
 }
 
-/* Modal */
-.hidden {
-    display: none !important;
-}
-
-.modal {
+/* Modals: Pico <dialog> handles backdrop, centring and animation. Only sizing and
+   the scroll behaviour of the long lists are left. */
+#fav-modal article,
+#rsearch-modal article {
+    max-height: 80vh;
     display: flex;
-    position: absolute;
-
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-
-    justify-content: center;
-    align-items: center;
-
-    background-color: rgba(.7, .7, .7, .5);
+    flex-direction: column;
 }
 
-.modal-content {
-    position: relative;
+#fav-modal .controls,
+#rsearch-modal .controls {
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
 
-    background-color: #FFFFFF;
-
-    width: 600px;
-    height: 600px;
-
-    padding: 24px;
-}
-
-.modal h2 {
-    font-size: larger;
-}
-
-.modal h3 {
-    font-size: large;
-}
-
-.modal b {
-    font-weight: bold;
-}
-
-.modal ul, .modal li {
-    list-style: initial;
-}
-
-/* Before you start modal */
-#load-modal {
-    h2 {
-        font-size: 24px;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .modal-content {
-        height: 200px;
-        width: 800px;
-    }
-
-    button {
-        font-size: 18px;
-    }
-
-    strong {
-        font-weight: bold;
-    }
-
-    p {
-        margin-bottom: 18px;
+    input, select {
+        margin-bottom: 0;
     }
 }
 
-#fav-modal, #rsearch-modal {
-    h2 {
-        font-size: 22px;
-        text-align: center;
-        margin-bottom: 5px;
-    }
-
-    ul#fav-list {
-        overflow-y: auto;
-        max-height: calc(100% - 40px);
-    }
-
-    .controls {
-        text-align: center;
-        margin-bottom: 5px;
-    }
+#fav-list {
+    overflow-y: auto;
+    flex: 1;
+    margin-top: 1rem;
 }
 
-#fav-modal {
-    ul#fav-list {
-        overflow-y: auto;
-        max-height: calc(100% - 40px);
-    }
+#rsearch-modal article {
+    max-width: 1000px;
 }
 
-#rsearch-modal {
-    .modal-content {
-        width: 1000px;
-    }
+.rsearch-results-container {
+    display: flex;
+    gap: 1.5rem;
+    overflow: hidden;
+    flex: 1;
 
-    .controls {
-        margin: 10px 0;
-    }
-
-    .rsearch-results-container {
-        display: flex;
-        height: calc(100% - 60px);
-    }
-
-    ul#rsearch-text-list {
+    #rsearch-text-list {
         overflow-y: auto;
         word-wrap: break-word;
-        height: 100%;
         width: calc(50% - 10px);
-        margin-right: 20px;
     }
 
     #rsearch-result-view {
@@ -243,5 +208,64 @@
         li {
             list-style: none;
         }
+    }
+}
+
+/*
+ * Creating content is the first thing the panel offers, as in the case flow -- and the
+ * same size, which means the case flow's tight padding rather than Pico's default. A
+ * full-height button here would tower over the file list it sits above.
+ */
+#dds-file-panel > #new-file-button {
+    padding: 3px;
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+/*
+ * The manifest panel, below the file list. Shaped like the case flow's, which uses the
+ * same list-of-buttons idiom for the files a manifest declares.
+ */
+#dds-manifest-panel {
+    margin: 0;
+    padding: 0.5rem;
+
+    header {
+        margin-bottom: 0.5rem;
+        padding: 0;
+
+        label {
+            font-size: 0.75rem;
+            margin: 0.25rem 0 0;
+        }
+    }
+
+    .files-order ul {
+        margin: 0;
+        padding: 0;
+    }
+
+    .files-order li {
+        list-style: none;
+    }
+
+    button {
+        padding: 3px;
+        width: 100%;
+        text-align: left;
+        word-break: break-all;
+    }
+
+    /* The document as written. Long paths wrap rather than widen the panel. */
+    .manifest-text {
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+        font-size: 0.75rem;
+        margin: 0;
+        padding: 0.5rem;
+    }
+
+    .manifest-broken {
+        border-left: 3px solid var(--pico-del-color);
     }
 }

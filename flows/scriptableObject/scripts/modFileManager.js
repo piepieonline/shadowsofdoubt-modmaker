@@ -1,55 +1,37 @@
-async function refreshModList() {
-    let mods = [];
-    for await (const entry of window.dirHandleModDir.values()) {
-        if (entry.kind === "directory" && entry.name !== '.git') {
-            mods.push(await openModFolder(entry.name));
-        }
-    }
-    return mods;
-}
+import { createFileIfMissing, deepClone } from '../../../core/files.js';
+import { makeCSVSafe, makeNameFieldSafe } from '../../../core/strings.js';
+import { PATCH_SUFFIX } from './contentList.js';
 
-async function openModFolder(modName, create = false, type = null, createDDS = false) {
-    let modFolders = { modName };
+/**
+ * Lay out a new case inside a content folder: the preset it revolves around, and the
+ * manifest telling the loader what to load and in what order.
+ *
+ * No DDS folders. This used to offer to create them, on the grounds that the case
+ * might gain dialogue later; the DDS flow now makes them when there is a document to
+ * put in them, so a folder full of empty directories is no longer the price of a case.
+ */
+export async function scaffoldCase(folder, name, type) {
+    const hasPreset = type === 'MurderMO' || type === 'JobPreset';
 
-    modFolders.baseFolder = await tryGetFolder(window.dirHandleModDir, [modName], create)
-
-    if(create)
-    {
-        // If we are creating the DDS folders, touch them all. Makes it work better with the DDS Editor
-        if(createDDS) {
-            await tryGetFolder(modFolders.baseFolder, ['DDSContent', 'DDS', 'Trees'], true);
-            await tryGetFolder(modFolders.baseFolder, ['DDSContent', 'DDS', 'Messages'], true);
-            await tryGetFolder(modFolders.baseFolder, ['DDSContent', 'DDS', 'Blocks'], true);
-            await tryGetFolder(modFolders.baseFolder, ['DDSContent', 'Strings', 'English', 'DDS'], true);
-            await tryGetFolder(modFolders.baseFolder, ['DDSContent', 'Strings', 'English', 'Evidence'], true);
-        }
-
-        let didCreateBaseFile = false;
-        if(type === 'MurderMO' || type === 'JobPreset')
-        {
-            await createFileIfNotExisting(modName, type, modFolders.baseFolder, (content) => {
-                content.name = modName;
-                content.presetName = modName;
-                content.notes = modName;
-                content.copyFrom = null;
-                return content;
-            });
-
-            didCreateBaseFile = true;
-        }
-
-        await createFileIfNotExisting('murdermanifest', 'MurderManifest', modFolders.baseFolder, (content) => {
-            if(didCreateBaseFile) {
-                content.fileOrder.splice(0, 0, `REF:${modName.toLowerCase()}`);
-            }
+    if (hasPreset) {
+        await createFileIfNotExisting(name, type, folder, (content) => {
+            content.name = name;
+            content.presetName = name;
+            content.notes = name;
+            content.copyFrom = null;
             return content;
         });
     }
 
-    return modFolders;
+    await createFileIfNotExisting('murdermanifest', 'MurderManifest', folder, (content) => {
+        if (hasPreset) {
+            content.fileOrder.splice(0, 0, `REF:${name.toLowerCase()}`);
+        }
+        return content;
+    });
 }
 
-function cloneTemplate(template) {
+export function cloneTemplate(template) {
     var templateToClone = template in window.enums ? 0 : window.templates[template];
     if(templateToClone === undefined)
     {
@@ -61,7 +43,7 @@ function cloneTemplate(template) {
                 let childType = obj[keys[i]].Item1;
                 let isArray = obj[keys[i]].Item2;
 
-                let newVal = JSON.parse(JSON.stringify(window.basicTypeTemplates[childType] ?? childType));
+                let newVal = deepClone(window.basicTypeTemplates[childType] ?? childType);
                 
                 if(newVal === childType && !(childType in window.typeMap) && !(childType in window.enums))
                 {
@@ -86,45 +68,27 @@ function cloneTemplate(template) {
             return obj;
         }
 
-        templateToClone = remapTemplate(JSON.parse(JSON.stringify(window.typeLayout[template])));
+        templateToClone = remapTemplate(deepClone(window.typeLayout[template]));
     }
-    return JSON.parse(JSON.stringify(templateToClone));
+    return deepClone(templateToClone);
 }
 
-async function createFileIfNotExisting(filename, type, handle, newFileContentCallback) {
-    let contentType;
-
-    if(!Array.isArray(filename)) {
-        filename = [`${filename}.sodso.json`];
-    }
-    contentType = type;
-
-    let file = await tryGetFile(handle, type)
-    if(!file)
-    {
-        file = await getFile(handle, filename, true);
-        let newContentTemplate = cloneTemplate(contentType);
-        if(type !== 'MurderManifest') {
-            newContentTemplate.fileType = type;
-        }
-        let newContent = newFileContentCallback(newContentTemplate);
-        await writeFile(file, JSON.stringify(newContent));
-    }
+/**
+ * An override: a partial file the loader applies over the base game asset of the same
+ * name. A new one overrides nothing, so it holds only what identifies it -- the asset,
+ * which the file name repeats, and the type, which a patch has no other way to state.
+ */
+export async function createOverrideIfNotExisting(name, type, handle) {
+    return createFileIfMissing(handle, [`${name}${PATCH_SUFFIX}`], () => ({ name, fileType: type }));
 }
 
-function makeNameFieldSafe(name) {
-    return name.replaceAll(/[^a-zA-Z0-9\-]/g, "");
-}
+export async function createFileIfNotExisting(filename, type, handle, newFileContentCallback) {
+    const segments = Array.isArray(filename) ? filename : [`${filename}.sodso.json`];
 
-function makeCSVSafe(line) {
-    line = line.replace(/\\/g, '\\\\');
-
-    // Allow double quoted for included commas etc
-    if (line.includes(",")) {
-        line = '\\"' + line + '\\"';
-    }
-
-    line = '"' + line + '"';
-
-    return line;
+    return createFileIfMissing(handle, segments, () => {
+        const template = cloneTemplate(type);
+        // The manifest describes the mod rather than being a typed asset itself.
+        if (type !== 'MurderManifest') template.fileType = type;
+        return newFileContentCallback(template);
+    });
 }

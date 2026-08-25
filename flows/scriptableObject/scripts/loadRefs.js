@@ -233,4 +233,5 @@ window.ddsMap = {
     blocks: ddsMap.Blocks
 };
 
-window.updateAssetModel(true, false);
+// updateAssetModel() moved to main.js: a data module should not drive the UI,
+// and it has to run after main.js publishes the global surface.
