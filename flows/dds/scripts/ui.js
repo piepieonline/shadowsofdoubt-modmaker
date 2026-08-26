@@ -5,6 +5,7 @@ import { renderFilePanel } from '../../../core/filePanel.js';
 import { WINDOW_DEPTHS } from './jsonTreeAdditions.js';
 import { listContent, STRINGS_OPEN_AS } from './contentList.js';
 import { refreshManifestPanel } from './manifestPanel.js';
+import { closeStringsWindow, openStringsFile, openStringsPath } from './stringsEditor.js';
 import { initAndLoad, loadI18n, loadFile } from '../index.js';
 
 /**
@@ -30,6 +31,11 @@ export async function onModSelected(selection) {
         await loadI18n();
     }
 
+    // An open strings file belongs to the mod it was opened from, and is identified by
+    // a path relative to that mod's content folder -- which another mod can have a file
+    // of its own at. Saving after a switch would write into the wrong one.
+    closeStringsWindow(true);
+
     await refreshManifestPanel();
     await refreshPanel();
 }
@@ -47,11 +53,15 @@ export async function refreshPanel() {
 /**
  * Open whatever was clicked in the panel.
  *
- * A strings file has no editor yet. It is still listed as a button, because it is a
- * file of the mod's like any other and will open one when there is one.
+ * A strings file is text rather than a document, and opens in a window of its own
+ * beside the drill-down; everything else is a level of it.
  */
 async function openPanelEntry(entry) {
-    if (entry.openAs === STRINGS_OPEN_AS) return;
+    if (entry.openAs === STRINGS_OPEN_AS) {
+        // The entry's id is the path on disk, which is what identifies the file.
+        await openStringsFile(entry.id);
+        return;
+    }
 
     await openDdsFile(entry.id, entry.openAs);
 }
@@ -322,13 +332,13 @@ export function updateRSearchResultsTable(blockId) {
 
 
 /**
- * What is open, so it can be put back after a trip to another editor.
+ * The open documents, deepest level included.
  *
  * The three windows are levels of one drill-down, so their depth is part of the
  * state -- reopening only the top level would rebuild the cascade from its first
  * message and block, which is not necessarily where you were.
  */
-export function captureSession() {
+function captureDocuments() {
     const open = [];
 
     for (let depth = 0; depth < WINDOW_DEPTHS; depth++) {
@@ -339,12 +349,37 @@ export function captureSession() {
     return open;
 }
 
-export async function restoreSession(open) {
-    if (!open?.length) return;
+async function restoreDocuments(documents) {
+    if (!documents?.length) return;
 
     // Shallowest first: opening a level cascades into the ones below it, so each
     // deeper entry then puts back what was actually there.
-    for (const { depth, path } of [...open].sort((a, b) => a.depth - b.depth)) {
+    for (const { depth, path } of [...documents].sort((a, b) => a.depth - b.depth)) {
         await loadFile(path, depth);
     }
+}
+
+/**
+ * Load every open document again.
+ *
+ * For after the strings have changed underneath them: English text is resolved into a
+ * document as it loads, so re-reading from disk is what shows the new text. The strings
+ * window is deliberately not part of this -- it is what did the changing.
+ */
+export async function reloadOpenDocuments() {
+    await restoreDocuments(captureDocuments());
+}
+
+/** What is open, so it can be put back after a trip to another editor. */
+export function captureSession() {
+    return { documents: captureDocuments(), strings: openStringsPath() };
+}
+
+export async function restoreSession(session) {
+    if (!session) return;
+
+    await restoreDocuments(session.documents);
+
+    // Last, so a reload triggered by the documents cannot land on a half-open window.
+    if (session.strings) await openStringsFile(session.strings);
 }

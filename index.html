@@ -162,7 +162,7 @@
                         <!-- Only for a mod that has a ddsmanifest; hidden otherwise, so
                              the app is never the reason a mod gains one. Last, because
                              what the loader is told matters less than what is there. -->
-                        <article id="dds-manifest-panel" class="hidden">
+                        <section id="dds-manifest-panel" class="manifest-section hidden">
                             <hr />
                             <header>
                                 <strong>Manifest</strong>
@@ -175,7 +175,7 @@
                                 <ul></ul>
                             </div>
                             <div class="manifest-source hidden"></div>
-                        </article>
+                        </section>
                     </aside>
                     <div id="trees"></div>
                 </div>
@@ -304,17 +304,22 @@
                             <div id="so-file-list"></div>
 
                             <!-- The manifest last: what the loader is told, below what
-                                 is actually there. -->
-                            <hr />
-                            <header>
-                                <label>
-                                    <input name="terms" type="checkbox" role="switch" onclick="toggleManifestPanel()"/>
-                                    Show full Manifest
-                                </label>
-                            </header>
-                            <div id="manifest_content_tree">
-                                <!-- And here be panels for manifest and file list -->
-                            </div>
+                                 is actually there. Same shape as the DDS flow's, down
+                                 to the title above the switch -- both sidebars answer
+                                 the same question in the same place. -->
+                            <section class="manifest-section">
+                                <hr />
+                                <header>
+                                    <strong>Manifest</strong>
+                                    <label>
+                                        <input type="checkbox" role="switch" onclick="toggleManifestPanel()"/>
+                                        Show full manifest
+                                    </label>
+                                </header>
+                                <div id="manifest_content_tree">
+                                    <!-- And here be panels for manifest and file list -->
+                                </div>
+                            </section>
                         </article>
                         <div class="trees_wrapper">
                             <div id="trees"></div>

@@ -319,7 +319,18 @@ body {
     font-weight: bold;
 }
 
-/* The file panel, shared by both flows. */
+/*
+ * The file panel, shared by both flows.
+ *
+ * Its width lives here because the two flows lay their sidebar out differently -- the
+ * DDS flow with a flex item, the case flow with a grid track -- and sizing it in each
+ * stylesheet is what left them 40px apart. Neither can size itself to its contents:
+ * these are file names and paths, which are as long as they are.
+ */
+:root {
+    --file-panel-width: 300px;
+}
+
 .file-panel-category {
     margin-bottom: 0.5rem;
 
@@ -337,17 +348,73 @@ body {
 
 .file-panel-entry {
     margin-bottom: 0.2rem;
+    /* Pico pads list items inside an <aside>, which the DDS panel is and the case
+       flow's <article> is not -- the same list stood half again as tall in one flow. */
+    padding: 0;
 
     button {
-        width: 100%;
-        text-align: left;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
-        margin: 0;
         display: flex;
         justify-content: space-between;
         gap: 0.5rem;
     }
+}
+
+/*
+ * The manifest section at the foot of both sidebars: what the loader is told the
+ * content folder holds, below the list of what is actually in it. Both flows write the
+ * same markup for it, so it is described once here rather than drifting between two
+ * stylesheets -- the case flow had no title over its switch, and a switch at Pico's
+ * full size beside a panel of 0.75rem controls.
+ */
+.manifest-section {
+    margin: 0;
+
+    header {
+        margin-bottom: 0.5rem;
+        padding: 0;
+    }
+
+    /* A caption under the title, rather than a control competing with it. */
+    header label {
+        font-size: 0.75rem;
+        margin: 0.25rem 0 0;
+    }
+
+    .files-order ul {
+        margin: 0;
+        padding: 0;
+    }
+
+    .files-order li {
+        list-style: none;
+        margin-bottom: 0.2rem;
+        padding: 0;
+    }
+}
+
+/*
+ * An entry in either list. The manifest's are the same kind of thing as the file
+ * panel's -- one file each, in a 260px column -- so they are the same size, rather
+ * than Pico's full-height button with centred body text.
+ */
+.file-panel-entry button,
+.manifest-section .files-order button {
+    width: 100%;
+    margin: 0;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    text-align: left;
+}
+
+/*
+ * A manifest entry is a path, and most are wider than the panel. Cut it off rather
+ * than wrapping it over three lines: both flows put the whole of it in the tooltip.
+ */
+.manifest-section .files-order button {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .file-panel-name {

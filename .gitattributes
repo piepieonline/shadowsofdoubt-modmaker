@@ -13,6 +13,7 @@
 *.ico binary
 
 # Generated reference data from ShadowsOfDoubtMods/DocumentationGenerator.
-# Multi-MB single-line JSON; diffing it is never useful.
-flows/*/ref/*.json -diff linguist-generated
-data/**/*.json     -diff linguist-generated
+# Multi-MB JSON; diffing it is never useful. refs/authored/ is deliberately absent --
+# those files are hand-maintained and their diffs are worth reading.
+refs/generated/*.json -diff linguist-generated
+refs/assets/**/*.json -diff linguist-generated

@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { installFsHarness, seedFs, queuePicks, connectFolders, selectContent, gotoFlow } from './support/harness.js';
-import { ddsFixture, soFixture, pluginsFixture } from './support/fixtures.js';
+import {
+    ddsFixture, soFixture, pluginsFixture, ddsManifestFixture, soFolderContent, FLAT_MOD,
+} from './support/fixtures.js';
 
 /**
  * The point of the merge: both flows share one persisted mod folder.
@@ -195,6 +197,82 @@ test('both flows offer adding content the same way', async ({ page }) => {
     const ddsBox = await ddsButton.boundingBox();
     expect(Math.abs(ddsBox.height - caseBox.height)).toBeLessThan(2);
     await expect(ddsButton).not.toHaveClass(/secondary/);
+});
+
+/**
+ * The foot of both sidebars: a title, the switch that swaps the friendly list for the
+ * document, and an entry per file the manifest names.
+ *
+ * The case flow's had no title at all and carried a switch at Pico's full size, and
+ * both flows' entries were full-height buttons with centred body text sitting under a
+ * list of small ones. Compared rather than asserted flow by flow, because what went
+ * wrong was the two drifting apart.
+ */
+const manifestSection = (page) => page.evaluate(() => {
+    const section = document.querySelector('#flow-root .manifest-section');
+    const style = (el, ...props) =>
+        Object.fromEntries(props.map((p) => [p, getComputedStyle(el)[p]]));
+
+    const entry = section.querySelector('.files-order button');
+    // The list above it, which the manifest's entries are meant to match.
+    const listed = document.querySelector('.file-panel-entry button');
+
+    return {
+        title: section.querySelector('header > strong')?.textContent ?? null,
+        switchLabel: section.querySelector('header label').textContent.trim(),
+        switchSize: style(section.querySelector('header label'), 'fontSize'),
+
+        entry: {
+            ...style(entry, 'fontSize', 'padding', 'textAlign', 'textOverflow', 'whiteSpace'),
+            height: entry.getBoundingClientRect().height,
+        },
+        // Same font and same height as an entry in the file panel above.
+        listed: {
+            ...style(listed, 'fontSize'),
+            height: listed.getBoundingClientRect().height,
+        },
+    };
+});
+
+/** The sidebar of whichever flow is mounted, and how wide it is. */
+const sidebarWidth = (page) => page.evaluate(() =>
+    document.querySelector('#dds-file-panel, #manifest_panel').getBoundingClientRect().width);
+
+test('both flows show the manifest the same way', async ({ page }) => {
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, { ...ddsManifestFixture, ...soFolderContent });
+    await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+    await page.locator('#manifest_panel .files-order button').first().waitFor();
+
+    const so = await manifestSection(page);
+    const soWidth = await sidebarWidth(page);
+
+    await page.selectOption('#flow-picker', 'dds');
+    await page.locator('html[data-flow-ready="dds"]').waitFor();
+    // A mod with a ddsmanifest: without one the flow offers no panel at all, since it
+    // never invites a mod into a structure its author has not chosen.
+    await selectContent(page, FLAT_MOD.mod, FLAT_MOD.content);
+    await page.locator('#dds-manifest-panel .files-order button').first().waitFor();
+
+    const dds = await manifestSection(page);
+
+    // The sidebar itself, which the two flows lay out by different means -- a flex
+    // item here, a grid track there -- and so had drifted 40px apart.
+    expect(await sidebarWidth(page)).toBe(soWidth);
+    expect(soWidth).toBe(300);
+
+    expect(dds).toEqual(so);
+    expect(dds.title).toBe('Manifest');
+    expect(dds.switchLabel).toBe('Show full manifest');
+
+    // Sized against the list above rather than against Pico's default button.
+    expect(dds.entry.fontSize).toBe(dds.listed.fontSize);
+    expect(dds.entry.height).toBeCloseTo(dds.listed.height, 1);
+    // A path too long for the panel is cut off, not wrapped over three lines.
+    expect(dds.entry.textOverflow).toBe('ellipsis');
+    expect(dds.entry.whiteSpace).toBe('nowrap');
+    expect(dds.entry.textAlign).toBe('left');
 });
 
 test('mods are listed with what each of their folders holds', async ({ page }) => {

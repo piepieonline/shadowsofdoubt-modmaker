@@ -7,4 +7,4 @@ Instructions for use found on the wiki.
 http-server -c-1 -S
 
 To add a new data type for online reference:
-Modify the documentation generator onlineTypes
+Modify the documentation generator's onlineTypes, which is written to `refs/assets/index.json`.

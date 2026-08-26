@@ -129,11 +129,65 @@ export async function createFileIfNotExisting(type, guid) {
 }
 
 /**
+ * A row as its fields, with quoted fields kept whole.
+ *
+ * A quote in these files is load bearing: a field holding a comma is quoted precisely
+ * so that the comma is not a separator. Splitting on every comma tears such a row into
+ * pieces, and rejoining the pieces is not the row it came from.
+ *
+ * The quotes are kept in the field text, so that fields.join(',') gives back the line
+ * exactly -- what a rewrite does not touch, it must not alter.
+ */
+function splitRow(line) {
+    const fields = [];
+    let field = '';
+    let quoted = false;
+
+    for (const char of line) {
+        if (char === '"') {
+            quoted = !quoted;
+            field += char;
+        } else if (char === ',' && !quoted) {
+            fields.push(field);
+            field = '';
+        } else {
+            field += char;
+        }
+    }
+
+    fields.push(field);
+    return fields;
+}
+
+/**
+ * The GUID a row is keyed by: its first field, however it is written.
+ *
+ * The game's own CSVs quote their fields, so a mod that began as a copy of one has rows
+ * reading `"guid",,"text",...`. Reading already allowed for that -- loadI18n strips the
+ * quotes off the GUID, and so does reverse search -- but writing did not: a row was
+ * found with `startsWith(id)`, which a quoted row never satisfies.
+ *
+ * That was not a failure to find it. The file was tested with `includes(id)`, which a
+ * quoted row does satisfy, so the write took the overwrite path, matched no line, and
+ * wrote the file back exactly as it was. Every edit to such a file did nothing at all,
+ * silently: no new row, no changed row, no error.
+ */
+const rowId = (line) => splitRow(line)[0].replaceAll('"', '').trim();
+
+/** The columns this app has a view on. A row holds more, and they are not ours. */
+const TEXT_FIELD = 2;
+const EDITED_FIELD = 6;
+
+/**
  * Write a line of block text into the mod's strings CSV.
  *
  * Which file that is comes from the manifest: a mod that maps dds.blocks.csv somewhere
  * of its own gets its text there, one that keeps its other CSVs together gets it
  * beside them, and one with no manifest is written the ordinary way.
+ *
+ * One question decides how it is written -- is there already a row for this GUID? --
+ * so it is asked once, of the rows themselves, rather than once of the file's text and
+ * again of each line in a way that could disagree with it.
  */
 export async function addOrModifyStrings(id, content) {
     let d = new Date();
@@ -145,16 +199,38 @@ export async function addOrModifyStrings(id, content) {
     const { real, addEntry } = placeStringsFile(manifest, DDS_BLOCKS_VIRTUAL);
 
     let csvHandle = await stringsFileHandle(ddsFolder, real, true);
-    let stringsFileContent = (await (await csvHandle.getFile()).text());
 
-    if(stringsFileContent.includes(id)) {
-        // If we have the content, overwrite it
-        stringsFileContent = stringsFileContent.split('\n').map(val => (val.startsWith(id) ? `${id},,${content},,,,${datestring}` : val)).join('\n');
-        await writeFile(csvHandle, stringsFileContent, false);
+    // Creating the file is allowed to fail -- a folder that cannot be written, a name
+    // taken by a directory -- and the next line would make that a TypeError on null,
+    // thrown out of a blur handler where nobody would ever see it.
+    if (!csvHandle) throw new Error(`Could not open ${real} in this mod to write the line to.`);
+
+    const stringsFileContent = (await (await csvHandle.getFile()).text());
+
+    const lines = stringsFileContent.split('\n');
+    const existing = lines.findIndex((line) => rowId(line) === id);
+
+    if (existing !== -1) {
+        // Only the two columns this app knows the meaning of. A row can carry more --
+        // the game's own files do -- and rewriting the whole line threw that away along
+        // with whatever quoting its author had a reason for.
+        const fields = splitRow(lines[existing]);
+        while (fields.length <= EDITED_FIELD) fields.push('');
+
+        fields[TEXT_FIELD] = content;
+        fields[EDITED_FIELD] = datestring;
+
+        lines[existing] = fields.join(',');
+        await writeFile(csvHandle, lines.join('\n'), false);
     } else {
-        // Otherwise, just append the new content
         await writeFile(csvHandle, `\n${id},,${content},,,,${datestring}`, true);
     }
+
+    // This file may be open as text, in which case it is now a row behind. The handle
+    // goes with the path because it is the file itself, which is the only thing that
+    // says whether it is the one on screen.
+    const { refreshOpenStringsFile } = await import('./stringsEditor.js');
+    await refreshOpenStringsFile(real, csvHandle);
 
     // The file went where the mod keeps its CSVs, which is not where the game looks
     // for it -- so say so, or the text is written and never read.

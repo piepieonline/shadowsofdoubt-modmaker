@@ -308,16 +308,32 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
             return;
         }
 
-        item.parent.findChildren(node => ['id', 'replaceWithID'].includes(node.label), async node => {
-            await addOrModifyStrings(renderedValue(node), parsed);
+        // A line is stored against the GUID beside it, and findChildren is how that
+        // GUID is found. It does not await its handler, so the write cannot happen
+        // inside one: anything thrown there is an unhandled rejection, which is this
+        // edit silently doing nothing whatever went wrong. Collect, then write.
+        const keys = [];
+        item.parent.findChildren(
+            node => ['id', 'replaceWithID'].includes(node.label),
+            node => keys.push(renderedValue(node))
+        );
 
-            // Show what was stored rather than what was typed: a line with a comma in
-            // it is quoted on the way into the CSV, and a correction made at the prompt
-            // is not in the control at all.
-            setValue(input, parsed);
+        // Nothing to key the line by. Saying so beats appearing to have stored it.
+        if (keys.length === 0) {
+            alert('This line has no id or replaceWithID beside it to be stored against.');
+            return false;
+        }
 
-            await loadI18n();
-        });
+        for (const key of keys) {
+            await addOrModifyStrings(key, parsed);
+        }
+
+        // Show what was stored rather than what was typed: a line with a comma in it is
+        // quoted on the way into the CSV, and a correction made at the prompt is not in
+        // the control at all.
+        setValue(input, parsed);
+
+        await loadI18n();
     }
 
     async function copySource() {

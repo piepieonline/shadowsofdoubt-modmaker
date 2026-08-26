@@ -4,6 +4,9 @@
  * The markup drives the app through inline attributes, which resolve against the
  * global scope. This block is the complete list of what the markup depends on --
  * replacing the inline handlers with addEventListener wiring means deleting it.
+ *
+ * Exported rather than assigned so that the registry installs it alongside the
+ * reference data, and removes it when another flow's markup takes over.
  */
 import {
     setIdAndLoad, loadFromGUI, newFile,
@@ -12,9 +15,9 @@ import {
 } from './scripts/ui.js';
 import { toggleManifestPanel } from './scripts/manifestPanel.js';
 
-Object.assign(window, {
+export default {
     setIdAndLoad, loadFromGUI, newFile,
     showBrowse, updateBrowse, updateBrowseTypeahead, showReverseSearch,
     updateRSearch, updateRSearchResultsTable, showHelp, openModal, closeModal,
     toggleDdsManifestPanel: toggleManifestPanel,
-});
+};

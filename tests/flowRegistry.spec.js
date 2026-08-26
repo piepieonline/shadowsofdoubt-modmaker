@@ -50,6 +50,68 @@ test('readiness is not signalled until reference data has loaded', async ({ page
     expect(await page.evaluate(() => window.ddsMap?.trees?.length ?? 0)).toBeGreaterThan(0);
 });
 
+/**
+ * Reference data belongs to the active flow, however many times you switch.
+ *
+ * The flows share global names for data of different shapes. Each used to install its
+ * own by assigning to window from a module body, which runs once per URL: the second
+ * visit to a flow reinstalled nothing, so you edited case files against the DDS
+ * templates, and DDS documents against a ddsMap with no id/name index.
+ */
+const refShape = (page) => page.evaluate(() => ({
+    hasCaseTemplates: 'MurderManifest' in (window.templates ?? {}),
+    hasDdsTemplates: 'tree' in (window.templates ?? {}),
+    hasIdNameMap: Boolean(window.ddsMap?.idNameMap),
+    // Only the case flow defines these, so they must not survive into the other.
+    hasTypeMap: Boolean(window.typeMap),
+}));
+
+test('each flow reinstalls its reference data on every activation', async ({ page }) => {
+    await gotoFlow(page, '?flow=scriptableObject');
+    const caseRefs = await refShape(page);
+    expect(caseRefs.hasCaseTemplates).toBe(true);
+    expect(caseRefs.hasTypeMap).toBe(true);
+
+    await page.selectOption('#flow-picker', 'dds');
+    await page.locator('html[data-flow-ready="dds"]').waitFor();
+    expect(await refShape(page)).toEqual({
+        hasCaseTemplates: false,
+        hasDdsTemplates: true,
+        hasIdNameMap: true,
+        hasTypeMap: false,
+    });
+
+    // The second activation: the modules are cached, so nothing re-runs on import.
+    await page.selectOption('#flow-picker', 'scriptableObject');
+    await page.locator('html[data-flow-ready="scriptableObject"]').waitFor();
+    expect(await refShape(page)).toEqual(caseRefs);
+
+    await page.selectOption('#flow-picker', 'dds');
+    await page.locator('html[data-flow-ready="dds"]').waitFor();
+    expect(await refShape(page)).toEqual({
+        hasCaseTemplates: false,
+        hasDdsTemplates: true,
+        hasIdNameMap: true,
+        hasTypeMap: false,
+    });
+});
+
+test('a flow keeps its inline handler surface across a round trip', async ({ page }) => {
+    await gotoFlow(page, '?flow=dds');
+    const handler = () => page.evaluate(() => typeof window.loadFromGUI);
+    expect(await handler()).toBe('function');
+
+    await page.selectOption('#flow-picker', 'scriptableObject');
+    await page.locator('html[data-flow-ready="scriptableObject"]').waitFor();
+    // The DDS markup is unmounted, so its handlers go with it.
+    expect(await handler()).toBe('undefined');
+    expect(await page.evaluate(() => typeof window.toggleEditMode)).toBe('function');
+
+    await page.selectOption('#flow-picker', 'dds');
+    await page.locator('html[data-flow-ready="dds"]').waitFor();
+    expect(await handler()).toBe('function');
+});
+
 test('a third flow can register and activate without touching core', async ({ page }) => {
     await gotoFlow(page, '?flow=dds');
 

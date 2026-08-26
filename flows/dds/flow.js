@@ -26,8 +26,9 @@ export default {
 
     /** Loaded on activation, not at page load. See the note in the other flow. */
     async loadRefs() {
-        await import('./scripts/loadRefs.js');
-        await import('./globals.js');
+        const refs = await import('./scripts/loadRefs.js');
+        const handlers = await import('./globals.js');
+        return { ...refs.default, ...handlers.default };
     },
 
     async onFoldersConnected() {

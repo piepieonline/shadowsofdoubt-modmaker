@@ -1,15 +1,25 @@
-import templates from './ref/templates.json' with { type: 'json' };
-import soChildTypes from './ref/soChildTypes.json' with { type: 'json' };
-import soMap from './ref/soMap.json' with { type: 'json' };
-import ddsMap from  './ref/ddsMap.json' with { type: 'json' };
-import soIDMap from './ref/soIdMap.json' with { type: 'json' };
+/**
+ * Reference data lives at the repo root in refs/, not in this flow: ddsContentIndex is
+ * read by both flows, and keeping a copy per flow is what let the two drift apart.
+ * See refs/README.md for what each file is and who writes it.
+ */
+import soDefaults from '../../../refs/generated/soDefaults.json' with { type: 'json' };
+import soTypeLayout from '../../../refs/generated/soTypeLayout.json' with { type: 'json' };
+import soAssetsByType from '../../../refs/generated/soAssetsByType.json' with { type: 'json' };
+import soEnums from '../../../refs/generated/soEnums.json' with { type: 'json' };
+import ddsContentIndex from '../../../refs/generated/ddsContentIndex.json' with { type: 'json' };
+import soPathIds from '../../../refs/generated/soPathIds.json' with { type: 'json' };
 
-import soCustomDescriptions from './soCustomDescriptions.json' with { type: 'json' };
+import soCustomDescriptions from '../../../refs/authored/soFieldDescriptions.json' with { type: 'json' };
 
-import onlineTypes from '../data/onlineTypes.json' with { type: 'json' };
-window.onlineTypes = onlineTypes;
+import onlineTypes from '../../../refs/assets/index.json' with { type: 'json' };
 
-window.basicTypeLayouts = {
+/**
+ * Built at module scope, published by the default export below: the registry installs
+ * the flow's globals on every activation, because a module body runs only once.
+ * See the loadRefs note in core/flowRegistry.js.
+ */
+const basicTypeLayouts = {
     Vector2: {
         x: {
             "Item1": "Single",
@@ -156,7 +166,7 @@ window.basicTypeLayouts = {
     }
 };
 
-window.templates = {
+const templates = {
     MurderManifest: {
         enabled: true,
         fileOrder: [],
@@ -172,14 +182,14 @@ window.templates = {
         value: 0,
         weightedMode: 0
     },
-    ...templates
+    ...soDefaults
 };
 
-window.typeMap = {
-    ...soMap["ScriptableObject"]
+const typeMap = {
+    ...soAssetsByType
 };
 
-window.enums = {
+const enums = {
     Boolean: [
         'false',
         'true'
@@ -190,10 +200,10 @@ window.enums = {
         'Out',
         'Both'
     ],
-    ...soMap["Enum"]
+    ...soEnums
 };
 
-window.typeLayout = {
+const typeLayout = {
     Manifest: {
         fileOrder: {
             "Item1": "FileType", // Type of the field
@@ -206,11 +216,11 @@ window.typeLayout = {
             "Item3": "Should we wait for this manifest to have loaded before we start loading?"
         }
     },
-    ...window.basicTypeLayouts,
-    ...soChildTypes
+    ...basicTypeLayouts,
+    ...soTypeLayout
 };
 
-window.basicTypeTemplates = {
+const basicTypeTemplates = {
     Int32: 0,
     Single: 0,
     Boolean: false,
@@ -220,18 +230,29 @@ window.basicTypeTemplates = {
     Color: { r: 0, g: 0, b: 0, a: 0 }
 };
 
-window.pathIdMap = Object.keys(soIDMap).reduce((map, val) => {
-    map[val] = soIDMap[val][0];
+const pathIdMap = Object.keys(soPathIds).reduce((map, val) => {
+    map[val] = soPathIds[val][0];
     return map;
 }, {});
 
-window.soCustomDescriptions = soCustomDescriptions;
-
-window.ddsMap = {
-    trees: ddsMap.Trees,
-    messages: ddsMap.Messages,
-    blocks: ddsMap.Blocks
+const ddsMap = {
+    trees: ddsContentIndex.Trees,
+    messages: ddsContentIndex.Messages,
+    blocks: ddsContentIndex.Blocks
 };
 
 // updateAssetModel() moved to main.js: a data module should not drive the UI,
 // and it has to run after main.js publishes the global surface.
+
+export default {
+    onlineTypes,
+    basicTypeLayouts,
+    templates,
+    typeMap,
+    enums,
+    typeLayout,
+    basicTypeTemplates,
+    pathIdMap,
+    soCustomDescriptions,
+    ddsMap,
+};

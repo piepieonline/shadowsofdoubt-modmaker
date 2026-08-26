@@ -29,8 +29,9 @@ export default {
      * would run its startup against markup that is not mounted.
      */
     async loadRefs() {
-        await import('./scripts/loadRefs.js');
-        await import('./globals.js');
+        const refs = await import('./scripts/loadRefs.js');
+        const handlers = await import('./globals.js');
+        return { ...refs.default, ...handlers.default };
     },
 
     async onFoldersConnected() {

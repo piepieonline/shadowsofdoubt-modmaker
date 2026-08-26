@@ -78,13 +78,14 @@ test('opening an entry loads it, without needing to know its GUID', async ({ pag
         .toHaveValue('cccccccc-3333-4333-8333-333333333333');
 });
 
-test('a strings file is a button, and clicking it does nothing yet', async ({ page }) => {
+test('a strings file opens as text, not as a document', async ({ page }) => {
     await openMod(page);
 
     await section(page, 'strings').getByRole('button', { name: 'dds.blocks' }).click();
 
-    // No editor for strings files yet: nothing opens, and nothing is mistaken for a
-    // GUID and complained about.
+    // Its own window: a CSV is not a level of the tree -> message -> block drill-down,
+    // and nothing here is mistaken for a GUID and complained about.
+    await expect(page.locator('#strings-window')).toContainText('Strings: dds.blocks.csv');
     await expect(page.locator('#file-window-0')).toHaveCount(0);
     expect(await alerts(page)).toEqual([]);
 });

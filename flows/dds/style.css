@@ -23,7 +23,7 @@
     }
 
     #path-to-read {
-        min-width: 300px;
+        min-width: 320px;
         text-align: center;
     }
 
@@ -60,7 +60,7 @@
 
 #dds-file-panel {
     flex: none;
-    width: 260px;
+    width: var(--file-panel-width);
     overflow-y: auto;
     border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--pico-border-radius);
@@ -123,6 +123,47 @@
     white-space: initial;
     flex-grow: 1;
     padding: 0 0.5rem;
+}
+
+/*
+ * The strings editor: a window holding one file as text.
+ *
+ * The container is laid out as a column so the text takes whatever the editor bar
+ * leaves, rather than being sized against a height it cannot know. Its own horizontal
+ * resize is dropped: the textarea fills the width, so dragging the container narrower
+ * only clips the text.
+ */
+/* Last in the row whenever it was opened. The drill-down reads left to right and this
+   sits beside it -- but reloading a document appends its window afresh, so where this
+   one happens to be in the DOM is no guide to where it belongs. */
+#trees .file-window[strings] {
+    order: 1;
+}
+
+#trees .file-window[strings] .jsontree-container {
+    display: flex;
+    flex-direction: column;
+    resize: none;
+}
+
+#trees .strings-text {
+    flex: 1;
+    min-height: 10rem;
+    width: 100%;
+    margin: 0 0 0.5rem;
+    padding: 0.4rem;
+    font-family: inherit;
+    font-size: inherit;
+    /* A row per line: wrapping a CSV hides where one row ends and the next starts. */
+    white-space: pre;
+    overflow: auto;
+    resize: none;
+}
+
+/* Text that has been typed and not yet written -- which a write from elsewhere leaves
+   alone rather than overwriting. See refreshOpenStringsFile. */
+#trees .file-window[data-dirty] .doc-title h2::after {
+    content: " *";
 }
 
 .copy-icon {
@@ -223,39 +264,11 @@
 }
 
 /*
- * The manifest panel, below the file list. Shaped like the case flow's, which uses the
- * same list-of-buttons idiom for the files a manifest declares.
+ * The manifest panel, below the file list. Its shape is .manifest-section in
+ * core/chrome.css, shared with the case flow's; only the manifest document itself is
+ * particular to this flow.
  */
 #dds-manifest-panel {
-    margin: 0;
-    padding: 0.5rem;
-
-    header {
-        margin-bottom: 0.5rem;
-        padding: 0;
-
-        label {
-            font-size: 0.75rem;
-            margin: 0.25rem 0 0;
-        }
-    }
-
-    .files-order ul {
-        margin: 0;
-        padding: 0;
-    }
-
-    .files-order li {
-        list-style: none;
-    }
-
-    button {
-        padding: 3px;
-        width: 100%;
-        text-align: left;
-        word-break: break-all;
-    }
-
     /* The document as written. Long paths wrap rather than widen the panel. */
     .manifest-text {
         white-space: pre-wrap;

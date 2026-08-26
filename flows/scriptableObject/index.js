@@ -44,8 +44,11 @@ export async function loadFileFromFolder(path, folderHandle, readOnly, type) {
  * `data/`, which was right while this flow was a site of its own and has pointed at
  * nothing since it became a flow served from the repo root. The fetch 404ed and the
  * error page was handed to JSON.parse.
+ *
+ * They now live in refs/assets/ with the rest of the generated reference data. Fetched
+ * rather than imported: it is 12 MB across 1500 files, and one is read at a time.
  */
-const ASSET_DATA = new URL('./data/', import.meta.url);
+const ASSET_DATA = new URL('../../refs/assets/', import.meta.url);
 
 export async function loadFileFromOnlineRepo(path, type) {
     const response = await fetch(new URL(path, ASSET_DATA));
@@ -214,6 +217,9 @@ export async function loadFileContent(path, loadedFile, readOnly, type) {
                 let file_link = fastElement("button", "secondary");
                 file_link.setAttribute('type', 'submit');
                 file_link.innerText = ele.innerText.replace(/REF:|"|'/g, '');
+                // The button truncates a name too long for the panel, so the whole of
+                // it has to be readable somewhere. The DDS flow's entries do the same.
+                file_link.title = file_link.innerText;
                 file_link.addEventListener('click', () => {
                     loadFile(refPath, false);
                 });

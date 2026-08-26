@@ -13,10 +13,20 @@
  *   label         human-readable, for the flow picker
  *   saveStrategy  'fullFile' | 'vanillaPatch'  (see core/persistence.js)
  *   windowPolicy  WindowPolicy.*               (see core/treeWindow.js)
- *   loadRefs      () => Promise -- reference data, loaded on activation rather than
- *                 at page load. The two current flows pull ~3.7 MB of generated JSON
- *                 between them, and a single shell must not make every user download
- *                 all of it to edit one kind of content.
+ *   loadRefs      () => Promise<object> -- reference data and the flow's inline
+ *                 handler surface, as an object of globals to publish on window.
+ *                 Loaded on activation rather than at page load: the two current
+ *                 flows pull ~3.7 MB of generated JSON between them, and a single
+ *                 shell must not make every user download all of it to edit one kind
+ *                 of content.
+ *
+ *                 Return the globals rather than assigning them. A module body runs
+ *                 once per URL, so a flow that assigned window.templates on import
+ *                 installed it on first activation and never again -- switching away
+ *                 and back left the other flow's data in place. Returning them lets
+ *                 activation reinstall on every switch, and lets the registry take
+ *                 the previous flow's globals back down first, so a name only one
+ *                 flow defines cannot linger into the other.
  *   template      optional css selector for a <template> holding the flow's markup.
  *                 Only the active flow is mounted: the flows share element ids, so
  *                 having both in the document would break getElementById.
@@ -105,6 +115,22 @@ function applyStyles(hrefs = []) {
     })));
 }
 
+/**
+ * The global names the active flow published, so the next one can take them down.
+ *
+ * The flows share names for data of different shapes -- templates, enums, ddsMap --
+ * and each has names the other never sets. Removing before installing means the
+ * window surface belongs entirely to the active flow, rather than being whatever the
+ * last two activations happened to leave behind.
+ */
+let installedGlobals = [];
+
+function installGlobals(surface = {}) {
+    for (const name of installedGlobals) delete window[name];
+    installedGlobals = Object.keys(surface);
+    Object.assign(window, surface);
+}
+
 function mountTemplate(selector) {
     const root = flowRoot();
     if (!root || !selector) return;
@@ -125,7 +151,7 @@ export async function activateFlow(id) {
 
         if (flow.treeOptions) jsonTree.configure(flow.treeOptions);
 
-        await flow.loadRefs();
+        installGlobals(await flow.loadRefs());
         active = flow;
 
         // Exposed for tests and for the deep-link handling Phase 7 adds.

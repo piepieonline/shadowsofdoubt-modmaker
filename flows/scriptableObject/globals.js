@@ -8,9 +8,9 @@ import {
 } from './scripts/ui.js';
 import { cancelNewCasePopup } from './index.js';
 
-Object.assign(window, {
+export default {
     toggleManifestPanel, shareOpen, enableAssetOnlyMode, toggleEditMode, toggleDefaultValues,
     updateAssetModel, updateNewFileCopyFrom, newFileMode, setNewFileMode, updateNewFileSubmitState,
     updateSelectAllCopyFrom, loadExportedSOs,
     cancelNewCasePopup,
-});
+};

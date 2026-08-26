@@ -320,7 +320,7 @@ test('manifest file references are shown but not editable', async ({ page }) => 
     await openMod(page);
 
     // The manifest tree is collapsed behind a toggle by default.
-    await page.getByRole('switch', { name: 'Show full Manifest' }).click();
+    await page.getByRole('switch', { name: 'Show full manifest' }).click();
 
     const fileOrder = page.locator(
         "#manifest_content_tree li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"fileOrder\"'))"

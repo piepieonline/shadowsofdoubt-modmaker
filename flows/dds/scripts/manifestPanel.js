@@ -7,13 +7,12 @@
  * a mapping explains why a file the game reads as Strings/English/Citizens/jobs.csv is
  * sitting at the content root.
  *
- * Two things are deliberately absent.
+ * An entry opens the file it names as text, the way the file list below does -- a
+ * mapping names a strings CSV, and this is the only list that shows one a mod has
+ * declared but not yet written.
  *
- * The entries are buttons that do nothing. They name strings CSVs, and nothing in the
- * app opens one of those yet; when something does, that is what they will do.
- *
- * The document is shown, not edited. jsonTree is built for the wide columns of #trees
- * (grid-auto-columns: minmax(500px, auto)) and in a 260px panel a value's box escapes
+ * The document itself is shown, not edited. jsonTree is built for the wide columns of
+ * #trees (grid-auto-columns: minmax(500px, auto)) and in a 260px panel a value's box escapes
  * the column, leaving it legible but out of the pointer's reach. Editing waits for
  * somewhere wider to live. Until then the only thing that rewrites a manifest is the
  * app declaring a strings file it just created -- see writeManifest in ddsManifest.js.
@@ -21,6 +20,7 @@
 import { fastElement } from '../../../core/dom.js';
 import { ddsContentFolder } from './modFileManager.js';
 import { readManifest, virtualPathOf } from './ddsManifest.js';
+import { openStringsFile } from './stringsEditor.js';
 
 const PANEL = '#dds-manifest-panel';
 
@@ -59,6 +59,9 @@ function renderMappings(panel, mappings) {
         button.type = 'button';
         button.innerText = mapping.real;
         button.title = `Read by the game as ${virtualPathOf(mapping)}`;
+        // The real path: that is what the file is, and a mapping to a file that is not
+        // there yet opens as an empty one.
+        button.addEventListener('click', () => openStringsFile(mapping.real));
 
         item.append(button);
         list.append(item);

@@ -147,6 +147,26 @@ export const ddsModContent = {
         'ModRoom,,A mod room name,,,,09:00 01/01/2024',
 };
 
+/**
+ * A mod whose block text is quoted the way the game's own CSVs are.
+ *
+ * The base game writes `"guid",,"text",...`, and a mod that began as a copy of one --
+ * or was written by hand to match -- has its rows in that shape. Nothing the app writes
+ * is quoted, so this is the file it fails to recognise its own rows in.
+ */
+export const ddsQuotedStringsFixture = {
+    ...streamingAssets,
+    ...ddsModDir,
+    ...ddsModContent,
+    'Mods/TestMod/Content/DDSContent/Strings/English/DDS/dds.blocks.csv': [
+        '"HEADER 1",,,,,,',
+        // A column the app has no view on, and must therefore leave alone.
+        `"${BLOCK_GUID}",,"An existing quoted line",,KEEP-ME,,09:00 01/01/2024`,
+        // A neighbour whose text holds a comma, which is what its quotes are for.
+        '"dddddddd-4444-4444-8444-444444444444",,"Wait, listen to me",,,,09:00 01/01/2024',
+    ].join('\n'),
+};
+
 export const ddsFixture = { ...streamingAssets, ...ddsModDir };
 export const ddsFixtureWithContent = { ...ddsFixture, ...ddsModContent };
 export const soFixture = { ...soModDir };
@@ -190,6 +210,33 @@ export const ddsManifestNoBlocksFixture = {
     ...streamingAssets,
     ...flatFiles,
     ...flatManifest({ 'jobs.csv': 'Strings/English/Citizens' }),
+};
+
+/**
+ * A manifest naming a file the mod has not written yet.
+ *
+ * The file list is built from disk, so this entry appears only in the manifest panel --
+ * which is the one place a declared-but-absent file can be opened from.
+ */
+export const ddsManifestMissingFileFixture = {
+    ...streamingAssets,
+    ...flatFiles,
+    [`${FLAT}/dds.blocks.csv`]: flatBlocksCsv,
+    ...flatManifest({
+        'jobs.csv': 'Strings/English/Citizens',
+        'dds.blocks.csv': 'Strings/English/DDS',
+        'names.rooms.csv': 'Strings/English',
+    }),
+};
+
+/** Block text declared, and not written yet: the file exists only in the manifest. */
+export const ddsManifestBlocksDeclaredFixture = {
+    ...streamingAssets,
+    ...flatFiles,
+    ...flatManifest({
+        'jobs.csv': 'Strings/English/Citizens',
+        'dds.blocks.csv': 'Strings/English/DDS',
+    }),
 };
 
 /** Entries in two different folders, so there is no convention to copy. */

@@ -118,8 +118,20 @@ export function createTextEditor(domNode, { readOnly = false, link = null } = {}
     input.addEventListener('blur', async (e) => {
         if (initialValue === e.target.value) return;
 
-        if (await onCommit(e.target.value) === false) {
+        try {
+            if (await onCommit(e.target.value) === false) {
+                setValue(input, initialValue);
+            }
+        } catch (error) {
+            // A commit that throws was an unhandled rejection: nothing stored, the
+            // typed value still on screen as though it had been, and nothing said. The
+            // control goes back to what the document holds, and the fault is reported.
+            //
+            // A thrown string is this codebase's idiom for "the user has already been
+            // told" -- see assertModSelected -- so it is not reported twice.
             setValue(input, initialValue);
+            if (typeof error !== 'string') alert(`This edit could not be stored:\n\n${error.message ?? error}`);
+            throw error;
         }
     });
 
