@@ -15,15 +15,18 @@
 import { registerFlow, activateFlow, listFlows, getFlow } from './core/flowRegistry.js';
 import { restoreFolders } from './core/folders.js';
 import { initFoldersModal, activateFoldersFor, onFoldersChanged } from './core/foldersModal.js';
+import { initTutorialsModal } from './core/tutorialsModal.js';
 import { initModSelection, refreshMods, reapplySelection } from './core/modSelection.js';
 import { initNewContent } from './core/newContent.js';
 import { initAutosave } from './core/autosave.js';
 import { configureNavigation, switchFlow } from './core/navigation.js';
 import ddsFlow from './flows/dds/flow.js';
 import soFlow from './flows/scriptableObject/flow.js';
+import buildingFlow from './flows/building/flow.js';
 
 registerFlow(ddsFlow);
 registerFlow(soFlow);
+registerFlow(buildingFlow);
 
 const DEFAULT_FLOW = soFlow.id;
 const SPOILER_KEY = 'SOD_MurderCaseBuilder_SpoilerWarningDismissed';
@@ -97,6 +100,7 @@ onFoldersChanged(async () => {
 const flowId = requestedFlowId();
 buildPicker(flowId);
 initFoldersModal();
+initTutorialsModal();
 initModSelection();
 initNewContent();
 initAutosave();

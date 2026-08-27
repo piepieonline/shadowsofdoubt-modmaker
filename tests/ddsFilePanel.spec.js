@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, alerts } from './support/harness.js';
+import { installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, alerts, openDdsDocument } from './support/harness.js';
 import { ddsFixtureWithContent, TREE_GUID, MSG_GUID } from './support/fixtures.js';
 
 /**
@@ -74,8 +74,10 @@ test('opening an entry loads it, without needing to know its GUID', async ({ pag
 
     // Opened directly, so it is the top window rather than the end of a drill-down.
     await expect(page.locator('#file-window-0')).toContainText('ModBlock');
-    await expect(page.locator('#path-to-read'))
-        .toHaveValue('cccccccc-3333-4333-8333-333333333333');
+    // A mod's own block, which is in no reference data: the panel knows what it is,
+    // and opening it as anything else would read from the wrong folder.
+    await expect(page.locator('#file-window-0'))
+        .toHaveAttribute('path', 'DDS/Blocks/cccccccc-3333-4333-8333-333333333333.block');
 });
 
 test('a strings file opens as text, not as a document', async ({ page }) => {
@@ -101,10 +103,9 @@ test('prompts to choose a mod before anything is selected', async ({ page }) => 
 test('editing base game content adds its patch to the panel', async ({ page }) => {
     await openMod(page);
 
-    // The patched tree in the fixture is already listed; open an unpatched one.
-    await page.evaluate((g) => { document.getElementById('path-to-read').value = g; }, MSG_GUID);
-    await page.selectOption('#select-guid-type', 'message');
-    await page.getByRole('button', { name: 'Load', exact: true }).click();
+    // The patched tree in the fixture is already listed; open an unpatched one. The
+    // type comes with it: this GUID is the fixture's, so nothing can look it up.
+    await openDdsDocument(page, MSG_GUID, 'message');
     await expect(page.locator('#file-window-0')).toContainText('TestMessage');
 
     await expect(section(page, 'messages').locator(`.file-panel-entry[data-id="${MSG_GUID}"]`)).toHaveCount(0);

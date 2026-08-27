@@ -173,6 +173,7 @@ export async function selectContentFolder(modName, contentPath, handle) {
             handle,
             hasManifest: false,
             hasDdsContent: false,
+            hasFloors: false,
         });
     }
 

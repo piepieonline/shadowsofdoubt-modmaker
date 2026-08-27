@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, connectFolders, selectContent, gotoFlow } from './support/harness.js';
+import { installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, openDdsDocument } from './support/harness.js';
 import { caseWithDdsReference, ddsFixtureWithContent, TREE_GUID } from './support/fixtures.js';
 
 /**
@@ -25,8 +25,7 @@ test('the DDS drill-down comes back as it was', async ({ page }) => {
     await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
     await selectContent(page, 'TestMod', 'Content');
 
-    await page.evaluate((g) => { document.getElementById('path-to-read').value = g; }, TREE_GUID);
-    await page.getByRole('button', { name: 'Load', exact: true }).click();
+    await openDdsDocument(page, TREE_GUID);
     await page.locator('#file-window-2 .jsontree_child-nodes').first().waitFor();
     const before = await openWindows(page);
 
@@ -49,8 +48,7 @@ test('a deeper level chosen by hand is restored, not the default cascade', async
     await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
     await selectContent(page, 'TestMod', 'Content');
 
-    await page.evaluate((g) => { document.getElementById('path-to-read').value = g; }, TREE_GUID);
-    await page.getByRole('button', { name: 'Load', exact: true }).click();
+    await openDdsDocument(page, TREE_GUID);
     await page.locator('#file-window-2 .jsontree_child-nodes').first().waitFor();
 
     // The tree has two messages; loading it opens the first. Pick the second, so the

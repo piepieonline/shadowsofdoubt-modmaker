@@ -23,6 +23,23 @@
     <script src="./libs/jsonTree/jsonTree.js"></script>
     <script src="./libs/JSON-Patch/fast-json-patch.min.js"></script>
 
+    <!-- three.js, for the building flow's floorplan view. Declaring an import map
+         fetches nothing, so the other flows pay no cost for it; the building flow
+         dynamic-imports these once it is activated. It has to be declared before
+         main.js, because a module graph resolves its bare specifiers against whatever
+         map exists when it loads.
+
+         Pinned rather than floating on ^0.185: a minor release changing InstancedMesh
+         raycast behaviour would break painting with no local change to point at. -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+        }
+    }
+    </script>
+
     <script type="module" src="./main.js"></script>
 
     <link href="./libs/jsonTree/jsonTree.css" rel="stylesheet" />
@@ -71,6 +88,9 @@
             <li>
                 <button id="folders-open" class="secondary">Folders</button>
             </li>
+            <li>
+                <button id="tutorials-open" class="secondary">Tutorials</button>
+            </li>
         </ul>
     </nav>
 
@@ -118,6 +138,21 @@
         </article>
     </dialog>
 
+    <!-- Guided walkthroughs. In the shell rather than in a flow: a tutorial covers
+         whatever the mod it builds needs, so it is not one editor's. -->
+    <dialog id="tutorials-modal">
+        <article>
+            <header>
+                <button aria-label="Close" rel="prev" id="tutorials-close"></button>
+                <h5><strong>Tutorials</strong></h5>
+            </header>
+            <small>
+                <p>Walkthroughs that build a working mod a step at a time.</p>
+            </small>
+            <ul id="tutorials-list"></ul>
+        </article>
+    </dialog>
+
     <template id="flow-template-dds">
             <div class="editor flow-container">
                 <!-- Same three slots as the case flow's bar: see .flow-bar. -->
@@ -126,20 +161,11 @@
                         <li><a href="#" onclick="event.preventDefault();showBrowse()">Browse...</a></li>
                         <li><a href="#" onclick="event.preventDefault();showReverseSearch()">Reverse Search</a></li>
                     </ul>
-                    <ul>
-                        <li>
-                            <div role="group">
-                                <select id="select-guid-type"
-                                    onchange="document.getElementById('new-file-button').innerText = `Add new ${document.getElementById('select-guid-type').value}`">
-                                    <option value="tree">Tree</option>
-                                    <option value="message">Message</option>
-                                    <option value="block">Block</option>
-                                </select>
-                                <input id="path-to-read" placeholder="Path" value="74da6230-45ef-4bb4-8f2e-8f6840e56927" />
-                                <button onclick="loadFromGUI()">Load</button>
-                            </div>
-                        </li>
-                    </ul>
+                    <!-- Empty, and kept: .flow-bar is a three column grid, so removing
+                         the middle one puts Help where the middle used to be. Typing a
+                         GUID to load one lived here; Browse... does that, and knows
+                         which documents exist. -->
+                    <ul></ul>
                     <ul>
                         <li><a href="#" onclick="event.preventDefault();showHelp()">Help</a></li>
                     </ul>
@@ -149,10 +175,10 @@
                      the system theme. -->
                 <div class="dds-workspace" data-theme="light">
                     <aside id="dds-file-panel">
-                        <!-- The type comes from the select in the nav, which the Load
-                             group uses for the same purpose. -->
+                        <!-- What kind of thing, and what to call it, are asked in the
+                             dialog below. -->
                         <button id="new-file-button" data-needs-content disabled
-                            onclick="newFile(document.getElementById('select-guid-type').value)">Add new tree</button>
+                            onclick="showNewDdsFile()">Add new...</button>
 
                         <header>
                             <strong>Mod content</strong>
@@ -180,6 +206,57 @@
                     <div id="trees"></div>
                 </div>
             </div>
+
+            <!-- New content, for every kind of thing this flow writes.
+                 A tree, a message and a block are one document each and are created
+                 from a template; a strings file is a CSV chosen from where the game
+                 reads them, so it names a file rather than being given one. -->
+            <dialog id="new-dds-file-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" class="close-button"
+                            onclick="closeNewDdsFile()"></button>
+                        <h5><strong>Add new...</strong></h5>
+                    </header>
+                    <form id="new-dds-file-form" onsubmit="event.preventDefault();submitNewDdsFile()">
+                        <label>
+                            Type
+                            <select id="new-dds-file-type" onchange="updateNewDdsFileForm()">
+                                <option value="tree">Tree</option>
+                                <option value="message">Message</option>
+                                <option value="block">Block</option>
+                                <option value="strings">Strings file</option>
+                            </select>
+                        </label>
+                        <label id="new-dds-file-name-field">
+                            Name
+                            <input id="new-dds-file-name" required />
+                            <small>The mod's name is put in front of it, so a document is
+                                recognisable as this mod's wherever it is listed.</small>
+                        </label>
+                        <!-- Which file, not what to call it: the game reads these from
+                             fixed paths, so a mod's own is only ever one of them. -->
+                        <label id="new-dds-file-strings-field" hidden>
+                            File
+                            <select id="new-dds-file-strings">
+                                <option value="DDS/dds.blocks">DDS/dds.blocks</option>
+                                <option value="Evidence/evidence.names">Evidence/evidence.names</option>
+                            </select>
+                            <small>Below Strings/English. Opening one this mod already
+                                has leaves what is in it alone.</small>
+                        </label>
+                        <!-- A tree and a message each carry a block, so all three end in
+                             one line of text. -->
+                        <label id="new-dds-file-line-field">
+                            English line
+                            <input id="new-dds-file-line" />
+                            <small>What the block says. Written into the mod's strings
+                                CSV, which is where the game reads it from.</small>
+                        </label>
+                        <button id="new-dds-file-submit" type="submit" style="width: 100%">Create</button>
+                    </form>
+                </article>
+            </dialog>
 
             <!-- Help modal. Mostly redirect to the wiki -->
             <dialog id="help-modal">
@@ -265,6 +342,82 @@
                     </div>
                 </article>
             </dialog>
+    </template>
+
+    <template id="flow-template-building">
+            <div class="editor flow-container">
+                <!-- Same three slots as the other two flows' bars: see .flow-bar. -->
+                <nav class="flow-bar compact-controls">
+                    <ul>
+                        <li>
+                            <button id="building-save" class="secondary" data-needs-content disabled
+                                onclick="saveBuildingFloor()">Save floor</button>
+                        </li>
+                        <li><a href="#" onclick="event.preventDefault();resetBuildingView()">Reset view</a></li>
+                    </ul>
+                    <ul>
+                        <li>
+                            <!-- What is open. Two names, because a blueprint on its own
+                                 is not enough to save one back. -->
+                            <strong id="building-open-name">No floor open</strong>
+                            <small id="building-open-issues" class="hidden"></small>
+                        </li>
+                    </ul>
+                    <ul>
+                        <li>
+                            <label>
+                                Colour by
+                                <select id="building-overlay" onchange="setBuildingOverlay(this.value)">
+                                    <option value="address">Address</option>
+                                    <option value="room">Room</option>
+                                    <option value="floorType">Floor type</option>
+                                </select>
+                            </label>
+                        </li>
+                    </ul>
+                </nav>
+
+                <div class="building-workspace">
+                    <aside id="building-file-panel">
+                        <button id="new-building-button" data-needs-content disabled
+                            onclick="addBuilding()">Add building...</button>
+
+                        <header>
+                            <strong>Buildings</strong>
+                        </header>
+                        <div id="building-file-list"></div>
+                    </aside>
+
+                    <!-- The canvas fills whatever is left. Labels are absolutely
+                         positioned over it and must not take the pointer, or every
+                         click near one would miss the floor. -->
+                    <section id="building-view">
+                        <div id="building-canvas"></div>
+                        <div id="building-labels" aria-hidden="true"></div>
+                    </section>
+
+                    <aside id="building-panels">
+                        <div id="building-tools"></div>
+
+                        <section>
+                            <header><strong>Addresses</strong></header>
+                            <div id="building-addresses"></div>
+                        </section>
+                        <section>
+                            <header><strong>Rooms</strong></header>
+                            <div id="building-rooms"></div>
+                        </section>
+                        <section>
+                            <header><strong>Wall preset</strong></header>
+                            <div id="building-walls"></div>
+                        </section>
+                        <section>
+                            <header><strong>Selection</strong></header>
+                            <div id="building-selection"></div>
+                        </section>
+                    </aside>
+                </div>
+            </div>
     </template>
 
     <template id="flow-template-scriptableObject">

@@ -1,0 +1,353 @@
+{
+    "$comment": "A step pointing at a dialog names the card, except where the card is too big to have a popover beside it -- the DDS one nearly fills the window, so driver.js gives up and centres the popover over the Create button. That step names the first field instead. Three parts: everything the case editor can make on its own, then the text content in the DDS editor, then back to join the two with the GUIDs those documents turned out to have. Steps gated on `saved` read the file from disk, so they need Autosaving left on. Steps point at the whole document window and name the key in the text -- highlighting the row itself did not survive contact with the tree. Only the first step changes editor for you; the two crossings in the middle are the player's to make.",
+    "steps": [
+        {
+            "flow": "scriptableObject",
+            "element": "#select-mod",
+            "title": "Pick a mod to build in",
+            "description": "A case lives inside a mod. Choose one you already have — this walkthrough will add a folder to it and leave the rest of it alone.",
+            "side": "bottom",
+            "advanceWhen": "mod-chosen"
+        },
+        {
+            "element": "#new-content",
+            "title": "Make a home for the case",
+            "description": "Click <b>New content</b> and name it exactly <code>theftgonewrong</code>.<br><br>The name matters — the steps after this read the case file by it, and it is what the manifest will point at.",
+            "side": "bottom",
+            "advanceWhen": {
+                "visible": "#new-case-modal[open]"
+            }
+        },
+        {
+            "element": "#new-case-modal article",
+            "title": "Make it a murder",
+            "description": "Leave the type as <b>Murder</b> and click <b>Create Case</b>.<br><br>That writes two files: the case itself, and a manifest telling the game to load it.",
+            "side": "bottom",
+            "advanceWhen": {
+                "saved": "theftgonewrong.sodso.json"
+            }
+        },
+        {
+            "element": "#so-file-list",
+            "title": "Open the case",
+            "description": "It is under <b>MurderMO</b> — the type that describes how a murder is chosen and staged. Click <code>theftgonewrong</code> to open it.<br><br>Leave <b>Autosaving</b> on: the steps ahead check your work by reading the files.",
+            "side": "right",
+            "advanceWhen": {
+                "fileOpen": "theftgonewrong.sodso.json"
+            }
+        },
+        {
+            "element": {
+                "file": "theftgonewrong.sodso.json"
+            },
+            "title": "Say which killer this fits",
+            "description": "Find <code>compatibleWith</code>, expand it, add an entry, and set it to <code>REF:MurderPreset|SerialKiller</code>.<br><br>A motive on its own is not a murderer. This says the serial killer can carry it.",
+            "side": "left",
+            "advanceWhen": {
+                "saved": "theftgonewrong.sodso.json",
+                "at": "compatibleWith",
+                "contains": "REF:MurderPreset|SerialKiller"
+            }
+        },
+        {
+            "element": {
+                "file": "theftgonewrong.sodso.json"
+            },
+            "title": "Who does this?",
+            "description": "Find <code>murdererTraitModifiers</code>. Add an entry, fill its <code>traitList</code> with the desperate ones — <code>REF:CharacterTrait|Affliction-Destitute</code> at least, plus the addictions if you like — and set <code>scoreModifier</code> to <code>15</code>.<br><br>This does not pick the murderer. It weights who the game is likely to choose.",
+            "side": "left",
+            "advanceWhen": {
+                "saved": "theftgonewrong.sodso.json",
+                "at": "murdererTraitModifiers.0.traitList",
+                "contains": "REF:CharacterTrait|Affliction-Destitute"
+            }
+        },
+        {
+            "element": {
+                "file": "theftgonewrong.sodso.json"
+            },
+            "title": "What they bring",
+            "description": "Find <code>weaponsPool</code> and add <code>REF:MurderWeaponsPool|Guns</code>, plus <code>REF:MurderWeaponsPool|Blades</code> if you want.<br><br>Someone holding up a shop brings a weapon with them. That is what separates this from a killing of opportunity.",
+            "side": "left",
+            "advanceWhen": {
+                "saved": "theftgonewrong.sodso.json",
+                "at": "weaponsPool",
+                "contains": "REF:MurderWeaponsPool|Guns"
+            }
+        },
+        {
+            "element": {
+                "file": "theftgonewrong.sodso.json"
+            },
+            "title": "Where it happens",
+            "description": "Set <code>allowWork</code> to <code>1</code>, and leave <code>allowHome</code>, <code>allowPublic</code> and <code>allowStreets</code> at <code>0</code>. They sit together, a little over halfway down.<br><br>This one happens behind the counter, so the victim's workplace is the only place it can.",
+            "side": "left",
+            "advanceWhen": {
+                "saved": "theftgonewrong.sodso.json",
+                "at": "allowWork",
+                "is": 1
+            }
+        },
+        {
+            "element": {
+                "file": "theftgonewrong.sodso.json"
+            },
+            "title": "Who is behind the counter",
+            "description": "Find <code>victimJobModifiers</code>. Add an entry whose <code>jobs</code> hold <code>REF:OccupationPreset|Shopkeeper</code> and <code>REF:OccupationPreset|ShopAssistant</code>, with a <code>jobBoost</code> of <code>20</code>.<br><br>Not a rule — a heavy thumb on the scale. The game can still pick someone else.",
+            "side": "left",
+            "advanceWhen": {
+                "saved": "theftgonewrong.sodso.json",
+                "at": "victimJobModifiers.0.jobs",
+                "contains": "REF:OccupationPreset|Shopkeeper"
+            }
+        },
+        {
+            "element": {
+                "file": "theftgonewrong.sodso.json"
+            },
+            "title": "Somewhere worth robbing",
+            "description": "Find <code>victimCompanyModifiers</code>. Add an entry and fill <code>companies</code> with the places that keep cash: <code>REF:CompanyPreset|PawnShop</code>, and any of Chemist, HardwareStore or Supermarket.<br><br>Set <code>mininumEmployees</code> to <code>2</code> — note the game's spelling — so the shop is not a one-person operation.",
+            "side": "left",
+            "advanceWhen": {
+                "saved": "theftgonewrong.sodso.json",
+                "at": "victimCompanyModifiers.0.companies",
+                "contains": "REF:CompanyPreset|PawnShop"
+            }
+        },
+        {
+            "element": {
+                "file": "theftgonewrong.sodso.json"
+            },
+            "title": "A stranger, not a colleague",
+            "description": "Find <code>sameWorkplaceBoost</code> and set it to <code>-3</code>.<br><br>A robbery is done by someone who walked in off the street. The negative score pushes the game away from picking a killer who works there.",
+            "side": "left",
+            "advanceWhen": {
+                "saved": "theftgonewrong.sodso.json",
+                "at": "sameWorkplaceBoost",
+                "is": -3
+            }
+        },
+        {
+            "element": "#manifest_add_item_button",
+            "title": "The thing they leave behind",
+            "description": "A case is only solvable if it leaves something to find. This one leaves a crumpled note, which takes two files: one for the object on the floor, and one for the evidence it becomes when you pick it up.<br><br>Click <b>Add new file</b>.",
+            "side": "right",
+            "advanceWhen": {
+                "visible": "#new-file-modal[open]"
+            }
+        },
+        {
+            "element": "#new-file-modal article",
+            "title": "The evidence",
+            "description": "Name it <code>crumpledpaperstickupevidence</code>, set the type to <b>EvidencePreset</b>, and with <b>Copy From</b> selected choose <code>CrumpledNameCipher</code>.<br><br>Copying means you only fill in what differs from that base — which is why this file ends up four lines long.",
+            "side": "left",
+            "advanceWhen": {
+                "saved": "crumpledpaperstickupevidence.sodso.json"
+            }
+        },
+        {
+            "element": "#manifest_add_item_button",
+            "title": "The object itself",
+            "description": "Add another file: <code>crumpledpaperstickupinteractable</code>, type <b>InteractablePreset</b>, <b>Copy From</b> <code>CrumpledPaperNameCypher</code>.<br><br>Note the base game spells this one Cypher and the other one Cipher. Both are real.",
+            "side": "right",
+            "advanceWhen": {
+                "saved": "crumpledpaperstickupinteractable.sodso.json"
+            }
+        },
+        {
+            "element": "#so-file-list",
+            "title": "Open the object",
+            "description": "Find <code>crumpledpaperstickupinteractable</code> under <b>InteractablePreset</b> and click it.",
+            "side": "right",
+            "advanceWhen": {
+                "fileOpen": "crumpledpaperstickupinteractable.sodso.json"
+            }
+        },
+        {
+            "element": {
+                "file": "crumpledpaperstickupinteractable.sodso.json"
+            },
+            "title": "Join the two",
+            "description": "Find <code>spawnEvidence</code> and set it to <code>REF:EvidencePreset|CrumpledPaperStickupEvidence</code>.<br><br>Picking the object up produces that evidence. The name here is the evidence file's <code>presetName</code>, not its file name.",
+            "side": "left",
+            "advanceWhen": {
+                "saved": "crumpledpaperstickupinteractable.sodso.json",
+                "at": "spawnEvidence",
+                "is": "REF:EvidencePreset|CrumpledPaperStickupEvidence"
+            }
+        },
+        {
+            "element": "#so-file-list",
+            "title": "Back to the case",
+            "description": "Open <code>theftgonewrong</code> again — one more field here before you leave this editor.",
+            "side": "right",
+            "advanceWhen": {
+                "fileOpen": "theftgonewrong.sodso.json"
+            }
+        },
+        {
+            "element": {
+                "file": "theftgonewrong.sodso.json"
+            },
+            "title": "Leave it at the scene",
+            "description": "Find <code>callingCardPool</code>, add an entry, and set its <code>item</code> to <code>REF:InteractablePreset|CrumpledPaperStickupInteractable</code>.<br><br>Now every murder with this motive drops the note. That is the thread the player pulls.",
+            "side": "left",
+            "advanceWhen": {
+                "saved": "theftgonewrong.sodso.json",
+                "at": "callingCardPool.0.item",
+                "is": "REF:InteractablePreset|CrumpledPaperStickupInteractable"
+            }
+        },
+        {
+            "element": "#flow-picker",
+            "title": "Now the words on the note",
+            "description": "Every case file this mod needs now exists. What none of them can say is what the note actually reads — that lives in the other editor.<br><br>Change <b>Editing</b> to <b>DDS Text Content</b>.",
+            "side": "bottom",
+            "advanceWhen": {
+                "editor": "dds"
+            }
+        },
+        {
+            "element": "#new-file-button",
+            "title": "Make a tree",
+            "description": "Click <b>Add new...</b>.<br><br>A tree is a whole document. Making one also makes the message and block inside it, so you get the full chain in one go.",
+            "side": "right",
+            "advanceWhen": {
+                "visible": "#new-dds-file-modal[open]"
+            }
+        },
+        {
+            "element": "#new-dds-file-type",
+            "title": "Say what it is and what it says",
+            "description": "Type <b>Tree</b>, name <code>CrumpledNoteStickup</code>, and for the English line the reference mod uses <code>Hand everything over!</code> — anything works, it is the killer's words.<br><br>The name is yours and for searching; the mod's name goes in front of it. What the game follows is the GUID.",
+            "side": "bottom",
+            "advanceWhen": {
+                "visible": "#file-window-0[path$='.tree']"
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "What the note says",
+            "description": "Three documents were written, not one: this tree, the message inside it, and the block inside that.<br><br>The line went straight into the mod's strings file. The block only holds its ID.",
+            "side": "left"
+        },
+        {
+            "element": "#file-window-0",
+            "title": "Keep the GUID",
+            "description": "Click the 📄 beside the GUID in this window's title to copy it.<br><br>Two of the case files you just made are going to point at this document, and that GUID is how they do it. Paste it somewhere for a moment.",
+            "side": "left"
+        },
+        {
+            "element": "#new-file-button",
+            "title": "The name the papers give them",
+            "description": "<b>Add new...</b> again — this time type <b>Message</b>, named <code>MonkierTheftGoneWrong</code> (the game's spelling of moniker, kept so it matches everything else), and the reference uses <code>The Robbery Reaper</code> for the line.<br><br>A message is a rung below a tree. This one is not a document anyone reads — it is where the game gets the killer's nickname.",
+            "side": "right",
+            "advanceWhen": {
+                "visible": "#file-window-0[path$='.msg']"
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "Keep this GUID too",
+            "description": "Copy this document's GUID as well, once it opens. The case file will need it.<br><br>Click <b>→</b> when you have it.",
+            "side": "left"
+        },
+        {
+            "element": "#new-file-button",
+            "title": "One more thing to name",
+            "description": "The evidence file you made is called <code>crumpledpaperstickupevidence</code>. That is a file name — not something a player should ever have to read. The name they <i>do</i> see comes from a strings file.<br><br><b>Add new...</b>, set the type to <b>Strings file</b>, and choose <code>Evidence/evidence.names</code>.",
+            "side": "right",
+            "advanceWhen": {
+                "visible": "#strings-window"
+            }
+        },
+        {
+            "element": "#strings-window",
+            "title": "Call it a crumpled paper",
+            "description": "Click <b>+ Add row</b>. For the key, put <code>crumpledpaperstickupevidence</code> — the name you gave the evidence file. For the text, put <code>Crumpled Paper</code> — what the player reads.<br><br>Click out of the box when you are done — that is what writes it.",
+            "side": "left",
+            "advanceWhen": {
+                "savedText": "DDSContent/Strings/English/Evidence/evidence.names.csv",
+                "contains": "Crumpled Paper"
+            }
+        },
+        {
+            "element": "#flow-picker",
+            "title": "Back to the case files",
+            "description": "Both documents exist and both have a GUID. Three fields over in the case files are waiting for them.<br><br>Change <b>Editing</b> back to <b>Cases &amp; ScriptableObjects</b>.",
+            "side": "bottom",
+            "advanceWhen": {
+                "editor": "scriptableObject"
+            }
+        },
+        {
+            "element": "#so-file-list",
+            "title": "Open the evidence",
+            "description": "Find <code>crumpledpaperstickupevidence</code> under <b>EvidencePreset</b> and click it.",
+            "side": "right",
+            "advanceWhen": {
+                "fileOpen": "crumpledpaperstickupevidence.sodso.json"
+            }
+        },
+        {
+            "element": {
+                "file": "crumpledpaperstickupevidence.sodso.json"
+            },
+            "title": "Point it at the note",
+            "description": "Find <code>ddsDocumentID</code> and paste the tree's GUID into it — the first one you copied.<br><br>This is what makes the evidence show your text instead of the base game's.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "ddsDocumentID",
+                "file": "crumpledpaperstickupevidence.sodso.json"
+            }
+        },
+        {
+            "element": "#so-file-list",
+            "title": "Open the object again",
+            "description": "Back to <code>crumpledpaperstickupinteractable</code> under <b>InteractablePreset</b>.",
+            "side": "right",
+            "advanceWhen": {
+                "fileOpen": "crumpledpaperstickupinteractable.sodso.json"
+            }
+        },
+        {
+            "element": {
+                "file": "crumpledpaperstickupinteractable.sodso.json"
+            },
+            "title": "And what it reads as",
+            "description": "Find <code>summaryMessageSource</code> and paste the tree's GUID there too.<br><br>The evidence points at the note for the case file; this points at it for the object you are holding.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "summaryMessageSource",
+                "file": "crumpledpaperstickupinteractable.sodso.json"
+            }
+        },
+        {
+            "element": "#so-file-list",
+            "title": "And the case one last time",
+            "description": "Open <code>theftgonewrong</code>.",
+            "side": "right",
+            "advanceWhen": {
+                "fileOpen": "theftgonewrong.sodso.json"
+            }
+        },
+        {
+            "element": {
+                "file": "theftgonewrong.sodso.json"
+            },
+            "title": "Give the killer a name",
+            "description": "Find <code>monkierDDSMessageList</code> and paste the message GUID into it — the second one you copied, not the tree.<br><br>This is where the newspapers get the name they print.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "monkierDDSMessageList",
+                "file": "theftgonewrong.sodso.json"
+            }
+        },
+        {
+            "element": "#so-file-list",
+            "title": "That is the case",
+            "description": "A motive that picks a desperate killer and a shopkeeper victim, staged at the counter, leaving a note that reads in the player's hands and a name for the papers.<br><br>What is left is scoring weights — the <code>Boost</code> and <code>ScoreRange</code> fields, which shift how often the game reaches for this case over any other. They are safe to leave at zero: the case works, it is just picked no more often than the rest.<br><br>Two things worth trying next, both in the DDS editor: a block can hold several lines and pick between them, and a tree can be styled — paper, colour, font.",
+            "side": "right"
+        }
+    ]
+}

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, gotoFlow } from './support/harness.js';
+import { installFsHarness, gotoFlow, seedFs, connectFolders } from './support/harness.js';
+import { ddsFixture, TREE_GUID } from './support/fixtures.js';
 
 /**
  * The shell: one page hosting every flow, chosen by URL.
@@ -19,14 +20,14 @@ test.beforeEach(async ({ page }) => {
 test('?flow= selects which flow is mounted', async ({ page }) => {
     await gotoFlow(page, '?flow=dds');
     expect(await activeId(page)).toBe('dds');
-    await expect(page.locator('#flow-root #path-to-read')).toHaveCount(1);
+    await expect(page.locator('#flow-root #dds-file-panel')).toHaveCount(1);
     // The other flow's markup stays in its template, out of the document.
     await expect(page.locator('#flow-root #manifest_panel')).toHaveCount(0);
 
     await gotoFlow(page, '?flow=scriptableObject');
     expect(await activeId(page)).toBe('scriptableObject');
     await expect(page.locator('#flow-root #manifest_panel')).toHaveCount(1);
-    await expect(page.locator('#flow-root #path-to-read')).toHaveCount(0);
+    await expect(page.locator('#flow-root #dds-file-panel')).toHaveCount(0);
 });
 
 test('only one flow is ever in the document, so shared ids resolve', async ({ page }) => {
@@ -55,21 +56,29 @@ test('an unknown or missing flow falls back rather than failing', async ({ page 
     expect(await activeId(page)).toBe('scriptableObject');
 });
 
-test('a DDS deep link selects the DDS flow without naming it', async ({ page }) => {
+test('a DDS deep link selects the DDS flow and opens the document', async ({ page }) => {
     // The old DDS Viewer was a separate site and the modding wiki links to it, so
     // its parameters have to keep working.
-    await gotoFlow(page, '?documentId=74da6230-45ef-4bb4-8f2e-8f6840e56927&documentType=tree&caseEditorLink=true');
-
+    await gotoFlow(page, `?documentId=${TREE_GUID}&documentType=tree&caseEditorLink=true`);
     expect(await activeId(page)).toBe('dds');
-    await expect(page.locator('#path-to-read')).toHaveValue('74da6230-45ef-4bb4-8f2e-8f6840e56927');
-    await expect(page.locator('#select-guid-type')).toHaveValue('tree');
+
+    // It used to fill in the GUID field and leave the reader to press Load. There is
+    // no field now, so the link has to open it -- which it can only do once the game
+    // folder is connected, since that is where the document is read from.
+    await seedFs(page, ddsFixture);
+    await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
+
+    await expect(page.locator('#file-window-0'))
+        .toHaveAttribute('path', `DDS/Trees/${TREE_GUID}.tree`);
 });
 
 test('the picker lists every flow and switching navigates', async ({ page }) => {
     await gotoFlow(page, '?flow=dds');
 
     const picker = page.locator('#flow-picker');
-    await expect(picker.locator('option')).toHaveText(['DDS Text Content', 'Cases & ScriptableObjects']);
+    await expect(picker.locator('option')).toHaveText([
+        'DDS Text Content', 'Cases & ScriptableObjects', 'Building Floorplans',
+    ]);
     await expect(picker).toHaveValue('dds');
 
     await picker.selectOption('scriptableObject');

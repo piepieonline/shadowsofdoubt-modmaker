@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, connectFolders, selectContent, queuePrompts,
-    readFile, listDir, alerts, gotoFlow, editField, fieldInput,
+    readFile, listDir, alerts, gotoFlow, editField, fieldInput, openDdsDocument, addDdsContent,
 } from './support/harness.js';
 import { ddsFixture, ddsBareFixture, pluginsFixture, TREE_GUID } from './support/fixtures.js';
 
@@ -66,8 +66,7 @@ test('with autosaving off an edit writes nothing until Save is pressed', async (
     await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
     await page.locator(AUTOSAVE).uncheck();
 
-    await page.evaluate((g) => { document.getElementById('path-to-read').value = g; }, TREE_GUID);
-    await page.getByRole('button', { name: 'Load', exact: true }).click();
+    await openDdsDocument(page, TREE_GUID);
     await page.locator('#file-window-2 .jsontree_child-nodes').first().waitFor();
     await selectContent(page, 'TestMod', 'Content');
 
@@ -122,8 +121,9 @@ test('a folder with nothing in it yet is still the one being edited', async ({ p
     expect(await listDir(page, 'Mods/BareMod/Extra')).toEqual([]);
 
     // Then the first document it holds goes into it, not into the folder it came from.
-    await queuePrompts(page, ['A line for the new block']);
-    await page.getByRole('button', { name: 'Add new tree' }).click();
+    await addDdsContent(page, {
+        type: 'tree', name: 'FirstTree', line: 'A line for the new block',
+    });
 
     await expect.poll(() => listDir(page, 'Mods/BareMod/Extra/DDSContent/DDS'))
         .toEqual(['Blocks', 'Messages', 'Trees']);
@@ -151,5 +151,22 @@ test('creating content is not offered until there is a mod to put it in', async 
     await newContent.click();
 
     await expect.poll(() => listDir(page, 'Mods/BareMod/Nowhere')).toEqual([]);
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('the tutorials list opens from the header and closes again', async ({ page }) => {
+    await gotoFlow(page, '?flow=scriptableObject');
+    await dismissFolders(page);
+
+    const modal = page.locator('#tutorials-modal');
+    await expect(modal).toBeHidden();
+
+    // In the shell, so it is there whichever editor is open and with no folder needed.
+    await page.getByRole('button', { name: 'Tutorials' }).click();
+    await expect(modal).toBeVisible();
+    await expect(modal.getByRole('button', { name: 'Theft Gone Wrong' })).toBeVisible();
+
+    await modal.getByRole('button', { name: 'Close' }).click();
+    await expect(modal).toBeHidden();
     expect(await alerts(page)).toEqual([]);
 });

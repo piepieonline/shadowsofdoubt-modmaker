@@ -16,7 +16,7 @@
  * Strings are the exception: they are listed as the CSV files they live in, not as
  * their rows. A mod's strings are not only DDS text -- room names, job titles and
  * evidence names sit in files of their own -- and a row of those has nothing to open.
- * One of these opens as text; see stringsEditor.js.
+ * One of these opens as a list of its strings; see stringsEditor.js.
  */
 import { readFileContent, tryGetFolder } from '../../../core/fs.js';
 import { CONTENT_ROOT, ddsContentFolder } from './modFileManager.js';

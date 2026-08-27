@@ -113,8 +113,11 @@ test('manifest fileOrder entries become links that open the referenced file', as
     await expect(page.locator('#trees input').first()).toHaveValue('MurderMO');
 
     // The strongest signal that the type system resolved: copyFrom is typed as
-    // MurderMO, so its dropdown is populated with real MurderMO asset names.
-    await expect(page.locator('#trees select')).toContainText('ExCopSniper');
+    // MurderMO, so its dropdown is populated with real MurderMO asset names. Named
+    // rather than "the select in this tree" -- booleans get a dropdown here too.
+    await expect(page.locator(
+        "#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"copyFrom\"')) select"
+    ).first()).toContainText('ExCopSniper');
     expect(await alerts(page)).toEqual([]);
 });
 
@@ -129,11 +132,36 @@ test('renders object keys in file order, not sorted', async ({ page }) => {
     // stay in the game's serialisation order. This pins jsonTree.configure options.
     const labels = await topLevelLabels(page, '#trees .file-window');
 
-    expect(labels).toEqual(['fileType', 'name', 'presetName', 'notes', 'copyFrom', 'nested']);
+    expect(labels).toEqual(['fileType', 'name', 'presetName', 'notes', 'copyFrom', 'nested', 'MOleads']);
     expect(labels).not.toEqual([...labels].sort());
 
     // This flow separates values with '&nbsp;'; the DDS flow uses a literal comma.
     expect(await page.locator('#trees .file-window').innerHTML()).not.toContain('</span>,');
+});
+
+test('field labels carry their description, however deep the field is', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openMod(page);
+    await page.locator('#manifest_panel .files-order ul button').click();
+    await expect(page.locator('#trees .file-window')).toHaveCount(1);
+
+    const label = (name) => page.locator(
+        `#trees .file-window .jsontree_label:text-is('"${name}"')`
+    ).first();
+
+    // Two levels: what we wrote about it, from refs/authored/fieldDescriptions.json.
+    await expect(label('MOleads')).toHaveAttribute('title', /spawn with the murderer/);
+
+    // Four levels -- MOleads[0].traitModifiers[0].mustPassForApplication. The lookup
+    // this replaces resolved exactly one level of the path, threw on anything deeper,
+    // and swallowed it: the field had no tooltip and nothing said why.
+    await expect(label('mustPassForApplication'))
+        .toHaveAttribute('title', /^Official description: If this isn't true/);
+
+    // A field the game does not have gets no tooltip rather than an error.
+    await expect(label('nested')).toHaveAttribute('title', '');
+    expect(await alerts(page)).toEqual([]);
 });
 
 test('asset explorer lists ScriptableObject types', async ({ page }) => {

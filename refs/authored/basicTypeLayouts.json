@@ -1,0 +1,146 @@
+{
+    "Vector2": {
+        "x": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "y": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        }
+    },
+    "Vector2Int": {
+        "x": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "y": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        }
+    },
+    "Vector3": {
+        "x": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "y": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "z": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        }
+    },
+    "Vector3Int": {
+        "x": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "y": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "z": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        }
+    },
+    "Color": {
+        "r": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "g": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "b": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "a": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        }
+    },
+    "AnimationCurve": {
+        "serializedVersion": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "m_Curve": {
+            "Item1": "AnimationCurve.Keyframe",
+            "Item2": true,
+            "Item3": ""
+        },
+        "m_PreInfinity": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "m_PostInfinity": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "m_RotationOrder": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        }
+    },
+    "AnimationCurve.Keyframe": {
+        "inTangent": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "inWeight": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "outTangent": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "outWeight": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "time": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "value": {
+            "Item1": "Single",
+            "Item2": false,
+            "Item3": ""
+        },
+        "weightedMode": {
+            "Item1": "WeightedMode",
+            "Item2": false,
+            "Item3": ""
+        }
+    }
+}

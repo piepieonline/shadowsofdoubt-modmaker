@@ -1,0 +1,540 @@
+{
+  "presetName": "ChemicalPlant",
+  "disable": false,
+  "prefab": {
+    "m_FileID": 51358,
+    "m_PathID": 0
+  },
+  "emissionMapUnlit": {
+    "m_FileID": 51440,
+    "m_PathID": 0
+  },
+  "emissionMapLit": {
+    "m_FileID": 51392,
+    "m_PathID": 0
+  },
+  "buildingHeight": 12,
+  "lightningRodLocalPos": {
+    "x": 6.570000171661377,
+    "y": 50.5099983215332,
+    "z": 1.350000023841858
+  },
+  "defaultExteriorWallMaterial": [
+    {
+      "m_FileID": 38372,
+      "m_PathID": 0
+    }
+  ],
+  "exteriorKey": {
+    "baseMaterial": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "mainColour": {
+      "r": 1,
+      "g": 1,
+      "b": 1,
+      "a": 1
+    },
+    "colour1": {
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 0
+    },
+    "colour2": {
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 0
+    },
+    "colour3": {
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 0
+    },
+    "grubiness": 0
+  },
+  "enableAlleywayWalls": true,
+  "enableExteriorQuoins": false,
+  "overrideEvidencePhotoSettings": false,
+  "relativeCamPhotoPos": {
+    "x": -5,
+    "y": 3,
+    "z": 19
+  },
+  "relativeCamPhotoEuler": {
+    "x": -43,
+    "y": 158,
+    "z": 0
+  },
+  "overrideDistrictEnvironment": true,
+  "sceneProfile": 1,
+  "maxLostAndFound": 0,
+  "floorLayouts": [
+    {
+      "floorsWithThisSetting": 1,
+      "blueprints": [
+        "ChemPlantGroundFloor1",
+        "ChemPlantGroundFloor2"
+      ],
+      "airVentMaximumExtrusion": 0,
+      "controlRoomVariants": [
+        "ChemPlantGroundFloor1_Control",
+        "ChemPlantGroundFloor2_Control"
+      ],
+      "forceShowModel": false,
+      "forceHideModels": [],
+      "forceHideModelsInRooms": [],
+      "forceHideModelsOutside": [],
+      "overrideCeilingHeight": false,
+      "newCeilingHeight": 51
+    },
+    {
+      "floorsWithThisSetting": 1,
+      "blueprints": [
+        "ChemPlantFloor1"
+      ],
+      "airVentMaximumExtrusion": 1,
+      "controlRoomVariants": [
+        "ChemPlantFloor1_Control"
+      ],
+      "forceShowModel": false,
+      "forceHideModels": [
+        "Base",
+        "Office"
+      ],
+      "forceHideModelsInRooms": [],
+      "forceHideModelsOutside": [],
+      "overrideCeilingHeight": false,
+      "newCeilingHeight": 51
+    },
+    {
+      "floorsWithThisSetting": 1,
+      "blueprints": [
+        "ChemPlantFloor2"
+      ],
+      "airVentMaximumExtrusion": 1,
+      "controlRoomVariants": [],
+      "forceShowModel": false,
+      "forceHideModels": [
+        "Base",
+        "Office"
+      ],
+      "forceHideModelsInRooms": [],
+      "forceHideModelsOutside": [],
+      "overrideCeilingHeight": false,
+      "newCeilingHeight": 51
+    }
+  ],
+  "basementLayouts": [],
+  "controlRoomRange": {
+    "x": 1,
+    "y": 1
+  },
+  "forceBuildingDesignStyles": [
+    {
+      "m_FileID": 12858,
+      "m_PathID": 0
+    }
+  ],
+  "stairwellRegular": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "stairwellLarge": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "buildingFeaturesEchelonFloors": false,
+  "echelonFloorStart": 10,
+  "overrideGrubiness": false,
+  "grubinessOverride": 0,
+  "displayedZone": 2,
+  "allowedInAllDistricts": false,
+  "allowedInDistricts": [
+    {
+      "m_FileID": 13736,
+      "m_PathID": 0
+    }
+  ],
+  "densityMinimum": 0,
+  "densityMaximum": 3,
+  "landValueMinimum": 0,
+  "landValueMaximum": 4,
+  "minimum": 1,
+  "featureImportance": 7,
+  "hardLimit": 3,
+  "desiredRatio": 0.05000000074505806,
+  "modernity": 3,
+  "lobbyPreset": {
+    "m_FileID": 37350,
+    "m_PathID": 0
+  },
+  "nonEnterable": false,
+  "boundary": false,
+  "boundaryCorner": false,
+  "overrideNaming": false,
+  "possibleNames": [],
+  "customDrawOnMap": false,
+  "tex": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "captureMesh": {
+    "m_FileID": 51382,
+    "m_PathID": 0
+  },
+  "windowMap": {
+    "m_FileID": 51368,
+    "m_PathID": 0
+  },
+  "addonMap": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "sortedWindows": [
+    {
+      "front": [],
+      "back": [],
+      "left": [
+        {
+          "originPixel": {
+            "x": 5,
+            "y": 95
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 8
+          },
+          "centrePixel": {
+            "x": 7,
+            "y": 99
+          },
+          "localMeshPositionLeft": {
+            "x": -14,
+            "y": 8.300000190734863,
+            "z": -9.800000190734863
+          },
+          "localMeshPositionRight": {
+            "x": -14,
+            "y": 8.300000190734863,
+            "z": -10
+          },
+          "floor": 1,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 12,
+            "y": 95
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 8
+          },
+          "centrePixel": {
+            "x": 14,
+            "y": 99
+          },
+          "localMeshPositionLeft": {
+            "x": -14,
+            "y": 8.300000190734863,
+            "z": -11.200000762939453
+          },
+          "localMeshPositionRight": {
+            "x": -14,
+            "y": 8.300000190734863,
+            "z": -11.399999618530273
+          },
+          "floor": 1,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 19,
+            "y": 95
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 8
+          },
+          "centrePixel": {
+            "x": 21,
+            "y": 99
+          },
+          "localMeshPositionLeft": {
+            "x": -14,
+            "y": 8.300000190734863,
+            "z": -12.600000381469727
+          },
+          "localMeshPositionRight": {
+            "x": -14,
+            "y": 8.300000190734863,
+            "z": -12.799999237060547
+          },
+          "floor": 1,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 2
+        }
+      ],
+      "right": []
+    },
+    {
+      "front": [
+        {
+          "originPixel": {
+            "x": 16,
+            "y": 123
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 8
+          },
+          "centrePixel": {
+            "x": 18,
+            "y": 127
+          },
+          "localMeshPositionLeft": {
+            "x": -7.799999713897705,
+            "y": 13.5,
+            "z": 2.8000011444091797
+          },
+          "localMeshPositionRight": {
+            "x": -8,
+            "y": 13.5,
+            "z": 2.8000011444091797
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 23,
+            "y": 123
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 8
+          },
+          "centrePixel": {
+            "x": 25,
+            "y": 127
+          },
+          "localMeshPositionLeft": {
+            "x": -9.199999809265137,
+            "y": 13.5,
+            "z": 2.800001382827759
+          },
+          "localMeshPositionRight": {
+            "x": -9.40000057220459,
+            "y": 13.5,
+            "z": 2.8000011444091797
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 30,
+            "y": 123
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 8
+          },
+          "centrePixel": {
+            "x": 32,
+            "y": 127
+          },
+          "localMeshPositionLeft": {
+            "x": -10.600000381469727,
+            "y": 13.5,
+            "z": 2.8000009059906006
+          },
+          "localMeshPositionRight": {
+            "x": -10.799999237060547,
+            "y": 13.500000953674316,
+            "z": 2.8000011444091797
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 2
+        }
+      ],
+      "back": [],
+      "left": [
+        {
+          "originPixel": {
+            "x": 177,
+            "y": 93
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 8
+          },
+          "centrePixel": {
+            "x": 179,
+            "y": 97
+          },
+          "localMeshPositionLeft": {
+            "x": -14.000000953674316,
+            "y": 13.5,
+            "z": -9.800000190734863
+          },
+          "localMeshPositionRight": {
+            "x": -14,
+            "y": 13.5,
+            "z": -10
+          },
+          "floor": 2,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 184,
+            "y": 93
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 8
+          },
+          "centrePixel": {
+            "x": 186,
+            "y": 97
+          },
+          "localMeshPositionLeft": {
+            "x": -14,
+            "y": 13.500000953674316,
+            "z": -11.200000762939453
+          },
+          "localMeshPositionRight": {
+            "x": -14,
+            "y": 13.5,
+            "z": -11.399999618530273
+          },
+          "floor": 2,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 191,
+            "y": 93
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 8
+          },
+          "centrePixel": {
+            "x": 193,
+            "y": 97
+          },
+          "localMeshPositionLeft": {
+            "x": -14,
+            "y": 13.500000953674316,
+            "z": -12.600000381469727
+          },
+          "localMeshPositionRight": {
+            "x": -14,
+            "y": 13.5,
+            "z": -12.799999237060547
+          },
+          "floor": 2,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 2
+        }
+      ],
+      "right": []
+    }
+  ],
+  "floorCount": 2,
+  "meshHeight": 75,
+  "cableLinkPoints": [],
+  "cableSpawnChanceOverHeight": {
+    "serializedVersion": "2",
+    "m_Curve": [
+      {
+        "serializedVersion": "3",
+        "time": 0,
+        "value": 1,
+        "inSlope": 0,
+        "outSlope": 0,
+        "weightedMode": 0,
+        "inWeight": 0,
+        "outWeight": 0
+      },
+      {
+        "serializedVersion": "3",
+        "time": 1,
+        "value": 0.4000000059604645,
+        "inSlope": -0.5999999642372131,
+        "outSlope": -0.5999999642372131,
+        "weightedMode": 0,
+        "inWeight": 0,
+        "outWeight": 0
+      }
+    ],
+    "m_PreInfinity": 2,
+    "m_PostInfinity": 2,
+    "m_RotationOrder": 4
+  },
+  "sideSignPoints": [],
+  "possibleNeonSigns": [],
+  "signsPerBuildingRange": {
+    "x": 0,
+    "y": 0
+  },
+  "horizontalSignOffset": {
+    "x": 0,
+    "y": 4.5960001945495605,
+    "z": 0.20000000298023224
+  },
+  "featuresSmokestack": true,
+  "spawnInterval": {
+    "x": 0.10000000149011612,
+    "y": 0.33000001311302185
+  },
+  "spritePrefab": {
+    "m_FileID": 51376,
+    "m_PathID": 0
+  },
+  "spawnOffset": {
+    "x": 7.619999885559082,
+    "y": 44.84000015258789,
+    "z": 1.0800000429153442
+  }
+}

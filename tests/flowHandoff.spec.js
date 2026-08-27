@@ -32,7 +32,8 @@ test('following a DDS reference switches to the DDS flow and opens it', async ({
 
     // And it actually loaded the referenced tree, rather than just switching.
     await expect(page.locator('#file-window-0')).toContainText('TestTree');
-    await expect(page.locator('#path-to-read')).toHaveValue(TREE_GUID);
+    await expect(page.locator('#file-window-0'))
+        .toHaveAttribute('path', `DDS/Trees/${TREE_GUID}.tree`);
 });
 
 test('the content folder stays selected across the handoff', async ({ page }) => {

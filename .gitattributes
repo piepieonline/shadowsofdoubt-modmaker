@@ -17,3 +17,8 @@
 # those files are hand-maintained and their diffs are worth reading.
 refs/generated/*.json -diff linguist-generated
 refs/assets/**/*.json -diff linguist-generated
+
+# Floor blueprints and building presets, copied out of the game. Not the generator's
+# yet -- see GENERATOR.md section 5 -- but game data all the same, and a floor is one
+# 60 KB line, so a diff of one is no more readable than a diff of the others.
+refs/floors/**/*.json -diff linguist-generated

@@ -14,9 +14,26 @@ import { initAndLoad, loadI18n, loadFile } from '../index.js';
  */
 /** Load the vanilla strings once the game folder is connected. */
 export async function onFoldersConnected() {
-    if (window.dirHandleStreamingAssets) {
-        await loadVanillaStrings();
-    }
+    if (!window.dirHandleStreamingAssets) return;
+
+    await loadVanillaStrings();
+
+    // A deep link arrives before any folder is connected, and a document cannot be
+    // read until one is. Taken rather than read, so a second folder change does not
+    // reopen it over whatever is being looked at by then.
+    const pending = pendingDocument;
+    pendingDocument = null;
+    if (pending) await loadDocument(pending.id, pending.type);
+}
+
+/**
+ * A document to open as soon as there is somewhere to read it from. See flow.js: the
+ * old DDS Viewer's URLs name one, and the wiki links to them.
+ */
+let pendingDocument = null;
+
+export function openWhenReady(id, type) {
+    pendingDocument = { id, type };
 }
 
 /**
@@ -69,60 +86,77 @@ async function openPanelEntry(entry) {
 /**
  * Open a document from the panel.
  *
- * A mod's own files are not in the generated reference data, so loadFromGUI cannot
- * infer their type -- the panel knows it and sets it here.
+ * A mod's own files are not in the generated reference data, so their type cannot be
+ * inferred -- the panel knows it and says so here.
  */
 export async function openDdsFile(id, type) {
-    // Only when the caller knows: loadFromGUI recognises base game GUIDs itself, and
-    // a type of null would leave the select on something meaningless.
-    if (type) document.getElementById('select-guid-type').value = type;
-    await setIdAndLoad(id);
+    await loadDocument(id, type);
 }
 
-export async function setIdAndLoad(id) {
-    document.getElementById('path-to-read').value = id;
-    loadFromGUI();
+/** Open a document whose type the caller may or may not know. */
+export async function setIdAndLoad(id, type = null) {
+    await loadDocument(id, type);
 }
 
-export async function loadFromGUI() {
+/** Where each kind of document is read from, below the content root. */
+const DOCUMENT_PATHS = {
+    tree: { prefix: 'DDS/Trees/', postfix: '.tree' },
+    message: { prefix: 'DDS/Messages/', postfix: '.msg' },
+    block: { prefix: 'DDS/Blocks/', postfix: '.block' },
+};
+
+/**
+ * The type of the last document opened, for a GUID nothing can say the type of.
+ *
+ * This is what the type dropdown in the nav bar used to hold. It was there to be read
+ * at exactly this point, and every other thing it did -- being set by the panel, by a
+ * new document, by the lookup below -- was keeping it honest for this one read.
+ */
+let lastType = 'tree';
+
+/** The type the generated reference data gives a base game GUID, if it knows it. */
+function vanillaType(id) {
+    if (window.ddsMap?.trees?.includes(id)) return 'tree';
+    if (window.ddsMap?.messages?.includes(id)) return 'message';
+    if (window.ddsMap?.blocks?.includes(id)) return 'block';
+    return null;
+}
+
+/**
+ * Open a DDS document by GUID.
+ *
+ * The reference data is asked first and the caller second, as it always was: a base
+ * game GUID is only ever the type the game gives it, whatever the caller thinks.
+ */
+export async function loadDocument(id, type = null) {
     // Folders are connected by the shell before any flow runs, so this only loads.
-    let fileID = document.getElementById('path-to-read').value;
-
-    if (!GUID_PATTERN.test(fileID)) {
+    if (!GUID_PATTERN.test(id)) {
         alert('Invalid GUID format, please check and try loading again');
         return;
     }
 
-    let fileType = '';
-    if (window.ddsMap.trees.indexOf(fileID) != -1) fileType = 'tree';
-    else if (window.ddsMap.messages.indexOf(fileID) != -1) fileType = 'message';
-    else if (window.ddsMap.blocks.indexOf(fileID) != -1) fileType = 'block';
-    else fileType = document.getElementById('select-guid-type').value;
+    const fileType = vanillaType(id) ?? type ?? lastType;
+    lastType = fileType;
 
-    document.getElementById('select-guid-type').value = fileType;
-
-    var prefix = '', postfix = '';
-    switch (fileType) {
-        case 'tree': prefix = "DDS/Trees/"; postfix = ".tree"; break;
-        case 'message': prefix = "DDS/Messages/"; postfix = ".msg"; break;
-        case 'block': prefix = "DDS/Blocks/"; postfix = ".block"; break;
-    }
-
-    await initAndLoad(prefix + fileID + postfix);
+    const { prefix, postfix } = DOCUMENT_PATHS[fileType];
+    await initAndLoad(prefix + id + postfix);
 }
 
-export async function newFile(type, templateData) {
+/**
+ * Create a document and open it.
+ *
+ * @param templateData an existing document to copy; omitted for a fresh one
+ * @param options      name, and the English line its block says. See createNewFile.
+ */
+export async function newFile(type, templateData, options) {
     if (window.selectedMod == null) {
         alert('Please select a mod to edit first');
         throw 'Please select a mod to edit first';
     }
 
-    let newGUID = await createNewFile(type, templateData)
+    let newGUID = await createNewFile(type, templateData, options)
 
-    document.getElementById('path-to-read').value = newGUID;
-    document.getElementById('select-guid-type').value = type;
-
-    await loadFromGUI();
+    await loadDocument(newGUID, type);
     await refreshPanel();
 }
 
@@ -163,8 +197,11 @@ export function updateBrowse() {
         }));
     }
 
+    // A favourite carries the type it was saved with, which a mod's own document needs
+    // -- only base game GUIDs are in the reference data to be looked up. Everything
+    // else in this list is base game, so it passes nothing and is recognised.
     document.getElementById('fav-list').innerHTML = listToShow.map(fav =>
-        `<li><span class="link-element" onclick="setIdAndLoad('${fav.guid}');">${fav.guid}</span>: ${fav.name}</li>`
+        `<li><span class="link-element" onclick="setIdAndLoad('${fav.guid}'${fav.type ? `, '${fav.type}'` : ''});">${fav.guid}</span>: ${fav.name}</li>`
     ).join('');
 }
 

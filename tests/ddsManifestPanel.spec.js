@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, connectFolders, selectContent, readFile, alerts, gotoFlow, fieldInput } from './support/harness.js';
+import { installFsHarness, seedFs, connectFolders, selectContent, readFile, alerts, gotoFlow, fieldInput, openDdsDocument } from './support/harness.js';
 import {
     ddsManifestFixture, ddsManifestNoBlocksFixture, ddsManifestBrokenFixture,
     ddsFixtureWithContent, FLAT_MOD, TREE_GUID,
@@ -71,8 +71,7 @@ test('the panel follows the manifest the app writes for itself', async ({ page }
 
     // Writing the first line of block text declares the file it created. Nothing else
     // in the app rewrites a manifest, so this is what the panel has to keep up with.
-    await page.evaluate((g) => { document.getElementById('path-to-read').value = g; }, TREE_GUID);
-    await page.getByRole('button', { name: 'Load', exact: true }).click();
+    await openDdsDocument(page, TREE_GUID);
     await page.locator('#file-window-2 .jsontree_child-nodes').first().waitFor();
 
     const line = fieldInput(page, '#file-window-2', '_ENG Localisation_');

@@ -20,5 +20,8 @@
         "compatibleWithMotives": "Leave this blank, and the mod will set it up for you",
         "compatibleWithAllMotives": "Always have this set to true",
         "chance": "Chance that this item will spawn in (0 for never, 0.5 for half the time, 1 for all the time)"
+    },
+    "DDSTreeSave": {
+        "startingMessage": "The `instanceID` of the message this tree opens on. That is the instanceID, not the msgID: the same message can appear in a tree more than once."
     }
 }

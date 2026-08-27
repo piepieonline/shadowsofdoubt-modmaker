@@ -1,0 +1,12 @@
+{
+    "Boolean": [
+        "false",
+        "true"
+    ],
+    "WeightedMode": [
+        "None",
+        "In",
+        "Out",
+        "Both"
+    ]
+}

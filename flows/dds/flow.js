@@ -38,8 +38,8 @@ export default {
 
     /**
      * Open a DDS document, from anywhere -- the panel, a deep link, or a case file
-     * referencing it. `type` may be null: loadFromGUI recognises base game GUIDs
-     * from the reference data on its own.
+     * referencing it. `type` may be null: a base game GUID is recognised from the
+     * reference data on its own.
      */
     async openDocument({ id, type }) {
         const { openDdsFile } = await import('./scripts/ui.js');
@@ -63,12 +63,19 @@ export default {
         await onModSelected(selection);
     },
 
+    /**
+     * The old DDS Viewer's deep link, which the modding wiki still points at.
+     *
+     * It used to fill in the GUID field and leave the Load button to the reader. There
+     * is no field to fill in now, so the document is opened -- but not here: this runs
+     * before any folder is connected, and a document cannot be read until one is.
+     */
     async start() {
-        if (window?.queryParams?.caseEditorLink === 'true') {
-            document.querySelector('#path-to-read').value = window.queryParams.documentId;
-            if (window.queryParams.documentType != 'unknown') {
-                document.querySelector('#select-guid-type').value = window.queryParams.documentType;
-            }
-        }
+        if (window?.queryParams?.caseEditorLink !== 'true') return;
+        if (!window.queryParams.documentId) return;
+
+        const { openWhenReady } = await import('./scripts/ui.js');
+        const type = window.queryParams.documentType;
+        openWhenReady(window.queryParams.documentId, type === 'unknown' ? null : type);
     },
 };

@@ -1,0 +1,8206 @@
+{
+  "presetName": "Hotel",
+  "disable": false,
+  "prefab": {
+    "m_FileID": 73864,
+    "m_PathID": 0
+  },
+  "emissionMapUnlit": {
+    "m_FileID": 30536,
+    "m_PathID": 0
+  },
+  "emissionMapLit": {
+    "m_FileID": 73838,
+    "m_PathID": 0
+  },
+  "buildingHeight": 11,
+  "lightningRodLocalPos": {
+    "x": 9.739999771118164,
+    "y": 85.30000305175781,
+    "z": -3.190000057220459
+  },
+  "defaultExteriorWallMaterial": [
+    {
+      "m_FileID": 53876,
+      "m_PathID": 0
+    }
+  ],
+  "exteriorKey": {
+    "baseMaterial": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "mainColour": {
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 0
+    },
+    "colour1": {
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 0
+    },
+    "colour2": {
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 0
+    },
+    "colour3": {
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 0
+    },
+    "grubiness": 0
+  },
+  "enableAlleywayWalls": false,
+  "enableExteriorQuoins": true,
+  "overrideEvidencePhotoSettings": true,
+  "relativeCamPhotoPos": {
+    "x": -5,
+    "y": 3,
+    "z": 19
+  },
+  "relativeCamPhotoEuler": {
+    "x": -50,
+    "y": 158,
+    "z": 0
+  },
+  "overrideDistrictEnvironment": true,
+  "sceneProfile": 9,
+  "maxLostAndFound": 3,
+  "floorLayouts": [
+    {
+      "floorsWithThisSetting": 1,
+      "blueprints": [
+        "Hotel_GroundFloor"
+      ],
+      "airVentMaximumExtrusion": 0,
+      "controlRoomVariants": [],
+      "forceShowModel": false,
+      "forceHideModels": [
+        "Base"
+      ],
+      "forceHideModelsInRooms": [],
+      "forceHideModelsOutside": [],
+      "overrideCeilingHeight": true,
+      "newCeilingHeight": 53
+    },
+    {
+      "floorsWithThisSetting": 1,
+      "blueprints": [
+        "Hotel_FirstFloor"
+      ],
+      "airVentMaximumExtrusion": 1,
+      "controlRoomVariants": [],
+      "forceShowModel": false,
+      "forceHideModels": [
+        "Base"
+      ],
+      "forceHideModelsInRooms": [],
+      "forceHideModelsOutside": [],
+      "overrideCeilingHeight": false,
+      "newCeilingHeight": 51
+    },
+    {
+      "floorsWithThisSetting": 1,
+      "blueprints": [
+        "Hotel_SecondFloor"
+      ],
+      "airVentMaximumExtrusion": 1,
+      "controlRoomVariants": [],
+      "forceShowModel": false,
+      "forceHideModels": [
+        "Base"
+      ],
+      "forceHideModelsInRooms": [],
+      "forceHideModelsOutside": [],
+      "overrideCeilingHeight": true,
+      "newCeilingHeight": 53
+    },
+    {
+      "floorsWithThisSetting": 1,
+      "blueprints": [
+        "Hotel_ThirdFloor"
+      ],
+      "airVentMaximumExtrusion": 1,
+      "controlRoomVariants": [],
+      "forceShowModel": false,
+      "forceHideModels": [
+        "Base"
+      ],
+      "forceHideModelsInRooms": [],
+      "forceHideModelsOutside": [],
+      "overrideCeilingHeight": false,
+      "newCeilingHeight": 51
+    },
+    {
+      "floorsWithThisSetting": 1,
+      "blueprints": [
+        "Hotel_BallroomTop"
+      ],
+      "airVentMaximumExtrusion": 1,
+      "controlRoomVariants": [],
+      "forceShowModel": false,
+      "forceHideModels": [
+        "Base"
+      ],
+      "forceHideModelsInRooms": [],
+      "forceHideModelsOutside": [],
+      "overrideCeilingHeight": false,
+      "newCeilingHeight": 51
+    },
+    {
+      "floorsWithThisSetting": 4,
+      "blueprints": [
+        "Hotel_TopFloors",
+        "Hotel_TopFloors2",
+        "Hotel_TopFloors3"
+      ],
+      "airVentMaximumExtrusion": 1,
+      "controlRoomVariants": [],
+      "forceShowModel": false,
+      "forceHideModels": [
+        "Base"
+      ],
+      "forceHideModelsInRooms": [],
+      "forceHideModelsOutside": [],
+      "overrideCeilingHeight": false,
+      "newCeilingHeight": 51
+    },
+    {
+      "floorsWithThisSetting": 1,
+      "blueprints": [
+        "Hotel_RooftopBar"
+      ],
+      "airVentMaximumExtrusion": 0,
+      "controlRoomVariants": [],
+      "forceShowModel": false,
+      "forceHideModels": [],
+      "forceHideModelsInRooms": [],
+      "forceHideModelsOutside": [],
+      "overrideCeilingHeight": false,
+      "newCeilingHeight": 51
+    },
+    {
+      "floorsWithThisSetting": 2,
+      "blueprints": [
+        "Hotel_Penthouse"
+      ],
+      "airVentMaximumExtrusion": 0,
+      "controlRoomVariants": [],
+      "forceShowModel": false,
+      "forceHideModels": [],
+      "forceHideModelsInRooms": [],
+      "forceHideModelsOutside": [
+        "Base"
+      ],
+      "overrideCeilingHeight": false,
+      "newCeilingHeight": 51
+    }
+  ],
+  "basementLayouts": [
+    {
+      "floorsWithThisSetting": 1,
+      "blueprints": [
+        "Hotel_Basement1",
+        "Hotel_Basement2"
+      ],
+      "airVentMaximumExtrusion": 0,
+      "controlRoomVariants": [],
+      "forceShowModel": false,
+      "forceHideModels": [],
+      "forceHideModelsInRooms": [],
+      "forceHideModelsOutside": [],
+      "overrideCeilingHeight": false,
+      "newCeilingHeight": 0
+    }
+  ],
+  "controlRoomRange": {
+    "x": 0,
+    "y": 0
+  },
+  "forceBuildingDesignStyles": [
+    {
+      "m_FileID": 12714,
+      "m_PathID": 0
+    },
+    {
+      "m_FileID": 12712,
+      "m_PathID": 0
+    }
+  ],
+  "stairwellRegular": {
+    "m_FileID": 18034,
+    "m_PathID": 0
+  },
+  "stairwellLarge": {
+    "m_FileID": 13386,
+    "m_PathID": 0
+  },
+  "buildingFeaturesEchelonFloors": false,
+  "echelonFloorStart": 10,
+  "overrideGrubiness": false,
+  "grubinessOverride": 0,
+  "displayedZone": 1,
+  "allowedInAllDistricts": false,
+  "allowedInDistricts": [
+    {
+      "m_FileID": 15746,
+      "m_PathID": 0
+    },
+    {
+      "m_FileID": 17774,
+      "m_PathID": 0
+    }
+  ],
+  "densityMinimum": 1,
+  "densityMaximum": 3,
+  "landValueMinimum": 1,
+  "landValueMaximum": 4,
+  "minimum": 1,
+  "featureImportance": 9,
+  "hardLimit": 1,
+  "desiredRatio": 0.05000000074505806,
+  "modernity": 3,
+  "lobbyPreset": {
+    "m_FileID": 73754,
+    "m_PathID": 0
+  },
+  "nonEnterable": false,
+  "boundary": false,
+  "boundaryCorner": false,
+  "overrideNaming": false,
+  "possibleNames": [],
+  "customDrawOnMap": false,
+  "tex": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "captureMesh": {
+    "m_FileID": 73788,
+    "m_PathID": 0
+  },
+  "windowMap": {
+    "m_FileID": 73880,
+    "m_PathID": 0
+  },
+  "addonMap": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "sortedWindows": [
+    {
+      "front": [
+        {
+          "originPixel": {
+            "x": 876,
+            "y": 162
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 878,
+            "y": 170
+          },
+          "localMeshPositionLeft": {
+            "x": 1.4999995231628418,
+            "y": 7.699999809265137,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": 1.2999992370605469,
+            "y": 7.699999809265137,
+            "z": 13.513501167297363
+          },
+          "floor": 1,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 884,
+            "y": 162
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 886,
+            "y": 170
+          },
+          "localMeshPositionLeft": {
+            "x": -0.10000038146972656,
+            "y": 7.699999809265137,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -0.3000006675720215,
+            "y": 7.699999809265137,
+            "z": 13.513501167297363
+          },
+          "floor": 1,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 892,
+            "y": 162
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 894,
+            "y": 170
+          },
+          "localMeshPositionLeft": {
+            "x": -1.7000007629394531,
+            "y": 7.699999809265137,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -1.9000005722045898,
+            "y": 7.700000286102295,
+            "z": 13.51350212097168
+          },
+          "floor": 1,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 2
+        }
+      ],
+      "back": [],
+      "left": [],
+      "right": []
+    },
+    {
+      "front": [
+        {
+          "originPixel": {
+            "x": 825,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 827,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": 11.699999809265137,
+            "y": 12.699999809265137,
+            "z": 13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 11.5,
+            "y": 12.699999809265137,
+            "z": 13.513501167297363
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 836,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 838,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": 9.5,
+            "y": 12.699999809265137,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 9.299999237060547,
+            "y": 12.699999809265137,
+            "z": 13.513501167297363
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 847,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 849,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": 7.300000190734863,
+            "y": 12.699999809265137,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 7.099999904632568,
+            "y": 12.700000762939453,
+            "z": 13.51350212097168
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 876,
+            "y": 184
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 17
+          },
+          "centrePixel": {
+            "x": 878,
+            "y": 192
+          },
+          "localMeshPositionLeft": {
+            "x": 1.5,
+            "y": 12.100000381469727,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 1.2999999523162842,
+            "y": 12.100000381469727,
+            "z": 13.51350212097168
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 884,
+            "y": 184
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 17
+          },
+          "centrePixel": {
+            "x": 886,
+            "y": 192
+          },
+          "localMeshPositionLeft": {
+            "x": -0.10000014305114746,
+            "y": 12.100000381469727,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -0.3000006675720215,
+            "y": 12.100000381469727,
+            "z": 13.51350212097168
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 4
+        },
+        {
+          "originPixel": {
+            "x": 892,
+            "y": 184
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 17
+          },
+          "centrePixel": {
+            "x": 894,
+            "y": 192
+          },
+          "localMeshPositionLeft": {
+            "x": -1.700000524520874,
+            "y": 12.100000381469727,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -1.9000005722045898,
+            "y": 12.100000381469727,
+            "z": 13.51350212097168
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 5
+        },
+        {
+          "originPixel": {
+            "x": 919,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 921,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": -7.100000858306885,
+            "y": 12.699999809265137,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -7.3000006675720215,
+            "y": 12.699999809265137,
+            "z": 13.513500213623047
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 6
+        },
+        {
+          "originPixel": {
+            "x": 930,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 932,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": -9.30000114440918,
+            "y": 12.699999809265137,
+            "z": 13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -9.500000953674316,
+            "y": 12.700000762939453,
+            "z": 13.513501167297363
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 7
+        },
+        {
+          "originPixel": {
+            "x": 941,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 943,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": -11.500001907348633,
+            "y": 12.700000762939453,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -11.700000762939453,
+            "y": 12.699999809265137,
+            "z": 13.513501167297363
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 8
+        }
+      ],
+      "back": [
+        {
+          "originPixel": {
+            "x": 634,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 636,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": -11.700000762939453,
+            "y": 12.700000762939453,
+            "z": -13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -11.500000953674316,
+            "y": 12.700000762939453,
+            "z": -13.513500213623047
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 645,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 647,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": -9.500000953674316,
+            "y": 12.700000762939453,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -9.30000114440918,
+            "y": 12.700000762939453,
+            "z": -13.513500213623047
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 656,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 658,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": -7.3000006675720215,
+            "y": 12.700000762939453,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -7.100000381469727,
+            "y": 12.700000762939453,
+            "z": -13.513500213623047
+          },
+          "floor": 2,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 2
+        }
+      ],
+      "left": [
+        {
+          "originPixel": {
+            "x": 496,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 498,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500000953674316,
+            "y": 12.699999809265137,
+            "z": 11.51150131225586
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 12.699999809265137,
+            "z": 11.311301231384277
+          },
+          "floor": 2,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 507,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 509,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 12.699999809265137,
+            "z": 9.309301376342773
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 12.699999809265137,
+            "z": 9.109101295471191
+          },
+          "floor": 2,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 518,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 520,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500000953674316,
+            "y": 12.700000762939453,
+            "z": 7.1071014404296875
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 12.700000762939453,
+            "z": 6.9069013595581055
+          },
+          "floor": 2,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 725,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 727,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500000953674316,
+            "y": 12.700000762939453,
+            "z": -7.107099533081055
+          },
+          "localMeshPositionRight": {
+            "x": -13.500001907348633,
+            "y": 12.700000762939453,
+            "z": -7.307300567626953
+          },
+          "floor": 2,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 736,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 738,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 12.700000762939453,
+            "z": -9.30929946899414
+          },
+          "localMeshPositionRight": {
+            "x": -13.500001907348633,
+            "y": 12.700000762939453,
+            "z": -9.509500503540039
+          },
+          "floor": 2,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 4
+        },
+        {
+          "originPixel": {
+            "x": 747,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 749,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500000953674316,
+            "y": 12.700000762939453,
+            "z": -11.511500358581543
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 12.700000762939453,
+            "z": -11.711700439453125
+          },
+          "floor": 2,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 5
+        }
+      ],
+      "right": [
+        {
+          "originPixel": {
+            "x": 591,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 593,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 12.700000762939453,
+            "z": 7.107100486755371
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 12.700000762939453,
+            "z": 7.307300090789795
+          },
+          "floor": 2,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 602,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 604,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": 13.500000953674316,
+            "y": 12.700000762939453,
+            "z": 9.309300422668457
+          },
+          "localMeshPositionRight": {
+            "x": 13.500000953674316,
+            "y": 12.700000762939453,
+            "z": 9.509501457214355
+          },
+          "floor": 2,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 613,
+            "y": 189
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 13
+          },
+          "centrePixel": {
+            "x": 615,
+            "y": 195
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 12.700000762939453,
+            "z": 11.51150131225586
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 12.700000762939453,
+            "z": 11.711701393127441
+          },
+          "floor": 2,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 2
+        }
+      ]
+    },
+    {
+      "front": [
+        {
+          "originPixel": {
+            "x": 301,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 302,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": 10.09999942779541,
+            "y": 19.10000228881836,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": 9.899998664855957,
+            "y": 19.10000228881836,
+            "z": 13.51350212097168
+          },
+          "floor": 3,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 308,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 309,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": 8.69999885559082,
+            "y": 19.10000228881836,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 8.5,
+            "y": 19.10000228881836,
+            "z": 13.513501167297363
+          },
+          "floor": 3,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 676,
+            "y": 2
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 678,
+            "y": 11
+          },
+          "localMeshPositionLeft": {
+            "x": 1.4999998807907104,
+            "y": 18.700000762939453,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 1.2999999523162842,
+            "y": 18.700000762939453,
+            "z": 13.51350212097168
+          },
+          "floor": 3,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 684,
+            "y": 2
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 686,
+            "y": 11
+          },
+          "localMeshPositionLeft": {
+            "x": -0.10000014305114746,
+            "y": 18.700000762939453,
+            "z": 13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -0.3000001907348633,
+            "y": 18.700000762939453,
+            "z": 13.513500213623047
+          },
+          "floor": 3,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 692,
+            "y": 2
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 694,
+            "y": 11
+          },
+          "localMeshPositionLeft": {
+            "x": -1.7000000476837158,
+            "y": 18.700000762939453,
+            "z": 13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -1.8999998569488525,
+            "y": 18.700000762939453,
+            "z": 13.513501167297363
+          },
+          "floor": 3,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 4
+        },
+        {
+          "originPixel": {
+            "x": 221,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 222,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -8.500000953674316,
+            "y": 19.10000228881836,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -8.700000762939453,
+            "y": 19.10000228881836,
+            "z": 13.51350212097168
+          },
+          "floor": 3,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 5
+        },
+        {
+          "originPixel": {
+            "x": 228,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 229,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -9.900001525878906,
+            "y": 19.10000228881836,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -10.100001335144043,
+            "y": 19.10000228881836,
+            "z": 13.513501167297363
+          },
+          "floor": 3,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 6
+        }
+      ],
+      "back": [
+        {
+          "originPixel": {
+            "x": 181,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 182,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -10.100001335144043,
+            "y": 19.10000228881836,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -9.900001525878906,
+            "y": 19.10000228881836,
+            "z": -13.513500213623047
+          },
+          "floor": 3,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 188,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 189,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -8.700000762939453,
+            "y": 19.10000228881836,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -8.500001907348633,
+            "y": 19.10000228881836,
+            "z": -13.513500213623047
+          },
+          "floor": 3,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 201,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 202,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": 8.499999046325684,
+            "y": 19.10000228881836,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 8.699999809265137,
+            "y": 19.10000228881836,
+            "z": -13.513500213623047
+          },
+          "floor": 3,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 208,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 209,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": 9.899999618530273,
+            "y": 19.10000228881836,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 10.09999942779541,
+            "y": 19.10000228881836,
+            "z": -13.513500213623047
+          },
+          "floor": 3,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 3
+        }
+      ],
+      "left": [
+        {
+          "originPixel": {
+            "x": 261,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 262,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 19.10000228881836,
+            "z": 9.909899711608887
+          },
+          "localMeshPositionRight": {
+            "x": -13.500001907348633,
+            "y": 19.10000228881836,
+            "z": 9.709701538085938
+          },
+          "floor": 3,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 268,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 269,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500000953674316,
+            "y": 19.10000228881836,
+            "z": 8.508500099182129
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 19.10000228881836,
+            "z": 8.308300971984863
+          },
+          "floor": 3,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 619,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 17
+          },
+          "centrePixel": {
+            "x": 621,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 19.100000381469727,
+            "z": -0.3002992570400238
+          },
+          "localMeshPositionRight": {
+            "x": -13.5,
+            "y": 19.10000228881836,
+            "z": -0.5004990696907043
+          },
+          "floor": 3,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 241,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 242,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 19.10000228881836,
+            "z": -8.708700180053711
+          },
+          "localMeshPositionRight": {
+            "x": -13.500001907348633,
+            "y": 19.10000228881836,
+            "z": -8.908900260925293
+          },
+          "floor": 3,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 248,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 249,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500000953674316,
+            "y": 19.10000228881836,
+            "z": -10.110099792480469
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 19.10000228881836,
+            "z": -10.31029987335205
+          },
+          "floor": 3,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 4
+        }
+      ],
+      "right": [
+        {
+          "originPixel": {
+            "x": 161,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 162,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 19.10000228881836,
+            "z": -10.31029987335205
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 19.10000228881836,
+            "z": -10.110099792480469
+          },
+          "floor": 3,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 168,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 169,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 19.10000228881836,
+            "z": -8.908900260925293
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 19.10000228881836,
+            "z": -8.708700180053711
+          },
+          "floor": 3,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 281,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 282,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 19.10000228881836,
+            "z": 8.308300971984863
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 19.10000228881836,
+            "z": 8.508500099182129
+          },
+          "floor": 3,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 288,
+            "y": 5
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 289,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 19.10000228881836,
+            "z": 9.709700584411621
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 19.10000228881836,
+            "z": 9.909900665283203
+          },
+          "floor": 3,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 3
+        }
+      ]
+    },
+    {
+      "front": [
+        {
+          "originPixel": {
+            "x": 301,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 302,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": 10.09999942779541,
+            "y": 24.500003814697266,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 9.899999618530273,
+            "y": 24.5,
+            "z": 13.513501167297363
+          },
+          "floor": 4,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 308,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 309,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": 8.699999809265137,
+            "y": 24.5,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 8.499999046325684,
+            "y": 24.5,
+            "z": 13.513501167297363
+          },
+          "floor": 4,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 676,
+            "y": 31
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 678,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": 1.499999761581421,
+            "y": 24.5,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 1.2999998331069946,
+            "y": 24.5,
+            "z": 13.51350212097168
+          },
+          "floor": 4,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 684,
+            "y": 31
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 686,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": -0.10000026226043701,
+            "y": 24.5,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -0.30000030994415283,
+            "y": 24.5,
+            "z": 13.513501167297363
+          },
+          "floor": 4,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 692,
+            "y": 31
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 694,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": -1.7000001668930054,
+            "y": 24.5,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -1.9000000953674316,
+            "y": 24.5,
+            "z": 13.513501167297363
+          },
+          "floor": 4,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 4
+        },
+        {
+          "originPixel": {
+            "x": 221,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 222,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": -8.500001907348633,
+            "y": 24.500003814697266,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -8.70000171661377,
+            "y": 24.5,
+            "z": 13.513501167297363
+          },
+          "floor": 4,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 5
+        },
+        {
+          "originPixel": {
+            "x": 228,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 229,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": -9.900001525878906,
+            "y": 24.5,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -10.100001335144043,
+            "y": 24.5,
+            "z": 13.513501167297363
+          },
+          "floor": 4,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 6
+        }
+      ],
+      "back": [
+        {
+          "originPixel": {
+            "x": 181,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 182,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": -10.100000381469727,
+            "y": 24.500003814697266,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -9.900001525878906,
+            "y": 24.5,
+            "z": -13.513500213623047
+          },
+          "floor": 4,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 188,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 189,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": -8.700000762939453,
+            "y": 24.5,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -8.500000953674316,
+            "y": 24.5,
+            "z": -13.513500213623047
+          },
+          "floor": 4,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 201,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 202,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": 8.5,
+            "y": 24.500003814697266,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 8.699999809265137,
+            "y": 24.5,
+            "z": -13.513500213623047
+          },
+          "floor": 4,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 208,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 209,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": 9.899999618530273,
+            "y": 24.5,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 10.09999942779541,
+            "y": 24.5,
+            "z": -13.513500213623047
+          },
+          "floor": 4,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 3
+        }
+      ],
+      "left": [
+        {
+          "originPixel": {
+            "x": 261,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 262,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500000953674316,
+            "y": 24.500003814697266,
+            "z": 9.909900665283203
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 24.5,
+            "z": 9.709701538085938
+          },
+          "floor": 4,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 268,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 269,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500000953674316,
+            "y": 24.5,
+            "z": 8.508501052856445
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 24.5,
+            "z": 8.30830192565918
+          },
+          "floor": 4,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 619,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 17
+          },
+          "centrePixel": {
+            "x": 621,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500000953674316,
+            "y": 24.5,
+            "z": -0.30029913783073425
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 24.5,
+            "z": -0.5004991888999939
+          },
+          "floor": 4,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 241,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 242,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500000953674316,
+            "y": 24.500003814697266,
+            "z": -8.708700180053711
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 24.5,
+            "z": -8.908900260925293
+          },
+          "floor": 4,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 248,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 249,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500000953674316,
+            "y": 24.5,
+            "z": -10.110098838806152
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 24.5,
+            "z": -10.31029987335205
+          },
+          "floor": 4,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 4
+        }
+      ],
+      "right": [
+        {
+          "originPixel": {
+            "x": 161,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 162,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 24.500003814697266,
+            "z": -10.310300827026367
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 24.5,
+            "z": -10.110099792480469
+          },
+          "floor": 4,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 168,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 169,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 24.5,
+            "z": -8.908900260925293
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 24.5,
+            "z": -8.708700180053711
+          },
+          "floor": 4,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 281,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 282,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 24.500003814697266,
+            "z": 8.308300971984863
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 24.5,
+            "z": 8.508500099182129
+          },
+          "floor": 4,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 288,
+            "y": 32
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 289,
+            "y": 40
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 24.5,
+            "z": 9.709701538085938
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 24.5,
+            "z": 9.909899711608887
+          },
+          "floor": 4,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 3
+        }
+      ]
+    },
+    {
+      "front": [
+        {
+          "originPixel": {
+            "x": 301,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 302,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": 10.09999942779541,
+            "y": 29.900001525878906,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": 9.899999618530273,
+            "y": 29.900001525878906,
+            "z": 13.513500213623047
+          },
+          "floor": 5,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 308,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 309,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": 8.69999885559082,
+            "y": 29.900001525878906,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": 8.5,
+            "y": 29.900001525878906,
+            "z": 13.51350212097168
+          },
+          "floor": 5,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 676,
+            "y": 58
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 678,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": 1.4999995231628418,
+            "y": 29.900001525878906,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 1.299999713897705,
+            "y": 29.900001525878906,
+            "z": 13.513501167297363
+          },
+          "floor": 5,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 684,
+            "y": 58
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 686,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -0.10000038146972656,
+            "y": 29.900001525878906,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -0.3000004291534424,
+            "y": 29.900001525878906,
+            "z": 13.513501167297363
+          },
+          "floor": 5,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 692,
+            "y": 58
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 694,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -1.700000286102295,
+            "y": 29.900001525878906,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -1.9000000953674316,
+            "y": 29.900001525878906,
+            "z": 13.513501167297363
+          },
+          "floor": 5,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 4
+        },
+        {
+          "originPixel": {
+            "x": 221,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 222,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -8.500001907348633,
+            "y": 29.900001525878906,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -8.700000762939453,
+            "y": 29.900001525878906,
+            "z": 13.513500213623047
+          },
+          "floor": 5,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 5
+        },
+        {
+          "originPixel": {
+            "x": 228,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 229,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -9.900001525878906,
+            "y": 29.900001525878906,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -10.10000228881836,
+            "y": 29.900001525878906,
+            "z": 13.51350212097168
+          },
+          "floor": 5,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 6
+        }
+      ],
+      "back": [
+        {
+          "originPixel": {
+            "x": 181,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 182,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -10.100001335144043,
+            "y": 29.900001525878906,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -9.900001525878906,
+            "y": 29.900001525878906,
+            "z": -13.513500213623047
+          },
+          "floor": 5,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 188,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 189,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -8.70000171661377,
+            "y": 29.900001525878906,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -8.500001907348633,
+            "y": 29.900001525878906,
+            "z": -13.513501167297363
+          },
+          "floor": 5,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 748,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 17
+          },
+          "centrePixel": {
+            "x": 750,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -0.10000014305114746,
+            "y": 29.900001525878906,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 0.09999990463256836,
+            "y": 29.900001525878906,
+            "z": -13.513500213623047
+          },
+          "floor": 5,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 201,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 202,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": 8.499999046325684,
+            "y": 29.900001525878906,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 8.69999885559082,
+            "y": 29.900001525878906,
+            "z": -13.513500213623047
+          },
+          "floor": 5,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 208,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 209,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": 9.899999618530273,
+            "y": 29.900001525878906,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 10.09999942779541,
+            "y": 29.900001525878906,
+            "z": -13.513501167297363
+          },
+          "floor": 5,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 4
+        }
+      ],
+      "left": [
+        {
+          "originPixel": {
+            "x": 261,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 262,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 29.900001525878906,
+            "z": 9.909900665283203
+          },
+          "localMeshPositionRight": {
+            "x": -13.5,
+            "y": 29.900001525878906,
+            "z": 9.709701538085938
+          },
+          "floor": 5,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 268,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 269,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 29.900001525878906,
+            "z": 8.508501052856445
+          },
+          "localMeshPositionRight": {
+            "x": -13.500001907348633,
+            "y": 29.900001525878906,
+            "z": 8.30830192565918
+          },
+          "floor": 5,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 619,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 17
+          },
+          "centrePixel": {
+            "x": 621,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 29.900001525878906,
+            "z": -0.3002992570400238
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 29.900001525878906,
+            "z": -0.5004990696907043
+          },
+          "floor": 5,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 241,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 242,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 29.900001525878906,
+            "z": -8.708699226379395
+          },
+          "localMeshPositionRight": {
+            "x": -13.5,
+            "y": 29.900001525878906,
+            "z": -8.908900260925293
+          },
+          "floor": 5,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 248,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 249,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 29.900001525878906,
+            "z": -10.110099792480469
+          },
+          "localMeshPositionRight": {
+            "x": -13.500001907348633,
+            "y": 29.900001525878906,
+            "z": -10.31029987335205
+          },
+          "floor": 5,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 4
+        }
+      ],
+      "right": [
+        {
+          "originPixel": {
+            "x": 161,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 162,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 29.900001525878906,
+            "z": -10.31029987335205
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 29.900001525878906,
+            "z": -10.110099792480469
+          },
+          "floor": 5,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 168,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 169,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 29.900001525878906,
+            "z": -8.908900260925293
+          },
+          "localMeshPositionRight": {
+            "x": 13.500000953674316,
+            "y": 29.900001525878906,
+            "z": -8.708700180053711
+          },
+          "floor": 5,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 281,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 282,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 29.900001525878906,
+            "z": 8.30830192565918
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 29.900001525878906,
+            "z": 8.508500099182129
+          },
+          "floor": 5,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 288,
+            "y": 59
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 289,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 29.900001525878906,
+            "z": 9.709701538085938
+          },
+          "localMeshPositionRight": {
+            "x": 13.500000953674316,
+            "y": 29.900001525878906,
+            "z": 9.909900665283203
+          },
+          "floor": 5,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 3
+        }
+      ]
+    },
+    {
+      "front": [
+        {
+          "originPixel": {
+            "x": 301,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 302,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": 10.09999942779541,
+            "y": 35.30000305175781,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": 9.899999618530273,
+            "y": 35.30000305175781,
+            "z": 13.51350212097168
+          },
+          "floor": 6,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 308,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 309,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": 8.699999809265137,
+            "y": 35.30000305175781,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 8.5,
+            "y": 35.30000305175781,
+            "z": 13.513501167297363
+          },
+          "floor": 6,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 676,
+            "y": 85
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 678,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": 1.4999995231628418,
+            "y": 35.30000305175781,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 1.299999713897705,
+            "y": 35.29999923706055,
+            "z": 13.513501167297363
+          },
+          "floor": 6,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 684,
+            "y": 85
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 686,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": -0.10000061988830566,
+            "y": 35.30000305175781,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -0.3000004291534424,
+            "y": 35.30000305175781,
+            "z": 13.513501167297363
+          },
+          "floor": 6,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 692,
+            "y": 85
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 694,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": -1.7000007629394531,
+            "y": 35.30000305175781,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -1.9000005722045898,
+            "y": 35.29999923706055,
+            "z": 13.513501167297363
+          },
+          "floor": 6,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 4
+        },
+        {
+          "originPixel": {
+            "x": 221,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 222,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": -8.500001907348633,
+            "y": 35.30000305175781,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -8.70000171661377,
+            "y": 35.30000305175781,
+            "z": 13.51350212097168
+          },
+          "floor": 6,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 5
+        },
+        {
+          "originPixel": {
+            "x": 228,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 229,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": -9.900001525878906,
+            "y": 35.30000305175781,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -10.10000228881836,
+            "y": 35.30000305175781,
+            "z": 13.513501167297363
+          },
+          "floor": 6,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 6
+        }
+      ],
+      "back": [
+        {
+          "originPixel": {
+            "x": 181,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 182,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": -10.100001335144043,
+            "y": 35.30000305175781,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -9.900001525878906,
+            "y": 35.30000305175781,
+            "z": -13.513500213623047
+          },
+          "floor": 6,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 188,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 189,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": -8.70000171661377,
+            "y": 35.30000305175781,
+            "z": -13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -8.500001907348633,
+            "y": 35.30000305175781,
+            "z": -13.513501167297363
+          },
+          "floor": 6,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 748,
+            "y": 87
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 750,
+            "y": 95
+          },
+          "localMeshPositionLeft": {
+            "x": -0.10000038146972656,
+            "y": 35.5,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 0.09999990463256836,
+            "y": 35.5,
+            "z": -13.513501167297363
+          },
+          "floor": 6,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 201,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 202,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": 8.499999046325684,
+            "y": 35.30000305175781,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 8.69999885559082,
+            "y": 35.30000305175781,
+            "z": -13.513500213623047
+          },
+          "floor": 6,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 208,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 209,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": 9.899999618530273,
+            "y": 35.30000305175781,
+            "z": -13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 10.09999942779541,
+            "y": 35.30000305175781,
+            "z": -13.513501167297363
+          },
+          "floor": 6,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 4
+        }
+      ],
+      "left": [
+        {
+          "originPixel": {
+            "x": 261,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 262,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 35.30000305175781,
+            "z": 9.909900665283203
+          },
+          "localMeshPositionRight": {
+            "x": -13.500001907348633,
+            "y": 35.30000305175781,
+            "z": 9.709701538085938
+          },
+          "floor": 6,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 268,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 269,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500000953674316,
+            "y": 35.30000305175781,
+            "z": 8.508500099182129
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 35.30000305175781,
+            "z": 8.308300971984863
+          },
+          "floor": 6,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 619,
+            "y": 87
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 621,
+            "y": 95
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 35.5,
+            "z": -0.3002994954586029
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 35.5,
+            "z": -0.5004990696907043
+          },
+          "floor": 6,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 241,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 242,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 35.30000305175781,
+            "z": -8.708700180053711
+          },
+          "localMeshPositionRight": {
+            "x": -13.500001907348633,
+            "y": 35.30000305175781,
+            "z": -8.908900260925293
+          },
+          "floor": 6,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 248,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 249,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500000953674316,
+            "y": 35.30000305175781,
+            "z": -10.110099792480469
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 35.30000305175781,
+            "z": -10.310300827026367
+          },
+          "floor": 6,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 4
+        }
+      ],
+      "right": [
+        {
+          "originPixel": {
+            "x": 161,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 162,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 35.30000305175781,
+            "z": -10.31029987335205
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 35.30000305175781,
+            "z": -10.110099792480469
+          },
+          "floor": 6,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 168,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 169,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": 13.500000953674316,
+            "y": 35.30000305175781,
+            "z": -8.908900260925293
+          },
+          "localMeshPositionRight": {
+            "x": 13.500000953674316,
+            "y": 35.30000305175781,
+            "z": -8.708701133728027
+          },
+          "floor": 6,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 281,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 282,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 35.30000305175781,
+            "z": 8.308300971984863
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 35.30000305175781,
+            "z": 8.508500099182129
+          },
+          "floor": 6,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 288,
+            "y": 86
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 289,
+            "y": 94
+          },
+          "localMeshPositionLeft": {
+            "x": 13.500000953674316,
+            "y": 35.30000305175781,
+            "z": 9.709700584411621
+          },
+          "localMeshPositionRight": {
+            "x": 13.500000953674316,
+            "y": 35.30000305175781,
+            "z": 9.909900665283203
+          },
+          "floor": 6,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 3
+        }
+      ]
+    },
+    {
+      "front": [
+        {
+          "originPixel": {
+            "x": 301,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 302,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": 10.09999942779541,
+            "y": 40.70000076293945,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": 9.899999618530273,
+            "y": 40.70000076293945,
+            "z": 13.51350212097168
+          },
+          "floor": 7,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 308,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 309,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": 8.699999809265137,
+            "y": 40.70000076293945,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": 8.499999046325684,
+            "y": 40.70000076293945,
+            "z": 13.51350212097168
+          },
+          "floor": 7,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 824,
+            "y": 117
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 15
+          },
+          "centrePixel": {
+            "x": 826,
+            "y": 124
+          },
+          "localMeshPositionLeft": {
+            "x": 1.4999996423721313,
+            "y": 41.099998474121094,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 1.299999713897705,
+            "y": 41.099998474121094,
+            "z": 13.513501167297363
+          },
+          "floor": 7,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 832,
+            "y": 117
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 15
+          },
+          "centrePixel": {
+            "x": 834,
+            "y": 124
+          },
+          "localMeshPositionLeft": {
+            "x": -0.10000032186508179,
+            "y": 41.10000228881836,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -0.3000004291534424,
+            "y": 41.10000228881836,
+            "z": 13.513500213623047
+          },
+          "floor": 7,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 840,
+            "y": 117
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 15
+          },
+          "centrePixel": {
+            "x": 842,
+            "y": 124
+          },
+          "localMeshPositionLeft": {
+            "x": -1.700000286102295,
+            "y": 41.10000228881836,
+            "z": 13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -1.9000000953674316,
+            "y": 41.099998474121094,
+            "z": 13.513501167297363
+          },
+          "floor": 7,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 4
+        },
+        {
+          "originPixel": {
+            "x": 221,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 222,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": -8.500001907348633,
+            "y": 40.70000076293945,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -8.70000171661377,
+            "y": 40.70000076293945,
+            "z": 13.51350212097168
+          },
+          "floor": 7,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 5
+        },
+        {
+          "originPixel": {
+            "x": 228,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 229,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": -9.900001525878906,
+            "y": 40.70000076293945,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -10.100001335144043,
+            "y": 40.70000076293945,
+            "z": 13.51350212097168
+          },
+          "floor": 7,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 6
+        }
+      ],
+      "back": [
+        {
+          "originPixel": {
+            "x": 181,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 182,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": -10.100001335144043,
+            "y": 40.70000076293945,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -9.900001525878906,
+            "y": 40.70000076293945,
+            "z": -13.513500213623047
+          },
+          "floor": 7,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 188,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 189,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": -8.70000171661377,
+            "y": 40.70000076293945,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -8.500000953674316,
+            "y": 40.70000076293945,
+            "z": -13.513500213623047
+          },
+          "floor": 7,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 391,
+            "y": 242
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 15
+          },
+          "centrePixel": {
+            "x": 393,
+            "y": 249
+          },
+          "localMeshPositionLeft": {
+            "x": -0.10000050067901611,
+            "y": 41.10000228881836,
+            "z": -13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 0.09999978542327881,
+            "y": 41.10000228881836,
+            "z": -13.513500213623047
+          },
+          "floor": 7,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 201,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 202,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": 8.499999046325684,
+            "y": 40.70000076293945,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 8.699999809265137,
+            "y": 40.70000076293945,
+            "z": -13.513500213623047
+          },
+          "floor": 7,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 208,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 209,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": 9.899999618530273,
+            "y": 40.70000076293945,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 10.09999942779541,
+            "y": 40.70000076293945,
+            "z": -13.513500213623047
+          },
+          "floor": 7,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 4
+        }
+      ],
+      "left": [
+        {
+          "originPixel": {
+            "x": 261,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 262,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 40.70000076293945,
+            "z": 9.909900665283203
+          },
+          "localMeshPositionRight": {
+            "x": -13.500001907348633,
+            "y": 40.70000076293945,
+            "z": 9.709701538085938
+          },
+          "floor": 7,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 268,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 269,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 40.70000076293945,
+            "z": 8.508500099182129
+          },
+          "localMeshPositionRight": {
+            "x": -13.500001907348633,
+            "y": 40.70000076293945,
+            "z": 8.308300971984863
+          },
+          "floor": 7,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 962,
+            "y": 117
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 15
+          },
+          "centrePixel": {
+            "x": 964,
+            "y": 124
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 41.10000228881836,
+            "z": -0.30029913783073425
+          },
+          "localMeshPositionRight": {
+            "x": -13.5,
+            "y": 41.10000228881836,
+            "z": -0.5004991292953491
+          },
+          "floor": 7,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 241,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 242,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 40.70000076293945,
+            "z": -8.708700180053711
+          },
+          "localMeshPositionRight": {
+            "x": -13.500001907348633,
+            "y": 40.70000076293945,
+            "z": -8.908900260925293
+          },
+          "floor": 7,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 248,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 249,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 40.70000076293945,
+            "z": -10.110099792480469
+          },
+          "localMeshPositionRight": {
+            "x": -13.500001907348633,
+            "y": 40.70000076293945,
+            "z": -10.31029987335205
+          },
+          "floor": 7,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 4
+        }
+      ],
+      "right": [
+        {
+          "originPixel": {
+            "x": 161,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 162,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 40.70000076293945,
+            "z": -10.31029987335205
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 40.70000076293945,
+            "z": -10.110099792480469
+          },
+          "floor": 7,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 168,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 169,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 40.70000076293945,
+            "z": -8.908900260925293
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 40.70000076293945,
+            "z": -8.708700180053711
+          },
+          "floor": 7,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 281,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 282,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 40.70000076293945,
+            "z": 8.30830192565918
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 40.70000076293945,
+            "z": 8.508500099182129
+          },
+          "floor": 7,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 288,
+            "y": 113
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 16
+          },
+          "centrePixel": {
+            "x": 289,
+            "y": 121
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 40.70000076293945,
+            "z": 9.709701538085938
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 40.70000076293945,
+            "z": 9.909900665283203
+          },
+          "floor": 7,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 3
+        }
+      ]
+    },
+    {
+      "front": [
+        {
+          "originPixel": {
+            "x": 301,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 302,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": 10.09999942779541,
+            "y": 45.10000228881836,
+            "z": 13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 9.899999618530273,
+            "y": 45.10000228881836,
+            "z": 13.513500213623047
+          },
+          "floor": 8,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 308,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 309,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": 8.699999809265137,
+            "y": 45.10000228881836,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": 8.499999046325684,
+            "y": 45.10000228881836,
+            "z": 13.513501167297363
+          },
+          "floor": 8,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 629,
+            "y": 120
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 15
+          },
+          "centrePixel": {
+            "x": 631,
+            "y": 127
+          },
+          "localMeshPositionLeft": {
+            "x": 1.499999761581421,
+            "y": 45.099998474121094,
+            "z": 13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 1.299999713897705,
+            "y": 45.10000228881836,
+            "z": 13.513501167297363
+          },
+          "floor": 8,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 637,
+            "y": 120
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 15
+          },
+          "centrePixel": {
+            "x": 639,
+            "y": 127
+          },
+          "localMeshPositionLeft": {
+            "x": -0.10000038146972656,
+            "y": 45.10000228881836,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -0.3000001907348633,
+            "y": 45.10000228881836,
+            "z": 13.513501167297363
+          },
+          "floor": 8,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 645,
+            "y": 120
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 15
+          },
+          "centrePixel": {
+            "x": 647,
+            "y": 127
+          },
+          "localMeshPositionLeft": {
+            "x": -1.7000000476837158,
+            "y": 45.10000228881836,
+            "z": 13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -1.9000000953674316,
+            "y": 45.10000228881836,
+            "z": 13.513501167297363
+          },
+          "floor": 8,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 4
+        },
+        {
+          "originPixel": {
+            "x": 221,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 222,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": -8.500001907348633,
+            "y": 45.10000228881836,
+            "z": 13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -8.70000171661377,
+            "y": 45.10000228881836,
+            "z": 13.513500213623047
+          },
+          "floor": 8,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 5
+        },
+        {
+          "originPixel": {
+            "x": 228,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 229,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": -9.900001525878906,
+            "y": 45.10000228881836,
+            "z": 13.51350212097168
+          },
+          "localMeshPositionRight": {
+            "x": -10.100000381469727,
+            "y": 45.10000228881836,
+            "z": 13.513501167297363
+          },
+          "floor": 8,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 6
+        }
+      ],
+      "back": [
+        {
+          "originPixel": {
+            "x": 181,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 182,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": -10.100001335144043,
+            "y": 45.10000228881836,
+            "z": -13.51349925994873
+          },
+          "localMeshPositionRight": {
+            "x": -9.900001525878906,
+            "y": 45.10000228881836,
+            "z": -13.513500213623047
+          },
+          "floor": 8,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 188,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 189,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": -8.700000762939453,
+            "y": 45.10000228881836,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -8.500000953674316,
+            "y": 45.10000228881836,
+            "z": -13.513500213623047
+          },
+          "floor": 8,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 391,
+            "y": 263
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 14
+          },
+          "centrePixel": {
+            "x": 393,
+            "y": 270
+          },
+          "localMeshPositionLeft": {
+            "x": -0.10000014305114746,
+            "y": 45.29999923706055,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 0.09999990463256836,
+            "y": 45.29999923706055,
+            "z": -13.513500213623047
+          },
+          "floor": 8,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 201,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 202,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": 8.5,
+            "y": 45.10000228881836,
+            "z": -13.51349925994873
+          },
+          "localMeshPositionRight": {
+            "x": 8.699999809265137,
+            "y": 45.10000228881836,
+            "z": -13.513500213623047
+          },
+          "floor": 8,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 208,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 209,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": 9.899999618530273,
+            "y": 45.10000228881836,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 10.09999942779541,
+            "y": 45.10000228881836,
+            "z": -13.513500213623047
+          },
+          "floor": 8,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 4
+        }
+      ],
+      "left": [
+        {
+          "originPixel": {
+            "x": 261,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 262,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": -13.5,
+            "y": 45.10000228881836,
+            "z": 9.909900665283203
+          },
+          "localMeshPositionRight": {
+            "x": -13.5,
+            "y": 45.10000228881836,
+            "z": 9.709701538085938
+          },
+          "floor": 8,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 268,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 269,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 45.10000228881836,
+            "z": 8.508500099182129
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 45.10000228881836,
+            "z": 8.308300971984863
+          },
+          "floor": 8,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 897,
+            "y": 121
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 14
+          },
+          "centrePixel": {
+            "x": 899,
+            "y": 128
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 45.29999923706055,
+            "z": -0.3002994954586029
+          },
+          "localMeshPositionRight": {
+            "x": -13.500001907348633,
+            "y": 45.29999923706055,
+            "z": -0.5004993081092834
+          },
+          "floor": 8,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 241,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 242,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": -13.5,
+            "y": 45.10000228881836,
+            "z": -8.708700180053711
+          },
+          "localMeshPositionRight": {
+            "x": -13.5,
+            "y": 45.10000228881836,
+            "z": -8.908900260925293
+          },
+          "floor": 8,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 248,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 249,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": -13.500001907348633,
+            "y": 45.10000228881836,
+            "z": -10.110099792480469
+          },
+          "localMeshPositionRight": {
+            "x": -13.500000953674316,
+            "y": 45.10000228881836,
+            "z": -10.31029987335205
+          },
+          "floor": 8,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 4
+        }
+      ],
+      "right": [
+        {
+          "originPixel": {
+            "x": 161,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 162,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": 13.499999046325684,
+            "y": 45.10000228881836,
+            "z": -10.31029987335205
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 45.10000228881836,
+            "z": -10.110099792480469
+          },
+          "floor": 8,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 168,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 169,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 45.10000228881836,
+            "z": -8.908900260925293
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 45.10000228881836,
+            "z": -8.708700180053711
+          },
+          "floor": 8,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 281,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 282,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": 13.499999046325684,
+            "y": 45.10000228881836,
+            "z": 8.308300971984863
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 45.10000228881836,
+            "z": 8.508500099182129
+          },
+          "floor": 8,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 288,
+            "y": 139
+          },
+          "rectSize": {
+            "x": 3,
+            "y": 9
+          },
+          "centrePixel": {
+            "x": 289,
+            "y": 143
+          },
+          "localMeshPositionLeft": {
+            "x": 13.5,
+            "y": 45.10000228881836,
+            "z": 9.709701538085938
+          },
+          "localMeshPositionRight": {
+            "x": 13.5,
+            "y": 45.10000228881836,
+            "z": 9.909900665283203
+          },
+          "floor": 8,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 3
+        }
+      ]
+    },
+    {
+      "front": [
+        {
+          "originPixel": {
+            "x": 925,
+            "y": 4
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 18
+          },
+          "centrePixel": {
+            "x": 927,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": 2.500000238418579,
+            "y": 50.89999771118164,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": 2.3000006675720215,
+            "y": 50.90000534057617,
+            "z": 2.702700138092041
+          },
+          "floor": 9,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 933,
+            "y": 4
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 18
+          },
+          "centrePixel": {
+            "x": 935,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": 0.9000000953674316,
+            "y": 50.89999771118164,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": 0.6999998092651367,
+            "y": 50.89999771118164,
+            "z": 2.702699899673462
+          },
+          "floor": 9,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 941,
+            "y": 4
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 18
+          },
+          "centrePixel": {
+            "x": 943,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -0.7000002861022949,
+            "y": 50.900001525878906,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": -0.9000000953674316,
+            "y": 50.89999771118164,
+            "z": 2.702699899673462
+          },
+          "floor": 9,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 982,
+            "y": 4
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 18
+          },
+          "centrePixel": {
+            "x": 984,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -8.899999618530273,
+            "y": 50.89999771118164,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": -9.09999942779541,
+            "y": 50.900001525878906,
+            "z": 2.702699899673462
+          },
+          "floor": 9,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 990,
+            "y": 4
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 18
+          },
+          "centrePixel": {
+            "x": 992,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -10.5,
+            "y": 50.900001525878906,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": -10.699999809265137,
+            "y": 50.900001525878906,
+            "z": 2.702699899673462
+          },
+          "floor": 9,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 4
+        }
+      ],
+      "back": [
+        {
+          "originPixel": {
+            "x": 1003,
+            "y": 4
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 18
+          },
+          "centrePixel": {
+            "x": 1005,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -10.699999809265137,
+            "y": 50.89999771118164,
+            "z": -8.108100891113281
+          },
+          "localMeshPositionRight": {
+            "x": -10.5,
+            "y": 50.900001525878906,
+            "z": -8.108100891113281
+          },
+          "floor": 9,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 1011,
+            "y": 4
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 18
+          },
+          "centrePixel": {
+            "x": 1013,
+            "y": 13
+          },
+          "localMeshPositionLeft": {
+            "x": -9.100001335144043,
+            "y": 50.900001525878906,
+            "z": -8.108100891113281
+          },
+          "localMeshPositionRight": {
+            "x": -8.900001525878906,
+            "y": 50.89999771118164,
+            "z": -8.108100891113281
+          },
+          "floor": 9,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 1
+        }
+      ],
+      "left": [
+        {
+          "originPixel": {
+            "x": 6,
+            "y": 163
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 18
+          },
+          "centrePixel": {
+            "x": 8,
+            "y": 172
+          },
+          "localMeshPositionLeft": {
+            "x": -11.699999809265137,
+            "y": 50.900001525878906,
+            "z": 1.3012999296188354
+          },
+          "localMeshPositionRight": {
+            "x": -11.700000762939453,
+            "y": 50.900001525878906,
+            "z": 1.101099967956543
+          },
+          "floor": 9,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 14,
+            "y": 163
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 18
+          },
+          "centrePixel": {
+            "x": 16,
+            "y": 172
+          },
+          "localMeshPositionLeft": {
+            "x": -11.699999809265137,
+            "y": 50.89999771118164,
+            "z": -0.30030032992362976
+          },
+          "localMeshPositionRight": {
+            "x": -11.700000762939453,
+            "y": 50.900001525878906,
+            "z": -0.5005002617835999
+          },
+          "floor": 9,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 22,
+            "y": 163
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 18
+          },
+          "centrePixel": {
+            "x": 24,
+            "y": 172
+          },
+          "localMeshPositionLeft": {
+            "x": -11.699999809265137,
+            "y": 50.900001525878906,
+            "z": -1.9019004106521606
+          },
+          "localMeshPositionRight": {
+            "x": -11.700000762939453,
+            "y": 50.900001525878906,
+            "z": -2.102100133895874
+          },
+          "floor": 9,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 30,
+            "y": 163
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 18
+          },
+          "centrePixel": {
+            "x": 32,
+            "y": 172
+          },
+          "localMeshPositionLeft": {
+            "x": -11.700000762939453,
+            "y": 50.900001525878906,
+            "z": -3.5035006999969482
+          },
+          "localMeshPositionRight": {
+            "x": -11.699999809265137,
+            "y": 50.900001525878906,
+            "z": -3.703700542449951
+          },
+          "floor": 9,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 38,
+            "y": 163
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 18
+          },
+          "centrePixel": {
+            "x": 40,
+            "y": 172
+          },
+          "localMeshPositionLeft": {
+            "x": -11.700000762939453,
+            "y": 50.900001525878906,
+            "z": -5.105100631713867
+          },
+          "localMeshPositionRight": {
+            "x": -11.699999809265137,
+            "y": 50.89999771118164,
+            "z": -5.305300235748291
+          },
+          "floor": 9,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 4
+        },
+        {
+          "originPixel": {
+            "x": 46,
+            "y": 163
+          },
+          "rectSize": {
+            "x": 5,
+            "y": 18
+          },
+          "centrePixel": {
+            "x": 48,
+            "y": 172
+          },
+          "localMeshPositionLeft": {
+            "x": -11.699999809265137,
+            "y": 50.89999771118164,
+            "z": -6.706700801849365
+          },
+          "localMeshPositionRight": {
+            "x": -11.69999885559082,
+            "y": 50.89999771118164,
+            "z": -6.906900405883789
+          },
+          "floor": 9,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 5
+        }
+      ],
+      "right": []
+    },
+    {
+      "front": [
+        {
+          "originPixel": {
+            "x": 902,
+            "y": 33
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 904,
+            "y": 42
+          },
+          "localMeshPositionLeft": {
+            "x": 7.100000381469727,
+            "y": 56.70000076293945,
+            "z": 2.702700138092041
+          },
+          "localMeshPositionRight": {
+            "x": 6.90000057220459,
+            "y": 56.70000076293945,
+            "z": 2.702700138092041
+          },
+          "floor": 10,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 910,
+            "y": 33
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 912,
+            "y": 42
+          },
+          "localMeshPositionLeft": {
+            "x": 5.5,
+            "y": 56.70000076293945,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": 5.300000190734863,
+            "y": 56.70000076293945,
+            "z": 2.702699899673462
+          },
+          "floor": 10,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 925,
+            "y": 33
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 927,
+            "y": 42
+          },
+          "localMeshPositionLeft": {
+            "x": 2.500000238418579,
+            "y": 56.70000076293945,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": 2.3000004291534424,
+            "y": 56.70000076293945,
+            "z": 2.702699899673462
+          },
+          "floor": 10,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 933,
+            "y": 33
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 935,
+            "y": 42
+          },
+          "localMeshPositionLeft": {
+            "x": 0.9000000357627869,
+            "y": 56.70000076293945,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": 0.7000001072883606,
+            "y": 56.70000076293945,
+            "z": 2.702699899673462
+          },
+          "floor": 10,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 941,
+            "y": 33
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 943,
+            "y": 42
+          },
+          "localMeshPositionLeft": {
+            "x": -0.6999998688697815,
+            "y": 56.69999694824219,
+            "z": 2.702699661254883
+          },
+          "localMeshPositionRight": {
+            "x": -0.899999737739563,
+            "y": 56.70000076293945,
+            "z": 2.702699899673462
+          },
+          "floor": 10,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 4
+        },
+        {
+          "originPixel": {
+            "x": 956,
+            "y": 33
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 958,
+            "y": 42
+          },
+          "localMeshPositionLeft": {
+            "x": -3.6999990940093994,
+            "y": 56.69999694824219,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": -3.8999993801116943,
+            "y": 56.70000076293945,
+            "z": 2.702699899673462
+          },
+          "floor": 10,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 5
+        },
+        {
+          "originPixel": {
+            "x": 964,
+            "y": 33
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 966,
+            "y": 42
+          },
+          "localMeshPositionLeft": {
+            "x": -5.300000190734863,
+            "y": 56.70000076293945,
+            "z": 2.702700138092041
+          },
+          "localMeshPositionRight": {
+            "x": -5.5,
+            "y": 56.70000457763672,
+            "z": 2.702700138092041
+          },
+          "floor": 10,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 6
+        }
+      ],
+      "back": [
+        {
+          "originPixel": {
+            "x": 149,
+            "y": 190
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 151,
+            "y": 199
+          },
+          "localMeshPositionLeft": {
+            "x": -6.700000762939453,
+            "y": 56.70000457763672,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -6.500000953674316,
+            "y": 56.70000076293945,
+            "z": -13.51349925994873
+          },
+          "floor": 10,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 157,
+            "y": 190
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 159,
+            "y": 199
+          },
+          "localMeshPositionLeft": {
+            "x": -5.100000858306885,
+            "y": 56.70000076293945,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -4.90000057220459,
+            "y": 56.70000076293945,
+            "z": -13.513500213623047
+          },
+          "floor": 10,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 165,
+            "y": 190
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 167,
+            "y": 199
+          },
+          "localMeshPositionLeft": {
+            "x": -3.500000476837158,
+            "y": 56.70000076293945,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -3.3000006675720215,
+            "y": 56.70000076293945,
+            "z": -13.513500213623047
+          },
+          "floor": 10,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 200,
+            "y": 190
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 202,
+            "y": 199
+          },
+          "localMeshPositionLeft": {
+            "x": 3.499999523162842,
+            "y": 56.70000076293945,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 3.6999998092651367,
+            "y": 56.70000076293945,
+            "z": -13.513500213623047
+          },
+          "floor": 10,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 208,
+            "y": 190
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 210,
+            "y": 199
+          },
+          "localMeshPositionLeft": {
+            "x": 5.099999904632568,
+            "y": 56.70000076293945,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 5.299999713897705,
+            "y": 56.70000076293945,
+            "z": -13.513500213623047
+          },
+          "floor": 10,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 4
+        },
+        {
+          "originPixel": {
+            "x": 216,
+            "y": 190
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 218,
+            "y": 199
+          },
+          "localMeshPositionLeft": {
+            "x": 6.699999809265137,
+            "y": 56.70000076293945,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 6.900000095367432,
+            "y": 56.70000076293945,
+            "z": -13.513500213623047
+          },
+          "floor": 10,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 5
+        }
+      ],
+      "left": [
+        {
+          "originPixel": {
+            "x": 126,
+            "y": 192
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 128,
+            "y": 201
+          },
+          "localMeshPositionLeft": {
+            "x": -8.100000381469727,
+            "y": 56.70000076293945,
+            "z": -10.710700035095215
+          },
+          "localMeshPositionRight": {
+            "x": -8.100001335144043,
+            "y": 56.70000076293945,
+            "z": -10.910901069641113
+          },
+          "floor": 10,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 0
+        }
+      ],
+      "right": [
+        {
+          "originPixel": {
+            "x": 98,
+            "y": 192
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 100,
+            "y": 201
+          },
+          "localMeshPositionLeft": {
+            "x": 8.100001335144043,
+            "y": 56.70000076293945,
+            "z": -10.710700988769531
+          },
+          "localMeshPositionRight": {
+            "x": 8.100000381469727,
+            "y": 56.70000457763672,
+            "z": -10.51050090789795
+          },
+          "floor": 10,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 0
+        }
+      ]
+    },
+    {
+      "front": [
+        {
+          "originPixel": {
+            "x": 902,
+            "y": 58
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 904,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": 7.100000381469727,
+            "y": 61.70000076293945,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": 6.90000057220459,
+            "y": 61.70000076293945,
+            "z": 2.702699899673462
+          },
+          "floor": 11,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 910,
+            "y": 58
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 912,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": 5.500000476837158,
+            "y": 61.70000076293945,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": 5.300000190734863,
+            "y": 61.70000457763672,
+            "z": 2.702699899673462
+          },
+          "floor": 11,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 925,
+            "y": 58
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 927,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": 2.5,
+            "y": 61.70000076293945,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": 2.3000001907348633,
+            "y": 61.70000076293945,
+            "z": 2.702699899673462
+          },
+          "floor": 11,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 933,
+            "y": 58
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 935,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": 0.9000005722045898,
+            "y": 61.70000076293945,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": 0.7000002861022949,
+            "y": 61.70000076293945,
+            "z": 2.702700138092041
+          },
+          "floor": 11,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 941,
+            "y": 58
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 943,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -0.6999995708465576,
+            "y": 61.69999694824219,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": -0.8999998569488525,
+            "y": 61.70000457763672,
+            "z": 2.702699899673462
+          },
+          "floor": 11,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 4
+        },
+        {
+          "originPixel": {
+            "x": 956,
+            "y": 58
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 958,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -3.6999998092651367,
+            "y": 61.70000457763672,
+            "z": 2.702700138092041
+          },
+          "localMeshPositionRight": {
+            "x": -3.90000057220459,
+            "y": 61.70000076293945,
+            "z": 2.702700138092041
+          },
+          "floor": 11,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 5
+        },
+        {
+          "originPixel": {
+            "x": 964,
+            "y": 58
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 966,
+            "y": 67
+          },
+          "localMeshPositionLeft": {
+            "x": -5.300000190734863,
+            "y": 61.70000457763672,
+            "z": 2.702699899673462
+          },
+          "localMeshPositionRight": {
+            "x": -5.500000476837158,
+            "y": 61.70000457763672,
+            "z": 2.702699899673462
+          },
+          "floor": 11,
+          "side": {
+            "x": 0,
+            "y": 1
+          },
+          "horizonal": 6
+        }
+      ],
+      "back": [
+        {
+          "originPixel": {
+            "x": 149,
+            "y": 215
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 151,
+            "y": 224
+          },
+          "localMeshPositionLeft": {
+            "x": -6.700000762939453,
+            "y": 61.70000076293945,
+            "z": -13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": -6.500000953674316,
+            "y": 61.70000076293945,
+            "z": -13.51349925994873
+          },
+          "floor": 11,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 0
+        },
+        {
+          "originPixel": {
+            "x": 157,
+            "y": 215
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 159,
+            "y": 224
+          },
+          "localMeshPositionLeft": {
+            "x": -5.100000858306885,
+            "y": 61.70000076293945,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -4.90000057220459,
+            "y": 61.70000076293945,
+            "z": -13.513501167297363
+          },
+          "floor": 11,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 1
+        },
+        {
+          "originPixel": {
+            "x": 165,
+            "y": 215
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 167,
+            "y": 224
+          },
+          "localMeshPositionLeft": {
+            "x": -3.5000009536743164,
+            "y": 61.70000076293945,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": -3.3000006675720215,
+            "y": 61.70000076293945,
+            "z": -13.513500213623047
+          },
+          "floor": 11,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 2
+        },
+        {
+          "originPixel": {
+            "x": 200,
+            "y": 215
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 202,
+            "y": 224
+          },
+          "localMeshPositionLeft": {
+            "x": 3.5,
+            "y": 61.70000076293945,
+            "z": -13.513500213623047
+          },
+          "localMeshPositionRight": {
+            "x": 3.6999998092651367,
+            "y": 61.70000076293945,
+            "z": -13.513500213623047
+          },
+          "floor": 11,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 3
+        },
+        {
+          "originPixel": {
+            "x": 208,
+            "y": 215
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 210,
+            "y": 224
+          },
+          "localMeshPositionLeft": {
+            "x": 5.100000858306885,
+            "y": 61.70000076293945,
+            "z": -13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 5.3000006675720215,
+            "y": 61.70000457763672,
+            "z": -13.513500213623047
+          },
+          "floor": 11,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 4
+        },
+        {
+          "originPixel": {
+            "x": 216,
+            "y": 215
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 218,
+            "y": 224
+          },
+          "localMeshPositionLeft": {
+            "x": 6.700000286102295,
+            "y": 61.70000076293945,
+            "z": -13.513501167297363
+          },
+          "localMeshPositionRight": {
+            "x": 6.900001049041748,
+            "y": 61.70000076293945,
+            "z": -13.513501167297363
+          },
+          "floor": 11,
+          "side": {
+            "x": 0,
+            "y": -1
+          },
+          "horizonal": 5
+        }
+      ],
+      "left": [
+        {
+          "originPixel": {
+            "x": 126,
+            "y": 217
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 128,
+            "y": 226
+          },
+          "localMeshPositionLeft": {
+            "x": -8.100001335144043,
+            "y": 61.70000076293945,
+            "z": -10.710700035095215
+          },
+          "localMeshPositionRight": {
+            "x": -8.100001335144043,
+            "y": 61.70000076293945,
+            "z": -10.910901069641113
+          },
+          "floor": 11,
+          "side": {
+            "x": -1,
+            "y": 0
+          },
+          "horizonal": 0
+        }
+      ],
+      "right": [
+        {
+          "originPixel": {
+            "x": 98,
+            "y": 217
+          },
+          "rectSize": {
+            "x": 4,
+            "y": 19
+          },
+          "centrePixel": {
+            "x": 100,
+            "y": 226
+          },
+          "localMeshPositionLeft": {
+            "x": 8.100000381469727,
+            "y": 61.70000076293945,
+            "z": -10.710700035095215
+          },
+          "localMeshPositionRight": {
+            "x": 8.100000381469727,
+            "y": 61.69999694824219,
+            "z": -10.51050090789795
+          },
+          "floor": 11,
+          "side": {
+            "x": 1,
+            "y": 0
+          },
+          "horizonal": 0
+        }
+      ]
+    }
+  ],
+  "floorCount": 11,
+  "meshHeight": 0,
+  "cableLinkPoints": [
+    {
+      "localPos": {
+        "x": 11.700000762939453,
+        "y": 10.619999885559082,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 8.076000213623047,
+        "y": 10.619999885559082,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 3.7659988403320312,
+        "y": 10.619999885559082,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -0.3839988708496094,
+        "y": 10.619999885559082,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -4.543998718261719,
+        "y": 10.619999885559082,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -8.964000701904297,
+        "y": 10.619999885559082,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -12.434001922607422,
+        "y": 10.619999885559082,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 11.700000762939453,
+        "y": 16.079998016357422,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 8.076000213623047,
+        "y": 16.079998016357422,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 3.7659988403320312,
+        "y": 16.079998016357422,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -0.3839988708496094,
+        "y": 16.079998016357422,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -4.543998718261719,
+        "y": 16.079998016357422,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -8.964000701904297,
+        "y": 16.079998016357422,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -12.434001922607422,
+        "y": 16.079998016357422,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 11.700000762939453,
+        "y": 21.62999725341797,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 8.076000213623047,
+        "y": 21.62999725341797,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 3.7659988403320312,
+        "y": 21.62999725341797,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -0.3839988708496094,
+        "y": 21.62999725341797,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -4.543998718261719,
+        "y": 21.62999725341797,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -8.964000701904297,
+        "y": 21.62999725341797,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -12.434001922607422,
+        "y": 21.62999725341797,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 11.700000762939453,
+        "y": 27.110004425048828,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 8.076000213623047,
+        "y": 27.110004425048828,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 3.7659988403320312,
+        "y": 27.110004425048828,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -0.3839988708496094,
+        "y": 27.110004425048828,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -4.543998718261719,
+        "y": 27.110004425048828,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -8.964000701904297,
+        "y": 27.110004425048828,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -12.434001922607422,
+        "y": 27.110004425048828,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 11.700000762939453,
+        "y": 32.27000045776367,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 8.076000213623047,
+        "y": 32.27000045776367,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 3.7659988403320312,
+        "y": 32.27000045776367,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -0.3839988708496094,
+        "y": 32.27000045776367,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -4.543998718261719,
+        "y": 32.27000045776367,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -8.964000701904297,
+        "y": 32.27000045776367,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -12.434001922607422,
+        "y": 32.27000045776367,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 11.700000762939453,
+        "y": 37.40999984741211,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 8.076000213623047,
+        "y": 37.40999984741211,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 3.7659988403320312,
+        "y": 37.40999984741211,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -0.3839988708496094,
+        "y": 37.40999984741211,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -4.543998718261719,
+        "y": 37.40999984741211,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -8.964000701904297,
+        "y": 37.40999984741211,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -12.434001922607422,
+        "y": 37.40999984741211,
+        "z": 13.513508796691895
+      },
+      "localRot": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.730487823486328,
+        "y": 10.619999885559082,
+        "z": -11.891716957092285
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.696422576904297,
+        "y": 10.619999885559082,
+        "z": -8.271528244018555
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.656002044677734,
+        "y": 10.619999885559082,
+        "z": -3.966019630432129
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.617000579833984,
+        "y": 10.619999885559082,
+        "z": 0.1796908974647522
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.577938079833984,
+        "y": 10.619999885559082,
+        "z": 4.335294246673584
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.53634262084961,
+        "y": 10.619999885559082,
+        "z": 8.750572204589844
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.503803253173828,
+        "y": 10.619999885559082,
+        "z": 12.217090606689453
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.730487823486328,
+        "y": 16.079998016357422,
+        "z": -11.891716957092285
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.696422576904297,
+        "y": 16.079998016357422,
+        "z": -8.271528244018555
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.656002044677734,
+        "y": 16.079998016357422,
+        "z": -3.966019630432129
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.617000579833984,
+        "y": 16.079998016357422,
+        "z": 0.1796908974647522
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.577938079833984,
+        "y": 16.079998016357422,
+        "z": 4.335294246673584
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.53634262084961,
+        "y": 16.079998016357422,
+        "z": 8.750572204589844
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.503803253173828,
+        "y": 16.079998016357422,
+        "z": 12.217090606689453
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.730487823486328,
+        "y": 21.62999725341797,
+        "z": -11.891716957092285
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.696422576904297,
+        "y": 21.62999725341797,
+        "z": -8.271528244018555
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.656002044677734,
+        "y": 21.62999725341797,
+        "z": -3.966019630432129
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.617000579833984,
+        "y": 21.62999725341797,
+        "z": 0.1796908974647522
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.577938079833984,
+        "y": 21.62999725341797,
+        "z": 4.335294246673584
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.53634262084961,
+        "y": 21.62999725341797,
+        "z": 8.750572204589844
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.503803253173828,
+        "y": 21.62999725341797,
+        "z": 12.217090606689453
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.730487823486328,
+        "y": 27.110004425048828,
+        "z": -11.891716957092285
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.696422576904297,
+        "y": 27.110004425048828,
+        "z": -8.271528244018555
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.656002044677734,
+        "y": 27.110004425048828,
+        "z": -3.966019630432129
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.617000579833984,
+        "y": 27.110004425048828,
+        "z": 0.1796908974647522
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.577938079833984,
+        "y": 27.110004425048828,
+        "z": 4.335294246673584
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.53634262084961,
+        "y": 27.110004425048828,
+        "z": 8.750572204589844
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.503803253173828,
+        "y": 27.110004425048828,
+        "z": 12.217090606689453
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.730487823486328,
+        "y": 32.27000045776367,
+        "z": -11.891716957092285
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.696422576904297,
+        "y": 32.27000045776367,
+        "z": -8.271528244018555
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.656002044677734,
+        "y": 32.27000045776367,
+        "z": -3.966019630432129
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.617000579833984,
+        "y": 32.27000045776367,
+        "z": 0.1796908974647522
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.577938079833984,
+        "y": 32.27000045776367,
+        "z": 4.335294246673584
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.53634262084961,
+        "y": 32.27000045776367,
+        "z": 8.750572204589844
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.503803253173828,
+        "y": 32.27000045776367,
+        "z": 12.217090606689453
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.730487823486328,
+        "y": 37.40999984741211,
+        "z": -11.891716957092285
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.696422576904297,
+        "y": 37.40999984741211,
+        "z": -8.271528244018555
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.656002044677734,
+        "y": 37.40999984741211,
+        "z": -3.966019630432129
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.617000579833984,
+        "y": 37.40999984741211,
+        "z": 0.1796908974647522
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.577938079833984,
+        "y": 37.40999984741211,
+        "z": 4.335294246673584
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.53634262084961,
+        "y": 37.40999984741211,
+        "z": 8.750572204589844
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 13.503803253173828,
+        "y": 37.40999984741211,
+        "z": 12.217090606689453
+      },
+      "localRot": {
+        "x": 0,
+        "y": 90,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.280513763427734,
+        "y": 10.619999885559082,
+        "z": -11.891716957092285
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.314579010009766,
+        "y": 10.619999885559082,
+        "z": -8.271528244018555
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.354999542236328,
+        "y": 10.619999885559082,
+        "z": -3.966019630432129
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.394001007080078,
+        "y": 10.619999885559082,
+        "z": 0.1796908974647522
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.433063507080078,
+        "y": 10.619999885559082,
+        "z": 4.335294246673584
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.474658966064453,
+        "y": 10.619999885559082,
+        "z": 8.750572204589844
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.507198333740234,
+        "y": 10.619999885559082,
+        "z": 12.217090606689453
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.280513763427734,
+        "y": 16.079998016357422,
+        "z": -11.891716957092285
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.314579010009766,
+        "y": 16.079998016357422,
+        "z": -8.271528244018555
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.354999542236328,
+        "y": 16.079998016357422,
+        "z": -3.966019630432129
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.394001007080078,
+        "y": 16.079998016357422,
+        "z": 0.1796908974647522
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.433063507080078,
+        "y": 16.079998016357422,
+        "z": 4.335294246673584
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.474658966064453,
+        "y": 16.079998016357422,
+        "z": 8.750572204589844
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.507198333740234,
+        "y": 16.079998016357422,
+        "z": 12.217090606689453
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.280513763427734,
+        "y": 21.62999725341797,
+        "z": -11.891716957092285
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.314579010009766,
+        "y": 21.62999725341797,
+        "z": -8.271528244018555
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.354999542236328,
+        "y": 21.62999725341797,
+        "z": -3.966019630432129
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.394001007080078,
+        "y": 21.62999725341797,
+        "z": 0.1796908974647522
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.433063507080078,
+        "y": 21.62999725341797,
+        "z": 4.335294246673584
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.474658966064453,
+        "y": 21.62999725341797,
+        "z": 8.750572204589844
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.507198333740234,
+        "y": 21.62999725341797,
+        "z": 12.217090606689453
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.280513763427734,
+        "y": 27.110004425048828,
+        "z": -11.891716957092285
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.314579010009766,
+        "y": 27.110004425048828,
+        "z": -8.271528244018555
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.354999542236328,
+        "y": 27.110004425048828,
+        "z": -3.966019630432129
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.394001007080078,
+        "y": 27.110004425048828,
+        "z": 0.1796908974647522
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.433063507080078,
+        "y": 27.110004425048828,
+        "z": 4.335294246673584
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.474658966064453,
+        "y": 27.110004425048828,
+        "z": 8.750572204589844
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.507198333740234,
+        "y": 27.110004425048828,
+        "z": 12.217090606689453
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.280513763427734,
+        "y": 32.27000045776367,
+        "z": -11.891716957092285
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.314579010009766,
+        "y": 32.27000045776367,
+        "z": -8.271528244018555
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.354999542236328,
+        "y": 32.27000045776367,
+        "z": -3.966019630432129
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.394001007080078,
+        "y": 32.27000045776367,
+        "z": 0.1796908974647522
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.433063507080078,
+        "y": 32.27000045776367,
+        "z": 4.335294246673584
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.474658966064453,
+        "y": 32.27000045776367,
+        "z": 8.750572204589844
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.507198333740234,
+        "y": 32.27000045776367,
+        "z": 12.217090606689453
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.280513763427734,
+        "y": 37.40999984741211,
+        "z": -11.891716957092285
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.314579010009766,
+        "y": 37.40999984741211,
+        "z": -8.271528244018555
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.354999542236328,
+        "y": 37.40999984741211,
+        "z": -3.966019630432129
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.394001007080078,
+        "y": 37.40999984741211,
+        "z": 0.1796908974647522
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.433063507080078,
+        "y": 37.40999984741211,
+        "z": 4.335294246673584
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.474658966064453,
+        "y": 37.40999984741211,
+        "z": 8.750572204589844
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -13.507198333740234,
+        "y": 37.40999984741211,
+        "z": 12.217090606689453
+      },
+      "localRot": {
+        "x": 0,
+        "y": 270,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 11.700000762939453,
+        "y": 10.619999885559082,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 8.076000213623047,
+        "y": 10.619999885559082,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 3.7659988403320312,
+        "y": 10.619999885559082,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -0.3839988708496094,
+        "y": 10.619999885559082,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -4.543998718261719,
+        "y": 10.619999885559082,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -8.964000701904297,
+        "y": 10.619999885559082,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -12.434001922607422,
+        "y": 10.619999885559082,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 11.700000762939453,
+        "y": 16.079998016357422,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 8.076000213623047,
+        "y": 16.079998016357422,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 3.7659988403320312,
+        "y": 16.079998016357422,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -0.3839988708496094,
+        "y": 16.079998016357422,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -4.543998718261719,
+        "y": 16.079998016357422,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -8.964000701904297,
+        "y": 16.079998016357422,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -12.434001922607422,
+        "y": 16.079998016357422,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 11.700000762939453,
+        "y": 21.62999725341797,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 8.076000213623047,
+        "y": 21.62999725341797,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 3.7659988403320312,
+        "y": 21.62999725341797,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -0.3839988708496094,
+        "y": 21.62999725341797,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -4.543998718261719,
+        "y": 21.62999725341797,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -8.964000701904297,
+        "y": 21.62999725341797,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -12.434001922607422,
+        "y": 21.62999725341797,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 11.700000762939453,
+        "y": 27.110004425048828,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 8.076000213623047,
+        "y": 27.110004425048828,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 3.7659988403320312,
+        "y": 27.110004425048828,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -0.3839988708496094,
+        "y": 27.110004425048828,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -4.543998718261719,
+        "y": 27.110004425048828,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -8.964000701904297,
+        "y": 27.110004425048828,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -12.434001922607422,
+        "y": 27.110004425048828,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 11.700000762939453,
+        "y": 32.27000045776367,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 8.076000213623047,
+        "y": 32.27000045776367,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 3.7659988403320312,
+        "y": 32.27000045776367,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -0.3839988708496094,
+        "y": 32.27000045776367,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -4.543998718261719,
+        "y": 32.27000045776367,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -8.964000701904297,
+        "y": 32.27000045776367,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -12.434001922607422,
+        "y": 32.27000045776367,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 11.700000762939453,
+        "y": 37.40999984741211,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 8.076000213623047,
+        "y": 37.40999984741211,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": 3.7659988403320312,
+        "y": 37.40999984741211,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -0.3839988708496094,
+        "y": 37.40999984741211,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -4.543998718261719,
+        "y": 37.40999984741211,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -8.964000701904297,
+        "y": 37.40999984741211,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    },
+    {
+      "localPos": {
+        "x": -12.434001922607422,
+        "y": 37.40999984741211,
+        "z": -13.726263046264648
+      },
+      "localRot": {
+        "x": 0,
+        "y": 180,
+        "z": 0
+      }
+    }
+  ],
+  "cableSpawnChanceOverHeight": {
+    "serializedVersion": "2",
+    "m_Curve": [
+      {
+        "serializedVersion": "3",
+        "time": 0,
+        "value": 1,
+        "inSlope": 0,
+        "outSlope": -0.6000000238418579,
+        "weightedMode": 0,
+        "inWeight": 0,
+        "outWeight": 0
+      },
+      {
+        "serializedVersion": "3",
+        "time": 1,
+        "value": 0.4000000059604645,
+        "inSlope": -0.6000000238418579,
+        "outSlope": 0,
+        "weightedMode": 0,
+        "inWeight": 0,
+        "outWeight": 0
+      }
+    ],
+    "m_PreInfinity": 2,
+    "m_PostInfinity": 2,
+    "m_RotationOrder": 4
+  },
+  "sideSignPoints": [],
+  "possibleNeonSigns": [],
+  "signsPerBuildingRange": {
+    "x": 0,
+    "y": 0
+  },
+  "horizontalSignOffset": {
+    "x": 0,
+    "y": 4.046000003814697,
+    "z": 0
+  },
+  "featuresSmokestack": false,
+  "spawnInterval": {
+    "x": 0.10000000149011612,
+    "y": 0.33000001311302185
+  },
+  "spritePrefab": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "spawnOffset": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  }
+}

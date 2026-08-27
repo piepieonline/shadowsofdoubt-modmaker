@@ -1,6 +1,9 @@
 import { getFile, tryGetFolder, writeFile } from '../../../core/fs.js';
 import { createFileIfMissing, deepClone } from '../../../core/files.js';
 import { makeCSVSafe, makeNameFieldSafe } from '../../../core/strings.js';
+import {
+    EDITED_FIELD, KEY_FIELD, TEXT_FIELD, editedStamp, quote, rowKey, splitRow, unquoteText,
+} from '../../../core/stringsCsv.js';
 import { DDS_BLOCKS_VIRTUAL, placeStringsFile, readManifest, stringsFileHandle, withMapping, writeManifest } from './ddsManifest.js';
 import { loadI18n } from '../index.js';
 
@@ -48,12 +51,33 @@ export function cloneFile(file) {
     return deepClone(file);
 }
 
+/** A document's name field: the author's name for it, behind the mod's. */
+const documentName = (name) => makeNameFieldSafe(`${window.selectedMod.modName}-${name}`);
+
+/**
+ * The name of a rung below the document that was asked for.
+ *
+ * The author's name is carried down whole and the rung's own kind put on the end here,
+ * rather than each level appending to what it was handed -- which named a new tree's
+ * block <name>-Message-Block, after the rung between them.
+ */
+const rungName = (name, rung) => (rung ? `${name}-${rung}` : name);
+
 /**
  * A new document of `type`, written into the mod, returning its GUID.
  *
+ * A tree carries a message and a message carries a block, so creating one creates the
+ * levels below it -- which is why the name and the line are carried down rather than
+ * asked for again. The author named the thing they asked for; the rungs below it are
+ * named after it, so a mod's panel reads as documents rather than as Default-anything.
+ *
  * @param templateData an existing document to copy; omitted for a fresh one
+ * @param name         the author's name for it, without the mod's name in front
+ * @param line         the English line the block at the bottom of it says
+ * @param rung         what this level is, when it is one of the levels below the
+ *                     document that was actually asked for
  */
-export async function createNewFile(type, templateData) {
+export async function createNewFile(type, templateData, { name, line, rung } = {}) {
     /**
      * Fresh, or a copy of something that already exists.
      *
@@ -85,9 +109,13 @@ export async function createNewFile(type, templateData) {
             return createNewFileImpl('tree', async newContent => {
                 if (fromTemplate) {
                     newContent.messages.push(cloneTemplate('treeMessage'));
-                    newContent.messages[0].msgID = await createNewFile('message');
+                    // Named after the tree it belongs to: it is a rung of this document
+                    // rather than a document anyone went looking for.
+                    newContent.messages[0].msgID = await createNewFile('message', undefined, {
+                        name, line, rung: 'Message',
+                    });
                     newContent.messages[0].instanceID = crypto.randomUUID();
-                    newContent.name = makeNameFieldSafe(window.selectedMod.modName + "-" + 'DefaultTree');
+                    newContent.name = documentName(name ?? 'DefaultTree');
                     newContent.startingMessage = newContent.messages[0].instanceID;
                 } else {
                     newContent.name += " (Clone)";
@@ -97,24 +125,27 @@ export async function createNewFile(type, templateData) {
             return createNewFileImpl('message', async newContent => {
                 if (fromTemplate) {
                     newContent.blocks.push(cloneTemplate('messageBlock'));
-                    newContent.blocks[0].blockID = await createNewFile('block');
+                    newContent.blocks[0].blockID = await createNewFile('block', undefined, {
+                        name, line, rung: 'Block',
+                    });
                     newContent.blocks[0].instanceID = crypto.randomUUID();
                     // Said 'DefaultBlock' while nothing could reach it, which would now
                     // name every new message after the wrong kind of document.
-                    newContent.name = makeNameFieldSafe(window.selectedMod.modName + "-" + 'DefaultMessage');
+                    newContent.name = documentName(name ? rungName(name, rung) : 'DefaultMessage');
                 } else {
                     newContent.name += " (Clone)";
                 }
             });
         case 'block':
             return createNewFileImpl('block', async newContent => {
-                // Dismissing the prompt means an empty line, not a crash: this is now
-                // reached partway through creating a tree, and throwing there would
-                // leave the tree and its message half-written.
-                let line = JSON.parse(makeCSVSafe(prompt(`English Line`) ?? ''));
-                newContent.name = makeNameFieldSafe(window.selectedMod.modName + "-" + line.substring(0, 20));
+                // Quoted as the CSV needs it, which is also what goes in the document's
+                // name when there is nothing else to name it after. No line is an empty
+                // row rather than no row: the block is keyed by GUID, and a block with
+                // nothing to resolve to reads in the game as a missing string.
+                const text = JSON.parse(makeCSVSafe(line ?? ''));
+                newContent.name = documentName(name ? rungName(name, rung) : text.substring(0, 20));
 
-                await addOrModifyStrings(newContent.id, line);
+                await addOrModifyStrings(newContent.id, text);
             });
     }
 }
@@ -129,56 +160,6 @@ export async function createFileIfNotExisting(type, guid) {
 }
 
 /**
- * A row as its fields, with quoted fields kept whole.
- *
- * A quote in these files is load bearing: a field holding a comma is quoted precisely
- * so that the comma is not a separator. Splitting on every comma tears such a row into
- * pieces, and rejoining the pieces is not the row it came from.
- *
- * The quotes are kept in the field text, so that fields.join(',') gives back the line
- * exactly -- what a rewrite does not touch, it must not alter.
- */
-function splitRow(line) {
-    const fields = [];
-    let field = '';
-    let quoted = false;
-
-    for (const char of line) {
-        if (char === '"') {
-            quoted = !quoted;
-            field += char;
-        } else if (char === ',' && !quoted) {
-            fields.push(field);
-            field = '';
-        } else {
-            field += char;
-        }
-    }
-
-    fields.push(field);
-    return fields;
-}
-
-/**
- * The GUID a row is keyed by: its first field, however it is written.
- *
- * The game's own CSVs quote their fields, so a mod that began as a copy of one has rows
- * reading `"guid",,"text",...`. Reading already allowed for that -- loadI18n strips the
- * quotes off the GUID, and so does reverse search -- but writing did not: a row was
- * found with `startsWith(id)`, which a quoted row never satisfies.
- *
- * That was not a failure to find it. The file was tested with `includes(id)`, which a
- * quoted row does satisfy, so the write took the overwrite path, matched no line, and
- * wrote the file back exactly as it was. Every edit to such a file did nothing at all,
- * silently: no new row, no changed row, no error.
- */
-const rowId = (line) => splitRow(line)[0].replaceAll('"', '').trim();
-
-/** The columns this app has a view on. A row holds more, and they are not ours. */
-const TEXT_FIELD = 2;
-const EDITED_FIELD = 6;
-
-/**
  * Write a line of block text into the mod's strings CSV.
  *
  * Which file that is comes from the manifest: a mod that maps dds.blocks.csv somewhere
@@ -188,10 +169,15 @@ const EDITED_FIELD = 6;
  * One question decides how it is written -- is there already a row for this GUID? --
  * so it is asked once, of the rows themselves, rather than once of the file's text and
  * again of each line in a way that could disagree with it.
+ *
+ * The key and the line are quoted whichever way the row is written, which is the shape
+ * the game's own CSVs are in and the shape the strings editor writes. `content` arrives
+ * quoted already when it holds a comma (see makeCSVSafe), so it is unquoted first --
+ * quoting it twice would put the quotes in the string the player reads.
  */
 export async function addOrModifyStrings(id, content) {
-    let d = new Date();
-    let datestring = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2) + " " + ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear();
+    const datestring = editedStamp();
+    const line = quote(unquoteText(content));
 
     const ddsFolder = await ddsContentFolder(window.selectedMod.baseFolder, true);
     const manifest = await readManifest(ddsFolder);
@@ -208,25 +194,25 @@ export async function addOrModifyStrings(id, content) {
     const stringsFileContent = (await (await csvHandle.getFile()).text());
 
     const lines = stringsFileContent.split('\n');
-    const existing = lines.findIndex((line) => rowId(line) === id);
+    const existing = lines.findIndex((row) => rowKey(row) === id);
 
     if (existing !== -1) {
-        // Only the two columns this app knows the meaning of. A row can carry more --
-        // the game's own files do -- and rewriting the whole line threw that away along
-        // with whatever quoting its author had a reason for.
+        // Only the columns this app knows the meaning of. A row can carry more -- the
+        // game's own files do -- and rewriting the whole line threw that away.
         const fields = splitRow(lines[existing]);
         while (fields.length <= EDITED_FIELD) fields.push('');
 
-        fields[TEXT_FIELD] = content;
+        fields[KEY_FIELD] = quote(id);
+        fields[TEXT_FIELD] = line;
         fields[EDITED_FIELD] = datestring;
 
         lines[existing] = fields.join(',');
         await writeFile(csvHandle, lines.join('\n'), false);
     } else {
-        await writeFile(csvHandle, `\n${id},,${content},,,,${datestring}`, true);
+        await writeFile(csvHandle, `\n${quote(id)},,${line},,,,${datestring}`, true);
     }
 
-    // This file may be open as text, in which case it is now a row behind. The handle
+    // This file may be open in the strings editor, which is now a row behind. The handle
     // goes with the path because it is the file itself, which is the only thing that
     // says whether it is the one on screen.
     const { refreshOpenStringsFile } = await import('./stringsEditor.js');

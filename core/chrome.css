@@ -313,6 +313,87 @@ body {
     color: var(--pico-del-color);
 }
 
+#tutorials-list {
+    padding: 0;
+    margin: 0;
+}
+
+/* One tutorial per row, the whole row being the thing you click. Title and summary
+   read as a block, so the button's own centring has to be undone. */
+.tutorial-row {
+    list-style: none;
+
+    button {
+        width: 100%;
+        text-align: left;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/*
+ * Keep the app usable while a walkthrough is running.
+ *
+ * driver.js expects to own the screen: driver.css turns off pointer events for the
+ * whole document and turns them back on only for the popover and the one highlighted
+ * element. That suits a feature tour, where the highlighted control is the only thing
+ * to press, and is exactly wrong here -- a step points at the button that opens a
+ * dialog, and the work then happens *in* that dialog, which is neither.
+ *
+ * So the app gets its clicks back, and only the backdrop is made inert. Safe because
+ * nothing reads overlay clicks: the runner sets allowClose false and a walkthrough is
+ * ended through the popover's own close button, which is not part of the overlay.
+ *
+ * !important throughout because driver.css is fetched when a walkthrough starts, so it
+ * lands in the document after this file and would otherwise win on order. The overlay
+ * rule carries the same `body.driver-active` prefix so that it outranks the rule above
+ * rather than being overridden by it.
+ */
+body.driver-active * {
+    pointer-events: auto !important;
+}
+
+body.driver-active .driver-overlay,
+body.driver-active .driver-overlay path {
+    pointer-events: none !important;
+}
+
+/*
+ * Back and forward either side of the step count.
+ *
+ * driver.js puts the count on the left and groups both buttons together on the right,
+ * so the group is dissolved with `display: contents` and the three are placed in
+ * columns of their own. Equal outer tracks rather than space-between: the count stays
+ * dead centre on the first step, where there is no back button to balance it.
+ *
+ * Prefixed with body.driver-active to outrank driver.css, which is fetched when a
+ * walkthrough starts and so lands in the document after this file. The display needs
+ * !important on top of that: driver.js sets it inline, which no selector can outweigh.
+ */
+body.driver-active .driver-popover-footer {
+    display: grid !important;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+body.driver-active .driver-popover-navigation-btns {
+    display: contents;
+}
+
+body.driver-active .driver-popover-prev-btn {
+    grid-column: 1;
+    justify-self: start;
+}
+
+body.driver-active .driver-popover-progress-text {
+    grid-column: 2;
+}
+
+body.driver-active .driver-popover-next-btn {
+    grid-column: 3;
+    justify-self: end;
+}
+
 /* The active flow needs a folder that is not set. */
 #folders-open[data-folders-missing]::after {
     content: " !";

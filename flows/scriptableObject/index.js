@@ -3,6 +3,7 @@ import { assertModSelected, shouldSave, toSaveSafeJSON, writeWholeFile } from '.
 import { createEditLoop } from '../../core/document.js';
 import { decorateValueNodes, NodeKind } from '../../core/valueNodes.js';
 import { getJSONPointer } from '../../core/jsonPointer.js';
+import { describeField, fieldPath, resolveField } from '../../core/typeHints.js';
 import { parseEditedValue } from '../../core/valueEditors.js';
 import { fastElement } from '../../core/dom.js';
 import { addTreeElement, deleteTree, createInputElement, createSOSelectElement, createEnumSelectElement } from './scripts/jsonTreeAdditions.js';
@@ -119,30 +120,23 @@ export async function loadFileContent(path, loadedFile, readOnly, type) {
         return data;
     }
 
-    function mapSplitPath(typeList)
-    {
-        if(typeList.length == 1)
-        {
-            typeList = [fileType, ...typeList];
+    /**
+     * The game's name for the type a path lands on, or undefined if the layout does not
+     * describe it.
+     *
+     * This was `mapSplitPath`, a recursion that mutated the array it was handed and threw
+     * on an unknown type. It also carried a branch returning `window.typeMap[type]` -- the
+     * list of asset *names* where a type name was expected -- reachable only by a path
+     * continuing past a reference, which cannot happen: a reference is a leaf string.
+     */
+    function typeAtPath(splitPath) {
+        // The document's own `type` field names the file's type rather than holding a
+        // value of one, so the layout has nothing to say about it.
+        if (splitPath.length === 2 && splitPath[0] === fileType && splitPath[1] === 'type') {
+            return 'FileType';
         }
-        
-        if(typeList.length == 2)
-        {
-            if(typeList[0] === fileType && typeList[1] === "type") {
-                return "FileType";
-            } else if(typeList[0] !== fileType && window.typeMap[typeList[0]]) {
-                return window.typeMap[typeList[0]];
-            } else {
-                var soType = window.typeLayout[typeList[0]][typeList[1]]?.Item1;
-                return soType;
-            }
-        }
-        else
-        {
-            typeList[1] = window.typeLayout[typeList[0]][typeList[1]]?.Item1;
-            typeList.splice(0, 1);
-            return mapSplitPath(typeList);
-        }
+
+        return resolveField(splitPath, window.typeLayout)?.type;
     }
 
     async function runTreeSetup() {
@@ -155,34 +149,22 @@ export async function loadFileContent(path, loadedFile, readOnly, type) {
             document.querySelector('#manifest_panel .files-order ul').replaceChildren();
         }
 
-        // Set paths & titles
-        tree.findAndHandle(item => {
-            return true;
-        }, item => {
-            calculatePathToItemGeneric(item);
+        // What this field is for, if anything says. The lookup used to hop exactly one
+        // level up the path, so anything deeper than a type's own field fell into a bare
+        // catch and quietly had no tooltip at all -- and the two halves of it disagreed on
+        // an array element, one keyed by path and the other by label.
+        //
+        // This pass also used to assign pathToItem and pathToItemGeneric to every node.
+        // Nothing read them: core/document.js identifies nodes by JSON Pointer, and the
+        // split-path form the tooltip wanted is fieldPath() in core/typeHints.js.
+        tree.findAndHandle(() => true, item => {
+            const labelEle = item.el.querySelector('.jsontree_label');
+            if (!labelEle) return;
 
-            // Add tooltip text
-            var splitPath = [fileType, ...item.pathToItemSplit];
-
-            try
-            {
-                if(splitPath.length > 2) {
-                    splitPath[splitPath.length - 2] = window.typeLayout[splitPath.at(-3)][splitPath.at(-2)].Item1;
-                }
-            } catch {} // Nothing found
-
-            var labelEle = item.el.querySelector('.jsontree_label');
-            try
-            {
-                labelEle.title = window.soCustomDescriptions[splitPath.at(-2)][splitPath.at(-1)] || "";
-            } catch {}
-            
-            try
-            {
-                let officialDescription = window.typeLayout[splitPath.at(-2)][item.label].Item3 || "";
-                if(labelEle.title != "" && officialDescription != "") labelEle.title += "\n\n";
-                if(officialDescription != "") labelEle.title += 'Official description: ' + officialDescription;
-            } catch {}
+            labelEle.title = describeField([fileType, ...fieldPath(item)], {
+                typeLayout: window.typeLayout,
+                descriptions: window.fieldDescriptions,
+            });
         });
 
         // Auto-expand the useful keys
@@ -233,8 +215,8 @@ export async function loadFileContent(path, loadedFile, readOnly, type) {
         // ScriptableObject, or something the user must not edit.
         decorateValueNodes(tree, {
             resolveNode: (item, valueEl) => {
-                const splitPath = [fileType, ...item.pathToItemSplit];
-                let mappedType = mapSplitPath(splitPath);
+                const splitPath = [fileType, ...fieldPath(item)];
+                let mappedType = typeAtPath(splitPath);
 
                 // copyFrom points at another file of this same type.
                 if (splitPath.at(-1) === 'copyFrom') mappedType = fileType;
@@ -341,7 +323,7 @@ export async function loadFileContent(path, loadedFile, readOnly, type) {
                 var ele = item.el.querySelector('.jsontree_label');
                 ele.addEventListener('contextmenu', async (e) => {
                     e.preventDefault();
-                    addNewArrayElement([fileType, ...item.pathToItemSplit], getJSONPointer(item));
+                    addNewArrayElement([fileType, ...fieldPath(item)], getJSONPointer(item));
                 });
             });
         }
@@ -351,7 +333,7 @@ export async function loadFileContent(path, loadedFile, readOnly, type) {
                 alert('Please select a mod to save in first');
                 throw 'Please select a mod to save in first';
             }
-            let mappedType = mapSplitPath(splitPath);
+            let mappedType = typeAtPath(splitPath);
 
             let newContent;
             if(window.typeMap[mappedType])
@@ -370,30 +352,6 @@ export async function loadFileContent(path, loadedFile, readOnly, type) {
             ]);
         }
 
-    }
-
-    function calculatePathToItemGeneric(actualItem) {
-        if(actualItem.pathToItemGeneric === undefined) {
-            actualItem.pathToItem = actualItem.label.toString();
-            actualItem.pathToItemGeneric = actualItem.label.toString().replace(/\d+/, '-');
-            actualItem.pathToItemSplit = []
-
-            if(actualItem.label.toString().replace(/\d+/, '') !== '') {
-                actualItem.pathToItemSplit.splice(0, 0, actualItem.label.toString());
-            }
-
-            let item = actualItem.parent;
-            while(item.label != null) {
-                actualItem.pathToItem = item.label.toString() + '/' + actualItem.pathToItem;
-                actualItem.pathToItemGeneric = item.label.toString().replace(/\d+/, '-') + '/' + actualItem.pathToItemGeneric;
-
-                if(item.label.toString().replace(/\d+/, '') !== '') {
-                    actualItem.pathToItemSplit.splice(0, 0, item.label.toString());
-                }
-
-                item = item.parent;
-            }
-        }
     }
 
     async function copySource() {

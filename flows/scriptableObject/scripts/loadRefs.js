@@ -4,13 +4,15 @@
  * See refs/README.md for what each file is and who writes it.
  */
 import soDefaults from '../../../refs/generated/soDefaults.json' with { type: 'json' };
-import soTypeLayout from '../../../refs/generated/soTypeLayout.json' with { type: 'json' };
 import soAssetsByType from '../../../refs/generated/soAssetsByType.json' with { type: 'json' };
-import soEnums from '../../../refs/generated/soEnums.json' with { type: 'json' };
 import ddsContentIndex from '../../../refs/generated/ddsContentIndex.json' with { type: 'json' };
 import soPathIds from '../../../refs/generated/soPathIds.json' with { type: 'json' };
 
-import soCustomDescriptions from '../../../refs/authored/soFieldDescriptions.json' with { type: 'json' };
+import fieldDescriptions from '../../../refs/authored/fieldDescriptions.json' with { type: 'json' };
+
+// The type layout and the enums are shared with the DDS flow, and composed there so the
+// two cannot disagree about what a type is. See core/refs.js.
+import { enums, typeLayout as gameTypeLayout } from '../../../core/refs.js';
 
 import onlineTypes from '../../../refs/assets/index.json' with { type: 'json' };
 
@@ -19,153 +21,6 @@ import onlineTypes from '../../../refs/assets/index.json' with { type: 'json' };
  * the flow's globals on every activation, because a module body runs only once.
  * See the loadRefs note in core/flowRegistry.js.
  */
-const basicTypeLayouts = {
-    Vector2: {
-        x: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        y: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        }
-    },
-    Vector2Int: {
-        x: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        y: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        }
-    },
-    Vector3: {
-        x: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        y: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        z: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        }
-    },
-    Vector3Int: {
-        x: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        y: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        z: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        }
-    },
-    Color: {
-        r: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        g: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        b: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        a: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        }
-    },
-    AnimationCurve: {
-        serializedVersion: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        m_Curve: {
-            "Item1": "AnimationCurve.Keyframe",
-            "Item2": true,
-            "Item3": ""
-        },
-        m_PreInfinity: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        m_PostInfinity: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        m_RotationOrder: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        }
-    },
-    "AnimationCurve.Keyframe": {
-        inTangent: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        inWeight: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        outTangent: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        outWeight: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        time: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        value: {
-            "Item1": "Single",
-            "Item2": false,
-            "Item3": ""
-        },
-        weightedMode: {
-            "Item1": "WeightedMode",
-            "Item2": false,
-            "Item3": ""
-        },
-    }
-};
-
 const templates = {
     MurderManifest: {
         enabled: true,
@@ -189,20 +44,7 @@ const typeMap = {
     ...soAssetsByType
 };
 
-const enums = {
-    Boolean: [
-        'false',
-        'true'
-    ],
-    WeightedMode: [
-        'None',
-        'In',
-        'Out',
-        'Both'
-    ],
-    ...soEnums
-};
-
+/** The game's types, plus the manifest file, which is this tool's rather than the game's. */
 const typeLayout = {
     Manifest: {
         fileOrder: {
@@ -216,8 +58,7 @@ const typeLayout = {
             "Item3": "Should we wait for this manifest to have loaded before we start loading?"
         }
     },
-    ...basicTypeLayouts,
-    ...soTypeLayout
+    ...gameTypeLayout
 };
 
 const basicTypeTemplates = {
@@ -246,13 +87,12 @@ const ddsMap = {
 
 export default {
     onlineTypes,
-    basicTypeLayouts,
     templates,
     typeMap,
     enums,
     typeLayout,
     basicTypeTemplates,
     pathIdMap,
-    soCustomDescriptions,
+    fieldDescriptions,
     ddsMap,
 };

@@ -9,14 +9,18 @@
  * reference data, and removes it when another flow's markup takes over.
  */
 import {
-    setIdAndLoad, loadFromGUI, newFile,
+    setIdAndLoad, newFile,
     showBrowse, updateBrowse, updateBrowseTypeahead, showReverseSearch,
     updateRSearch, updateRSearchResultsTable, showHelp, openModal, closeModal,
 } from './scripts/ui.js';
+import {
+    showNewDdsFile, closeNewDdsFile, updateNewDdsFileForm, submitNewDdsFile,
+} from './scripts/newFileDialog.js';
 import { toggleManifestPanel } from './scripts/manifestPanel.js';
 
 export default {
-    setIdAndLoad, loadFromGUI, newFile,
+    setIdAndLoad, newFile,
+    showNewDdsFile, closeNewDdsFile, updateNewDdsFileForm, submitNewDdsFile,
     showBrowse, updateBrowse, updateBrowseTypeahead, showReverseSearch,
     updateRSearch, updateRSearchResultsTable, showHelp, openModal, closeModal,
     toggleDdsManifestPanel: toggleManifestPanel,

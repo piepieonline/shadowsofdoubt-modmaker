@@ -1,5 +1,5 @@
 /**
- * A mod's strings CSV, edited as text.
+ * A mod's strings CSV, edited as the list of strings it is.
  *
  * These files are rows of `guid,,text,,,,timestamp`, and everything the app wrote into
  * one it wrote a row at a time -- through addOrModifyStrings, keyed by a block's GUID.
@@ -7,9 +7,11 @@
  * block references any more, or a file DDS never names at all (room names, job titles,
  * evidence names) had no way to be touched here.
  *
- * So the editor is the file, as text. No columns, no parsing, no validation -- a CSV
- * this app half-understood would be worse than one it left alone, and the shape of a
- * row is the author's to keep.
+ * The format is fixed and only two of its seven columns are strings -- the key and the
+ * text -- so that is what the editor shows: a pair of boxes per row, a button to drop
+ * one and a button to add one. The other five columns are carried back out of each row
+ * unchanged, because they are the file author's and this app has no view on them. See
+ * core/stringsCsv.js for the row model and what it does and does not touch.
  *
  * There is one window for it, beside the tree -> message -> block drill-down rather
  * than inside it. A strings file is not a level of that cascade, and the reason to have
@@ -20,9 +22,10 @@
  * loads (see createDummyKeys), so editing the file a mod's block text lives in leaves
  * both stale. Saving reseeds them; see afterSave.
  */
-import { fastElement } from '../../../core/dom.js';
+import { fastDiv, fastElement } from '../../../core/dom.js';
 import { readFileContent, writeFile } from '../../../core/fs.js';
 import { assertModSelected, shouldSave } from '../../../core/persistence.js';
+import { editedStamp, parseStringsCsv, serialiseStringsCsv } from '../../../core/stringsCsv.js';
 import { closeWindow, createTreeWindow } from '../../../core/treeWindow.js';
 import { DDS_BLOCKS_VIRTUAL, readManifest, stringsFileHandle, toReal, toVirtual } from './ddsManifest.js';
 import { ddsContentFolder } from './modFileManager.js';
@@ -41,6 +44,17 @@ export const STRINGS_WINDOW_ID = 'strings-window';
  * file I have open" asks the handle. See isOpenFile.
  */
 let openFile = null;
+
+/**
+ * Writes, one after another.
+ *
+ * A row is two boxes, and moving from one to the other blurs the first -- so with
+ * autosave on, a write starts while the author is still typing the rest of the row.
+ * Left to run as they are asked for, two of those race: both read the rows, both write
+ * the file, and whichever finishes last is what is on disk. Chaining them means the
+ * second reads the rows the first has already written.
+ */
+let writes = Promise.resolve();
 
 const basename = (path) => path.split('/').at(-1);
 
@@ -96,8 +110,13 @@ export async function openStringsFile(realPath) {
         // Null until the file exists. Saving one that does not yet puts it here.
         handle,
         dirty: false,
+        // Bumped by every edit, so a write can tell whether what it is about to call
+        // saved is still what is on screen. See save.
+        revision: 0,
         windowEl: null,
-        textarea: null,
+        // The lines held back from the top of the file, written out above the rows.
+        headers: [],
+        rows: [],
     };
 
     render(text);
@@ -126,23 +145,193 @@ function render(text) {
         },
     });
 
-    const textarea = fastElement('textarea', 'strings-text');
-    textarea.value = text;
-    textarea.spellcheck = false;
-    textarea.setAttribute('aria-label', `${openFile.virtual} contents`);
-    textarea.addEventListener('input', () => markDirty(true));
-    // Autosave writes on the way out, the way an edited tree value does. With autosave
-    // off this does nothing and the Save button is the only writer.
-    textarea.addEventListener('blur', () => save(false));
-    treeEl.appendChild(textarea);
+    const editor = fastDiv('strings-editor');
+
+    // Said rather than hidden: the file has lines in it that the list does not show,
+    // and an author who cannot see them has no way to know they are being kept.
+    const headerNote = fastElement('p', 'strings-headers');
+
+    // A real table, so that the column a box is in is something a screen reader can
+    // say. Every row's boxes are otherwise a wall of identically labelled fields.
+    const table = fastElement('table', 'strings-table');
+    // The third column is a button per row, and each of those says what it removes.
+    // Its heading is for anyone who cannot see that, so it is not taking up width.
+    table.innerHTML = '<thead><tr>'
+        + '<th scope="col">Key</th><th scope="col">Text</th>'
+        + '<th scope="col"><span class="strings-unseen">Remove</span></th>'
+        + '</tr></thead>';
+
+    const body = fastElement('tbody');
+    table.appendChild(body);
+
+    const scroll = fastDiv('strings-scroll');
+    scroll.appendChild(table);
+
+    const add = fastElement('button', 'strings-add');
+    add.type = 'button';
+    add.textContent = '+ Add row';
+    add.addEventListener('click', () => {
+        // Focused, because the reason to add a row is to type in it -- and because an
+        // added row with nothing in it is not written, so nothing has happened yet.
+        addRow({ key: '', text: '' }).keyInput.focus();
+        markDirty(true);
+        validate();
+    });
+
+    editor.append(headerNote, scroll, add);
+    treeEl.appendChild(editor);
 
     openFile.windowEl = windowEl;
-    openFile.textarea = textarea;
+    openFile.bodyEl = body;
+    openFile.headerNoteEl = headerNote;
+
+    fill(text);
+}
+
+/** Put a file's contents in the window, replacing whatever rows were there. */
+function fill(text) {
+    const { headers, rows } = parseStringsCsv(text);
+
+    openFile.headers = headers;
+    openFile.rows = [];
+    openFile.bodyEl.replaceChildren();
+
+    for (const row of rows) addRow(row);
+
+    openFile.headerNoteEl.textContent = headers.length === 1
+        ? '1 header line at the top of this file, kept as it is.'
+        : `${headers.length} header lines at the top of this file, kept as they are.`;
+    openFile.headerNoteEl.hidden = headers.length === 0;
+
+    validate();
+}
+
+/** One of the two boxes in a row. */
+function fieldInput(className, label, value, onInput) {
+    const input = fastElement('input', className);
+    input.type = 'text';
+    input.value = value;
+    input.spellcheck = false;
+    input.setAttribute('aria-label', label);
+
+    input.addEventListener('input', () => {
+        onInput(input.value);
+        markDirty(true);
+        validate();
+    });
+
+    // Autosave writes on the way out, the way an edited tree value does. With autosave
+    // off this does nothing and the Save button is the only writer.
+    input.addEventListener('blur', () => save(false));
+
+    return input;
+}
+
+/**
+ * Append a row to the list.
+ *
+ * `fields` comes along for the ride: it is the row as it was read, and the columns
+ * this app has no view on are only still there because it was kept. A row added here
+ * has none, and is written as a fresh one.
+ */
+function addRow({ key, text, fields }) {
+    const row = { key, text, fields };
+
+    row.el = fastElement('tr', 'strings-row');
+
+    row.keyInput = fieldInput('strings-key', 'Key', key, (value) => {
+        row.key = value;
+        labelRemove(row);
+    });
+    row.valueInput = fieldInput('strings-value', 'Text', text, (value) => { row.text = value; });
+
+    // Under the key box rather than beside the row: both things that can be wrong with
+    // a row are wrong with its key.
+    row.issueEl = fastElement('p', 'strings-issue');
+    row.issueEl.hidden = true;
+
+    row.removeButton = fastElement('button', 'strings-remove');
+    row.removeButton.type = 'button';
+    row.removeButton.textContent = '×';
+    row.removeButton.addEventListener('click', () => removeRow(row));
+    labelRemove(row);
+
+    const keyCell = fastElement('td');
+    keyCell.append(row.keyInput, row.issueEl);
+
+    const valueCell = fastElement('td');
+    valueCell.appendChild(row.valueInput);
+
+    const removeCell = fastElement('td', 'strings-remove-cell');
+    removeCell.appendChild(row.removeButton);
+
+    row.el.append(keyCell, valueCell, removeCell);
+    openFile.bodyEl.appendChild(row.el);
+    openFile.rows.push(row);
+
+    return row;
+}
+
+/** Name the remove button by what it removes, since there is one per row. */
+function labelRemove(row) {
+    row.removeButton.setAttribute(
+        'aria-label', row.key === '' ? 'Remove the empty row' : `Remove ${row.key}`,
+    );
+}
+
+/**
+ * Drop a row.
+ *
+ * Written like an edit rather than immediately: removing a row is a decision, but it
+ * is the same kind of decision as retyping one, and the autosave switch is what says
+ * whether a decision reaches disk on its own.
+ */
+function removeRow(row) {
+    row.el.remove();
+    openFile.rows = openFile.rows.filter((other) => other !== row);
+
+    markDirty(true);
+    validate();
+    save(false);
+}
+
+/**
+ * Say what the game will not be able to read.
+ *
+ * Only two things, and both are about the key. What a line says is the author's, and a
+ * key that is not a GUID is not a mistake -- rooms and jobs are keyed by name -- so
+ * there is nothing to check about either.
+ */
+function validate() {
+    const keys = new Map();
+    for (const row of openFile.rows) {
+        if (row.key !== '') keys.set(row.key, (keys.get(row.key) ?? 0) + 1);
+    }
+
+    for (const row of openFile.rows) {
+        let issue = '';
+
+        if (row.key === '') {
+            // An empty row is one waiting to be typed in, and is not written at all.
+            if (row.text !== '') issue = 'No key: nothing can look this line up.';
+        } else if (keys.get(row.key) > 1) {
+            issue = 'Duplicate key: the game reads whichever row it finds first.';
+        }
+
+        row.issueEl.textContent = issue;
+        row.issueEl.hidden = issue === '';
+
+        // The string, not a bare attribute: Pico styles `[aria-invalid="true"]`.
+        if (issue === '') row.keyInput.removeAttribute('aria-invalid');
+        else row.keyInput.setAttribute('aria-invalid', 'true');
+    }
 }
 
 function markDirty(dirty) {
     openFile.dirty = dirty;
-    // Shown, because unsaved text here is text that a write from elsewhere will not
+    if (dirty) openFile.revision++;
+
+    // Shown, because unsaved rows here are rows that a write from elsewhere will not
     // overwrite and a reseed will not account for. See refreshOpenStringsFile.
     openFile.windowEl.toggleAttribute('data-dirty', dirty);
 }
@@ -154,20 +343,48 @@ function markDirty(dirty) {
  *              whether or not anything was typed, so autosave has nothing to do until
  *              something has been.
  */
-async function save(force) {
-    if (!openFile) return;
-    if (!force && !(openFile.dirty && shouldSave(false))) return;
+function save(force) {
+    if (!openFile) return Promise.resolve();
+
+    // Read now rather than in the write: this is the mod the edit was made in, and a
+    // write queued behind another has no other way to know it.
+    const file = openFile;
+    const mod = window.selectedMod;
+
+    const queued = writes.then(() => write(file, mod, force), () => write(file, mod, force));
+
+    // The queue itself must not be left rejected, or every write after a failed one is
+    // dropped. The caller still gets the failure, from `queued`.
+    writes = queued.catch(() => {});
+    return queued;
+}
+
+async function write(file, mod, force) {
+    if (!force && !(file.dirty && shouldSave(false))) return;
+
+    // The window can be closed between an edit and its write, and the file is still
+    // worth writing when it is -- but a different mod is a different DDSContent, and
+    // this file's path means something else under it, or nothing at all.
+    if (window.selectedMod !== mod) return;
 
     assertModSelected();
 
     const { ddsFolder } = await contentAndManifest(true);
-    const handle = await stringsFileHandle(ddsFolder, openFile.real, true);
-    await writeFile(handle, openFile.textarea.value, false);
+    const handle = await stringsFileHandle(ddsFolder, file.real, true);
+
+    // Read after the awaits, so a keystroke that landed while the folder was being
+    // resolved goes into this write rather than waiting for another.
+    const revision = file.revision;
+    await writeFile(handle, serialiseStringsCsv(file, editedStamp()), false);
 
     // Written for the first time, so there is now a file to be identified by.
-    openFile.handle = handle;
+    file.handle = handle;
 
-    markDirty(false);
+    // Only what is still on screen is marked saved. Clearing the flag for an edit this
+    // write did not include would leave that edit sitting there looking stored, and a
+    // write from elsewhere would then feel free to overwrite it.
+    if (file === openFile && file.revision === revision) markDirty(false);
+
     await afterSave(handle);
 }
 
@@ -200,8 +417,8 @@ async function afterSave(saved) {
  * Show what a write from elsewhere put in the file this window holds.
  *
  * addOrModifyStrings writes a row straight to disk, so an open editor is left looking
- * at what the file was a moment ago. Unsaved text is left exactly as it is: it is work
- * that re-reading would throw away, and the window marks itself as unsaved.
+ * at what the file was a moment ago. Unsaved rows are left exactly as they are: they
+ * are work that re-reading would throw away, and the window marks itself as unsaved.
  *
  * @param realPath the file that was written, below DDSContent
  * @param handle   that file, which is what it is actually recognised by
@@ -214,9 +431,7 @@ export async function refreshOpenStringsFile(realPath, handle) {
     // that did not exist and can now be identified by the one that does.
     openFile.handle = handle ?? openFile.handle;
 
-    openFile.textarea.value = openFile.handle
-        ? (await readFileContent(openFile.handle)) ?? ''
-        : '';
+    fill(openFile.handle ? (await readFileContent(openFile.handle)) ?? '' : '');
 }
 
 /**
@@ -225,9 +440,9 @@ export async function refreshOpenStringsFile(realPath, handle) {
  * @param discard skip the confirmation, for a close the user did not ask for
  */
 export function closeStringsWindow(discard) {
-    // Clicking any control moves focus out of the textarea first, so with autosave on
-    // the text is already written. With it off, this is the only thing between typing
-    // and losing it.
+    // Clicking any control moves focus out of the box first, so with autosave on the
+    // rows are already written. With it off, this is the only thing between typing and
+    // losing it.
     if (!discard && openFile?.dirty && !confirm('Discard unsaved changes to this file?')) return;
 
     closeWindow(document.getElementById(STRINGS_WINDOW_ID));

@@ -13,39 +13,10 @@
     flex-direction: column;
 }
 
-/* Layout is shared (.flow-bar); this is only what the Load group needs. Horizontal
-   spacing comes from the shared .flow-container gutter. */
+/* Layout is shared (.flow-bar); the bar is a row of links, as the case flow's is.
+   Horizontal spacing comes from the shared .flow-container gutter. */
 .editor > .flow-bar {
     margin-bottom: 0;
-
-    #select-guid-type {
-        min-width: 110px;
-    }
-
-    #path-to-read {
-        min-width: 320px;
-        text-align: center;
-    }
-
-    /* Pico stretches form controls to full width by default, which breaks a
-       horizontal toolbar. The group carries a form field's bottom margin as well,
-       which is a blank line under the bar and the reason this one used to stand
-       half again as tall as the case flow's. */
-    select, input, button, [role="group"] {
-        margin-bottom: 0;
-        width: auto;
-        white-space: nowrap;
-    }
-
-    /* What is left of the height difference is the padding Pico gives a form control
-       inside a role=group, which does not follow --pico-form-element-spacing-vertical.
-       The bar is one line of controls, not a form, so it is sized to its text: this
-       brings the row to the height of the case flow's, which is a line of links.
-       padding-block only, to leave the select room for its arrow. */
-    select, input, button {
-        padding-block: 0.15rem;
-        line-height: 1.4;
-    }
 }
 
 /* Panel on the left, trees filling the rest -- the case flow's shape. */
@@ -126,12 +97,12 @@
 }
 
 /*
- * The strings editor: a window holding one file as text.
+ * The strings editor: a window holding one file as the list of strings it is.
  *
- * The container is laid out as a column so the text takes whatever the editor bar
+ * The container is laid out as a column so the list takes whatever the editor bar
  * leaves, rather than being sized against a height it cannot know. Its own horizontal
- * resize is dropped: the textarea fills the width, so dragging the container narrower
- * only clips the text.
+ * resize is dropped: the table fills the width, so dragging the container narrower
+ * only squeezes the boxes.
  */
 /* Last in the row whenever it was opened. The drill-down reads left to right and this
    sits beside it -- but reloading a document appends its window afresh, so where this
@@ -146,21 +117,125 @@
     resize: none;
 }
 
-#trees .strings-text {
+#trees .strings-editor {
+    display: flex;
+    flex-direction: column;
     flex: 1;
-    min-height: 10rem;
-    width: 100%;
-    margin: 0 0 0.5rem;
-    padding: 0.4rem;
-    font-family: inherit;
-    font-size: inherit;
-    /* A row per line: wrapping a CSV hides where one row ends and the next starts. */
-    white-space: pre;
-    overflow: auto;
-    resize: none;
+    /* Both zero so this can be shrunk by the row and the column it sits in rather than
+       pushing its own size outwards: the window is shared with the drill-down, and a
+       list that insisted on its width would only overflow and scroll sideways. */
+    min-height: 0;
+    min-width: 0;
 }
 
-/* Text that has been typed and not yet written -- which a write from elsewhere leaves
+/* The rows scroll, not the window: the Add row button below them has to stay reachable
+   in a file with a thousand strings in it. */
+#trees .strings-scroll {
+    flex: 1;
+    min-height: 10rem;
+    overflow: auto;
+}
+
+#trees .strings-table {
+    width: 100%;
+    margin: 0;
+    /* So the widths below are the widths, rather than a suggestion the longest key in
+       the file can talk the browser out of. */
+    table-layout: fixed;
+}
+
+#trees .strings-table th {
+    /* The list scrolls under them, so which box is which stays readable. */
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--pico-background-color);
+}
+
+#trees .strings-table td {
+    /* Tight: a row is two boxes, and the padding a table cell would give them puts
+       fewer strings on screen without making any of them easier to read. */
+    padding: 0.15rem 0.25rem;
+    vertical-align: top;
+}
+
+#trees .strings-table input {
+    width: 100%;
+    margin: 0;
+    padding: 0.25rem 0.4rem;
+    height: auto;
+    font-size: 0.9em;
+}
+
+/* Keys are GUIDs more often than not, and a proportional font makes two of them hard
+   to tell apart at a glance. */
+#trees .strings-key {
+    font-family: monospace;
+    /* A shade smaller than the text beside it, so a GUID fits in the column when the
+       window is not sharing its width with the drill-down. */
+    font-size: 0.85em;
+}
+
+/* Enough for a GUID and no more, so that everything left over goes to the text -- which
+   is what an author has the file open to read. In a window too narrow for both, the key
+   gives way first: a truncated GUID is still recognisable by its ends, and a truncated
+   line of dialogue is not readable at all. */
+#trees .strings-table th:first-child,
+#trees .strings-table td:first-child {
+    width: min(22rem, 45%);
+}
+
+#trees .strings-table th:last-child,
+#trees .strings-remove-cell {
+    width: 2.5rem;
+}
+
+/* Read out, not drawn. */
+#trees .strings-unseen {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+#trees .strings-remove {
+    margin: 0;
+    padding: 0.25rem 0.5rem;
+    line-height: 1;
+    background: none;
+    border-color: transparent;
+    color: var(--pico-muted-color);
+}
+
+#trees .strings-remove:hover {
+    color: var(--pico-del-color);
+    border-color: currentColor;
+}
+
+#trees .strings-issue {
+    margin: 0.15rem 0 0;
+    font-size: 0.75em;
+    color: var(--pico-del-color);
+}
+
+/* The lines above the list that the list does not show. */
+#trees .strings-headers {
+    margin: 0 0 0.35rem;
+    font-size: 0.75em;
+    color: var(--pico-muted-color);
+}
+
+#trees .strings-add {
+    width: auto;
+    align-self: flex-start;
+    margin: 0.5rem 0;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.85em;
+}
+
+/* Rows that have been edited and not yet written -- which a write from elsewhere leaves
    alone rather than overwriting. See refreshOpenStringsFile. */
 #trees .file-window[data-dirty] .doc-title h2::after {
     content: " *";

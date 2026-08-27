@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, connectFolders, selectContent, queuePrompts, readFile, listDir, alerts, collectPageErrors, gotoFlow, fieldInput } from './support/harness.js';
+import { installFsHarness, seedFs, connectFolders, selectContent, readFile, listDir, alerts, collectPageErrors, gotoFlow, fieldInput, openDdsDocument, addDdsContent } from './support/harness.js';
 import {
     ddsManifestFixture, ddsManifestNoBlocksFixture, ddsManifestMixedFixture,
     ddsManifestBrokenFixture, ddsBareFixture, ddsFixture,
@@ -28,8 +28,7 @@ async function openFlatMod(page, fixture = ddsManifestFixture) {
 
 /** Load the vanilla tree, which cascades down to the block the mod has text for. */
 async function loadBlock(page) {
-    await page.evaluate((g) => { document.getElementById('path-to-read').value = g; }, TREE_GUID);
-    await page.getByRole('button', { name: 'Load', exact: true }).click();
+    await openDdsDocument(page, TREE_GUID);
     await page.locator('#file-window-2 .jsontree_child-nodes').first().waitFor();
 }
 
@@ -80,10 +79,10 @@ test('a mod with nothing scaffolded gets its layout only as it is written', asyn
     // only there to make the empty folder something OPFS can hold.)
     expect(await listDir(page, 'Mods/BareMod/Content/DDSContent')).toEqual(['.keep']);
 
-    // A new block asks for its English line, which is what reaches a strings file.
-    await queuePrompts(page, ['The first line this mod has']);
-    await page.selectOption('#select-guid-type', 'block');
-    await page.getByRole('button', { name: 'New block' }).click();
+    // A new block carries an English line, which is what reaches a strings file.
+    await addDdsContent(page, {
+        type: 'block', name: 'FirstBlock', line: 'The first line this mod has',
+    });
 
     // The mod has no manifest, so both go where the game reads them from.
     await expect.poll(() => listDir(page, 'Mods/BareMod/Content/DDSContent'))

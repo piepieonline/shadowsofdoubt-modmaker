@@ -174,6 +174,38 @@ export async function selectContent(page, modName, contentPath = '') {
 }
 
 /**
+ * Open a DDS document by GUID, and wait for it.
+ *
+ * There is no GUID field to type into any more: documents are opened from the file
+ * panel, from Browse..., or by following a reference out of a case file. None of those
+ * can name an arbitrary base game GUID from a test, so this calls what all three of
+ * them call.
+ *
+ * @param type for a GUID the reference data does not know -- a mod's own document
+ */
+export const openDdsDocument = (page, guid, type = null) =>
+    page.evaluate(([g, t]) => window.setIdAndLoad(g, t), [guid, type]);
+
+/**
+ * Create DDS content through the Add new... dialog.
+ *
+ * @param fields type, and then name and line for a document, or strings for a CSV
+ */
+export async function addDdsContent(page, { type, name, line = '', strings }) {
+    await page.locator('#new-file-button').click();
+    await page.selectOption('#new-dds-file-type', type);
+
+    if (type === 'strings') {
+        await page.selectOption('#new-dds-file-strings', strings);
+    } else {
+        await page.fill('#new-dds-file-name', name);
+        await page.fill('#new-dds-file-line', line);
+    }
+
+    await page.locator('#new-dds-file-submit').click();
+}
+
+/**
  * The `<input>` a tree renders over a field's value.
  *
  * Both flows edit values through one of these, so a value is read with toHaveValue

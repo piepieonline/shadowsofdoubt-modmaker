@@ -3,7 +3,8 @@
  *
  * The folder you point at is BepInEx/plugins: one subfolder per installed mod. What
  * we can edit is not the mod folder itself but a *content folder* -- one holding a
- * murdermanifest.sodso.json, a DDSContent directory, or both.
+ * murdermanifest.sodso.json, a DDSContent directory, a Floors directory, or any
+ * combination.
  *
  * Where that sits varies, and all of these occur in a real plugins folder:
  *
@@ -20,16 +21,25 @@ export const MANIFEST_FILE = 'murdermanifest.sodso.json';
 export const DDS_CONTENT_DIR = 'DDSContent';
 
 /**
+ * A building mod has no manifest of its own: it is a <Building>.sodso.json next to a
+ * Floors directory holding that building's floor blueprints. The preset is named after
+ * the building, so there is no fixed filename to look for -- the directory is the
+ * marker, exactly as DDSContent is.
+ */
+export const FLOORS_DIR = 'Floors';
+
+/**
  * How far below a mod to look. The deepest real example is three
  * (plugins/Cases/test), so four leaves headroom without walking whole asset trees.
  */
 const MAX_DEPTH = 4;
 
 /**
- * Directories never worth descending into. DDSContent is itself a marker -- what is
- * inside it is DDS/Trees and friends, not further content folders.
+ * Directories never worth descending into. DDSContent and Floors are themselves
+ * markers -- what is inside them is DDS/Trees and floor blueprints, not further
+ * content folders.
  */
-const SKIP = new Set([DDS_CONTENT_DIR, 'Strings', '.git', 'node_modules']);
+const SKIP = new Set([DDS_CONTENT_DIR, FLOORS_DIR, 'Strings', '.git', 'node_modules']);
 
 async function subdirectories(handle) {
     const dirs = [];
@@ -42,13 +52,15 @@ async function subdirectories(handle) {
 async function describe(handle) {
     let hasManifest = false;
     let hasDdsContent = false;
+    let hasFloors = false;
 
     for await (const entry of handle.values()) {
         if (entry.kind === 'file' && entry.name === MANIFEST_FILE) hasManifest = true;
         if (entry.kind === 'directory' && entry.name === DDS_CONTENT_DIR) hasDdsContent = true;
+        if (entry.kind === 'directory' && entry.name === FLOORS_DIR) hasFloors = true;
     }
 
-    return { hasManifest, hasDdsContent };
+    return { hasManifest, hasDdsContent, hasFloors };
 }
 
 /** The mods installed in a plugins folder, whether or not they hold content. */
@@ -70,10 +82,10 @@ export async function findContentFolders(modHandle) {
     const found = [];
 
     async function walk(handle, path, depth) {
-        const { hasManifest, hasDdsContent } = await describe(handle);
+        const { hasManifest, hasDdsContent, hasFloors } = await describe(handle);
 
-        if (hasManifest || hasDdsContent) {
-            found.push({ path, handle, hasManifest, hasDdsContent });
+        if (hasManifest || hasDdsContent || hasFloors) {
+            found.push({ path, handle, hasManifest, hasDdsContent, hasFloors });
             return;
         }
 
@@ -89,8 +101,9 @@ export async function findContentFolders(modHandle) {
 }
 
 /** How a content folder should read in a dropdown. */
-export function describeContentFolder({ path, hasManifest, hasDdsContent }) {
-    const kinds = [hasManifest && 'case', hasDdsContent && 'DDS'].filter(Boolean);
-    // A folder that was just created holds neither yet.
+export function describeContentFolder({ path, hasManifest, hasDdsContent, hasFloors }) {
+    const kinds = [hasManifest && 'case', hasDdsContent && 'DDS', hasFloors && 'building']
+        .filter(Boolean);
+    // A folder that was just created holds none of them yet.
     return `${path || '(mod root)'} — ${kinds.join(' + ') || 'new'}`;
 }

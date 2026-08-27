@@ -4,6 +4,7 @@ import { createEditLoop } from '../../core/document.js';
 import { decorateValueNodes, NodeKind } from '../../core/valueNodes.js';
 import { createTextEditor, createSelectEditor, parseEditedValue, renderedValue, setValue } from '../../core/valueEditors.js';
 import { getJSONPointer } from '../../core/jsonPointer.js';
+import { describeField, fieldPath, resolveField } from '../../core/typeHints.js';
 import { GUID_PATTERN } from '../../core/guid.js';
 import { addTreeElement } from './scripts/jsonTreeAdditions.js';
 import { cloneTemplate, createNewFile, createFileIfNotExisting, addOrModifyStrings, ddsContentFolder, modPath } from './scripts/modFileManager.js';
@@ -16,6 +17,22 @@ export const DUMMY_KEYS = {
 };
 
 export const LOCALISATION_MISSING_STRING = 'MISSING GUID IN dds.csv';
+
+/**
+ * What the game calls each kind of DDS document, so `refs/generated/soTypeLayout.json`
+ * can be walked from the right root.
+ *
+ * These are ordinary serialised game types; nothing about DDS content needs a reference
+ * table of its own. Note the layout has no inheritance metadata, so `name` and `id` --
+ * which every one of these inherits from `DDSComponent` -- resolve to nothing. See
+ * refs/README.md.
+ */
+const ROOT_TYPES = {
+    tree: 'DDSTreeSave',
+    msg: 'DDSMessageSave',
+    block: 'DDSBlockSave',
+    newspaper: 'NewspaperArticle',
+};
 
 
 export async function initAndLoad(path) {
@@ -81,7 +98,12 @@ export async function loadI18n() {
 export async function loadFile(path, thisTreeCount, parentData = null, openTheseIds = null) {
     var data = null;
     var fileType;
-    
+
+    // Read before the tree is built, not after: runTreeSetup() needs it, and the
+    // fileType below is assigned further down -- it was `undefined` for the whole of the
+    // first setup pass, and never covered `.newspaper` at all.
+    const rootType = ROOT_TYPES[path.split('.').at(-1)];
+
     var vanillaDataFile = await (await (await tryGetFile(window.dirHandleStreamingAssets, path.split('/')))?.getFile())?.text();
     var patchDataFile = window.selectedMod != null ? (await (await (await tryGetFile(window.selectedMod.baseFolder, modPath(path + '_patch')))?.getFile())?.text()) : null;
     
@@ -164,6 +186,19 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
     }
 
     async function runTreeSetup() {
+        // What each field is for, from the same reference data and the same resolver the
+        // case flow uses. Most DDS fields have no description written for them yet; those
+        // get no tooltip rather than an empty one.
+        tree.findAndHandle(() => true, item => {
+            const labelEle = item.el.querySelector('.jsontree_label');
+            if (!labelEle) return;
+
+            labelEle.title = describeField([rootType, ...fieldPath(item)], {
+                typeLayout: window.typeLayout,
+                descriptions: window.fieldDescriptions,
+            });
+        });
+
         // Auto-expand the useful keys
         let expandedNodes = ['messages', 'blocks', 'replacements']
         tree.expand(function (node) {
@@ -183,13 +218,28 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
 
         // Editing operations
 
-        // What kind of editor each value gets. This flow keys enums off the field
-        // name; anything else is edited as text.
+        // What kind of editor each value gets. This walks the game's type layout, as the
+        // case flow does; anything it cannot place is edited as text.
+        //
+        // It used to look the field's *name* up in a flat table of enums, which could not
+        // reach an array's elements -- those are labelled by index, so a participant's
+        // `triggers` were typed as raw numbers however carefully the table listed them.
         decorateValueNodes(tree, {
             resolveNode: (item, valueEl) => {
-                const options = window.enums[item.label];
+                const type = resolveField([rootType, ...fieldPath(item)], window.typeLayout)?.type;
+                const options = window.enums[type];
                 if (options?.length > 0) {
-                    return { kind: NodeKind.ENUM, options, currentValue: valueEl.innerText };
+                    // A boolean is an enum of ['false', 'true'], so it picks the control
+                    // up along with everything else -- but it is not stored as an index,
+                    // and the value on screen reads 'true' rather than 1.
+                    const isBoolean = type === 'Boolean';
+                    const rendered = valueEl.innerText;
+                    return {
+                        kind: NodeKind.ENUM,
+                        options,
+                        isBoolean,
+                        currentValue: isBoolean ? options.indexOf(rendered) : rendered,
+                    };
                 }
 
                 return {
@@ -206,7 +256,13 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
                     createSelectEditor(
                         valueEl, { options: node.options, selectedValue: node.currentValue },
                         async (value) => {
-                            await modifyTreeElement(getJSONPointer(item), parseInt(value));
+                            // Every other enum is stored as its index; a boolean is
+                            // stored as a boolean, and writing 1 into one would be a
+                            // document the game cannot read back.
+                            await modifyTreeElement(
+                                getJSONPointer(item),
+                                node.isBoolean ? value === '1' : parseInt(value)
+                            );
                         }
                     );
                 },

@@ -43,6 +43,14 @@ export const streamingAssets = {
         // expand it themselves and check it survives a tree rebuild.
         document: { background: '', fill: 1 },
         priority: 3,
+        // An enum inside an array, two levels down. Resolving this is what the flow
+        // could not do while enums were keyed by field name: every element of an array
+        // is labelled by its index, so `triggers` never matched.
+        participantA: { connection: 15, triggers: [12, 3] },
+        triggerPoint: 6,
+        // A Boolean, which the layout types and refs/authored/basicEnums.json makes a
+        // dropdown. It must not be stored as an enum index.
+        stopMovement: true,
         startingMessage: 'instance-1',
         messages: [
             { msgID: MSG_GUID, instanceID: 'instance-1', order: 0 },
@@ -111,6 +119,11 @@ export const soModDir = {
         // Not a real MurderMO field. Present so tests have something expandable,
         // which is what the edit loop's expanded-path restoration operates on.
         nested: { alpha: 'a', beta: 'b' },
+        // A real field four levels deep: MurderMO -> MOleads (MurderLeadItem) ->
+        // traitModifiers (MurdererModifierRule) -> mustPassForApplication, which the
+        // game documents. The tooltip lookup used to hop exactly one level, so anything
+        // this deep silently had none.
+        MOleads: [{ chance: 0.5, traitModifiers: [{ mustPassForApplication: true }] }],
     }),
 };
 
@@ -295,6 +308,14 @@ export const pluginsFixture = {
 
     // Deeper again.
     'Plugins/WhiteCollarSideJobs/plugins/Cases/test/murdermanifest.sodso.json': manifest([]),
+
+    // A building mod: no manifest and no DDSContent, just a preset named after the
+    // building and the floors it uses. The only thing marking it is the Floors folder.
+    'Plugins/TallTower/TallTower.sodso.json': json({ fileType: 'BuildingPreset', name: 'TallTower' }),
+    'Plugins/TallTower/Floors/TallTower_GroundFloor.json': json({ floorName: 'TallTower_GroundFloor' }),
+
+    // A mod holding both a case and a building, to pin that the markers compose.
+    'Plugins/AdditionalEvidence/GroupFlyers/Floors/Flyer_Roof.json': json({ floorName: 'Flyer_Roof' }),
 
     // A content folder with another manifest below it. Not something a real install
     // does, but it pins that the search stops at a match rather than walking on.

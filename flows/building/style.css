@@ -1,0 +1,349 @@
+/*
+ * Layout for the building flow. Sizes against its container rather than the viewport:
+ * the shell nav sits above it, so any 100vh arithmetic here would be wrong. Same
+ * reasoning, and the same .editor / .flow-bar frame, as the other two flows.
+ */
+
+.editor {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor > .flow-bar {
+    margin-bottom: 0;
+}
+
+/*
+ * Panel, floor, panel. The middle column is the only one that grows: both asides are
+ * lists of controls at a size they need, and the floor takes whatever is left.
+ */
+.building-workspace {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    background: var(--pico-background-color);
+}
+
+#building-file-panel {
+    flex: none;
+    width: var(--file-panel-width);
+}
+
+/*
+ * Wider than the file panel. Every row here is a control plus its label plus what it
+ * selects with, where the file panel's rows are one name each -- at the shared width
+ * the dropdowns squeeze to nothing and a floor is edited through empty boxes.
+ */
+#building-panels {
+    flex: none;
+    width: 22rem;
+}
+
+#building-file-panel,
+#building-panels {
+    overflow-y: auto;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+    padding: 0.75rem;
+
+    header {
+        margin-bottom: 0.5rem;
+    }
+
+    section {
+        margin-bottom: 1rem;
+    }
+}
+
+/*
+ * The canvas sizes itself to this, through a ResizeObserver, so this has to have a
+ * size of its own that does not depend on its contents -- min-height: 0 on a flex
+ * child is what stops the canvas from being what decides how big the canvas is.
+ */
+#building-view {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    position: relative;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    overflow: hidden;
+}
+
+#building-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/*
+ * Labels are drawn over the canvas rather than in it. Nothing here may take the
+ * pointer: a label sits exactly where you are about to click, so one that could be
+ * hit would swallow the click that put it there.
+ */
+#building-labels {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.cell-label,
+.tile-marker {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    white-space: pre;
+    font-size: 0.7rem;
+    line-height: 1.25;
+    padding: 0.2rem 0.4rem;
+    border-radius: var(--pico-border-radius);
+    background: rgb(0 0 0 / 0.72);
+    color: #fff;
+}
+
+.cell-label.selected {
+    outline: 1px solid var(--pico-primary);
+}
+
+.tile-marker {
+    background: rgb(0 0 0 / 0.55);
+    font-size: 0.75rem;
+}
+
+/*
+ * The tool bar, and the line saying what the modifiers do.
+ *
+ * Three to a row rather than five: "Floor type" does not fit in a fifth of the panel,
+ * and a button whose label is clipped to nothing is worse than a second row.
+ */
+.tool-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+
+    button {
+        padding: 0.35rem 0.2rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        margin: 0;
+    }
+
+    /* An explicit colour, not var(--pico-color): Pico sets that variable on the button
+       itself, to the inverse it uses for button text, so reading it back here gives
+       white on white. */
+    button:not(.active) {
+        background: transparent;
+        color: var(--pico-primary);
+        border-color: var(--pico-muted-border-color);
+    }
+}
+
+.tool-hint {
+    font-size: 0.7rem;
+    color: var(--pico-muted-color);
+    margin: 0 0 0.75rem;
+}
+
+/*
+ * The address and room lists. Each row both selects what is painted with and edits
+ * that entry, which is what keeps them to one list each rather than a list plus a
+ * detail pane.
+ *
+ * An address needs more than fits on one line -- a name, a colour and its layout
+ * variations -- so it is a two-row grid. The name gets the width, because it is the
+ * only part you read the row by.
+ */
+.address-row {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    grid-template-areas:
+        "radio index name"
+        "colour vars vars";
+    gap: 0.25rem 0.35rem;
+    align-items: center;
+    padding: 0.3rem 0.25rem;
+    border-radius: var(--pico-border-radius);
+
+    > input[type="radio"] { grid-area: radio; }
+    > .address-index { grid-area: index; }
+    > select { grid-area: name; }
+    > input[type="color"] { grid-area: colour; }
+    > .variations { grid-area: vars; }
+}
+
+.room-row {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.25rem;
+    border-radius: var(--pico-border-radius);
+}
+
+/*
+ * Sized by flex-basis rather than width, and scoped through the panel id.
+ *
+ * Pico sizes every text input with `input:not([type=checkbox]):not([type=radio])
+ * { width: 100% }`, which outranks a class on its own -- left to it, the room id box
+ * takes the whole row and squeezes the preset dropdown beside it to nothing. flex-basis
+ * decides a flex item's main size ahead of width, so it settles the argument rather
+ * than joining it.
+ */
+#building-panels {
+    .address-row select,
+    .address-row input,
+    .room-row select,
+    .room-row input {
+        margin: 0;
+        padding: 0.2rem 0.3rem;
+        font-size: 0.75rem;
+        height: auto;
+        min-width: 0;
+    }
+
+    .address-row > select {
+        width: 100%;
+    }
+
+    /* Sized explicitly: Pico stretches a radio to whatever box it is given, which in a
+       flex row is however much is left over. */
+    .address-row input[type="radio"],
+    .room-row input[type="radio"] {
+        flex: none;
+        width: 1rem;
+        height: 1rem;
+    }
+
+    /* And a colour input with no height collapses to a line, since the height it would
+       otherwise take comes from padding this removes. */
+    .address-row input[type="color"] {
+        width: 1.9rem;
+        height: 1.6rem;
+        padding: 0;
+    }
+
+    .room-row select {
+        flex: 1 1 auto;
+    }
+
+    .room-row .room-id {
+        flex: 0 0 4rem;
+        width: 4rem;
+    }
+}
+
+.address-row.selected,
+.room-row.selected {
+    background: var(--pico-primary-focus);
+}
+
+.address-index {
+    flex: none;
+    font-size: 0.7rem;
+    color: var(--pico-muted-color);
+    white-space: nowrap;
+}
+
+/*
+ * "Add address" and "Add room" are afterthoughts beside the list they sit under, not
+ * the point of the panel. Pico makes a button a full-width block by default, which
+ * here reads as the main action of the section above it.
+ */
+#building-panels .add-entry {
+    width: auto;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    margin: 0.4rem 0 0;
+}
+
+/* An address's layout variations, and the three buttons for having more of them. */
+.variations {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    min-width: 0;
+
+    button {
+        flex: none;
+        width: 1.5rem;
+        padding: 0.15rem;
+        margin: 0;
+        font-size: 0.7rem;
+        line-height: 1.2;
+    }
+
+    select {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.7rem;
+        margin: 0;
+        padding: 0.2rem 0.3rem;
+        height: auto;
+    }
+}
+
+.variation-none {
+    font-size: 0.7rem;
+    color: var(--pico-muted-color);
+    font-style: italic;
+}
+
+/* The fields of whatever is selected. */
+.field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    margin-bottom: 0.3rem;
+
+    select,
+    input {
+        margin: 0;
+        padding: 0.2rem 0.3rem;
+        font-size: 0.75rem;
+        height: auto;
+        width: 9rem;
+    }
+}
+
+.field .read-only {
+    /* Shown and not editable: f_r is carried through exactly and the app does not
+       know enough about it to offer changing it. See panels.js. */
+    font-family: var(--pico-font-family-monospace);
+    border-bottom: 1px dotted var(--pico-muted-color);
+    cursor: help;
+}
+
+.note,
+.warning {
+    font-size: 0.7rem;
+    margin: 0.25rem 0;
+}
+
+.warning {
+    color: var(--pico-del-color);
+}
+
+.note {
+    color: var(--pico-muted-color);
+}
+
+/* Unsaved work, on the Save button, without adding a second control to say it. */
+#building-save[data-dirty="true"]::after {
+    content: " •";
+    color: var(--pico-primary);
+}
+
+#building-open-issues {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--pico-del-color);
+}
+
+#building-open-issues.hidden {
+    display: none;
+}

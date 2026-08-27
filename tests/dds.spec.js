@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, queuePicks, connectFolders, selectContent, queuePrompts, prompts, readFile, listDir, alerts, collectPageErrors, topLevelLabels, gotoFlow, fieldInput, editField } from './support/harness.js';
+import { installFsHarness, seedFs, queuePicks, connectFolders, selectContent, queuePrompts, prompts, readFile, listDir, alerts, collectPageErrors, topLevelLabels, gotoFlow, fieldInput, editField, openDdsDocument, addDdsContent } from './support/harness.js';
 import { ddsFixture, ddsBareFixture, TREE_GUID, MSG_GUID, BLOCK_GUID, BLOCK_TEXT, NEWS_TREE_GUID, NEWS_MSG_GUID } from './support/fixtures.js';
 
 /**
@@ -14,8 +14,7 @@ async function openTree(page, guid = TREE_GUID) {
     await seedFs(page, ddsFixture);
     // Folders are connected once, in the shell, for every flow.
     await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
-    await page.evaluate((g) => { document.getElementById('path-to-read').value = g; }, guid);
-    await page.getByRole('button', { name: 'Load', exact: true }).click();
+    await openDdsDocument(page, guid);
 
     // Loading a tree cascades into its message and then its block, so the third
     // window appearing is the signal that the app has finished. Without this, any
@@ -42,18 +41,31 @@ test('boots and populates reference data from loadRefs.js', async ({ page }) => 
         enums: Object.keys(window.enums ?? {}),
         ddsMapKeys: Object.keys(window.ddsMap ?? {}),
         treeCount: window.ddsMap?.trees?.length ?? 0,
+        // A DDS document is an ordinary game type, so this flow reads the same generated
+        // layout the case flow does -- including the Unity built-ins a message's pos and
+        // col are made of, which the generator does not produce.
+        hasRootTypes: ['DDSTreeSave', 'DDSMessageSave', 'DDSBlockSave', 'NewspaperArticle']
+            .every((type) => !!window.typeLayout?.[type]),
+        hasBasicTypes: !!window.typeLayout?.Vector2 && !!window.typeLayout?.Color,
+        describedTypes: Object.keys(window.fieldDescriptions ?? {}),
     }));
 
     expect(refs.templates).toEqual(
         expect.arrayContaining(['tree', 'treeMessage', 'message', 'messageBlock', 'block', 'blockReplacement', 'newspaper'])
     );
+    // Enums are keyed by type name now, not by field name. The hand-written table that
+    // keyed them by field could not reach an array's elements, and had drifted from the
+    // game -- see refs/README.md.
     expect(refs.enums).toEqual(
-        expect.arrayContaining(['repeat', 'treeType', 'triggerPoint', 'triggers', 'connection', 'traitConditions', 'traitCondition'])
+        expect.arrayContaining(['RepeatSetting', 'TreeType', 'TriggerPoint', 'TreeTriggers', 'ConnectionType', 'TraitConditionType'])
     );
     expect(refs.ddsMapKeys).toEqual(
         expect.arrayContaining(['trees', 'messages', 'blocks', 'idNameMap', 'reverseIdMap'])
     );
     expect(refs.treeCount).toBeGreaterThan(0);
+    expect(refs.hasRootTypes).toBe(true);
+    expect(refs.hasBasicTypes).toBe(true);
+    expect(refs.describedTypes).toContain('DDSTreeSave');
     expect(errors).toEqual([]);
 });
 
@@ -133,7 +145,10 @@ test('renders object keys sorted, with comma separators', async ({ page }) => {
     // libs/jsonTree is shared with the ScriptableObject flow, which renders with the
     // opposite settings. This pins the options this flow passes to jsonTree.configure.
     const topLevel = await topLevelLabels(page, '#file-window-0');
-    expect(topLevel).toEqual(['document', 'id', 'messages', 'name', 'priority', 'startingMessage', 'treeType']);
+    expect(topLevel).toEqual([
+        'document', 'id', 'messages', 'name', 'participantA', 'priority',
+        'startingMessage', 'stopMovement', 'treeType', 'triggerPoint',
+    ]);
     expect(topLevel).toEqual([...topLevel].sort());
 
     // The ScriptableObject flow renders '&nbsp;' here instead, so a literal comma
@@ -160,9 +175,9 @@ test('a new document makes the folder it needs, and no others', async ({ page })
     await selectContent(page, 'BareMod', 'Content');
 
     // A block on its own: nothing a block does not need is created.
-    await queuePrompts(page, ['A line for the new block']);
-    await page.selectOption('#select-guid-type', 'block');
-    await page.getByRole('button', { name: 'New block' }).click();
+    await addDdsContent(page, {
+        type: 'block', name: 'NewBlock', line: 'A line for the new block',
+    });
 
     await expect.poll(() => listDir(page, 'Mods/BareMod/Content/DDSContent/DDS')).toEqual(['Blocks']);
     expect((await listDir(page, 'Mods/BareMod/Content/DDSContent/DDS/Blocks'))[0]).toContain('.block');
@@ -177,9 +192,11 @@ test('a new tree comes with the message and block it starts from', async ({ page
     await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
     await selectContent(page, 'BareMod', 'Content');
 
-    // The cascade ends at a block, which asks for its English line.
-    await queuePrompts(page, ['The first line of the new tree']);
-    await page.getByRole('button', { name: 'Add new tree' }).click();
+    // One line, asked for once: the cascade ends at a block, and the block is what
+    // says it.
+    await addDdsContent(page, {
+        type: 'tree', name: 'CrumpledNote', line: 'The first line of the new tree',
+    });
 
     await expect.poll(() => listDir(page, 'Mods/BareMod/Content/DDSContent/DDS'))
         .toEqual(['Blocks', 'Messages', 'Trees']);
@@ -201,32 +218,41 @@ test('a new tree comes with the message and block it starts from', async ({ page
     expect(tree.startingMessage).toBe(tree.messages[0].instanceID);
     expect(message.blocks[0].blockID).toBe(block.id);
 
-    // Named after the mod and what they are, never "(Clone)".
-    expect(tree.name).toBe('BareMod-DefaultTree');
-    expect(message.name).toBe('BareMod-DefaultMessage');
-    expect(block.name).toContain('BareMod-');
+    // Named after the mod and what the author called it, never "(Clone)". The rungs
+    // below carry the same name: they are levels of this document rather than
+    // documents anyone went looking for.
+    expect(tree.name).toBe('BareMod-CrumpledNote');
+    expect(message.name).toBe('BareMod-CrumpledNote-Message');
+    expect(block.name).toBe('BareMod-CrumpledNote-Block');
 
     // The block's text goes to the CSV, keyed by the block's GUID.
     await expect
         .poll(() => readFile(page, 'Mods/BareMod/Content/DDSContent/Strings/English/DDS/dds.blocks.csv'))
-        .toContain(`${block.id},,The first line of the new tree`);
+        .toContain(`"${block.id}",,"The first line of the new tree"`);
 
     expect(await alerts(page)).toEqual([]);
 });
 
-test('a new tree survives the English line being dismissed', async ({ page }) => {
+test('a new tree survives an empty English line', async ({ page }) => {
     await gotoFlow(page, '?flow=dds');
     await seedFs(page, ddsBareFixture);
     await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
     await selectContent(page, 'BareMod', 'Content');
 
-    // Nothing queued, so the prompt is dismissed. It is reached partway through
-    // creating the tree, and throwing there would leave the tree and its message
-    // written but never joined up.
-    await page.getByRole('button', { name: 'Add new tree' }).click();
+    // The line is optional, and writing it is the last step of the cascade: failing
+    // there would leave the tree and its message written but never joined up.
+    await addDdsContent(page, { type: 'tree', name: 'Wordless' });
 
     await expect.poll(() => listDir(page, 'Mods/BareMod/Content/DDSContent/DDS'))
         .toEqual(['Blocks', 'Messages', 'Trees']);
+
+    // A block is keyed by GUID, so it gets its row either way -- an empty one, rather
+    // than none, which the game reads as a missing string.
+    const blocks = await listDir(page, 'Mods/BareMod/Content/DDSContent/DDS/Blocks');
+    await expect
+        .poll(() => readFile(page, 'Mods/BareMod/Content/DDSContent/Strings/English/DDS/dds.blocks.csv'))
+        .toContain(`"${blocks[0].split('.')[0]}",,"",,,`);
+
     expect(await alerts(page)).toEqual([]);
 });
 
@@ -375,8 +401,7 @@ test('opening a newspaper tree creates its companion .newspaper file', async ({ 
     // the tree loads, not on save.
     await selectMod(page);
 
-    await page.evaluate((g) => { document.getElementById('path-to-read').value = g; }, NEWS_TREE_GUID);
-    await page.getByRole('button', { name: 'Load' }).click();
+    await openDdsDocument(page, NEWS_TREE_GUID);
 
     await expect(page.locator('#file-window-1')).toContainText('_Newspaper Article Configuration_');
 
@@ -580,7 +605,11 @@ test('enum fields render as dropdowns and editing one patches the file', async (
         "#file-window-0 li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"treeType\"')) select"
     ).first();
     await expect(select).toHaveCount(1);
-    await expect(select.locator('option')).toContainText(['conversation', 'vmail', 'document', 'newspaper', 'misc']);
+    await expect(select.locator('option')).toContainText([
+        // interactionDialog is the sixth: the hand-written table this flow used to read
+        // stopped at 'misc' and never gained it.
+        'conversation', 'vmail', 'document', 'newspaper', 'misc', 'interactionDialog',
+    ]);
 
     // The fixture is treeType 1, the second entry.
     await expect(select).toHaveValue('1');
@@ -590,4 +619,98 @@ test('enum fields render as dropdowns and editing one patches the file', async (
     const patchPath = `Mods/TestMod/Content/DDSContent/DDS/Trees/${TREE_GUID}.tree_patch`;
     await expect.poll(async () => JSON.parse((await readFile(page, patchPath)) ?? '[]'))
         .toContainEqual({ op: 'replace', path: '/treeType', value: 3 });
+});
+
+/**
+ * Reading the type layout rather than a table of field names, which is what the case
+ * flow has always done. See core/typeHints.js.
+ */
+test('an enum inside an array gets a dropdown', async ({ page }) => {
+    await gotoFlow(page, '?flow=dds');
+    await openTree(page);
+    await selectMod(page);
+
+    // participantA.triggers holds TreeTriggers indices. Every element of an array is
+    // labelled by its index, so looking the enum up by field name found nothing and
+    // these were edited as raw numbers.
+    const participant = page.locator(
+        "#file-window-0 li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"participantA\"'))"
+    ).first();
+    await participant.locator('.jsontree_expand-button').first().click();
+
+    const triggers = participant.locator(
+        "li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"triggers\"'))"
+    ).first();
+    await triggers.locator('.jsontree_expand-button').first().click();
+
+    const options = triggers.locator('select');
+    await expect(options).toHaveCount(2);
+    // The fixture holds [12, 3]: 'legal' and 'unconscious'.
+    await expect(options.nth(0)).toHaveValue('12');
+    await expect(options.nth(1)).toHaveValue('3');
+
+    await options.nth(1).selectOption('1');
+
+    const patchPath = `Mods/TestMod/Content/DDSContent/DDS/Trees/${TREE_GUID}.tree_patch`;
+    await expect.poll(async () => JSON.parse((await readFile(page, patchPath)) ?? '[]'))
+        .toContainEqual({ op: 'replace', path: '/participantA/triggers/1', value: 1 });
+});
+
+test('a boolean is a dropdown, and is stored as a boolean', async ({ page }) => {
+    await gotoFlow(page, '?flow=dds');
+    await openTree(page);
+    await selectMod(page);
+
+    // Booleans reach the dropdown through refs/authored/basicEnums.json, which both
+    // flows now read. This flow made you type `false` into a box before.
+    const select = page.locator(
+        "#file-window-0 li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"stopMovement\"')) select"
+    ).first();
+    await expect(select).toHaveCount(1);
+    await expect(select).toHaveValue('1');
+
+    await select.selectOption('0');
+
+    // Stored as false, not as 0. Every other enum is an index, and a document holding an
+    // index where the game wants a boolean is one the game cannot read back.
+    const patchPath = `Mods/TestMod/Content/DDSContent/DDS/Trees/${TREE_GUID}.tree_patch`;
+    await expect.poll(async () => JSON.parse((await readFile(page, patchPath)) ?? '[]'))
+        .toContainEqual({ op: 'replace', path: '/stopMovement', value: false });
+});
+
+test('triggerPoint reads the game enum, not the table that had drifted from it', async ({ page }) => {
+    await gotoFlow(page, '?flow=dds');
+    await openTree(page);
+
+    const select = page.locator(
+        "#file-window-0 li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"triggerPoint\"')) select"
+    ).first();
+
+    // The hand-written table had newspaperMurder at 6, pushing newspaperArticle to 7 --
+    // which the game reads as onGameStart. The fixture is 6.
+    await expect(select).toHaveValue('6');
+    await expect(select.locator('option:checked')).toHaveText('newspaperArticle');
+    await expect(select.locator('option')).not.toContainText(['newspaperMurder']);
+});
+
+test('a field label carries what the field is for', async ({ page }) => {
+    await gotoFlow(page, '?flow=dds');
+    await openTree(page);
+
+    const label = (name) => page.locator(
+        `#file-window-0 li > .jsontree_label-wrapper > .jsontree_label:text-is('"${name}"')`
+    ).first();
+
+    // From refs/authored/fieldDescriptions.json, keyed by the game's type name for a
+    // tree. This flow showed nothing at all before.
+    await expect(label('startingMessage')).toHaveAttribute('title', /`instanceID` of the message/);
+
+    // Complex nodes are visited too, not just leaves -- an empty title is a title that
+    // was set, where a node the pass skipped would carry no attribute at all. Nothing is
+    // written about participantA yet.
+    await expect(label('participantA')).toHaveAttribute('title', '');
+
+    // A field the layout cannot place gets no tooltip rather than an error: name and id
+    // come from the DDSComponent base, which the generated layout does not record.
+    await expect(label('name')).toHaveAttribute('title', '');
 });

@@ -15,6 +15,7 @@ One app, one page. The flow to edit is chosen with `?flow=<id>`, or from the pic
 |---|---|---|
 | Cases & ScriptableObjects | `scriptableObject` | ShadowsOfDoubt-CaseEditor |
 | DDS text content | `dds` | ShadowsOfDoubt-DDSViewer |
+| Building floorplans | `building` | ShadowsOfDoubt-FloorEditorUnity |
 
 Each flow lives in `flows/<id>/` and declares itself in `flow.js`. Shared machinery is in `core/`; adding a
 flow should not require changing anything there.
@@ -89,6 +90,7 @@ shared by every flow. It is split by who writes it:
 | `refs/generated/` | written by the `DocumentationGenerator` project in [ShadowsOfDoubtMods](https://github.com/piepieonline/ShadowsOfDoubtMods). Not hand-edited. |
 | `refs/authored/` | hand-maintained. The generator does not write here. |
 | `refs/assets/` | base game ScriptableObject extracts, also generated. Fetched at runtime, not imported. |
+| `refs/floors/` | the base game's floor blueprints and building presets, copied out of the game by hand. Fetched at runtime, not imported. |
 
 `refs/README.md` says what each file holds and which global it becomes. `refs/GENERATOR.md` is the
 contract with the generator, including the changes it still needs.

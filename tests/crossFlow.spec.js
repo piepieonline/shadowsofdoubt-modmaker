@@ -186,11 +186,10 @@ test('both flows offer adding content the same way', async ({ page }) => {
     await page.selectOption('#flow-picker', 'dds');
     await page.locator('html[data-flow-ready="dds"]').waitFor();
 
-    // Same wording, naming what this flow makes rather than "file".
+    // Same wording: what kind of thing is asked in the dialog either way, so neither
+    // button names one.
     const ddsButton = page.locator('#new-file-button');
-    await expect(ddsButton).toHaveText('Add new tree');
-    await page.selectOption('#select-guid-type', 'block');
-    await expect(ddsButton).toHaveText('Add new block');
+    await expect(ddsButton).toHaveText('Add new...');
 
     // And the same button: the DDS one used to be a secondary at Pico's full padding,
     // towering over the file list it sits above.
@@ -286,10 +285,17 @@ test('mods are listed with what each of their folders holds', async ({ page }) =
         'Choose a folder…', '(mod root) — case + DDS',
     ]);
 
-    // A mod with several, one of which has no DDS content.
+    // A mod with several, one of which has no DDS content and one of which holds
+    // every kind at once.
     await page.selectOption('#select-mod', 'AdditionalEvidence');
     await expect(page.locator('#select-content option')).toHaveText([
-        'Choose a folder…', 'BinPasscodes — case', 'GroupFlyers — case + DDS',
+        'Choose a folder…', 'BinPasscodes — case', 'GroupFlyers — case + DDS + building',
+    ]);
+
+    // A building mod, which is marked by a Floors folder and nothing else.
+    await page.selectOption('#select-mod', 'TallTower');
+    await expect(page.locator('#select-content option')).toHaveText([
+        'Choose a folder…', '(mod root) — building',
     ]);
 
     // A loader with nothing editable says so rather than looking broken.

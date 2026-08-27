@@ -1,0 +1,213 @@
+{
+  "presetName": "Park",
+  "disable": false,
+  "prefab": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "emissionMapUnlit": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "emissionMapLit": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "buildingHeight": 0,
+  "lightningRodLocalPos": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "defaultExteriorWallMaterial": [],
+  "exteriorKey": {
+    "baseMaterial": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "mainColour": {
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 0
+    },
+    "colour1": {
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 0
+    },
+    "colour2": {
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 0
+    },
+    "colour3": {
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "a": 0
+    },
+    "grubiness": 0
+  },
+  "enableAlleywayWalls": false,
+  "enableExteriorQuoins": true,
+  "overrideEvidencePhotoSettings": true,
+  "relativeCamPhotoPos": {
+    "x": -5,
+    "y": 3,
+    "z": 19
+  },
+  "relativeCamPhotoEuler": {
+    "x": -20,
+    "y": 158,
+    "z": 0
+  },
+  "overrideDistrictEnvironment": false,
+  "sceneProfile": 1,
+  "maxLostAndFound": 0,
+  "floorLayouts": [
+    {
+      "floorsWithThisSetting": 1,
+      "blueprints": [
+        "Park_GroundFloor01"
+      ],
+      "airVentMaximumExtrusion": 0,
+      "controlRoomVariants": [],
+      "forceShowModel": false,
+      "forceHideModels": [],
+      "forceHideModelsInRooms": [],
+      "forceHideModelsOutside": [],
+      "overrideCeilingHeight": false,
+      "newCeilingHeight": 51
+    }
+  ],
+  "basementLayouts": [],
+  "controlRoomRange": {
+    "x": 0,
+    "y": 0
+  },
+  "forceBuildingDesignStyles": [
+    {
+      "m_FileID": 12848,
+      "m_PathID": 0
+    }
+  ],
+  "stairwellRegular": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "stairwellLarge": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "buildingFeaturesEchelonFloors": false,
+  "echelonFloorStart": 10,
+  "overrideGrubiness": false,
+  "grubinessOverride": 0,
+  "displayedZone": 4,
+  "allowedInAllDistricts": false,
+  "allowedInDistricts": [
+    {
+      "m_FileID": 15746,
+      "m_PathID": 0
+    },
+    {
+      "m_FileID": 17770,
+      "m_PathID": 0
+    }
+  ],
+  "densityMinimum": 0,
+  "densityMaximum": 3,
+  "landValueMinimum": 0,
+  "landValueMaximum": 4,
+  "minimum": 0,
+  "featureImportance": 5,
+  "hardLimit": 10,
+  "desiredRatio": 0.05000000074505806,
+  "modernity": 3,
+  "lobbyPreset": {
+    "m_FileID": 15100,
+    "m_PathID": 0
+  },
+  "nonEnterable": false,
+  "boundary": false,
+  "boundaryCorner": false,
+  "overrideNaming": false,
+  "possibleNames": [],
+  "customDrawOnMap": false,
+  "tex": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "captureMesh": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "windowMap": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "addonMap": {
+    "m_FileID": 0,
+    "m_PathID": 0
+  },
+  "sortedWindows": [],
+  "floorCount": 2,
+  "meshHeight": 0,
+  "cableLinkPoints": [],
+  "cableSpawnChanceOverHeight": {
+    "serializedVersion": "2",
+    "m_Curve": [
+      {
+        "serializedVersion": "3",
+        "time": 0,
+        "value": 1,
+        "inSlope": 0,
+        "outSlope": -0.6000000238418579,
+        "weightedMode": 0,
+        "inWeight": 0,
+        "outWeight": 0
+      },
+      {
+        "serializedVersion": "3",
+        "time": 1,
+        "value": 0.4000000059604645,
+        "inSlope": -0.6000000238418579,
+        "outSlope": 0,
+        "weightedMode": 0,
+        "inWeight": 0,
+        "outWeight": 0
+      }
+    ],
+    "m_PreInfinity": 2,
+    "m_PostInfinity": 2,
+    "m_RotationOrder": 4
+  },
+  "sideSignPoints": [],
+  "possibleNeonSigns": [],
+  "signsPerBuildingRange": {
+    "x": 0,
+    "y": 0
+  },
+  "horizontalSignOffset": {
+    "x": 0,
+    "y": 4.5960001945495605,
+    "z": 0.20000000298023224
+  },
+  "featuresSmokestack": false,
+  "spawnInterval": {
+    "x": 0.10000000149011612,
+    "y": 0.33000001311302185
+  },
+  "spritePrefab": {
+    "m_FileID": 51376,
+    "m_PathID": 0
+  },
+  "spawnOffset": {
+    "x": 7.619999885559082,
+    "y": 44.84000015258789,
+    "z": 1.0800000429153442
+  }
+}

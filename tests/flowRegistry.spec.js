@@ -98,7 +98,7 @@ test('each flow reinstalls its reference data on every activation', async ({ pag
 
 test('a flow keeps its inline handler surface across a round trip', async ({ page }) => {
     await gotoFlow(page, '?flow=dds');
-    const handler = () => page.evaluate(() => typeof window.loadFromGUI);
+    const handler = () => page.evaluate(() => typeof window.setIdAndLoad);
     expect(await handler()).toBe('function');
 
     await page.selectOption('#flow-picker', 'scriptableObject');
@@ -146,7 +146,7 @@ test('a third flow can register and activate without touching core', async ({ pa
         started: true,
         active: 'fabricated',
         // The shell registers every flow up front; the fabricated one joins them.
-        known: ['dds', 'fabricated', 'scriptableObject'],
+        known: ['building', 'dds', 'fabricated', 'scriptableObject'],
         lookup: 'Fabricated Test Flow',
     });
 });

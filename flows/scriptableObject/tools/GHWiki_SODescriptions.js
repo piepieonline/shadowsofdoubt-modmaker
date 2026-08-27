@@ -5,7 +5,7 @@ const fs = require('fs');
  * Run with `node GHWiki_SODescriptions.js`
  */
 
-fs.readFile('../../../refs/authored/soFieldDescriptions.json', 'utf8', (err, data) => {
+fs.readFile('../../../refs/authored/fieldDescriptions.json', 'utf8', (err, data) => {
     if (err) {
         console.error('Error reading JSON file:', err);
         return;

@@ -120,6 +120,17 @@ export function createSOSelectElement(domNode, options, selectedSO, readOnly, on
 
     // Синхронизация select2 и обычного select
     selectElement.on('change', function() {
+        // Closed here, before anything that rebuilds the tree.
+        //
+        // While its dropdown is open select2 binds a scroll handler to every scrollable
+        // ancestor that puts the scroll position back where it was -- that is how it
+        // keeps the document still under an open dropdown -- and unbinds them when it
+        // closes. Choosing an option rebuilds the tree, which takes this <select> away
+        // before select2 gets that far, so the handler is left bound to the container,
+        // which is not rebuilt. Every attempt to scroll the document is then snapped
+        // back, for as long as the file stays open.
+        selectElement.select2('close');
+
         let value = selectElement[0].value;
         let newCustomValue;
         if(value == OPTION_CUSTOM_NEW_VALUE)
