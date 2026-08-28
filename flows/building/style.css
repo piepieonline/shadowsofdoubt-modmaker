@@ -16,8 +16,10 @@
 }
 
 /*
- * Panel, floor, panel. The middle column is the only one that grows: both asides are
- * lists of controls at a size they need, and the floor takes whatever is left.
+ * Three columns: what is being painted, the floor, and the controls. Only the floor
+ * grows; the asides are fixed and equal. The building list used to be a fourth and is
+ * now the Browse menu in the bar -- it was a column's width for something looked at
+ * once per floor.
  */
 .building-workspace {
     flex: 1;
@@ -28,23 +30,16 @@
     background: var(--pico-background-color);
 }
 
-#building-file-panel {
-    flex: none;
-    width: var(--file-panel-width);
-}
-
 /*
- * Wider than the file panel. Every row here is a control plus its label plus what it
- * selects with, where the file panel's rows are one name each -- at the shared width
- * the dropdowns squeeze to nothing and a floor is edited through empty boxes.
+ * Both columns are the same width, and it is the width the right one needs: every row
+ * there is a control plus its label plus what it selects with, and anything narrower
+ * squeezes the dropdowns to nothing. Matching the left to it costs the floor a little
+ * width and buys a workspace that is not lopsided.
  */
+#building-left,
 #building-panels {
     flex: none;
     width: 22rem;
-}
-
-#building-file-panel,
-#building-panels {
     overflow-y: auto;
     border: 1px solid var(--pico-muted-border-color);
     border-radius: var(--pico-border-radius);
@@ -58,6 +53,138 @@
     section {
         margin-bottom: 1rem;
     }
+}
+
+/*
+ * The Browse menu.
+ *
+ * A `<details>` rather than Pico's `.dropdown`, which styles a summary as a select and
+ * expects a `<ul>` beneath it; this holds a button and a list of collapsible categories.
+ * The summary is marked up as a button so it still looks like the control it replaced.
+ *
+ * The bar it sits in is the flow's `.flow-bar`, which does not establish a containing
+ * block of its own, so the menu is positioned against this.
+ *
+ * Both the control and the menu are 100px wider than they would otherwise be. An entry
+ * here is a blueprint name -- "Hotel_FloorB_Variant" -- indented under the floor it is a
+ * layout of and sharing its line with the button that deletes it, so the file panel's
+ * width the other flows share is not enough for one. The button takes it as padding
+ * because its width is its label, and half on each side is what keeps "Browse" in the
+ * middle of it.
+ */
+.browse {
+    --browse-extra: 100px;
+
+    position: relative;
+    margin-bottom: 0;
+
+    > summary {
+        margin: 0;
+        padding-inline: calc(var(--pico-form-element-spacing-horizontal) + var(--browse-extra) / 2);
+
+        &::marker,
+        &::-webkit-details-marker {
+            content: none;
+            display: none;
+        }
+    }
+}
+
+.browse-menu {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    width: calc(var(--file-panel-width) + var(--browse-extra));
+    /* Until it is opened and measured, when it is given the height of the columns it
+       hangs over -- see sizeBrowseMenu in scripts/ui.js. This is what a menu opened
+       before the workspace has a size falls back to. */
+    max-height: min(28rem, 60vh);
+    overflow-y: auto;
+    padding: 0.75rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+    box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.35);
+
+    /*
+     * The file panel lists its entries in a `<ul>`, and this menu hangs off the flow's
+     * `<nav>` -- where Pico lays out every descendant `ul` as a flex row and pads every
+     * `li` as a nav item. Left to it the buildings run side by side across the menu.
+     * What is inside here is a list of files that happens to be reachable from the bar,
+     * not navigation, so it is put back the way the panel is drawn everywhere else.
+     */
+    ul {
+        display: block;
+    }
+
+    li {
+        display: list-item;
+        padding: 0;
+    }
+}
+
+/*
+ * Adding a building is not one of the things listed, so it sits apart from them rather
+ * than at the top of the list: centred, and with room below it before the first section
+ * heading.
+ */
+#new-building-button {
+    display: block;
+    width: auto;
+    margin: 0 auto 1.5rem;
+}
+
+/*
+ * The status column: the same value twice, once as it would be painted and once as it
+ * is. Both blocks keep the same five rows in the same order whichever tool is active,
+ * so a glance down the column compares like with like.
+ */
+.status-block {
+    margin-bottom: 1.25rem;
+}
+
+.status-note {
+    font-size: 0.7rem;
+    color: var(--pico-muted-color);
+    margin: 0 0 0.4rem;
+}
+
+.status-row {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 0.4rem;
+    align-items: baseline;
+    padding: 0.2rem 0.3rem;
+    border-left: 2px solid transparent;
+    font-size: 0.75rem;
+}
+
+/* Which row the active tool would write. */
+.status-row.active {
+    border-left-color: var(--pico-primary);
+    background: var(--pico-background-color);
+}
+
+.status-label {
+    color: var(--pico-muted-color);
+}
+
+.status-value {
+    overflow-wrap: anywhere;
+}
+
+.status-value.none {
+    color: var(--pico-muted-color);
+}
+
+.status-swatch {
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    margin-right: 0.35rem;
+    border-radius: 2px;
+    border: 1px solid rgb(255 255 255 / 0.25);
 }
 
 /*
@@ -81,6 +208,23 @@
 }
 
 /*
+ * The canvas takes focus, because the arrow keys steer the camera and it is the canvas
+ * they are bound to. Clicking in the view focuses it, and a ring drawn every time someone
+ * clicked the floor would be noise -- hence focus-visible, which is the tab key's.
+ *
+ * Inset, because #building-view clips its overflow and an outline sitting outside the
+ * canvas would be cut off on all four sides.
+ */
+#building-canvas canvas:focus {
+    outline: none;
+}
+
+#building-canvas canvas:focus-visible {
+    outline: 2px solid var(--pico-primary);
+    outline-offset: -2px;
+}
+
+/*
  * Labels are drawn over the canvas rather than in it. Nothing here may take the
  * pointer: a label sits exactly where you are about to click, so one that could be
  * hit would swallow the click that put it there.
@@ -91,8 +235,7 @@
     pointer-events: none;
 }
 
-.cell-label,
-.tile-marker {
+.cell-label {
     position: absolute;
     transform: translate(-50%, -50%);
     white-space: pre;
@@ -104,13 +247,49 @@
     color: #fff;
 }
 
-.cell-label.selected {
-    outline: 1px solid var(--pico-primary);
+/*
+ * None / Paint / Flood, above the tools because the answer governs all five of them.
+ *
+ * Loud when it is not None: it is the difference between clicking to look and clicking to
+ * change the floor, and that is not something to have to read a label to find out. The
+ * frame is what carries that, so the three buttons inside it can stay quiet enough to
+ * read as one control rather than competing with the tool bar below.
+ */
+.mode-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+
+    button {
+        padding: 0.3rem 0.2rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        margin: 0;
+    }
+
+    /* An explicit colour, not var(--pico-color) -- see the note on .tool-bar. */
+    button:not(.active) {
+        background: transparent;
+        color: var(--pico-primary);
+        border-color: transparent;
+    }
+
+    button:disabled {
+        color: var(--pico-muted-color);
+    }
 }
 
-.tile-marker {
-    background: rgb(0 0 0 / 0.55);
-    font-size: 0.75rem;
+.mode-bar.on {
+    border-color: var(--pico-primary);
+}
+
+.painting-blocked {
+    font-size: 0.7rem;
+    color: var(--pico-muted-color);
 }
 
 /*
@@ -145,7 +324,15 @@
 .tool-hint {
     font-size: 0.7rem;
     color: var(--pico-muted-color);
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.2rem;
+}
+
+/*
+ * The last hint closes the tool bar, so the gap down to the selection panel below belongs
+ * to that one rather than to each of them.
+ */
+.tool-hint:last-child {
+    margin-bottom: 0.75rem;
 }
 
 /*
@@ -187,10 +374,10 @@
  * Sized by flex-basis rather than width, and scoped through the panel id.
  *
  * Pico sizes every text input with `input:not([type=checkbox]):not([type=radio])
- * { width: 100% }`, which outranks a class on its own -- left to it, the room id box
- * takes the whole row and squeezes the preset dropdown beside it to nothing. flex-basis
- * decides a flex item's main size ahead of width, so it settles the argument rather
- * than joining it.
+ * { width: 100% }`, which outranks a class on its own -- left to it, an input in one of
+ * these rows takes the whole row and squeezes the preset dropdown beside it to nothing.
+ * flex-basis decides a flex item's main size ahead of width, so it settles the argument
+ * rather than joining it.
  */
 #building-panels {
     .address-row select,
@@ -229,9 +416,25 @@
         flex: 1 1 auto;
     }
 
+    /* Read, not typed: the id is what the floor's own JSON calls this room, so it is
+       set in the muted colour every other stated fact in these panels uses. */
     .room-row .room-id {
-        flex: 0 0 4rem;
-        width: 4rem;
+        flex: none;
+        font-size: 0.7rem;
+        color: var(--pico-muted-color);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    /* The same square button as the ones an address's layouts are managed with, so the
+       two lists take a row away the same way. */
+    .room-row .room-remove {
+        flex: none;
+        width: 1.5rem;
+        padding: 0.15rem;
+        margin: 0;
+        font-size: 0.7rem;
+        line-height: 1.2;
     }
 }
 
@@ -291,6 +494,69 @@
     font-style: italic;
 }
 
+/*
+ * The Floor section: which storey is open, and the way to the ones above and below.
+ *
+ * The two arrows are the same size and sit at the ends, so the storey between them reads
+ * as a position rather than as a third button.
+ */
+.floor-steps {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.4rem;
+
+    button {
+        flex: none;
+        width: 2rem;
+        margin: 0;
+        padding: 0.15rem;
+        font-size: 0.75rem;
+        line-height: 1.4;
+    }
+}
+
+.floor-storey {
+    flex: 1;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* The file being edited. Long enough to run off the column, and worth all of it. */
+.floor-name {
+    margin: 0 0 0.4rem;
+    font-size: 0.75rem;
+    font-family: var(--pico-font-family-monospace);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Generating the building's model, under the floor it belongs to. */
+.floor-mesh {
+    margin-top: 0.5rem;
+
+    button {
+        width: 100%;
+        margin: 0;
+        padding: 0.2rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* What the last generation did, or that the last one has gone out of date. */
+.mesh-note {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.7rem;
+    line-height: 1.3;
+
+    &.stale {
+        color: var(--pico-del-color);
+    }
+}
+
 /* The fields of whatever is selected. */
 .field {
     display: flex;
@@ -308,6 +574,18 @@
         height: auto;
         width: 9rem;
     }
+}
+
+/*
+ * The one field whose value is a name rather than a setting: wall presets run to
+ * "WindowSmallLowWithUpperSpace", and the 9rem every other control takes clips that to
+ * something that names nothing. It takes what the label leaves instead -- same size,
+ * same row, more of it.
+ */
+.field select.wall-preset {
+    flex: 1;
+    width: auto;
+    min-width: 0;
 }
 
 .field .read-only {
@@ -332,12 +610,6 @@
     color: var(--pico-muted-color);
 }
 
-/* Unsaved work, on the Save button, without adding a second control to say it. */
-#building-save[data-dirty="true"]::after {
-    content: " •";
-    color: var(--pico-primary);
-}
-
 #building-open-issues {
     display: block;
     font-size: 0.7rem;
@@ -346,4 +618,16 @@
 
 #building-open-issues.hidden {
     display: none;
+}
+
+/*
+ * Help. Wider than Pico's 510px default, because the list of what contains what is mostly
+ * sentences and they read badly wrapped every few words. Taller than the viewport is
+ * Pico's problem and it already solves it: dialog > article scrolls.
+ *
+ * Scoped to this flow's stylesheet rather than the shell's, so the two other flows'
+ * help -- which shares this id and is much shorter -- keeps the width it was written for.
+ */
+#help-modal article {
+    max-width: 720px;
 }

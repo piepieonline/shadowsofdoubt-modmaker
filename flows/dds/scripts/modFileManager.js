@@ -1,27 +1,20 @@
 import { getFile, tryGetFolder, writeFile } from '../../../core/fs.js';
 import { createFileIfMissing, deepClone } from '../../../core/files.js';
 import { makeCSVSafe, makeNameFieldSafe } from '../../../core/strings.js';
-import {
-    EDITED_FIELD, KEY_FIELD, TEXT_FIELD, editedStamp, quote, rowKey, splitRow, unquoteText,
-} from '../../../core/stringsCsv.js';
-import { DDS_BLOCKS_VIRTUAL, placeStringsFile, readManifest, stringsFileHandle, withMapping, writeManifest } from './ddsManifest.js';
+import { DDS_BLOCKS_VIRTUAL, DDS_CONTENT_ROOT } from '../../../core/ddsManifest.js';
+import { writeStringsRow } from '../../../core/modStrings.js';
 import { loadI18n } from '../index.js';
 
 /**
  * This flow's files live under <content folder>/DDSContent, but `baseFolder` is the
  * content folder itself so that it means the same thing here as in the case flow.
- * Paths handed to it are prefixed with the content root instead.
+ * Paths handed to it are prefixed with the content root instead -- which is core's, not
+ * this flow's, because it is where any flow's strings go. See core/ddsManifest.js.
  */
-export const CONTENT_ROOT = 'DDSContent';
 
 /** Split a content-relative path into segments below the content folder. */
 export function modPath(path) {
-    return `${CONTENT_ROOT}/${path}`.split('/');
-}
-
-/** The mod's DDSContent folder, which everything in this flow hangs below. */
-export function ddsContentFolder(contentFolder, create) {
-    return tryGetFolder(contentFolder, [CONTENT_ROOT], create);
+    return `${DDS_CONTENT_ROOT}/${path}`.split('/');
 }
 
 /** Where each kind of document lives, below DDSContent/DDS. */
@@ -40,7 +33,7 @@ const SUBFOLDER = { tree: 'Trees', message: 'Messages', block: 'Blocks' };
  * addOrModifyStrings.
  */
 export function ddsFolderFor(type, contentFolder = window.selectedMod.baseFolder) {
-    return tryGetFolder(contentFolder, [CONTENT_ROOT, 'DDS', SUBFOLDER[type]], true);
+    return tryGetFolder(contentFolder, [DDS_CONTENT_ROOT, 'DDS', SUBFOLDER[type]], true);
 }
 
 export function cloneTemplate(template) {
@@ -162,69 +155,24 @@ export async function createFileIfNotExisting(type, guid) {
 /**
  * Write a line of block text into the mod's strings CSV.
  *
- * Which file that is comes from the manifest: a mod that maps dds.blocks.csv somewhere
- * of its own gets its text there, one that keeps its other CSVs together gets it
- * beside them, and one with no manifest is written the ordinary way.
- *
- * One question decides how it is written -- is there already a row for this GUID? --
- * so it is asked once, of the rows themselves, rather than once of the file's text and
- * again of each line in a way that could disagree with it.
- *
- * The key and the line are quoted whichever way the row is written, which is the shape
- * the game's own CSVs are in and the shape the strings editor writes. `content` arrives
- * quoted already when it holds a comma (see makeCSVSafe), so it is unquoted first --
- * quoting it twice would put the quotes in the string the player reads.
+ * The row itself is core's business -- see core/modStrings.js, and note that which file
+ * it lands in comes from the manifest rather than from the path the game reads. What is
+ * left here is what only this editor cares about: the two views that are now a row
+ * behind, and the text cache the documents resolve their lines through.
  */
 export async function addOrModifyStrings(id, content) {
-    const datestring = editedStamp();
-    const line = quote(unquoteText(content));
-
-    const ddsFolder = await ddsContentFolder(window.selectedMod.baseFolder, true);
-    const manifest = await readManifest(ddsFolder);
-
-    const { real, addEntry } = placeStringsFile(manifest, DDS_BLOCKS_VIRTUAL);
-
-    let csvHandle = await stringsFileHandle(ddsFolder, real, true);
-
-    // Creating the file is allowed to fail -- a folder that cannot be written, a name
-    // taken by a directory -- and the next line would make that a TypeError on null,
-    // thrown out of a blur handler where nobody would ever see it.
-    if (!csvHandle) throw new Error(`Could not open ${real} in this mod to write the line to.`);
-
-    const stringsFileContent = (await (await csvHandle.getFile()).text());
-
-    const lines = stringsFileContent.split('\n');
-    const existing = lines.findIndex((row) => rowKey(row) === id);
-
-    if (existing !== -1) {
-        // Only the columns this app knows the meaning of. A row can carry more -- the
-        // game's own files do -- and rewriting the whole line threw that away.
-        const fields = splitRow(lines[existing]);
-        while (fields.length <= EDITED_FIELD) fields.push('');
-
-        fields[KEY_FIELD] = quote(id);
-        fields[TEXT_FIELD] = line;
-        fields[EDITED_FIELD] = datestring;
-
-        lines[existing] = fields.join(',');
-        await writeFile(csvHandle, lines.join('\n'), false);
-    } else {
-        await writeFile(csvHandle, `\n${quote(id)},,${line},,,,${datestring}`, true);
-    }
+    const { real, handle, declared } = await writeStringsRow(
+        window.selectedMod.baseFolder, DDS_BLOCKS_VIRTUAL, id, content);
 
     // This file may be open in the strings editor, which is now a row behind. The handle
     // goes with the path because it is the file itself, which is the only thing that
     // says whether it is the one on screen.
     const { refreshOpenStringsFile } = await import('./stringsEditor.js');
-    await refreshOpenStringsFile(real, csvHandle);
+    await refreshOpenStringsFile(real, handle);
 
-    // The file went where the mod keeps its CSVs, which is not where the game looks
-    // for it -- so say so, or the text is written and never read.
-    if (addEntry) {
-        await writeManifest(ddsFolder, withMapping(manifest, addEntry));
-
-        // Declaring a file is the one thing the app changes a manifest for, and the
-        // panel is built from it, so it would otherwise sit there contradicting disk.
+    // Declaring a file is the one thing the app changes a manifest for, and the panel is
+    // built from it, so it would otherwise sit there contradicting disk.
+    if (declared) {
         const { refreshManifestPanel } = await import('./manifestPanel.js');
         await refreshManifestPanel();
     }

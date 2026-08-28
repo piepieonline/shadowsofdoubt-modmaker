@@ -8,11 +8,18 @@
  * Exported rather than assigned so that the registry installs it alongside the
  * reference data, and takes it back down when another flow's markup replaces this one.
  */
-import { saveNow, addBuilding, setOverlay, resetView } from './scripts/ui.js';
+import {
+    showAddBuilding, closeAddBuilding, submitAddBuilding,
+    syncPresetNameToTitle, markPresetNameEdited,
+    showHelp, closeHelp,
+} from './scripts/ui.js';
 
 export default {
-    saveBuildingFloor: saveNow,
-    addBuilding,
-    setBuildingOverlay: setOverlay,
-    resetBuildingView: resetView,
+    showAddBuilding,
+    closeAddBuilding,
+    submitAddBuilding,
+    syncPresetNameToTitle,
+    markPresetNameEdited,
+    showHelp,
+    closeHelp,
 };

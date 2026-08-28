@@ -94,6 +94,19 @@
         </ul>
     </nav>
 
+    <!-- Shown only under ?demo. Demo mode is undiscoverable, not invisible: made-up
+         content must never be mistaken for the mod you are working on.
+
+         A strip rather than a chip in the nav because the nav has no room -- with the
+         two selects already squeezed at 1280px, anything added there pushed the folder
+         and tutorial buttons off the right of the screen. A strip costs no width, and
+         it has space to say what demo mode actually means. -->
+    <div id="demo-banner" hidden>
+        <strong>Demo data</strong>
+        — made-up content inside the browser. Nothing is read from or written to your own
+        folders, and every visit starts fresh. Reload without <code>?demo</code> to use your own.
+    </div>
+
     <!-- The active flow's markup is cloned in here. Only one flow is ever mounted:
          the two share element ids (#trees, #help-modal), so having
          both in the document at once would break getElementById for whichever came
@@ -349,11 +362,20 @@
                 <!-- Same three slots as the other two flows' bars: see .flow-bar. -->
                 <nav class="flow-bar compact-controls">
                     <ul>
+                        <!-- The building list, which is how a floor is reached and then
+                             not needed again until the next one. A menu rather than a
+                             column: it was a third of the width for something looked at
+                             once. -->
                         <li>
-                            <button id="building-save" class="secondary" data-needs-content disabled
-                                onclick="saveBuildingFloor()">Save floor</button>
+                            <details class="browse" id="building-browse">
+                                <summary role="button" class="secondary">Browse</summary>
+                                <div class="browse-menu">
+                                    <button id="new-building-button" data-needs-content disabled
+                                        onclick="showAddBuilding()">Add building...</button>
+                                    <div id="building-file-list"></div>
+                                </div>
+                            </details>
                         </li>
-                        <li><a href="#" onclick="event.preventDefault();resetBuildingView()">Reset view</a></li>
                     </ul>
                     <ul>
                         <li>
@@ -363,29 +385,24 @@
                             <small id="building-open-issues" class="hidden"></small>
                         </li>
                     </ul>
+                    <!-- Help, in the slot the other two flows put it in. Also what keeps
+                         the open floor's name centred: .flow-bar is a three column grid,
+                         so an empty third column would pull it off centre. "Colour by"
+                         lived here; the tool on the left decides that now. See
+                         syncOverlay. -->
                     <ul>
-                        <li>
-                            <label>
-                                Colour by
-                                <select id="building-overlay" onchange="setBuildingOverlay(this.value)">
-                                    <option value="address">Address</option>
-                                    <option value="room">Room</option>
-                                    <option value="floorType">Floor type</option>
-                                </select>
-                            </label>
-                        </li>
+                        <li><a href="#" onclick="event.preventDefault();showHelp()">Help</a></li>
                     </ul>
                 </nav>
 
                 <div class="building-workspace">
-                    <aside id="building-file-panel">
-                        <button id="new-building-button" data-needs-content disabled
-                            onclick="addBuilding()">Add building...</button>
-
-                        <header>
-                            <strong>Buildings</strong>
-                        </header>
-                        <div id="building-file-list"></div>
+                    <!-- Whether a click paints and what with, then what it would paint
+                         and what is already there. One column, because they are one
+                         question: the switch and the buttons decide what the rows below
+                         them say. -->
+                    <aside id="building-left">
+                        <div id="building-tools"></div>
+                        <div id="building-status"></div>
                     </aside>
 
                     <!-- The canvas fills whatever is left. Labels are absolutely
@@ -396,9 +413,14 @@
                         <div id="building-labels" aria-hidden="true"></div>
                     </section>
 
+                    <!-- What each tool paints with, and the lists a floor is made of. -->
                     <aside id="building-panels">
-                        <div id="building-tools"></div>
-
+                        <!-- Where in the building the open floor is, and how to get to
+                             the ones above and below it without going back to Browse. -->
+                        <section>
+                            <header><strong>Floor</strong></header>
+                            <div id="building-floor"></div>
+                        </section>
                         <section>
                             <header><strong>Addresses</strong></header>
                             <div id="building-addresses"></div>
@@ -408,16 +430,185 @@
                             <div id="building-rooms"></div>
                         </section>
                         <section>
+                            <header><strong>Floor type</strong></header>
+                            <div id="building-floor-type"></div>
+                        </section>
+                        <section>
                             <header><strong>Wall preset</strong></header>
                             <div id="building-walls"></div>
                         </section>
                         <section>
-                            <header><strong>Selection</strong></header>
-                            <div id="building-selection"></div>
+                            <header><strong>Tile</strong></header>
+                            <div id="building-tiles"></div>
                         </section>
                     </aside>
                 </div>
             </div>
+
+            <!-- Adding a building. Everything it needs is asked for before anything
+                 is written, so cancelling leaves the mod as it was -- the same
+                 arrangement as the other flows' "Add new..." dialogs.
+
+                 Copying from a base game building is the option to reach for: a
+                 building of its own has no prefab, mesh or window data, so the game
+                 has nothing to draw until those are generated. -->
+            <dialog id="new-building-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" class="close-button"
+                            onclick="closeAddBuilding()"></button>
+                        <h5><strong>Add building...</strong></h5>
+                    </header>
+                    <form id="new-building-form"
+                        onsubmit="event.preventDefault();submitAddBuilding()">
+                        <label>
+                            Title
+                            <input id="new-building-title" required
+                                oninput="syncPresetNameToTitle()" />
+                            <small>What a player reads. Written to the mod's
+                                names.rooms.csv, which is the only place it is used.</small>
+                        </label>
+                        <!-- Everything else: the file, the REF a floor's building points
+                             at, and the key the title is stored against. So the pattern
+                             is what a file name and an identifier both allow. -->
+                        <label>
+                            Preset name
+                            <input id="new-building-preset-name" required
+                                pattern="[A-Za-z0-9_\-]+"
+                                title="Letters, digits, hyphens and underscores only"
+                                oninput="markPresetNameEdited()" />
+                            <small>Letters, digits, hyphens and underscores -- no spaces.
+                                Follows the title unless it is changed.</small>
+                        </label>
+                        <label>
+                            Copy from
+                            <select id="new-building-copy-from">
+                                <option value="">None</option>
+                            </select>
+                            <small>The base game building to take a prefab, mesh and
+                                window data from. None needs a mesh generating before the
+                                game can show it.</small>
+                        </label>
+                        <button id="new-building-submit" type="submit"
+                            style="width: 100%">Create building</button>
+                    </form>
+                </article>
+            </dialog>
+
+            <!-- Help. The other two flows each carry one under this same id, which is
+                 deliberate: only ever one flow is mounted, so the name belongs to
+                 whichever that is. See the note on #flow-root.
+
+                 The controls live here rather than under the tool bar. They are a
+                 reference to consult once rather than something to read while painting,
+                 and the left column is narrow enough that four lines of them crowded out
+                 the panel that says what is under the pointer. -->
+            <dialog id="help-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" class="close-button"
+                            onclick="closeHelp()"></button>
+                        <h5><strong>Help</strong></h5>
+                    </header>
+                    <small>
+                        <p>
+                            Paint a floor's addresses, rooms, floor types, walls and tile
+                            features onto a 21 × 21 grid. It is saved as the game's floor
+                            blueprint JSON, and attached to a building preset.
+                        </p>
+
+                        <h6>How a building is put together</h6>
+                        <p>
+                            Each level below is contained by the one above it. A floor is
+                            never opened on its own: the game reaches one through the
+                            building that names it, so this editor opens a floor
+                            <i>through</i> a building, and writes the building back when
+                            the floor changes.
+                        </p>
+                        <ul>
+                            <li><b>Building:</b> what the game places in the city. It carries the
+                                prefab, mesh and window data, and a list of <b>storeys</b>. A new
+                                building has none of those three, so copying a base game building
+                                is what gives the game something to draw.</li>
+                            <li><b>Storey:</b> one level of the building, counted from the ground
+                                floor with basements below it. Each holds one or more
+                                <b>blueprints</b> — alternative layouts the game picks between as
+                                it builds the city, reached through the Layout select.</li>
+                            <li><b>Blueprint:</b> the floor itself, and what this editor opens. A
+                                21 × 21 grid of <b>nodes</b> with a 7 × 7 grid of <b>tiles</b>
+                                laid over it. The outer three nodes on each side are the margin
+                                the city leaves between one lot and the next: read and written
+                                like any other node, but never painted.</li>
+                            <li><b>Address:</b> a self-contained unit on the floor — an apartment,
+                                an office, a lobby. It carries a layout configuration and the
+                                colour it is drawn in, and it owns its <b>rooms</b>. A square no
+                                address claims is Outside.</li>
+                            <li><b>Layout variation:</b> one complete set of rooms for an address.
+                                An address may hold several, and the game picks one each time it
+                                builds that floor. The grid shows the selected variation; the
+                                others are written back exactly as they were read.</li>
+                            <li><b>Room:</b> a slot in one address's variation, with a room type
+                                preset and an id. The id is generated rather than typed — the
+                                game's own floors reuse ids freely, so an id identifies nothing
+                                on its own.</li>
+                            <li><b>Node:</b> one of the 441 squares. It carries its floor height,
+                                its floor tile type, and the <b>walls</b> on its edges.</li>
+                            <li><b>Wall:</b> sits between two nodes and is stored on both of them,
+                                which this editor always writes together. Its preset is what
+                                makes it read as a wall, a window, a door or a blank.</li>
+                            <li><b>Tile:</b> 3 × 3 nodes, 49 to a floor. Where stairwells,
+                                elevators and entrances go — one entrance being the main one —
+                                each with a rotation of its own.</li>
+                        </ul>
+
+                        <h6>Painting</h6>
+                        <ul>
+                            <li><b>None, Paint, Flood</b> is whether a click looks or changes, and
+                                how much it changes at once. A floor opens in None, so looking at
+                                one cannot edit it. Flood fills up to the walls.</li>
+                            <li><b>The five tools</b> — Address, Room, Floor type, Wall, Tile —
+                                are what a click paints with. The panels on the right choose the
+                                value each of them uses.</li>
+                            <li><b>Ctrl+click</b>, or <b>Cmd+click</b>, picks the value under the
+                                pointer instead of painting it, in any mode.
+                                <b>Shift+click</b> removes a wall.</li>
+                            <li>The Tile tool cycles rather than sets. A stairwell turns through
+                                its four rotations and then comes off; an entrance becomes the
+                                main entrance before it goes.</li>
+                        </ul>
+
+                        <h6>Moving the camera</h6>
+                        <p>
+                            The left button paints, so every camera gesture is on something
+                            else. <b>Alt+drag</b> is the one to reach for on a trackpad, which
+                            has no comfortable way to hold the other two buttons.
+                        </p>
+                        <ul>
+                            <li><b>Alt+drag</b>, middle drag or right drag to orbit</li>
+                            <li><b>Alt+shift+drag</b> to pan</li>
+                            <li><b>Scroll</b> to zoom</li>
+                            <li>Or click the view and use the keyboard: <b>arrows</b> orbit,
+                                <b>shift+arrows</b> pan, <b>−</b> and <b>+</b> zoom</li>
+                        </ul>
+
+                        <h6>What is reported rather than repaired</h6>
+                        <p>
+                            The base game's own floors contain all three of these, so none is
+                            fatal and none is fixed behind your back. The selection panel says
+                            when it is looking at one.
+                        </p>
+                        <ul>
+                            <li><b>Overlap</b> — two addresses claim the same square. The later
+                                claim wins it on the grid.</li>
+                            <li><b>Gap</b> — no address covers a square. Filled in as Outside,
+                                the way the game itself backfills one.</li>
+                            <li><b>Disagreeing walls</b> — the two halves of one wall name
+                                different presets. Guessing which half is right would rewrite the
+                                game's data.</li>
+                        </ul>
+                    </small>
+                </article>
+            </dialog>
     </template>
 
     <template id="flow-template-scriptableObject">

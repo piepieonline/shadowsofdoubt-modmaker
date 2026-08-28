@@ -62,8 +62,9 @@ async function withPanels(page, body) {
             tools: make('tools'),
             addresses: make('addresses'),
             rooms: make('rooms'),
+            floorTypes: make('floorTypes'),
             walls: make('walls'),
-            selection: make('selection'),
+            status: make('status'),
         };
 
         const state = tools.createToolState();
@@ -90,16 +91,23 @@ test.beforeEach(async ({ page }) => {
 
 test('the tool bar offers all five tools and says which is active', async ({ page }) => {
     const bar = await withPanels(page, (panels, elements, floor, state) => {
-        const buttons = [...elements.tools.querySelectorAll('button')];
-        buttons.find((button) => button.dataset.tool === 'wall').click();
+        // Every click here redraws the bar, so nothing may be held across one.
+        const click = (selector) => elements.tools.querySelector(selector).click();
+
+        const labels = [...elements.tools.querySelectorAll('.tool-bar button')]
+            .map((button) => button.textContent);
+
+        // Into paint first: the hint a floor opens with is about picking, not painting.
+        click('.mode-bar button[data-mode="paint"]');
+        click('.tool-bar button[data-tool="wall"]');
 
         return {
-            labels: buttons.map((button) => button.textContent),
-            active: [...elements.tools.querySelectorAll('button')]
+            labels,
+            active: [...elements.tools.querySelectorAll('.tool-bar button')]
                 .filter((button) => button.getAttribute('aria-pressed') === 'true')
                 .map((button) => button.dataset.tool),
             tool: state.tool,
-            hint: elements.tools.querySelector('.tool-hint').textContent,
+            hint: elements.tools.querySelector('.tool-bar + .tool-hint').textContent,
         };
     });
 
@@ -110,6 +118,58 @@ test('the tool bar offers all five tools and says which is active', async ({ pag
     // The modifiers are the whole interface, and shift only means something for walls.
     expect(bar.hint).toContain('Ctrl+click to pick');
     expect(bar.hint).toContain('Shift+click to remove');
+});
+
+test('the mode bar says what a click does, and survives changing tool', async ({ page }) => {
+    const bar = await withPanels(page, (panels, elements, floor, state, panel, model, tools) => {
+        const click = (selector) => elements.tools.querySelector(selector).click();
+        const hint = () => elements.tools.querySelector('.tool-bar + .tool-hint').textContent;
+        const active = () => elements.tools
+            .querySelector('.mode-bar button[aria-pressed="true"]').dataset.mode;
+
+        const labels = [...elements.tools.querySelectorAll('.mode-bar button')]
+            .map((button) => button.textContent);
+
+        const opensAs = { mode: active(), hint: hint(), loud: null };
+        opensAs.loud = elements.tools.querySelector('.mode-bar').classList.contains('on');
+
+        click('.mode-bar button[data-mode="flood"]');
+        const flooding = { mode: state.mode, hint: hint(), tool: state.tool };
+        flooding.loud = elements.tools.querySelector('.mode-bar').classList.contains('on');
+
+        // The two tools a fill means nothing for.
+        click('.tool-bar button[data-tool="wall"]');
+        const wall = { mode: state.mode, hint: hint() };
+
+        click('.tool-bar button[data-tool="address"]');
+        click('.mode-bar button[data-mode="paint"]');
+        const painting = { mode: state.mode, hint: hint() };
+
+        return { labels, opensAs, flooding, wall, painting };
+    });
+
+    expect(bar.labels).toEqual(['None', 'Paint', 'Flood']);
+
+    // A floor opens where a click cannot change it, and the bar is quiet about it.
+    expect(bar.opensAs.mode).toBe('none');
+    expect(bar.opensAs.hint).toBe('Left click to select and pick · Nothing is edited');
+    expect(bar.opensAs.loud).toBe(false);
+
+    // Flood, and the frame goes loud: the difference between clicking to look and
+    // clicking to change 200 cells is not something to have to read a label for.
+    expect(bar.flooding.mode).toBe('flood');
+    expect(bar.flooding.hint).toContain('Left click to fill up to the walls');
+    expect(bar.flooding.loud).toBe(true);
+
+    // The mode is not a sixth tool: switching tools leaves it alone.
+    expect(bar.wall.mode).toBe('flood');
+
+    // But the wall tool cannot be filled, so the hint promises what will actually happen.
+    expect(bar.wall.hint).toContain('Left click to paint');
+    expect(bar.wall.hint).not.toContain('fill');
+
+    expect(bar.painting.mode).toBe('paint');
+    expect(bar.painting.hint).toBe('Left click to paint · Ctrl+click to pick');
 });
 
 test('an address that the base game has no name for is still shown', async ({ page }) => {
@@ -168,6 +228,38 @@ test('every layout variation of an address is reachable', async ({ page }) => {
     expect(result.rooms).toEqual(['Ballroom']);
 });
 
+test('switching layout puts the room selection in the layout arriving', async ({ page }) => {
+    const result = await withPanels(page, (panels, elements, floor, state, panel, model) => {
+        // Two rooms in layout 1, and the second of them selected. Layout 2 has one room,
+        // so that slot is about to stop existing.
+        state.addressIndex = 1;
+        model.addRoom(floor, 1, 'Kitchen');
+        state.roomIndex = 1;
+        panel.refresh();
+
+        const select = elements.addresses.querySelectorAll('.address-row')[1]
+            .querySelector('.variations select');
+        select.value = '1';
+        select.dispatchEvent(new Event('change'));
+
+        return {
+            roomIndex: state.roomIndex,
+            room: model.roomAt(floor, 1, state.roomIndex)?.preset ?? null,
+            rows: [...elements.rooms.querySelectorAll('.room-row')]
+                .map((row) => row.dataset.room),
+            checked: [...elements.rooms.querySelectorAll('input[type=radio]')]
+                .filter((radio) => radio.checked).length,
+        };
+    });
+
+    // A layout holds its own rooms, so a slot from the one being left names a different
+    // room here, or none at all.
+    expect(result.rows).toEqual(['Ballroom#3']);
+    expect(result.roomIndex).toBe(0);
+    expect(result.room).toBe('Ballroom');
+    expect(result.checked).toBe(1);
+});
+
 test('an address with no layouts says so rather than showing an empty list', async ({ page }) => {
     const text = await withPanels(page, (panels, elements, floor, state, panel, model) => {
         model.removeVariation(floor, 1, 1);
@@ -209,11 +301,11 @@ test('choosing a room in the list is what the room tool paints', async ({ page }
     const state = await withPanels(page, (panels, elements, floor, chosen, panel, model, tools) => {
         chosen.addressIndex = 0;
         chosen.tool = tools.Tool.ROOM;
-        model.addRoom(floor, 0, 'Kitchen', 7);
+        model.addRoom(floor, 0, 'Kitchen');
         panel.refresh();
 
         const row = [...elements.rooms.querySelectorAll('.room-row')]
-            .find((entry) => entry.dataset.room === 'Kitchen#7');
+            .find((entry) => entry.dataset.room.startsWith('Kitchen'));
         const radio = row.querySelector('input[type=radio]');
         radio.checked = true;
         radio.dispatchEvent(new Event('change'));
@@ -221,10 +313,100 @@ test('choosing a room in the list is what the room tool paints', async ({ page }
         tools.applyTool(floor, chosen, { kind: 'cell', x: 10, y: 10 });
         const room = model.roomOfNode(floor, model.nodeAt(floor, 10, 10));
 
-        return { preset: chosen.roomPreset, id: chosen.roomId, painted: `${room.preset}#${room.id}` };
+        return {
+            slot: chosen.roomIndex,
+            rowSlot: Number(row.dataset.roomIndex),
+            row: row.dataset.room,
+            painted: `${room.preset}#${room.id}`,
+        };
     });
 
-    expect(state).toEqual({ preset: 'Kitchen', id: 7, painted: 'Kitchen#7' });
+    // Chosen by slot, not by name: two rooms of an address can carry the same preset and
+    // the same id -- 24 in the base game do -- so the row is what says which one.
+    expect(state.slot).toBe(1);
+    expect(state.rowSlot).toBe(1);
+
+    // Id 4, because 1, 2 and 3 are in use across this floor -- 3 of them in a layout
+    // variation that is not even on show.
+    expect(state.row).toBe('Kitchen#4');
+    expect(state.painted).toBe('Kitchen#4');
+});
+
+test('a room’s id is stated rather than offered', async ({ page }) => {
+    const shown = await withPanels(page, (panels, elements) => {
+        const row = elements.rooms.querySelector('.room-row');
+
+        return {
+            id: row.querySelector('.room-id').textContent,
+            tag: row.querySelector('.room-id').tagName,
+            // The preset is still chosen; only the id has stopped being a question.
+            editable: [...row.querySelectorAll('input')].map((input) => input.type),
+        };
+    });
+
+    expect(shown.id).toBe('#1');
+    expect(shown.tag).toBe('SPAN');
+    expect(shown.editable).toEqual(['radio']);
+});
+
+test('removing a room leaves its squares in the address’s Null room', async ({ page }) => {
+    const result = await withPanels(page, (panels, elements, floor, state, panel, model) => {
+        const kitchen = model.addRoom(floor, 0, 'Kitchen');
+        model.setNodeRoom(floor, model.nodeAt(floor, 10, 10), 0, kitchen.roomIndex);
+
+        state.roomIndex = kitchen.roomIndex;
+        panel.refresh();
+
+        const row = [...elements.rooms.querySelectorAll('.room-row')]
+            .find((entry) => entry.dataset.room.startsWith('Kitchen'));
+        row.querySelector('.room-remove').click();
+
+        const node = model.nodeAt(floor, 10, 10);
+        return {
+            rows: [...elements.rooms.querySelectorAll('.room-row')].map((entry) => entry.dataset.room),
+            room: model.roomOfNode(floor, node).preset,
+            selected: state.roomIndex,
+        };
+    });
+
+    expect(result.rows).toEqual(['Null#1']);
+    expect(result.room).toBe('Null');
+
+    // The selection was on the row that went, so it lands on what took its place --
+    // here the only row left, rather than a slot that no longer exists.
+    expect(result.selected).toBe(0);
+});
+
+test('a new address arrives with a room, and naming it adds the room of that name', async ({ page }) => {
+    const result = await withPanels(page, (panels, elements, floor, state, panel, model) => {
+        elements.addresses.querySelector('.add-entry').click();
+
+        const rooms = () => [...elements.rooms.querySelectorAll('.room-row')]
+            .map((row) => row.dataset.room);
+
+        const onAdd = rooms();
+
+        const row = elements.addresses.querySelectorAll('.address-row')[2];
+        const select = row.querySelector(':scope > select');
+        select.value = 'Ballroom';
+        select.dispatchEvent(new Event('change'));
+
+        return {
+            onAdd,
+            named: rooms(),
+            address: state.addressIndex,
+            layout: floor.addresses[2].layoutConfiguration,
+        };
+    });
+
+    expect(result.address).toBe(2);
+    expect(result.layout).toBe('Ballroom');
+
+    // Something to paint with immediately, and the room the layout is named after once
+    // that layout is chosen. 19 of the game's 32 layout configurations share a name with
+    // a room preset, and an address of one nearly always holds a room of that name.
+    expect(result.onAdd).toEqual(['Null#4']);
+    expect(result.named).toEqual(['Null#4', 'Ballroom#5']);
 });
 
 test('the wall picker groups presets by what they are', async ({ page }) => {
@@ -252,6 +434,86 @@ test('the wall picker groups presets by what they are', async ({ page }) => {
     expect(picker.chosen).toBe('16');
 });
 
+/*
+ * The floor type setting. Both halves of it are checked because the tool writes both:
+ * setNodeFloor takes a type and a height together, so a panel that set one and not the
+ * other would paint the other from whatever was last picked off the floor.
+ */
+
+test('the floor type picker offers every type and sets what is painted', async ({ page }) => {
+    const picker = await withPanels(page, (panels, elements, floor, state) => {
+        const select = elements.floorTypes.querySelector('select');
+
+        select.value = '2';
+        select.dispatchEvent(new Event('change'));
+
+        return {
+            named: [...select.options].map((option) => option.textContent),
+            chosen: state.floorType,
+            // The line under the picker, which is where "noneButIndoors" is explained and
+            // where how each type is drawn is said.
+            note: elements.floorTypes.querySelector('.tool-hint')?.textContent ?? null,
+        };
+    });
+
+    expect(picker.named).toEqual([
+        'none', 'floorAndCeiling', 'floorOnly', 'CeilingOnly', 'noneButIndoors',
+    ]);
+
+    // A number, not a name: state.floorType indexes the enum, and setNodeFloor writes it
+    // straight into f_t.
+    expect(picker.chosen).toBe(2);
+    expect(picker.note).toContain('rooftop or a yard');
+});
+
+test('the height field takes a whole number and refuses anything else', async ({ page }) => {
+    const typed = await withPanels(page, (panels, elements, floor, state) => {
+        // Looked up again each time: an accepted value redraws the panel, so the element
+        // that was typed into is no longer the one on screen.
+        const enter = (value) => {
+            const field = elements.floorTypes.querySelector('input[type="number"]');
+            field.value = value;
+            field.dispatchEvent(new Event('change'));
+
+            return {
+                held: state.extraHeight,
+                shown: elements.floorTypes.querySelector('input[type="number"]').value,
+            };
+        };
+
+        return {
+            start: state.extraHeight,
+            raised: enter('8'),
+            fraction: enter('1.5'),
+            cleared: enter(''),
+        };
+    });
+
+    expect(typed.start).toBe(0);
+    expect(typed.raised).toEqual({ held: 8, shown: '8' });
+
+    // f_h is an integer and an empty box reads as 0, so neither a fraction nor a cleared
+    // field is taken: both put the setting back rather than quietly painting at floor
+    // level.
+    expect(typed.fraction).toEqual({ held: 8, shown: '8' });
+    expect(typed.cleared).toEqual({ held: 8, shown: '8' });
+});
+
+test('a floor type the enum has no name for is kept', async ({ page }) => {
+    const shown = await withPanels(page, (panels, elements, floor, state, panel) => {
+        state.floorType = 9;
+        panel.refresh();
+
+        const select = elements.floorTypes.querySelector('select');
+        return { value: select.value, first: select.options[0].textContent };
+    });
+
+    // The enum is positional, so a game update adding a type leaves the generated list
+    // short. Showing the number keeps that square paintable back to what it was.
+    expect(shown.value).toBe('9');
+    expect(shown.first).toBe('Type 9');
+});
+
 test('a floor naming a wall preset with no name keeps it', async ({ page }) => {
     const shown = await withPanels(page, (panels, elements, floor, state, panel) => {
         state.wallPreset = '29';
@@ -266,89 +528,127 @@ test('a floor naming a wall preset with no name keeps it', async ({ page }) => {
     expect(shown.first).toBe('Unnamed preset 29');
 });
 
-test('a selected node shows its fields, and its forced room read-only', async ({ page }) => {
-    const shown = await withPanels(page, (panels, elements, floor, state, panel) => {
-        state.selectedNode = { x: 9, y: 9 };
-        panel.refresh();
+/*
+ * The status column: what a click would paint, and what is already under the pointer,
+ * over the same five rows. The hovered target is passed to renderStatusPanel rather than
+ * set on the tool state, which is how the flow does it -- the pointer moves far more
+ * often than anything else in the panels changes, so it is redrawn on its own.
+ */
 
-        const section = elements.selection.querySelector('.selected-node');
-        const forced = section.querySelector('.read-only');
+test('a hovered node\'s forced room is named, and nothing in the column is editable', async ({ page }) => {
+    const shown = await withPanels(page, (panels, elements, floor, state) => {
+        panels.renderStatusPanel(elements.status, floor, state, { kind: 'cell', x: 9, y: 9 });
 
+        const under = elements.status.querySelectorAll('.status-block')[1];
         return {
-            heading: section.querySelector('h4').textContent,
-            labels: [...section.querySelectorAll('.field > span')].map((span) => span.textContent),
-            forcedText: forced?.textContent ?? null,
-            forcedIsInput: forced?.tagName === 'INPUT',
-            forcedTitle: forced?.getAttribute('title') ?? null,
+            caption: under.querySelector('.status-note').textContent,
+            notes: [...under.querySelectorAll('.note')].map((p) => p.textContent),
+            controls: elements.status.querySelectorAll('input, select, button').length,
         };
     });
 
-    expect(shown.heading).toBe('Node 9, 9');
-    expect(shown.labels).toContain('Forced room');
+    expect(shown.caption).toBe('Node 9, 9');
 
-    // f_r is carried through untouched and shown so an author knows it is there. It is
-    // not editable, because what a doubled value means is not known.
-    expect(shown.forcedText).toBe('Lobby.Lobby');
-    expect(shown.forcedIsInput).toBe(false);
-    expect(shown.forcedTitle).toContain('Not editable');
+    // f_r is carried through untouched and named so an author knows it is there. It is
+    // not editable, because what a doubled value means is not known -- and neither is
+    // anything else here: the column says what is, and the panels beside it set it.
+    expect(shown.notes).toContain('Forced room: Lobby.Lobby');
+    expect(shown.controls).toBe(0);
 });
 
-test('a node with no forced room does not show the field at all', async ({ page }) => {
-    const shown = await withPanels(page, (panels, elements, floor, state, panel) => {
-        state.selectedNode = { x: 10, y: 10 };
-        panel.refresh();
+test('a node with no forced room is not said to have one', async ({ page }) => {
+    const notes = await withPanels(page, (panels, elements, floor, state) => {
+        panels.renderStatusPanel(elements.status, floor, state, { kind: 'cell', x: 10, y: 10 });
 
-        const section = elements.selection.querySelector('.selected-node');
-        return [...section.querySelectorAll('.field > span')].map((span) => span.textContent);
+        const under = elements.status.querySelectorAll('.status-block')[1];
+        return [...under.querySelectorAll('.note')].map((p) => p.textContent);
     });
 
-    expect(shown).not.toContain('Forced room');
+    expect(notes).toEqual([]);
 });
 
-test('a selected tile shows its state and which cycle the tool is stepping', async ({ page }) => {
+test('a hovered tile is described by what it carries', async ({ page }) => {
     const shown = await withPanels(page, (panels, elements, floor, state, panel, model) => {
+        // Twice: on turns the elevator on, and again turns it through its first rotation.
         model.paintTile(model.tileAt(floor, 2, 2), model.TileMode.ELEVATOR);
         model.paintTile(model.tileAt(floor, 2, 2), model.TileMode.ELEVATOR);
-        state.selectedTile = { x: 2, y: 2 };
-        panel.refresh();
 
-        const section = elements.selection.querySelector('.selected-tile');
-        return {
-            heading: section.querySelector('h4').textContent,
-            values: [...section.querySelectorAll('.field')].map((label) => label.textContent),
-        };
+        // A tile is three nodes square, so the hover is over a node *in* tile 2,2 rather
+        // than at the same numbers -- node 2,2 is in tile 0,0 and carries nothing.
+        panels.renderStatusPanel(elements.status, floor, state, { kind: 'cell', x: 6, y: 6 });
+
+        const under = elements.status.querySelectorAll('.status-block')[1];
+        return under.querySelector('.status-row[data-type="tile"] .status-value').textContent;
     });
 
-    expect(shown.heading).toBe('Tile 2, 2');
-    expect(shown.values.join(' ')).toContain('elevator, 90°');
+    expect(shown).toContain('Elevator 90°');
 });
 
-test('a wall whose sides disagree says so when selected', async ({ page }) => {
+test('a wall whose sides disagree says so when hovered', async ({ page }) => {
     const shown = await withPanels(page, (panels, elements, floor, state, panel, model) => {
         // Half a wall, which is the state 582 base game wall halves are in.
         model.nodeAt(floor, 6, 6).walls.push({ ox: 0.5, oy: 0, preset: '7' });
-        state.selectedWall = { x: 6, y: 6, axis: 'x' };
-        panel.refresh();
+        panels.renderStatusPanel(elements.status, floor, state, { kind: 'wall', x: 6, y: 6, axis: 'x' });
 
-        const section = elements.selection.querySelector('.selected-wall');
+        const under = elements.status.querySelectorAll('.status-block')[1];
         return {
-            heading: section.querySelector('h4').textContent,
-            warning: section.querySelector('.warning')?.textContent ?? null,
+            caption: under.querySelector('.status-note').textContent,
+            wall: under.querySelector('.status-row[data-type="wall"] .status-value').textContent,
+            // A hover is over a wall or over a cell, never both, so the node's four rows
+            // are left blank rather than filled in from whichever cell is behind it.
+            room: under.querySelector('.status-row[data-type="room"] .status-value').textContent,
         };
     });
 
-    expect(shown.heading).toBe('Wall 6, 6 (x)');
-    expect(shown.warning).toContain('disagree');
+    expect(shown.caption).toBe('Wall 6, 6 (x)');
+    expect(shown.wall).toContain('sides disagree');
+    expect(shown.room).toBe('—');
 });
 
-test('a floor with something wrong with it says what', async ({ page }) => {
-    const notes = await withPanels(page, (panels, elements, floor, state, panel) => {
-        panel.refresh();
-        return [...elements.selection.querySelectorAll('.issues .note')].map((p) => p.textContent);
+test('with nothing hovered the column still lists every type', async ({ page }) => {
+    const shown = await withPanels(page, (panels, elements, floor, state) => {
+        panels.renderStatusPanel(elements.status, floor, state, null);
+
+        const blocks = [...elements.status.querySelectorAll('.status-block')];
+        return {
+            titles: blocks.map((block) => block.querySelector('strong').textContent),
+            rows: blocks.map((block) => [...block.querySelectorAll('.status-row')]
+                .map((row) => row.dataset.type)),
+            // Switching tool to find out what is under the pointer would change what the
+            // next click does. Every type is listed so that is never necessary.
+            active: blocks.map((block) => block.querySelector('.status-row.active').dataset.type),
+        };
     });
 
-    // This fixture has none of the three conditions, so nothing is claimed.
-    expect(notes).toEqual([]);
+    const everyType = ['address', 'room', 'floorType', 'wall', 'tile'];
+    expect(shown.titles).toEqual(['Painting with', 'Under the pointer']);
+    expect(shown.rows).toEqual([everyType, everyType]);
+    expect(shown.active).toEqual(['address', 'address']);
+});
+
+test('the painting column says what the mode will do with the values in it', async ({ page }) => {
+    const captions = await withPanels(page, (panels, elements, floor, state, panel, model, tools) => {
+        const caption = () => {
+            panels.renderStatusPanel(elements.status, floor, state, null);
+            const block = elements.status.querySelector('.status-block');
+            return block.querySelector('.status-note')?.textContent ?? null;
+        };
+
+        const seen = { none: caption() };
+        state.mode = tools.PaintMode.PAINT;
+        seen.paint = caption();
+        state.mode = tools.PaintMode.FLOOD;
+        seen.flood = caption();
+        return seen;
+    });
+
+    // The heading says "Painting with", which is a lie in None and an understatement in
+    // Flood. The caption is what makes the same five rows read correctly in all three.
+    expect(captions.none).toBe('A click picks these instead of painting them');
+    expect(captions.flood).toBe('A click fills up to the walls with these');
+
+    // Paint is the plain case, and a caption restating the heading is noise.
+    expect(captions.paint).toBe(null);
 });
 
 test('a colour survives a round trip through the picker', async ({ page }) => {

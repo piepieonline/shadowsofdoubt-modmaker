@@ -62,17 +62,71 @@ npm run serve:lan   # binds all interfaces over HTTPS
 
 Requires a Chromium-based browser — Firefox and Safari do not implement the File System Access API.
 
-## Tests
+## Demo mode
+
+`?demo` runs the whole app against content that is not on your disk — no game install, no mod
+folder, no folder prompt. It exists for trying the UI out, so there is no button for it.
 
 ```sh
-npm test              # headless
-npm run test:ui       # interactive
-npm run report        # last HTML report
+http://127.0.0.1:8080/?demo                    # the default editor
+http://127.0.0.1:8080/?flow=building&demo      # composes with ?flow=
 ```
+
+It seeds the Origin Private File System and hands the shell genuine browser-native
+`FileSystemDirectoryHandle` objects, the same trick the Playwright harness uses. Nothing about
+the app changes: every flow reads and writes the way it always does, so there is no demo-only
+path to drift out of step with the real one.
+
+What that means in practice:
+
+|  |  |
+|---|---|
+| Your folders | Never read and never written. Demo mode does not call `restoreFolders`, so a remembered handle is not even looked at, and nothing is written to idb-keyval. Leaving demo mode is a reload with the parameter dropped. |
+| Saving | Works, into the demo tree — an edit can be saved, reopened and seen again. That tree is wiped and reseeded on every load, so nothing accumulates. |
+| Folders modal | Reachable, but the buttons are disabled: connecting a real folder would break the promise above, quietly, with the badge still saying otherwise. |
+| Badge | A red **Demo data** chip in the header. Undiscoverable is not the same as invisible — made-up content must never be mistaken for the mod you are working on. |
+
+The content is three mods in `core/demo/fixtures.js`: one holding a case, its DDS text *and* a
+building (which is what lets switching editors keep the selection), one holding only a building,
+and one loader with nothing editable in it. The base game documents there are written by hand —
+their GUIDs and names are real ones from `refs/generated/ddsContentIndex.json`, so the Browse list
+names them correctly, but demo mode reads no install and there is nothing else they could be.
+
+## Tests
+
+Two suites, and the line between them is worth knowing before adding a test.
+
+```sh
+npm test                 # both, unit first
+npm run test:unit        # Vitest, ~1s
+npm run test:unit:watch  # the one to leave running
+npm run test:playwright  # Chromium, ~2min
+npm run test:ui          # interactive Playwright
+npm run report           # last HTML report
+```
+
+**Unit tests sit beside the module they cover**, named `*.unit.spec.js` — `core/stringsCsv.unit.spec.js`
+covers `core/stringsCsv.js`. They cover the logic that carries the correctness risk and needs no browser:
+parsing and serialising a file, turning a floor blueprint into a grid and back, deciding what a painting
+tool does to a node.
+
+> A unit test is never handed a `FileSystemDirectoryHandle`, real or fake, never a WebGL context, and never
+> a `document`. If a test needs one of the three, it belongs in the Playwright suite. `environment: 'node'`
+> makes the third of those a hard failure rather than a matter of discipline.
+
+The single exception is `fetch` for `/refs/**` (`tests/support/refs.js`), which serves the same files
+`http-server` does from the same paths. It is not a mock of anything, and nothing else is stubbed.
+
+**Playwright specs live in `tests/`**, named `*.spec.js`, and drive the real app in a real page.
+
+| | Tests | Wall clock |
+|---|---:|---:|
+| Unit (Vitest) | 168 | ~2s |
+| Playwright | 319 | ~6min |
 
 The app stays zero-build: npm is only needed for tests and the dev server, never to use or deploy the site.
 
-Tests never touch your real filesystem. `showDirectoryPicker` cannot be driven by Playwright, so the harness
+Playwright tests never touch your real filesystem. `showDirectoryPicker` cannot be driven by Playwright, so the harness
 (`tests/support/harness.js`) seeds the Origin Private File System and hands the app genuine browser-native
 `FileSystemDirectoryHandle` objects — real `createWritable`, `seek` and async `values()` rather than a mock.
 Fixtures live in `tests/support/fixtures.js`.

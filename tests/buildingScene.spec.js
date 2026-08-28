@@ -60,52 +60,6 @@ test.beforeEach(async ({ page }) => {
 
 
 /* -------------------------------------------------------------------------- */
-/* Index arithmetic, which needs no GPU at all                                 */
-/* -------------------------------------------------------------------------- */
-
-test('every wall slot has exactly one instance, and it maps back', async ({ page }) => {
-    const result = await page.evaluate(async () => {
-        const { instanceOfWall } = await import('/flows/building/scripts/scene.js');
-        const { AXIS_X, AXIS_Y, NODE_GRID } = await import('/flows/building/scripts/floorModel.js');
-
-        const seen = new Map();
-        let collisions = 0;
-
-        for (let y = 0; y < NODE_GRID; y++) {
-            for (let x = 0; x < NODE_GRID - 1; x++) {
-                const index = instanceOfWall(x, y, AXIS_X);
-                if (seen.has(index)) collisions++;
-                seen.set(index, `${x},${y},x`);
-            }
-        }
-        for (let y = 0; y < NODE_GRID - 1; y++) {
-            for (let x = 0; x < NODE_GRID; x++) {
-                const index = instanceOfWall(x, y, AXIS_Y);
-                if (seen.has(index)) collisions++;
-                seen.set(index, `${x},${y},y`);
-            }
-        }
-
-        return {
-            count: seen.size,
-            collisions,
-            lowest: Math.min(...seen.keys()),
-            highest: Math.max(...seen.keys()),
-        };
-    });
-
-    // 20 x 21 gaps along each axis. Two walls sharing an instance would have one
-    // silently painting over the other.
-    expect(result.count).toBe(840);
-    expect(result.collisions).toBe(0);
-
-    // Contiguous from zero, so the mesh is exactly as big as it needs to be.
-    expect(result.lowest).toBe(0);
-    expect(result.highest).toBe(839);
-});
-
-
-/* -------------------------------------------------------------------------- */
 /* The canvas                                                                  */
 /* -------------------------------------------------------------------------- */
 
@@ -391,6 +345,129 @@ test('a blank is drawn as an opening reaching the top', async ({ page }) => {
     ]);
 });
 
+/**
+ * The dividers, which are blanks with something more specific drawn for them, and the
+ * entrance that is drawn at the same height as one.
+ *
+ * A divider is a run of partition rather than one wall, so two things have to be
+ * readable: that it spans, and where a run of it ends. The rail is the first -- a lintel
+ * across the whole wall rather than an opening's width, so that neighbouring dividers
+ * join into one line -- and a post at one end is the second.
+ *
+ * The rail runs along the top: a band at the floor is read as part of the floor, and at
+ * this camera angle is very nearly under it. The posts are a blank's own jambs, so half
+ * of what a blank has is the whole of the difference between the two ends.
+ *
+ * The rail's rise is 0.35 of the wall's 0.55, which is 0.1925 -- exactly on the boundary
+ * shapeOf's three decimal places round at. An instance matrix is a Float32Array, so what
+ * is read back is a shade under that rather than a shade over, and it rounds down. Every
+ * other figure here is far enough from a boundary for the two to agree.
+ */
+const RAIL = { along: 1, rise: 0.192, offsetAlong: 0, offsetUp: 0.179 };
+const POST_LEFT = { along: 0.25, rise: 0.55, offsetAlong: -0.375, offsetUp: 0 };
+const POST_RIGHT = { along: 0.25, rise: 0.55, offsetAlong: 0.375, offsetUp: 0 };
+
+/** The kinds table as the reference data has it: all four of these are blanks. */
+const asBlanks = (page) => page.evaluate(() => {
+    window.wallPresetKinds = { 4: 'blank', 5: 'blank', 6: 'blank', 10: 'blank' };
+});
+
+test('a divider middle is drawn as a rail across the whole wall, with no posts', async ({ page }) => {
+    // The kinds table calls it a blank; the specific shape is what wins over that.
+    await asBlanks(page);
+
+    expect(await shapeOf(page, '4')).toEqual([RAIL]);
+});
+
+test('each divider end is drawn with the post on its own side', async ({ page }) => {
+    await asBlanks(page);
+
+    // The two ends take opposite sides, which is the whole of what distinguishes the
+    // pair: `EndLeft` is the one at the near end of the wall. See the note on
+    // PRESET_SHAPES for why that is not a claim about the game's own convention.
+    expect(await shapeOf(page, '5')).toEqual([POST_LEFT, RAIL]);
+    expect(await shapeOf(page, '6')).toEqual([POST_RIGHT, RAIL]);
+});
+
+/**
+ * The same preset, on the two axes, drawn the same way round.
+ *
+ * The scene mirrors the floor's x axis, so a piece offset along a wall that lies on that
+ * axis moves the opposite way to one on a wall that does not. That did not matter while
+ * every shape was symmetrical about the middle of its wall. It does for a divider end:
+ * without it, a run ending at a corner would have its two last walls capped at opposite
+ * ends of themselves, and which one an author saw would depend on which way the wall ran.
+ */
+test('an asymmetric preset is drawn the same way round on both axes', async ({ page }) => {
+    await asBlanks(page);
+
+    const post = await withBareFloor(page, (scene, floor, model, sceneModule) => {
+        model.setWall(floor, 10, 10, model.AXIS_X, '5');
+        model.setWall(floor, 10, 10, model.AXIS_Y, '5');
+        scene.refresh();
+
+        const parts = scene._internals.wallParts;
+        const matrix = new scene._internals.THREE.Matrix4();
+
+        // The post is the shape's first piece, and both walls have their middle at 10.5
+        // along themselves: the x-axis one runs along z, the y-axis one along x.
+        const offsetOf = (axis) => {
+            parts.getMatrixAt(sceneModule.instanceOfWall(10, 10, axis) * 4, matrix);
+            const e = matrix.elements;
+
+            // Read back through the mirror for the wall that lies on the mirrored axis,
+            // so both answers are in the floor's own coordinates.
+            const at = axis === model.AXIS_X ? e[14] : model.NODE_GRID - e[12];
+            return Number((at - 10.5).toFixed(3));
+        };
+
+        return { x: offsetOf(model.AXIS_X), y: offsetOf(model.AXIS_Y) };
+    });
+
+    expect(post).toEqual({ x: -0.375, y: -0.375 });
+});
+
+test('a nothing entrance is drawn as a threshold at a divider\'s height', async ({ page }) => {
+    await asBlanks(page);
+
+    // The rail at the same height, across the middle of the wall alone: a way through
+    // marked where you pass it, rather than a hole in a wall.
+    expect(await shapeOf(page, '10')).toEqual([
+        { ...RAIL, along: 0.5 },
+    ]);
+});
+
+test('a divider is coloured as a door rather than as the blank it is', async ({ page }) => {
+    // The kinds table as the reference data has it, for the two kinds compared against
+    // as well as for the dividers.
+    await page.evaluate(() => {
+        window.wallPresetKinds = { 4: 'blank', 5: 'blank', 6: 'blank', 7: 'door', 11: 'blank' };
+    });
+
+    const colours = await withBareFloor(page, (scene, floor, model, sceneModule) => {
+        const colourOf = (preset) => {
+            model.setWall(floor, 10, 10, model.AXIS_X, preset);
+            scene.refresh();
+
+            const at = sceneModule.instanceOfWall(10, 10, model.AXIS_X) * 4 * 3;
+            const array = scene._internals.wallParts.instanceColor.array;
+            return [...array.slice(at, at + 3)].map((value) => Number(value.toFixed(3)));
+        };
+
+        // A door, a blank, and the three dividers -- which the kinds table calls blanks.
+        return {
+            door: colourOf('7'),
+            blank: colourOf('11'),
+            dividers: ['4', '5', '6'].map(colourOf),
+        };
+    });
+
+    // The dark grey of a blank says "nothing here", which a divider is not: it is a thing
+    // to see over and step past, and it reads with the openings you pass through.
+    expect(colours.door).not.toEqual(colours.blank);
+    for (const divider of colours.dividers) expect(divider).toEqual(colours.door);
+});
+
 test('a preset the kinds table has never heard of is drawn as a solid wall', async ({ page }) => {
     await page.evaluate(() => { window.wallPresetKinds = {}; });
     const pieces = await shapeOf(page, '29');
@@ -488,37 +565,597 @@ test('changing overlay recolours the floor', async ({ page }) => {
     expect(colours.byRoom).not.toEqual(colours.byAddress);
 });
 
-test('a cell describes itself the way the reference labels one', async ({ page }) => {
-    const described = await withScene(page, (scene, container, floor, sceneModule) => ({
-        inside: sceneModule.describeCell(floor, 10, 10),
-        margin: sceneModule.describeCell(floor, 0, 0),
-    }));
 
-    // The reference puts the room preset, its id and the coordinates on every cell.
-    expect(described.inside.coordinate).toBe('10, 10');
-    expect(described.inside.room).toMatch(/^\S+ #\d+$/);
-    expect(typeof described.inside.address).toBe('string');
-    expect(described.margin.coordinate).toBe('0, 0');
-});
+/*
+ * The floor type overlay, which is the one that draws shapes rather than only colours.
+ *
+ * Five colours are five things to memorise. Two facts -- is there something to stand on,
+ * is there something overhead -- are what the enum's own names are made of, so they are
+ * what is drawn: a solid slab or a see-through one, with or without a square floating
+ * over it. What is checked here is that the pairing is right and that it happens in this
+ * overlay and no other.
+ */
 
-test('tile markers report entrances and stairwells, and nothing else', async ({ page }) => {
-    const markers = await withScene(page, (scene, container, floor, sceneModule) => (
-        sceneModule.tileMarkers(floor)
-    ));
+/**
+ * Where a square is drawn and how big, per mesh.
+ *
+ * Serialised into the page with the test body, so it takes THREE rather than importing
+ * one and spells out the constants it needs: 21 nodes to a side, and a slab 0.08 tall.
+ *
+ * Read straight off the matrix rather than through `decompose`, which reports a scale of
+ * 1 for a matrix scaled to nothing -- three treats a degenerate basis as unit rather than
+ * as zero, and "scaled to nothing" is exactly how a square that is not drawn is stored.
+ * These are scale and translation only, so the elements are the answer: 0 and 5 are the
+ * x and y scale, 13 the height of the middle.
+ */
+const READ_SQUARE = `(THREE, mesh, x, y) => {
+    const matrix = new THREE.Matrix4();
+    mesh.getMatrixAt(y * 21 + x, matrix);
 
-    expect(markers.length).toBeGreaterThan(0);
+    const te = matrix.elements;
+    const middle = te[13];
+    const height = te[5] * 0.08;
 
-    for (const marker of markers) {
-        // Only tiles that carry something are listed at all.
-        expect(marker.entrance ?? marker.stairwell).not.toBeNull();
+    return {
+        drawn: te[0] > 0,
+        middle,
+        top: middle + height / 2,
+        bottom: middle - height / 2,
+    };
+}`;
 
-        // The centre node of a 3 x 3 tile, which is what a label is positioned over.
-        expect(marker.nodeX).toBe(marker.x * 3 + 1);
-        expect(marker.nodeY).toBe(marker.y * 3 + 1);
+test('the floor type overlay draws each square by what it has under and over it', async ({ page }) => {
+    const drawn = await withScene(page, async (scene, container, floor, sceneModule, arg) => {
+        const { setNodeFloor, nodeAt } = await import('/flows/building/scripts/floorModel.js');
+        const { THREE, cells, ghostCells, ceilingCaps } = scene._internals;
+
+        // eslint-disable-next-line no-new-func
+        const read = new Function(`return ${arg.readSquare}`)();
+
+        // The Hotel's ground floor carries four of the five types where they are named
+        // below. CeilingOnly is the one it has none of -- 254 nodes in the whole base
+        // game are one -- so a square is made into one rather than left untested.
+        setNodeFloor(floor, nodeAt(floor, 9, 5), 3, 0);
+
+        const at = (x, y) => ({
+            solid: read(THREE, cells, x, y).drawn,
+            ghost: read(THREE, ghostCells, x, y).drawn,
+            cap: read(THREE, ceilingCaps, x, y).drawn,
+        });
+
+        const sample = () => ({
+            none: at(0, 0),
+            floorAndCeiling: at(8, 5),
+            floorOnly: at(10, 5),
+            ceilingOnly: at(9, 5),
+            noneButIndoors: at(4, 10),
+        });
+
+        scene.setOverlay(sceneModule.Overlay.FLOOR_TYPE);
+
+        const byType = sample();
+        const meshes = { ghost: ghostCells.visible, caps: ceilingCaps.visible };
+        const lid = read(THREE, ceilingCaps, 8, 5).middle;
+
+        scene.setOverlay(sceneModule.Overlay.ADDRESS);
+
+        return {
+            byType,
+            meshes,
+            lid,
+            byAddress: sample(),
+            elsewhere: { ghost: ghostCells.visible, caps: ceilingCaps.visible },
+            transparent: ghostCells.material.transparent,
+            opacity: ghostCells.material.opacity,
+        };
+    }, { readSquare: READ_SQUARE });
+
+    // Solid where there is something to stand on, see-through where there is not; a
+    // square overhead where the type says there is a ceiling. Exactly one of solid and
+    // ghost draws each square, whichever way round.
+    expect(drawn.byType).toEqual({
+        none: { solid: false, ghost: true, cap: false },
+        floorAndCeiling: { solid: true, ghost: false, cap: true },
+        floorOnly: { solid: true, ghost: false, cap: false },
+        ceilingOnly: { solid: false, ghost: true, cap: true },
+
+        // Drawn exactly as `none` is. Where the game counts the square as being is not a
+        // thing the view can show, and the colour is what tells the two apart.
+        noneButIndoors: { solid: false, ghost: true, cap: false },
+    });
+
+    // Clear of the walls, which stand 0.55 and are the tallest thing in the scene.
+    expect(drawn.lid).toBeGreaterThan(0.55);
+
+    // Only here. The address and room overlays are read as flat sheets of colour, and a
+    // floor half of which is see-through with squares hanging over it is not one.
+    expect(drawn.meshes).toEqual({ ghost: true, caps: true });
+    expect(drawn.elsewhere).toEqual({ ghost: false, caps: false });
+    for (const square of Object.values(drawn.byAddress)) {
+        expect(square).toEqual({ solid: true, ghost: false, cap: false });
     }
 
-    // Hotel_GroundFloor is the way into the building, so it has a main entrance.
-    expect(markers.some((marker) => marker.entrance === 'main')).toBe(true);
+    // See-through enough to read the grid and the walls through, or it says nothing.
+    expect(drawn.transparent).toBe(true);
+    expect(drawn.opacity).toBeLessThan(0.5);
+});
+
+test('a raised square stands on a plinth, and only in the overlay that paints one', async ({ page }) => {
+    const raised = await withScene(page, async (scene, container, floor, sceneModule, arg) => {
+        const { THREE, cells, ghostCells, cellHits } = scene._internals;
+
+        // eslint-disable-next-line no-new-func
+        const read = new Function(`return ${arg.readSquare}`)();
+
+        scene.setOverlay(sceneModule.Overlay.FLOOR_TYPE);
+
+        // 5,9 is the Hotel's tallest square: f_h 51 against a ceiling of 45. It is also
+        // noneButIndoors, so the mesh drawing it is the see-through one -- height and type
+        // are independent, and a square with nothing to stand on can still be up in the
+        // air. 8,5 is at the floor's own level, which every square on all but 71 base game
+        // floors is.
+        const tall = read(THREE, ghostCells, 5, 9);
+        const flat = read(THREE, cells, 8, 5);
+        const hit = read(THREE, cellHits, 5, 9);
+
+        scene.setOverlay(sceneModule.Overlay.ADDRESS);
+        const elsewhere = read(THREE, cells, 5, 9);
+
+        return { tall, flat, hit, elsewhere };
+    }, { readSquare: READ_SQUARE });
+
+    // A slab at the floor's own level rests on nothing and is a slab thick, which is what
+    // every square was before heights were drawn at all.
+    expect(raised.flat.bottom).toBeCloseTo(0, 5);
+    expect(raised.flat.top).toBeCloseTo(0.08, 5);
+
+    // 51/45 of a ceiling, drawn as that much of a wall's height. Above the walls, which
+    // is honest: it is the tallest thing on the floor.
+    expect(raised.tall.top).toBeGreaterThan(0.55);
+
+    // A plinth reaching the floor rather than a slab hovering over a gap, so that what is
+    // drawn is what a ray meets and a click near its edge cannot fall through it.
+    expect(raised.tall.bottom).toBeCloseTo(0, 5);
+
+    // What a ray hits is exactly what is drawn.
+    expect(raised.hit.top).toBeCloseTo(raised.tall.top, 5);
+    expect(raised.hit.bottom).toBeCloseTo(raised.tall.bottom, 5);
+
+    // Flat everywhere else: a floor being read for its addresses is a sheet of colour.
+    expect(raised.elsewhere.top).toBeCloseTo(0.08, 5);
+});
+
+test('every square can still be aimed at in the floor type overlay, floor or none', async ({ page }) => {
+    const round = await withScene(page, async (scene, container, floor, sceneModule) => {
+        const { setNodeFloor, nodeAt } = await import('/flows/building/scripts/floorModel.js');
+        scene.setOverlay(sceneModule.Overlay.FLOOR_TYPE);
+
+        // One square of each type, made rather than found: the Hotel has all five between
+        // them, but its noneButIndoors ones sit behind its raised block, and a square
+        // genuinely standing in front of another is not the thing being tested here. So a
+        // row in the open is painted with the five, and 5,9 -- the tallest square on the
+        // floor, with nothing in front of it -- is added for the height.
+        const row = [[8, 5], [9, 5], [10, 5], [11, 5], [12, 5]];
+        row.forEach(([x, y], type) => setNodeFloor(floor, nodeAt(floor, x, y), type, 0));
+        scene.refresh();
+
+        const checked = [];
+        for (const [x, y] of [...row, [5, 9]]) {
+            const at = scene.project(x, y);
+            if (!at) { checked.push({ x, y, at: null }); continue; }
+
+            const picked = scene.pickAt({ clientX: at.left, clientY: at.top });
+            checked.push({
+                x, y, kind: picked?.kind ?? null, got: picked ? [picked.x, picked.y] : null,
+            });
+        }
+
+        return checked;
+    });
+
+    // Projecting a square and picking at the result gives that square back, whatever it
+    // is made of and however high it stands. That round trip is what every painting tool
+    // is built on.
+    for (const cell of round) {
+        expect({ at: [cell.x, cell.y], got: cell.got }).toEqual(
+            { at: [cell.x, cell.y], got: [cell.x, cell.y] });
+        expect(cell.kind).toBe('cell');
+    }
+});
+
+test('the tile squares cover a tile each, clear of the walls, and only when asked', async ({ page }) => {
+    const overlay = await withScene(page, (scene) => {
+        const { THREE, tileOverlay } = scene._internals;
+
+        const visibleAtFirst = tileOverlay.visible;
+        scene.setTileOverlay(true);
+        const shown = tileOverlay.visible;
+
+        // Closing the floor takes the squares with it, whatever the tool is set to.
+        scene.setModel(null);
+        const withoutFloor = tileOverlay.visible;
+
+        const matrix = new THREE.Matrix4();
+        const position = new THREE.Vector3();
+        const centres = [];
+
+        for (const index of [0, 1, tileOverlay.count - 1]) {
+            tileOverlay.getMatrixAt(index, matrix);
+            centres.push(position.setFromMatrixPosition(matrix).toArray());
+        }
+
+        tileOverlay.geometry.computeBoundingBox();
+        const box = tileOverlay.geometry.boundingBox;
+
+        return {
+            visibleAtFirst,
+            shown,
+            withoutFloor,
+            count: tileOverlay.count,
+            centres,
+            width: box.max.x - box.min.x,
+            depth: box.max.z - box.min.z,
+            transparent: tileOverlay.material.transparent,
+            opacity: tileOverlay.material.opacity,
+        };
+    });
+
+    // Off until the tile tool asks for it: every other tool paints a cell, and 49 sheets
+    // over the floor would be in the way of reading the thing being painted.
+    expect(overlay.visibleAtFirst).toBe(false);
+    expect(overlay.shown).toBe(true);
+    expect(overlay.withoutFloor).toBe(false);
+
+    // One square per tile of the 7 x 7 grid.
+    expect(overlay.count).toBe(49);
+
+    // A tile is 3 x 3 cells, and a square is nearly that -- short of it by enough that
+    // the seam between two tiles is still visible.
+    expect(overlay.width).toBeCloseTo(3 * 0.94, 5);
+    expect(overlay.depth).toBeCloseTo(3 * 0.94, 5);
+
+    // Above the walls, which stand 0.55 and are the tallest thing in the scene. A square
+    // level with them would be sliced by every wall crossing it.
+    for (const [, height] of overlay.centres) expect(height).toBeGreaterThan(0.55);
+
+    // Neighbouring tiles are three cells apart, and the x axis is mirrored -- the floor's
+    // coordinates are left-handed and the scene's are not. See mirrorX.
+    const [first, second] = overlay.centres;
+    expect(second[0] - first[0]).toBeCloseTo(-3, 5);
+    expect(first[2]).toBeCloseTo(second[2], 5);
+
+    // See-through, or it hides the floor it is being read against.
+    expect(overlay.transparent).toBe(true);
+    expect(overlay.opacity).toBeLessThan(0.5);
+});
+
+test('a room is outlined where the room beside it changes, and Outside is not a room', async ({ page }) => {
+    const edges = await withScene(page, (scene, container, floor) => {
+        // 21 nodes to a side. Written out rather than imported, because the body of a
+        // withScene test is serialised and cannot close over one.
+        const GRID = 21;
+
+        const { roomEdges } = scene._internals;
+        const instances = roomEdges.instanceMatrix.array;
+
+        // A strip is centred on the seam it covers, and no two seams share a centre, so
+        // the centre alone names one. The scene mirrors x; this puts it back into the
+        // floor's own units, which is what the model below is in.
+        const drawn = new Map();
+
+        for (let i = 0; i < roomEdges.count; i++) {
+            const at = i * 16;
+            const scaleX = instances[at];
+            const scaleZ = instances[at + 10];
+            if (scaleX === 0 && scaleZ === 0) continue;
+
+            drawn.set(`${GRID - instances[at + 12]},${instances[at + 14]}`, {
+                height: instances[at + 13],
+                long: Math.max(scaleX, scaleZ),
+                thick: Math.min(scaleX, scaleZ),
+            });
+        }
+
+        /*
+         * The same question the scene asks, asked independently: which room is here, and
+         * nothing for the filler. Either mark counts -- the address named Outside, or a
+         * room whose preset is Null.
+         */
+        const roomOf = (x, y) => {
+            if (x < 0 || y < 0 || x >= GRID || y >= GRID) return null;
+
+            const node = floor.nodes[y * GRID + x];
+            if (!node) return null;
+
+            const address = floor.addresses[node.addressIndex];
+            if (address?.layoutConfiguration === 'Outside') return null;
+
+            const room = floor.rooms.find((entry) => entry.addressIndex === node.addressIndex
+                && entry.roomIndex === node.roomIndex);
+            if (!room || room.preset === 'Null') return null;
+
+            return `${node.addressIndex}:${node.roomIndex}`;
+        };
+
+        // One seam of each kind the rule has to tell apart. The seam to the right of
+        // (x, y) is the vertical one centred at (x + 1, y + 0.5).
+        const cases = {
+            sameRoom: null, twoRooms: null, roomAndOutside: null, bothOutside: null,
+        };
+
+        for (let y = 0; y < GRID; y++) {
+            for (let x = 0; x < GRID - 1; x++) {
+                const here = roomOf(x, y);
+                const beside = roomOf(x + 1, y);
+                const seam = `${x + 1},${y + 0.5}`;
+
+                if (here && here === beside) cases.sameRoom ??= seam;
+                else if (here && beside) cases.twoRooms ??= seam;
+                else if (here || beside) cases.roomAndOutside ??= seam;
+                else cases.bothOutside ??= seam;
+            }
+        }
+
+        return {
+            total: drawn.size,
+            found: Object.fromEntries(
+                Object.entries(cases).map(([name, seam]) => [name, seam !== null])),
+            drawn: Object.fromEntries(
+                Object.entries(cases).map(([name, seam]) => [name, drawn.has(seam)])),
+            strip: drawn.get(cases.twoRooms),
+        };
+    });
+
+    // The fixture has to contain all four for the assertions under it to mean anything --
+    // a floor of one room would pass most of them by drawing nothing at all.
+    expect(edges.found).toEqual({
+        sameRoom: true, twoRooms: true, roomAndOutside: true, bothOutside: true,
+    });
+
+    // The whole rule. Two rooms meeting is a boundary and so is a room against the open
+    // air; one room with itself is not, and neither is Outside with more Outside -- which
+    // is what keeps the margin and every unclaimed square bare.
+    expect(edges.drawn).toEqual({
+        sameRoom: false, twoRooms: true, roomAndOutside: true, bothOutside: false,
+    });
+
+    // Wide enough to read: a strip, not a hairline. Long enough to overlap the strip it
+    // meets at a corner, so a corner is filled rather than notched.
+    expect(edges.strip.thick).toBeCloseTo(0.09, 5);
+    expect(edges.strip.long).toBeCloseTo(1.09, 5);
+
+    // Just clear of the cells, and never more than the mesh holds: 441 cells with a seam
+    // to the right and below, plus the two sides with nothing beyond them.
+    expect(edges.strip.height).toBeCloseTo(0.09, 5);
+    expect(edges.total).toBeGreaterThan(0);
+    expect(edges.total).toBeLessThanOrEqual(21 * 21 * 2 + 21 * 2);
+});
+
+/* -------------------------------------------------------------------------- */
+/* The camera                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Driving the camera without a mouse.
+ *
+ * Every camera gesture wants a button held down through a drag, and a Mac trackpad has
+ * no comfortable way to hold the two buttons that orbit -- so the keys are not a
+ * convenience here, they are the way the view is reachable at all on that hardware. That
+ * makes them worth checking properly.
+ *
+ * Read through spherical coordinates rather than the raw position, because that is what
+ * the three moves are: orbit turns theta and phi, zoom changes the radius, pan moves the
+ * point all three are measured from. Asserting on x, y and z would test the arithmetic
+ * that converts between them, which is three.js's.
+ */
+const CAMERA_PROBE = `
+    const { camera, controls } = scene._internals;
+
+    const read = () => {
+        const offset = camera.position.clone().sub(controls.target);
+        return {
+            distance: offset.length(),
+            theta: Math.atan2(offset.x, offset.z),
+            height: camera.position.y,
+            target: controls.target.toArray(),
+        };
+    };
+
+    const key = (name, options = {}) => scene.canvas.dispatchEvent(new KeyboardEvent(
+        'keydown', { key: name, bubbles: true, cancelable: true, ...options }));
+`;
+
+/** Run a body with `read` and `key` already in scope. See CAMERA_PROBE. */
+async function withCamera(page, body) {
+    return withScene(page, `(scene) => { ${CAMERA_PROBE} return (${body.toString()})(scene, read, key); }`);
+}
+
+/**
+ * The turn from one azimuth to another, the short way round.
+ *
+ * The camera starts looking straight down -z, which is exactly where atan2 cuts its range
+ * -- so a press to either side of the start reads as most of a whole turn apart rather
+ * than as the sixteenth of one it is. Subtracting the two angles would compare where the
+ * cut fell, not where the camera went.
+ */
+const turn = (from, to) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
+
+test('left and right orbit opposite ways, and move nothing else', async ({ page }) => {
+    const moved = await withCamera(page, (scene, read, key) => {
+        const start = read();
+        key('ArrowLeft');
+        const left = read();
+        key('ArrowRight');
+        key('ArrowRight');
+        return { start, left, right: read() };
+    });
+
+    // One press left, then two right, so the second leg is twice the first and the other
+    // way about. Checked against itself rather than against the step the scene uses,
+    // which is a number this has no business knowing.
+    const leftStep = turn(moved.start.theta, moved.left.theta);
+    const rightStep = turn(moved.left.theta, moved.right.theta) / 2;
+
+    expect(leftStep).toBeLessThan(0);
+    expect(rightStep).toBeCloseTo(-leftStep, 9);
+
+    // Orbiting is a turn about the target, so neither of those moves.
+    expect(moved.left.distance).toBeCloseTo(moved.start.distance, 6);
+    expect(moved.right.distance).toBeCloseTo(moved.start.distance, 6);
+    expect(moved.right.target).toEqual(moved.start.target);
+});
+
+test('up climbs and down descends, and neither goes past the end of the arc', async ({ page }) => {
+    const arc = await withCamera(page, (scene, read, key) => {
+        const start = read();
+        key('ArrowUp');
+        const up = read();
+        key('ArrowDown');
+        key('ArrowDown');
+        const down = read();
+
+        // Far more presses than the arc is long, so both ends are reached and held.
+        for (let i = 0; i < 200; i++) key('ArrowUp');
+        const overhead = read();
+
+        for (let i = 0; i < 400; i++) key('ArrowDown');
+        return { start, up, down, overhead, underneath: read() };
+    });
+
+    expect(arc.up.height).toBeGreaterThan(arc.start.height);
+    expect(arc.down.height).toBeLessThan(arc.up.height);
+
+    // Straight down is a degenerate spherical angle: phi of zero has no direction to it,
+    // and a camera that reached it would have nothing left to orbit about.
+    expect(arc.overhead.height).toBeGreaterThan(0);
+    expect(Number.isFinite(arc.overhead.theta)).toBe(true);
+    expect(arc.overhead.distance).toBeCloseTo(arc.start.distance, 6);
+
+    // The floor is a plane, so the far end stops above it rather than passing under and
+    // losing the model. maxPolarAngle is 0.48 of a half turn, short of level.
+    expect(arc.underneath.height).toBeGreaterThan(arc.underneath.target[1]);
+    expect(arc.underneath.distance).toBeCloseTo(arc.start.distance, 6);
+});
+
+test('minus and plus zoom, and stop at both ends', async ({ page }) => {
+    const zoom = await withCamera(page, (scene, read, key) => {
+        const start = read();
+        key('-');
+        const out = read();
+        key('=');
+        key('=');
+        const back = read();
+
+        for (let i = 0; i < 200; i++) key('-');
+        const furthest = read();
+
+        for (let i = 0; i < 400; i++) key('=');
+        return { start, out, back, furthest, nearest: read() };
+    });
+
+    expect(zoom.out.distance).toBeGreaterThan(zoom.start.distance);
+    expect(zoom.back.distance).toBeLessThan(zoom.out.distance);
+
+    // Zoom slides along the line to the target, so the target and the angle stay put.
+    expect(zoom.out.target).toEqual(zoom.start.target);
+    expect(turn(zoom.start.theta, zoom.out.theta)).toBeCloseTo(0, 9);
+
+    // The bounds the scene sets. Without them a zoom in carries on through the floor and
+    // a zoom out loses the building somewhere past the far plane.
+    expect(zoom.furthest.distance).toBeCloseTo(80, 4);
+    expect(zoom.nearest.distance).toBeCloseTo(4, 4);
+});
+
+test('the shifted arrows pan, taking the target with them', async ({ page }) => {
+    const panned = await withCamera(page, (scene, read, key) => {
+        const start = read();
+        key('ArrowRight', { shiftKey: true });
+        const right = read();
+        key('ArrowLeft', { shiftKey: true });
+        return { start, right, back: read() };
+    });
+
+    // Panning moves what the camera looks at. Moving only the eye would swing the view,
+    // which is the other gesture entirely.
+    expect(panned.right.target).not.toEqual(panned.start.target);
+    expect(panned.right.distance).toBeCloseTo(panned.start.distance, 6);
+
+    // And the opposite arrow undoes it, which is the same claim as the step being a
+    // direction rather than a drift.
+    panned.back.target.forEach((component, axis) => {
+        expect(component).toBeCloseTo(panned.start.target[axis], 6);
+    });
+});
+
+test('a camera key with a command modifier on it is left to the browser', async ({ page }) => {
+    const held = await withCamera(page, (scene, read, key) => {
+        const start = read();
+
+        // Each of the three the handler stands aside for, and one it acts on, so a test
+        // that stopped working entirely would not look like a pass.
+        const handled = [
+            key('ArrowLeft', { ctrlKey: true }),
+            key('ArrowLeft', { metaKey: true }),
+            key('ArrowLeft', { altKey: true }),
+        ];
+
+        const after = read();
+        key('ArrowLeft');
+
+        return { start, after, moved: read(), handled };
+    });
+
+    // Not handled, so not consumed either: cmd+arrow is a browser navigation and ctrl+
+    // arrow moves a caret, and the view swallowing them would be a bug of its own.
+    expect(held.handled).toEqual([true, true, true]);
+    expect(turn(held.start.theta, held.after.theta)).toBeCloseTo(0, 9);
+    expect(turn(held.start.theta, held.moved.theta)).not.toBeCloseTo(0, 9);
+});
+
+test('alt lends the left button to the camera, and only for that press', async ({ page }) => {
+    const buttons = await withScene(page, (scene) => {
+        const { THREE, controls } = scene._internals;
+
+        // A whole gesture each way round, so the second press starts from where a real
+        // one would rather than from the middle of the first.
+        const press = (options) => {
+            for (const [type, buttons] of [['pointerdown', 1], ['pointerup', 0]]) {
+                scene.canvas.dispatchEvent(new PointerEvent(type, {
+                    pointerId: 1, button: 0, buttons, bubbles: true,
+                    clientX: 10, clientY: 10, ...options,
+                }));
+            }
+        };
+
+        press({ altKey: true });
+        const withAlt = controls.mouseButtons.LEFT === THREE.MOUSE.ROTATE;
+
+        press({});
+        return { withAlt, without: controls.mouseButtons.LEFT };
+    });
+
+    // Held, the left button orbits; let go, it goes back to the tools -- which is what a
+    // mouse action of null means to OrbitControls.
+    expect(buttons.withAlt).toBe(true);
+    expect(buttons.without).toBe(null);
+});
+
+test('the view can be focused, and a press focuses it', async ({ page }) => {
+    const focus = await withScene(page, (scene) => {
+        const before = document.activeElement === scene.canvas;
+
+        scene.canvas.dispatchEvent(new PointerEvent('pointerdown', {
+            pointerId: 1, button: 0, buttons: 1, bubbles: true, clientX: 10, clientY: 10,
+        }));
+
+        return { before, after: document.activeElement === scene.canvas, tabIndex: scene.canvas.tabIndex };
+    });
+
+    // The keys are the canvas's rather than the window's, so that an arrow in a text
+    // field stays that field's. Clicking the view is what hands them over.
+    expect(focus.tabIndex).toBe(0);
+    expect(focus.before).toBe(false);
+    expect(focus.after).toBe(true);
 });
 
 test('the view can be framed again after being moved', async ({ page }) => {

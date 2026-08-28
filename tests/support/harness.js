@@ -160,6 +160,12 @@ export async function connectFolders(page, mapping) {
 /**
  * Choose a mod and one of its content folders, through the shell's two dropdowns.
  *
+ * The waits take the default timeout rather than a shorter one of their own. Choosing a
+ * mod reads the folder, and in the building flow that is followed by building a scene,
+ * which under a full parallel run takes longer than the few seconds this used to allow.
+ * A wait that gives up before the test does turns load into a failure; the test's own
+ * timeout is what should decide that something has actually hung.
+ *
  * @param contentPath path within the mod; '' selects the mod root
  */
 export async function selectContent(page, modName, contentPath = '') {
@@ -167,10 +173,9 @@ export async function selectContent(page, modName, contentPath = '') {
     // A mod-root content folder has an empty path, so match on the value exactly.
     await page.waitForFunction(
         (p) => [...document.querySelectorAll('#select-content option')].some((o) => o.value === p),
-        contentPath, { timeout: 5000 });
+        contentPath);
     await page.selectOption('#select-content', contentPath);
-    await page.waitForFunction(
-        (m) => window.selectedMod?.modName === m, modName, { timeout: 5000 });
+    await page.waitForFunction((m) => window.selectedMod?.modName === m, modName);
 }
 
 /**

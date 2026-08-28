@@ -7,6 +7,7 @@
  * changed at any time -- including after startup, from the header.
  */
 import { FOLDERS, folderName, isPending, pendingName, selectFolder, missingFolders } from './folders.js';
+import { isDemoMode } from './demo/demoMode.js';
 
 const MODAL = '#folders-modal';
 
@@ -41,6 +42,10 @@ function render(flow) {
         button.className = status.state === 'connected' ? 'secondary' : '';
         button.textContent = status.action;
         button.dataset.selectFolder = kind.id;
+        // Enforced in selectFolder as well. Disabling it here is so the state is
+        // visible, rather than a click that answers with an alert.
+        button.disabled = isDemoMode();
+        if (button.disabled) button.title = 'Folders cannot be changed in demo mode';
         button.addEventListener('click', async () => {
             try {
                 await selectFolder(kind.id);
@@ -62,10 +67,19 @@ function render(flow) {
         .map((id) => FOLDERS.find((f) => f.id === id).label);
 
     const note = document.querySelector('#folders-missing');
-    note.textContent = missing.length
-        ? `${missing.join(' and ')} not set — needed to edit, but you can browse without.`
-        : '';
-    note.hidden = missing.length === 0;
+
+    if (isDemoMode()) {
+        // Demo mode connects folders of its own, so nothing is ever missing here. Saying
+        // what they are matters more: the names below are not folders on this machine.
+        note.textContent = 'Demo mode — these are made-up folders inside the browser. '
+            + 'Your own folders are untouched. Reload without ?demo to use them.';
+        note.hidden = false;
+    } else {
+        note.textContent = missing.length
+            ? `${missing.join(' and ')} not set — needed to edit, but you can browse without.`
+            : '';
+        note.hidden = missing.length === 0;
+    }
 
     markFoldersButton(missing.length > 0);
 }
@@ -78,8 +92,17 @@ export function onFoldersChanged(fn) {
     return () => listeners.delete(fn);
 }
 
-function notifyChanged() {
-    for (const fn of listeners) fn();
+/**
+ * Awaits its listeners, which is the whole point of it being async.
+ *
+ * Both callers already awaited this, and neither got what it was waiting for: connecting
+ * a folder starts a mod-list rebuild that reads the folder, and firing the listeners
+ * without awaiting them meant the caller carried on while that was still in flight.
+ * Anything choosing a mod in the next breath -- demo mode does, immediately -- raced the
+ * rebuild for the same `<select>` and lost.
+ */
+async function notifyChanged() {
+    await Promise.all([...listeners].map((fn) => fn()));
 }
 
 export function openFoldersModal(flow) {

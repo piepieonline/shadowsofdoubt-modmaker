@@ -10,6 +10,7 @@
  * after a reload is a permission question -- see restoreFolders below.
  */
 import { tryGetFolder } from './fs.js';
+import { isDemoMode } from './demo/demoMode.js';
 
 export const FOLDERS = [
     {
@@ -119,12 +120,34 @@ export const isPending = (id) => pendingHandles.has(id);
 export const pendingName = (id) => pendingHandles.get(id)?.name ?? null;
 
 /**
+ * Publish a folder without remembering it.
+ *
+ * For handles that did not come from the picker and must not outlive the page -- demo
+ * mode's seeded directories are the only ones so far. `accept` is the other half of
+ * this, and the difference is deliberate: writing one of these to idb-keyval would
+ * displace the real folder the user picked, and a later visit would silently reconnect
+ * to demo content.
+ */
+export function useFolder(id, handle) {
+    window[getFolderKind(id).globalName] = handle;
+    return handle;
+}
+
+/**
  * Ask for a folder. Must be called from a user gesture.
  *
  * If we already have a remembered handle for it, try re-granting that first: the user
  * gets a one-click permission prompt instead of the file dialog.
  */
 export async function selectFolder(id) {
+    // Demo mode's promise is that no real folder is read or written. Connecting one here
+    // would break that quietly, with the badge still saying otherwise -- and the folder
+    // would then be remembered, so it would outlast the demo.
+    if (isDemoMode()) {
+        alert('Folders cannot be changed in demo mode. Reload without ?demo to use your own.');
+        return null;
+    }
+
     const kind = getFolderKind(id);
 
     const remembered = pendingHandles.get(id) ?? (await rememberedHandle(kind));

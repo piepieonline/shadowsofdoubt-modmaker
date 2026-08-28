@@ -9,14 +9,18 @@
     "cert": "test -f cert.pem -a -f key.pem || openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365 -subj '/CN=localhost' 2>/dev/null && echo 'Self-signed cert ready (cert.pem, key.pem).'",
     "preserve:lan": "npm run cert",
     "serve:lan": "http-server -c-1 -S",
-    "test": "playwright test",
+    "test": "npm run test:unit && npm run test:playwright",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:playwright": "playwright test",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
     "report": "playwright show-report"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "vitest": "^4.1.11"
   },
   "license": "ISC"
 }

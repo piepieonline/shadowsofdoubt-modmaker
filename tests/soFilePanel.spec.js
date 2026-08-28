@@ -71,20 +71,35 @@ test('invalid files are listed after the types, not among them', async ({ page }
     await expect(summaries.last()).toContainText('Invalid');
 });
 
+/**
+ * The window a click on an entry opened.
+ *
+ * Counted as a change rather than as a total. This flow stacks windows rather than
+ * replacing them, so asserting that exactly one exists says only that the test arrived
+ * at a blank page -- it says nothing about the click. What is worth pinning is that one
+ * click opens one window, whatever was already open.
+ */
+async function opened(page, body) {
+    const windows = page.locator('#trees .file-window');
+    const before = await windows.count();
+    await body();
+
+    await expect(windows).toHaveCount(before + 1);
+    return windows.last();
+}
+
 test('opening a patch loads the patch file, not the asset it overrides', async ({ page }) => {
     // Both names are the same in the list; only the extension tells them apart.
-    await section(page, 'MurderMO').getByRole('button', { name: 'ExCopSniper' }).click();
+    const window_ = await opened(page, () =>
+        section(page, 'MurderMO').getByRole('button', { name: 'ExCopSniper' }).click());
 
-    const window_ = page.locator('#trees .file-window');
-    await expect(window_).toHaveCount(1);
     await expect(window_).toHaveAttribute('path', 'ExCopSniper.sodso_patch.json');
 });
 
 test('opening an entry loads that file', async ({ page }) => {
-    await section(page, 'InteractablePreset').getByRole('button', { name: 'IP_Note' }).click();
+    const window_ = await opened(page, () =>
+        section(page, 'InteractablePreset').getByRole('button', { name: 'IP_Note' }).click());
 
-    const window_ = page.locator('#trees .file-window');
-    await expect(window_).toHaveCount(1);
     await expect(window_).toHaveAttribute('path', 'IP_Note.sodso.json');
 });
 

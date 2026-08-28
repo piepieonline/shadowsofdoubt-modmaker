@@ -65,11 +65,20 @@ function fill(select, options, selected) {
 /** Rebuild the mod list from the connected plugins folder. */
 export async function refreshMods({ keepSelection = true } = {}) {
     const plugins = folderHandle('modDir');
-    const previous = keepSelection ? window.selectedMod?.modName : null;
+    const select = document.querySelector(MOD_SELECT);
 
     mods = plugins ? await listMods(plugins) : [];
 
-    fill(document.querySelector(MOD_SELECT), [
+    // Read after the listing, and from the select rather than from window.selectedMod.
+    //
+    // Both halves matter, and for the same reason: a mod can be chosen while this is
+    // still waiting on disk -- connecting a folder starts a refresh that nothing waits
+    // for. Choosing one sets the select and then *clears* window.selectedMod, because no
+    // content folder is picked yet, so reading the choice there found nothing to keep and
+    // rebuilt the list on the placeholder. The mod silently unchose itself.
+    const previous = keepSelection ? select.value || NONE : null;
+
+    fill(select, [
         { value: NONE, label: mods.length ? 'Choose a mod…' : 'No mod folder connected' },
         ...mods.map((m) => ({ value: m.name, label: m.name })),
     ], previous ?? NONE);

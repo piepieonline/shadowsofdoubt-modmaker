@@ -1,6 +1,10 @@
 /**
  * A mod's DDS manifest: the virtual structure the loader reads its files through.
  *
+ * In core rather than in the DDS flow because the manifest is the mod loader's, not that
+ * editor's: anything writing a string into a mod has to go through it, and the building
+ * flow writes one for every building it adds. See core/modStrings.js.
+ *
  * `ddsmanifest.json`, in a mod's DDSContent, gives a file a path other than the one it
  * sits at:
  *
@@ -21,13 +25,33 @@
  * `enabled` is carried through a write untouched. The loader does not act on it, so
  * neither does this.
  */
-import { getFile, getFolder, readFileContent, tryGetFile, tryGetFolder } from '../../../core/fs.js';
-import { writeWholeFile } from '../../../core/persistence.js';
+import { getFile, getFolder, readFileContent, tryGetFile, tryGetFolder } from './fs.js';
+import { writeWholeFile } from './persistence.js';
 
 export const MANIFEST_FILE = 'ddsmanifest.json';
 
+/**
+ * The folder a mod's DDS content hangs below.
+ *
+ * A content folder means the same thing in every flow -- the folder the mod's content
+ * sits in -- so DDS files are addressed below this rather than the content folder being
+ * the DDSContent one in this flow and not in the others.
+ */
+export const DDS_CONTENT_ROOT = 'DDSContent';
+
+/** The mod's DDSContent folder, or null when it has none and none is being made. */
+export function ddsContentFolder(contentFolder, create) {
+    return tryGetFolder(contentFolder, [DDS_CONTENT_ROOT], create);
+}
+
 /** Where DDS block text lives when nothing says otherwise. */
 export const DDS_BLOCKS_VIRTUAL = 'Strings/English/DDS/dds.blocks.csv';
+
+/**
+ * Where the game reads the readable name of a room or a building from, keyed by the
+ * preset's name. It is the only place a building's title is used.
+ */
+export const ROOM_NAMES_VIRTUAL = 'Strings/English/names.rooms.csv';
 
 /** A mod with no manifest, and the shape every caller can resolve against. */
 const ABSENT = { present: false, malformed: false, files: [], extra: {}, raw: null };

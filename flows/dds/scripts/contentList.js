@@ -19,8 +19,9 @@
  * One of these opens as a list of its strings; see stringsEditor.js.
  */
 import { readFileContent, tryGetFolder } from '../../../core/fs.js';
-import { CONTENT_ROOT, ddsContentFolder } from './modFileManager.js';
-import { readManifest, toVirtual } from './ddsManifest.js';
+import {
+    DDS_CONTENT_ROOT, ddsContentFolder, readManifest, toVirtual,
+} from '../../../core/ddsManifest.js';
 
 const CATEGORIES = [
     { id: 'trees', label: 'Trees', dir: ['DDS', 'Trees'], extension: 'tree', type: 'tree' },
@@ -42,7 +43,7 @@ export const STRINGS_OPEN_AS = 'strings';
 const vanillaName = (id) => window.ddsMap?.idNameMap?.[id] ?? null;
 
 async function readEntries(contentFolder, category) {
-    const folder = await tryGetFolder(contentFolder, [CONTENT_ROOT, ...category.dir]);
+    const folder = await tryGetFolder(contentFolder, [DDS_CONTENT_ROOT, ...category.dir]);
     if (!folder) return [];
 
     const entries = [];

@@ -412,6 +412,20 @@ body.driver-active .driver-popover-next-btn {
     --file-panel-width: 300px;
 }
 
+/* Heads a run of categories -- see `group` in core/filePanel.js. Quieter than the
+   categories under it: it is a divider, not something to open. */
+.file-panel-group {
+    margin: 0.75rem 0 0.4rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--pico-muted-color);
+
+    &:first-child {
+        margin-top: 0;
+    }
+}
+
 .file-panel-category {
     margin-bottom: 0.5rem;
 
@@ -419,6 +433,75 @@ body.driver-active .driver-popover-next-btn {
         cursor: pointer;
         font-size: 0.85rem;
     }
+}
+
+/*
+ * A group inside a category -- see `sections` in core/filePanel.js.
+ *
+ * Indented, and its heading a size down from the category's: the indent is what says
+ * these belong to the building above them rather than following it, and there is only
+ * ever one level of it.
+ */
+.file-panel-subcategory {
+    margin: 0.3rem 0 0.3rem 0.7rem;
+
+    summary {
+        cursor: pointer;
+        font-size: 0.75rem;
+        color: var(--pico-muted-color);
+    }
+
+    /* Open by default, so this is the common case: the entries under it should not read
+       as a second list stacked under the first. */
+    &[open] > summary {
+        margin-bottom: 0.15rem;
+    }
+}
+
+/*
+ * What can be done to a whole section, under what it acts on.
+ *
+ * Indented past the names above it and left-aligned under them: it is offered by the
+ * section rather than being one of the things in it, and centring it or stretching it
+ * across the column would make it the point of the section instead.
+ */
+.file-panel-footer {
+    margin: 0.15rem 0 0.5rem 0.7rem;
+}
+
+/*
+ * Pico draws the disclosure marker as a floated `::after` and lays the name out as text
+ * beside it, which leaves a name too long for the column wrapping under the marker. A row
+ * instead, with the name taking what is left and the marker keeping the corner -- as a
+ * flex item, a float being no use inside one.
+ */
+.file-panel-category > summary,
+.file-panel-subcategory > summary {
+    display: flex;
+    align-items: center;
+}
+
+.file-panel-summary-name {
+    flex: 1;
+    /* A flex item will not shrink below its content without this, and a name that cannot
+       shrink cannot be cut off either. */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/*
+ * The one thing that can be done to a name besides opening it. Sized to sit beside an
+ * entry rather than under it: these are 0.75rem rows in a 300px column.
+ */
+.file-panel-action {
+    flex: none;
+    width: auto;
+    margin: 0;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.7rem;
+    line-height: 1.4;
 }
 
 .file-panel-entries {
@@ -433,10 +516,25 @@ body.driver-active .driver-popover-next-btn {
        flow's <article> is not -- the same list stood half again as tall in one flow. */
     padding: 0;
 
-    button {
+    /* The name and its tag, side by side. Not the action beside them, which is one
+       glyph and is laid out as the button it is. */
+    button:not(.file-panel-action) {
         display: flex;
         justify-content: space-between;
         gap: 0.5rem;
+    }
+
+    /* An entry with an action is the name and the action side by side, and the name is
+       what gives when there is not room for both. */
+    &:has(.file-panel-action) {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .file-panel-open {
+        flex: 1;
+        min-width: 0;
     }
 }
 
@@ -477,8 +575,13 @@ body.driver-active .driver-popover-next-btn {
  * An entry in either list. The manifest's are the same kind of thing as the file
  * panel's -- one file each, in a 260px column -- so they are the same size, rather
  * than Pico's full-height button with centred body text.
+ *
+ * The action beside a name is excluded, because this rule is more specific than
+ * .file-panel-action: it would hand the delete button width: 100%, and with the
+ * flex: none that button is given for not shrinking, the × then takes the whole row and
+ * squeezes the name it sits beside down to nothing.
  */
-.file-panel-entry button,
+.file-panel-entry button:not(.file-panel-action),
 .manifest-section .files-order button {
     width: 100%;
     margin: 0;
@@ -513,4 +616,28 @@ body.driver-active .driver-popover-next-btn {
 .file-panel-empty {
     font-size: 0.8rem;
     opacity: 0.8;
+}
+
+/*
+ * The demo strip.
+ *
+ * Deliberately loud, and full width. Demo mode is hidden from anyone not looking for it,
+ * but once it is on, mistaking made-up content for your own mod is the one failure worth
+ * designing against -- so it says what it means rather than being a discreet mark.
+ *
+ * flex: none because body is a column flex container: without it this shares the space
+ * with #flow-root and the strip grows to half the page.
+ */
+#demo-banner {
+    flex: none;
+    padding: 0.35rem 1rem;
+    background: var(--pico-del-color);
+    color: var(--pico-background-color);
+    font-size: 0.8rem;
+
+    code {
+        background: none;
+        color: inherit;
+        padding: 0;
+    }
 }

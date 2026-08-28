@@ -15,11 +15,10 @@
  * #trees (grid-auto-columns: minmax(500px, auto)) and in a 260px panel a value's box escapes
  * the column, leaving it legible but out of the pointer's reach. Editing waits for
  * somewhere wider to live. Until then the only thing that rewrites a manifest is the
- * app declaring a strings file it just created -- see writeManifest in ddsManifest.js.
+ * app declaring a strings file it just created -- see writeManifest in core/ddsManifest.js.
  */
 import { fastElement } from '../../../core/dom.js';
-import { ddsContentFolder } from './modFileManager.js';
-import { readManifest, virtualPathOf } from './ddsManifest.js';
+import { ddsContentFolder, readManifest, virtualPathOf } from '../../../core/ddsManifest.js';
 import { openStringsFile } from './stringsEditor.js';
 
 const PANEL = '#dds-manifest-panel';

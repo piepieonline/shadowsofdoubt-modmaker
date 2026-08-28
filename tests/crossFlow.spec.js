@@ -173,6 +173,32 @@ test('the chosen content folder survives switching flows', async ({ page }) => {
     await expect(page.locator('#select-content')).toHaveValue('plugins/WhatIsYourPasscode');
 });
 
+test('a mod chosen before the list is rebuilt is not thrown away', async ({ page }) => {
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, pluginsFixture);
+    await connectFolders(page, { modDir: 'Plugins' });
+
+    // A mod with no content folder chosen yet. Choosing one *clears* window.selectedMod,
+    // which is only set once there is a folder to edit -- so this is the state a refresh
+    // used to find when it landed on a choice made a moment earlier, and reading the
+    // choice from there found nothing to keep.
+    await page.selectOption('#select-mod', 'DialogAdditions');
+    expect(await page.evaluate(() => window.selectedMod)).toBe(null);
+
+    // Connecting a folder starts one of these that nothing waits for -- notifyChanged
+    // calls its listeners without awaiting them -- so it lands whenever the disk reply
+    // does, which can be after the next thing the user does. Called directly and awaited
+    // here, because the point is what the refresh does rather than when it happens.
+    await page.evaluate(async () => {
+        const { refreshMods } = await import('/core/modSelection.js');
+        await refreshMods();
+    });
+
+    // The mod used to unchoose itself here, with nothing on screen to say it had.
+    await expect(page.locator('#select-mod')).toHaveValue('DialogAdditions');
+    await expect(page.locator('#select-content option').first()).toHaveText('Choose a folder…');
+});
+
 test('both flows offer adding content the same way', async ({ page }) => {
     await gotoFlow(page, '?flow=scriptableObject');
     await seedFs(page, pluginsFixture);

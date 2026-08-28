@@ -13,10 +13,11 @@
  * scope, so each flow publishes what it needs onto `window` when it loads.
  */
 import { registerFlow, activateFlow, listFlows, getFlow } from './core/flowRegistry.js';
-import { restoreFolders } from './core/folders.js';
+import { restoreFolders, useFolder } from './core/folders.js';
 import { initFoldersModal, activateFoldersFor, onFoldersChanged } from './core/foldersModal.js';
 import { initTutorialsModal } from './core/tutorialsModal.js';
-import { initModSelection, refreshMods, reapplySelection } from './core/modSelection.js';
+import { initModSelection, refreshMods, reapplySelection, selectContentFolder } from './core/modSelection.js';
+import { isDemoMode, seedDemoFolders } from './core/demo/demoMode.js';
 import { initNewContent } from './core/newContent.js';
 import { initAutosave } from './core/autosave.js';
 import { configureNavigation, switchFlow } from './core/navigation.js';
@@ -97,6 +98,27 @@ onFoldersChanged(async () => {
     await refreshMods();
 });
 
+/**
+ * Connect the folders demo mode invents, in place of the ones on this machine.
+ *
+ * Deliberately instead of restoreFolders rather than after it: a remembered handle
+ * installed and then replaced would still have been read from, and the promise demo mode
+ * makes is that a game install is never touched at all.
+ */
+async function startDemo() {
+    document.documentElement.dataset.demo = '';
+    document.getElementById('demo-banner').hidden = false;
+
+    const { streamingAssets, modDir, selection } = await seedDemoFolders();
+    useFolder('streamingAssets', streamingAssets);
+    useFolder('modDir', modDir);
+
+    return selection;
+}
+
+const demo = isDemoMode();
+let demoSelection = null;
+
 const flowId = requestedFlowId();
 buildPicker(flowId);
 initFoldersModal();
@@ -105,9 +127,23 @@ initModSelection();
 initNewContent();
 initAutosave();
 
-// Reconnect anything picked previously before deciding whether to ask for folders.
-await restoreFolders();
+if (demo) {
+    demoSelection = await startDemo();
+} else {
+    // Reconnect anything picked previously before deciding whether to ask for folders.
+    await restoreFolders();
+    // Not in demo mode: the warning is about what the game's own content spoils, and
+    // demo mode holds none of it. Dismissing it there would also set the preference for
+    // real use, which is not a decision a demo should make.
+    await awaitSpoilerAcceptance();
+}
 
-await awaitSpoilerAcceptance();
 await activateFlow(flowId);
 await activateFoldersFor(getFlow(flowId), { autoOpen: true });
+
+// Last, so the flow is active and has folders: choosing a content folder is what the
+// flow is told about, and it has to have somewhere to read it from first. Landing in an
+// empty editor would show the least interesting state the app has.
+if (demoSelection) {
+    await selectContentFolder(demoSelection.modName, demoSelection.contentPath);
+}

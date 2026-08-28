@@ -8,6 +8,10 @@ import { installFsHarness, seedFs, gotoFlow, readFile } from './support/harness.
  * together: opening a floor means finding the building that refers to it, and saving one
  * means writing that building back. The base game's 15 buildings are read-only, and
  * saving against one produces a stub in the mod instead.
+ *
+ * What is here is everything that reaches the mod's folder through a directory handle.
+ * Reading a preset's slots and pointing one at a blueprint take JSON and return JSON,
+ * and are covered beside the module in flows/building/scripts/buildingLibrary.unit.spec.js.
  */
 
 const json = (value) => JSON.stringify(value, null, 2);
@@ -61,99 +65,6 @@ test.beforeEach(async ({ page }) => {
         localStorage.setItem('SOD_MurderCaseBuilder_SpoilerWarningDismissed', 'true'));
     await gotoFlow(page, '?flow=dds');
     await seedFs(page, buildingMod);
-});
-
-
-/* -------------------------------------------------------------------------- */
-/* Slots                                                                       */
-/* -------------------------------------------------------------------------- */
-
-test('every base game building enumerates its slots', async ({ page }) => {
-    const summary = await withLibrary(page, async (library) => {
-        const index = await library.loadFloorIndex();
-        const buildings = [];
-
-        for (const name of index.buildings) {
-            const preset = await library.loadVanillaPreset(name);
-            const slots = library.enumerateSlots(preset);
-
-            buildings.push({
-                name,
-                slots: slots.length,
-                // Every slot must name a blueprint and carry a complete coordinate.
-                wellFormed: slots.every((option) => (
-                    typeof option.blueprint === 'string' && option.blueprint.length > 0
-                    && typeof option.label === 'string'
-                    && Number.isInteger(option.slot.layoutIndex)
-                    && Number.isInteger(option.slot.blueprintIndex)
-                    && typeof option.slot.isBasement === 'boolean'
-                    && typeof option.slot.isControlVariant === 'boolean'
-                )),
-            });
-        }
-
-        return buildings;
-    });
-
-    expect(summary).toHaveLength(15);
-
-    for (const building of summary) {
-        expect(building.wellFormed, `${building.name}`).toBe(true);
-    }
-
-    // Three of the fifteen have no floors at all, and that is the data rather than a
-    // fault: the boundary buildings are the scenery at the edge of the city, marked
-    // nonEnterable with a floorCount of 0. They are listed anyway, because a building
-    // with no interior is still a building, but nothing can be opened in one.
-    const withoutFloors = summary.filter((building) => building.slots === 0).map((b) => b.name);
-    expect(withoutFloors).toEqual(['BoundaryCoastal01', 'BoundaryCoastal02', 'BoundaryCorner01']);
-
-    for (const building of summary.filter((b) => !withoutFloors.includes(b.name))) {
-        expect(building.slots, `${building.name} has no floors`).toBeGreaterThan(0);
-    }
-});
-
-test('a slot list covers basements and control room variants', async ({ page }) => {
-    const slots = await withLibrary(page, async (library) => {
-        const preset = await library.loadVanillaPreset('Hotel');
-        return library.enumerateSlots(preset).map((option) => [option.label, option.blueprint]);
-    });
-
-    // Hotel has one setting whose three blueprints the game picks between, and a
-    // basement setting with two. Both have to be reachable, or a floor becomes
-    // uneditable because nothing offers its slot.
-    expect(slots).toContainEqual(['Floor 5 v0', 'Hotel_TopFloors']);
-    expect(slots).toContainEqual(['Floor 5 v2', 'Hotel_TopFloors3']);
-    expect(slots).toContainEqual(['Basement 0 v0', 'Hotel_Basement1']);
-    expect(slots).toContainEqual(['Basement 0 v1', 'Hotel_Basement2']);
-});
-
-test('a control room variant is offered as its own slot', async ({ page }) => {
-    const slots = await withLibrary(page, async (library) => {
-        const preset = await library.loadVanillaPreset('CityHall');
-        return library.enumerateSlots(preset).map((option) => [option.label, option.blueprint]);
-    });
-
-    expect(slots).toContainEqual(['Floor 0', 'CityHall_GroundFloor']);
-    expect(slots).toContainEqual(['Floor 0 (control)', 'CityHall_GroundFloor_Control']);
-});
-
-test('a building with no floor list at all is not a failure', async ({ page }) => {
-    // The shipped dumps always write an empty list rather than omitting it, but a mod
-    // preset is hand-written and a stub drops any list left at its default -- so a
-    // missing floorLayouts is a shape the library has to survive, not a broken file.
-    const result = await withLibrary(page, async (library) => ({
-        cityHallBasements: library.enumerateSlots(await library.loadVanillaPreset('CityHall'))
-            .filter((option) => option.slot.isBasement).length,
-        absent: library.enumerateSlots({ presetName: 'Bare' }),
-        nulled: library.enumerateSlots({ floorLayouts: null, basementLayouts: null }),
-        nothing: library.enumerateSlots(null),
-    }));
-
-    expect(result.cityHallBasements).toBe(0);
-    expect(result.absent).toEqual([]);
-    expect(result.nulled).toEqual([]);
-    expect(result.nothing).toEqual([]);
 });
 
 
@@ -259,105 +170,6 @@ test('a stub written from a base game building enumerates the same slots', async
     expect(compared.after.length).toBeGreaterThan(0);
 });
 
-test('a field left at the game\'s default is not written', async ({ page }) => {
-    const kept = await withLibrary(page, async (library) => {
-        const stub = library.stubFor('Thing', { floorLayouts: [], basementLayouts: [] });
-
-        // enableAlleywayWalls defaults to true and echelonFloorStart to 10, so neither
-        // belongs in the file; changing one puts it back.
-        stub.enableAlleywayWalls = true;
-        stub.echelonFloorStart = 10;
-        stub.buildingHeight = 4;
-
-        return Object.keys(library.withoutDefaults(stub));
-    });
-
-    // Under copyFrom, writing a default is not a no-op -- it overwrites the copied
-    // building's value with nothing. So only what actually differs is written, plus
-    // the five fields that identify the file.
-    expect(kept.sort()).toEqual(
-        ['buildingHeight', 'copyFrom', 'fileType', 'name', 'presetName', 'type'].sort());
-});
-
-test('the fields identifying a stub are written even at their defaults', async ({ page }) => {
-    const written = await withLibrary(page, async (library) => {
-        const stub = library.stubFor('Thing', null, { copyFrom: null });
-        return library.withoutDefaults(stub);
-    });
-
-    // presetName's default is the empty string and copyFrom's is absent from the game's
-    // table entirely. Dropping either leaves the loader an asset it cannot place.
-    expect(written.name).toBe('Thing');
-    expect(written.presetName).toBe('Thing');
-    expect(written.copyFrom).toBeNull();
-    expect(written.fileType).toBe('BuildingPreset');
-});
-
-
-/* -------------------------------------------------------------------------- */
-/* Changing a building's floors                                                */
-/* -------------------------------------------------------------------------- */
-
-test('pointing a slot at a floor replaces what was there', async ({ page }) => {
-    const result = await withLibrary(page, async (library, contentFolder) => {
-        const preset = await library.readCustomPreset(contentFolder, 'TallTower');
-        const resolved = library.setBlueprint(
-            preset, { isBasement: false, isControlVariant: false, layoutIndex: 1, blueprintIndex: 1 },
-            'TallTower_Replacement');
-
-        return { resolved, blueprints: preset.floorLayouts[1].blueprints };
-    });
-
-    expect(result.blueprints).toEqual(['TallTower_Upper', 'TallTower_Replacement']);
-    expect(result.resolved.blueprintIndex).toBe(1);
-});
-
-test('a slot past the end of a list appends rather than leaving a hole', async ({ page }) => {
-    const result = await withLibrary(page, async (library, contentFolder) => {
-        const preset = await library.readCustomPreset(contentFolder, 'TallTower');
-        const resolved = library.setBlueprint(
-            preset, { isBasement: false, isControlVariant: false, layoutIndex: 0, blueprintIndex: 9 },
-            'TallTower_Second');
-
-        return { resolved, blueprints: preset.floorLayouts[0].blueprints };
-    });
-
-    expect(result.blueprints).toEqual(['TallTower_Ground', 'TallTower_Second']);
-    expect(result.resolved.blueprintIndex).toBe(1);
-});
-
-test('a new floor setting is added when the slot names none', async ({ page }) => {
-    const result = await withLibrary(page, async (library, contentFolder) => {
-        const preset = await library.readCustomPreset(contentFolder, 'TallTower');
-        const resolved = library.setBlueprint(
-            preset, { isBasement: true, isControlVariant: false, layoutIndex: -1, blueprintIndex: 0 },
-            'TallTower_Basement');
-
-        return { resolved, basements: preset.basementLayouts };
-    });
-
-    expect(result.resolved).toEqual({
-        isBasement: true, isControlVariant: false, layoutIndex: 0, blueprintIndex: 0,
-    });
-    expect(result.basements).toHaveLength(1);
-    expect(result.basements[0].blueprints).toEqual(['TallTower_Basement']);
-    expect(result.basements[0].floorsWithThisSetting).toBe(1);
-});
-
-test('a control room variant is set without disturbing the ordinary blueprint', async ({ page }) => {
-    const layout = await withLibrary(page, async (library, contentFolder) => {
-        const preset = await library.readCustomPreset(contentFolder, 'TallTower');
-        library.setBlueprint(
-            preset, { isBasement: false, isControlVariant: true, layoutIndex: 0, blueprintIndex: 0 },
-            'TallTower_Ground_Control');
-
-        return preset.floorLayouts[0];
-    });
-
-    expect(layout.blueprints).toEqual(['TallTower_Ground']);
-    expect(layout.controlRoomVariants).toEqual(['TallTower_Ground_Control']);
-});
-
 
 /* -------------------------------------------------------------------------- */
 /* Creating and saving                                                         */
@@ -388,6 +200,20 @@ test('a new building copied from a base game one takes its floors and its name',
     expect(preset.copyFrom).toBe('REF:BuildingPreset|Hotel');
     expect(preset.name).toBe('MyHotel');
     expect(preset.floorLayouts).toHaveLength(8);
+});
+
+test('a building\'s readable title is not what identifies it', async ({ page }) => {
+    const preset = await withLibrary(page, async (library, contentFolder) => (
+        (await library.createCustomBuilding(
+            contentFolder, 'MyHotel', { title: 'My Lovely Hotel' })).preset
+    ));
+
+    // The preset name is the file, the REF and the strings key, so it is the one that
+    // has to stay identifier-safe. The title is text, and only the CSV row uses it.
+    expect(preset.presetName).toBe('MyHotel');
+    expect(preset.name).toBe('My Lovely Hotel');
+
+    expect(await readFile(page, 'Plugins/TallTower/MyHotel.sodso.json')).not.toBeNull();
 });
 
 test('a floor saved into the mod is readable back through the building', async ({ page }) => {
@@ -428,5 +254,218 @@ test('a base game preset is never written to when a floor is saved against it', 
     // to. What ends up in the mod is the stub and the floor.
     const stub = JSON.parse(await readFile(page, 'Plugins/TallTower/Hotel.sodso.json'));
     expect(stub.copyFrom).toBe('REF:BuildingPreset|Hotel');
-    expect(stub.floorLayouts[0].blueprints).toEqual(['Hotel_GroundFloor']);
+
+    // Pointed at the mod's copy, which is what the floor in the fixture is. See the
+    // FLOOR: tests at the bottom of this file.
+    expect(stub.floorLayouts[0].blueprints).toEqual(['FLOOR:Floors/Hotel_GroundFloor']);
+});
+
+
+/* -------------------------------------------------------------------------- */
+/* The manifest                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A preset the manifest does not name is a preset the loader never reads, so writing one
+ * means listing it. What that entry looks like and where it goes is covered beside the
+ * module in core/murderManifest.unit.spec.js; what is here is the file appearing in the
+ * mod, through each path that puts a building there.
+ */
+
+const MANIFEST = 'Plugins/TallTower/murdermanifest.sodso.json';
+
+const manifestIn = async (page) => JSON.parse(await readFile(page, MANIFEST));
+
+test('a new building is named in a manifest written for the mod that had none', async ({ page }) => {
+    await withLibrary(page, async (library, contentFolder) => (
+        library.createCustomBuilding(contentFolder, 'BrandNew')
+    ));
+
+    expect(await manifestIn(page))
+        .toEqual({ enabled: true, fileOrder: ['REF:BrandNew'], loadBefore: '', version: 1 });
+});
+
+test('a building joins the load order a mod already has, and is named once', async ({ page }) => {
+    await seedFs(page, {
+        ...buildingMod,
+        [MANIFEST]: json({
+            enabled: true,
+            fileOrder: ['REF:SomeWeapon', 'REF:TallTower'],
+            loadBefore: 'SomeOtherMod',
+            version: 1,
+        }),
+    });
+
+    await withLibrary(page, async (library, contentFolder) => {
+        await library.createCustomBuilding(contentFolder, 'BrandNew');
+
+        // Saving a floor against it writes the preset again, which must not name it a
+        // second time -- every autosave comes through here.
+        const { preset } = await library.presetForSaving(contentFolder, 'BrandNew');
+        await library.writeCustomPreset(contentFolder, 'BrandNew', preset);
+    });
+
+    const manifest = await manifestIn(page);
+
+    // Last, and the entries the author already had are where they were.
+    expect(manifest.fileOrder).toEqual(['REF:SomeWeapon', 'REF:TallTower', 'REF:BrandNew']);
+    expect(manifest.loadBefore).toBe('SomeOtherMod');
+});
+
+test('the stub written for a base game building is named too', async ({ page }) => {
+    await withLibrary(page, async (library, contentFolder) => {
+        const { preset } = await library.presetForSaving(contentFolder, 'Hotel');
+        await library.writeCustomPreset(contentFolder, 'Hotel', preset);
+    });
+
+    // The stub is a file in the mod like any other: unlisted, it is a floor edited into
+    // a building the game goes on building the base game's way.
+    expect((await manifestIn(page)).fileOrder).toEqual(['REF:Hotel']);
+});
+
+test('a building already named in lowercase is not named again', async ({ page }) => {
+    await seedFs(page, {
+        ...buildingMod,
+        [MANIFEST]: json({ enabled: true, fileOrder: ['REF:talltower'], loadBefore: '', version: 1 }),
+    });
+
+    await withLibrary(page, async (library, contentFolder) => {
+        const { preset } = await library.presetForSaving(contentFolder, 'TallTower');
+        await library.writeCustomPreset(contentFolder, 'TallTower', preset);
+    });
+
+    // Left exactly as its author wrote it, rather than gaining a second entry for the
+    // same file.
+    expect((await manifestIn(page)).fileOrder).toEqual(['REF:talltower']);
+});
+
+test('a manifest that will not parse is left alone, and the building is still written', async ({ page }) => {
+    await seedFs(page, { ...buildingMod, [MANIFEST]: '{ this is not json' });
+
+    await withLibrary(page, async (library, contentFolder) => (
+        library.createCustomBuilding(contentFolder, 'BrandNew')
+    ));
+
+    // The text is the author's and may be one comma away from working. Overwriting it
+    // would throw away the rest of the mod's load order to add one line.
+    expect(await readFile(page, MANIFEST)).toBe('{ this is not json');
+
+    // The building is the thing that was asked for, and it is on disk to be listed by
+    // hand.
+    expect(await readFile(page, 'Plugins/TallTower/BrandNew.sodso.json')).not.toBeNull();
+});
+
+
+/* -------------------------------------------------------------------------- */
+/* How a written preset points at its floors                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A floor the mod holds is written as `FLOOR:Floors/<name>` -- the prefix, the path, then
+ * the name. One the game ships stays a bare name so the game resolves its own copy.
+ *
+ * Which of the two an entry is cannot be settled where a slot is filled in: the answer
+ * depends on what is in the mod's Floors folder at the moment the preset is written, and
+ * that changes as floors are added and deleted. So it is settled here, for every slot
+ * rather than the one being edited.
+ *
+ * Reading normalises both forms back to a name, and is covered beside the module.
+ */
+const presetIn = async (page, name) =>
+    JSON.parse(await readFile(page, `Plugins/TallTower/${name}.sodso.json`));
+
+test('a floor the mod holds is written as a reference to the mod\'s copy', async ({ page }) => {
+    await withLibrary(page, async (library, contentFolder) => {
+        const { preset } = await library.presetForSaving(contentFolder, 'TallTower');
+        await library.writeCustomPreset(contentFolder, 'TallTower', preset);
+    });
+
+    // TallTower_Ground is in the mod's Floors folder; the two upper layouts are not.
+    const written = await presetIn(page, 'TallTower');
+    expect(written.floorLayouts[0].blueprints).toEqual(['FLOOR:Floors/TallTower_Ground']);
+    expect(written.floorLayouts[1].blueprints).toEqual(['TallTower_Upper', 'TallTower_Upper2']);
+});
+
+test('a floor named after a base game one points at the mod\'s copy', async ({ page }) => {
+    // The whole of editing a base game floor. The mod's copy does not shadow the original
+    // by sharing its name -- the building has to point at it.
+    await withLibrary(page, async (library, contentFolder) => {
+        const { preset } = await library.presetForSaving(contentFolder, 'Hotel');
+        library.setBlueprint(
+            preset,
+            { isBasement: false, isControlVariant: false, layoutIndex: 0, blueprintIndex: 0 },
+            'Hotel_GroundFloor');
+        await library.writeCustomPreset(contentFolder, 'Hotel', preset);
+    });
+
+    const written = await presetIn(page, 'Hotel');
+    expect(written.floorLayouts[0].blueprints[0]).toBe('FLOOR:Floors/Hotel_GroundFloor');
+
+    // Every other slot of the stub is still the base game's to resolve.
+    const rest = written.floorLayouts.slice(1).flatMap((layout) => layout.blueprints ?? []);
+    expect(rest.every((entry) => !entry.startsWith('FLOOR:'))).toBe(true);
+});
+
+test('control room variants are pointed at the same way', async ({ page }) => {
+    await seedFs(page, {
+        ...buildingMod,
+        'Plugins/TallTower/Floors/TallTower_Ground_Control.json':
+            json({ floorName: 'TallTower_Ground_Control', a_d: [], t_d: [] }),
+    });
+
+    await withLibrary(page, async (library, contentFolder) => {
+        const { preset } = await library.presetForSaving(contentFolder, 'TallTower');
+        library.setBlueprint(
+            preset,
+            { isBasement: false, isControlVariant: true, layoutIndex: 0, blueprintIndex: 0 },
+            'TallTower_Ground_Control');
+        await library.writeCustomPreset(contentFolder, 'TallTower', preset);
+    });
+
+    expect((await presetIn(page, 'TallTower')).floorLayouts[0].controlRoomVariants)
+        .toEqual(['FLOOR:Floors/TallTower_Ground_Control']);
+});
+
+test('writing twice does not point at a reference to a reference', async ({ page }) => {
+    await withLibrary(page, async (library, contentFolder) => {
+        for (let n = 0; n < 3; n++) {
+            const { preset } = await library.presetForSaving(contentFolder, 'TallTower');
+            await library.writeCustomPreset(contentFolder, 'TallTower', preset);
+        }
+    });
+
+    expect((await presetIn(page, 'TallTower')).floorLayouts[0].blueprints)
+        .toEqual(['FLOOR:Floors/TallTower_Ground']);
+});
+
+test('a floor deleted from the mod uncovers the base game\'s again', async ({ page }) => {
+    await withLibrary(page, async (library, contentFolder) => {
+        const { preset } = await library.presetForSaving(contentFolder, 'Hotel');
+        library.setBlueprint(
+            preset,
+            { isBasement: false, isControlVariant: false, layoutIndex: 0, blueprintIndex: 0 },
+            'Hotel_GroundFloor');
+        await library.writeCustomPreset(contentFolder, 'Hotel', preset);
+
+        // Stop overriding it, which is what deleting a floor named after a base game one
+        // means. The building must stop pointing at a file that is no longer there.
+        await library.deleteCustomBlueprint(contentFolder, 'Hotel_GroundFloor');
+
+        const reread = await library.readCustomPreset(contentFolder, 'Hotel');
+        await library.writeCustomPreset(contentFolder, 'Hotel', reread);
+    });
+
+    expect((await presetIn(page, 'Hotel')).floorLayouts[0].blueprints[0]).toBe('Hotel_GroundFloor');
+});
+
+test('the slots read back are the floors, whichever way they are written', async ({ page }) => {
+    const slots = await withLibrary(page, async (library, contentFolder) => {
+        const { preset } = await library.presetForSaving(contentFolder, 'TallTower');
+        await library.writeCustomPreset(contentFolder, 'TallTower', preset);
+
+        const reread = await library.readCustomPreset(contentFolder, 'TallTower');
+        return library.enumerateSlots(reread).map((slot) => slot.blueprint);
+    });
+
+    expect(slots).toEqual(['TallTower_Ground', 'TallTower_Upper', 'TallTower_Upper2']);
 });

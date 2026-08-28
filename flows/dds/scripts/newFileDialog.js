@@ -17,8 +17,9 @@
  *                          picked from the files the game looks for.
  */
 import { writeFile } from '../../../core/fs.js';
-import { placeStringsFile, readManifest, stringsFileHandle, withMapping, writeManifest } from './ddsManifest.js';
-import { ddsContentFolder } from './modFileManager.js';
+import {
+    ddsContentFolder, placeStringsFile, readManifest, stringsFileHandle, withMapping, writeManifest,
+} from '../../../core/ddsManifest.js';
 import { refreshManifestPanel } from './manifestPanel.js';
 import { openStringsFile } from './stringsEditor.js';
 import { closeModal, newFile, openModal, refreshPanel } from './ui.js';

@@ -27,8 +27,9 @@ import { readFileContent, writeFile } from '../../../core/fs.js';
 import { assertModSelected, shouldSave } from '../../../core/persistence.js';
 import { editedStamp, parseStringsCsv, serialiseStringsCsv } from '../../../core/stringsCsv.js';
 import { closeWindow, createTreeWindow } from '../../../core/treeWindow.js';
-import { DDS_BLOCKS_VIRTUAL, readManifest, stringsFileHandle, toReal, toVirtual } from './ddsManifest.js';
-import { ddsContentFolder } from './modFileManager.js';
+import {
+    DDS_BLOCKS_VIRTUAL, ddsContentFolder, readManifest, stringsFileHandle, toReal, toVirtual,
+} from '../../../core/ddsManifest.js';
 import { reloadOpenDocuments } from './ui.js';
 import { loadI18n } from '../index.js';
 

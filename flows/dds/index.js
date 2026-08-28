@@ -7,8 +7,8 @@ import { getJSONPointer } from '../../core/jsonPointer.js';
 import { describeField, fieldPath, resolveField } from '../../core/typeHints.js';
 import { GUID_PATTERN } from '../../core/guid.js';
 import { addTreeElement } from './scripts/jsonTreeAdditions.js';
-import { cloneTemplate, createNewFile, createFileIfNotExisting, addOrModifyStrings, ddsContentFolder, modPath } from './scripts/modFileManager.js';
-import { DDS_BLOCKS_VIRTUAL, readManifest, stringsFileHandle, toReal } from './scripts/ddsManifest.js';
+import { cloneTemplate, createNewFile, createFileIfNotExisting, addOrModifyStrings, modPath } from './scripts/modFileManager.js';
+import { DDS_BLOCKS_VIRTUAL, ddsContentFolder, readManifest, stringsFileHandle, toReal } from '../../core/ddsManifest.js';
 import { newFile, refreshPanel } from './scripts/ui.js';
 
 export const DUMMY_KEYS = {

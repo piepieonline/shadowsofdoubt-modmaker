@@ -21,10 +21,13 @@ export const MANIFEST_FILE = 'murdermanifest.sodso.json';
 export const DDS_CONTENT_DIR = 'DDSContent';
 
 /**
- * A building mod has no manifest of its own: it is a <Building>.sodso.json next to a
- * Floors directory holding that building's floor blueprints. The preset is named after
- * the building, so there is no fixed filename to look for -- the directory is the
- * marker, exactly as DDSContent is.
+ * A building mod is a <Building>.sodso.json next to a Floors directory holding that
+ * building's floor blueprints. The preset is named after the building, so there is no
+ * fixed filename to look for -- the directory is the marker, exactly as DDSContent is.
+ *
+ * A manifest naming the preset is not the marker even though this app writes one for
+ * every building it creates (see core/murderManifest.js): plenty of building mods in the
+ * wild predate that, and a manifest on its own says nothing about floors.
  */
 export const FLOORS_DIR = 'Floors';
 

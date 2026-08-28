@@ -13,19 +13,30 @@
 import { renderFilePanel } from '../../../core/filePanel.js';
 import { assertModSelected, shouldSave } from '../../../core/persistence.js';
 import { getFolder, getFile, writeFile } from '../../../core/fs.js';
+import { isNameFieldSafe, makeNameFieldSafe } from '../../../core/strings.js';
+import { ROOM_NAMES_VIRTUAL } from '../../../core/ddsManifest.js';
+import { ensureListed } from '../../../core/murderManifest.js';
+import { writeStringsRow } from '../../../core/modStrings.js';
 
 import {
-    parseFloor, serialiseFloor, describeIssues,
+    parseFloor, serialiseFloor, describeIssues, getWall, tileForNode, blankFloor,
 } from './floorModel.js';
 import {
     FLOORS_DIR, BUILDING_TYPE,
     listBuildings, listCustomBuildings, listCustomBlueprints, loadPreset, resolveBlueprint,
-    enumerateSlots, setBlueprint, presetForSaving, writeCustomPreset, writeCustomBlueprint,
-    createCustomBuilding, loadFloorIndex, stubFor,
+    enumerateSlots, storeysOf, sameSlot, setBlueprint, removeBlueprint, presetForSaving,
+    writeCustomPreset, writeCustomBlueprint, deleteCustomBlueprint, createCustomBuilding,
+    loadFloorIndex, stubFor, readCustomPreset,
 } from './buildingLibrary.js';
-import { createScene, Overlay, describeCell, tileMarkers } from './scene.js';
-import { createToolState, attachPainting, Tool } from './tools.js';
-import { createPanels } from './panels.js';
+import {
+    generateBuilding, writeGeneratedBuilding, isMeshStale, GENERATED_FIELDS,
+} from './meshExport.js';
+import { createScene, Overlay, describeCell } from './scene.js';
+import { createToolState, attachPainting, nearestEdge, Tool, PaintMode } from './tools.js';
+import {
+    createPanels, renderStatusPanel, renderFloorPanel,
+    wallPresetName, floorDescription, tileDescription,
+} from './panels.js';
 
 const CANVAS = '#building-canvas';
 const LABELS = '#building-labels';
@@ -50,6 +61,17 @@ let dirty = false;
 let saveTimer = null;
 
 const contentFolder = () => window.selectedMod?.baseFolder ?? null;
+
+/**
+ * Whether there is anywhere to write.
+ *
+ * The base game's buildings and floors ship with the app, so all of them can be opened
+ * and looked at with no mod selected at all -- which is worth being able to do, because
+ * "how did the game build a hotel" is a question you have before you have a mod. What
+ * needs a mod is changing one: painting is switched off and cannot be switched on, and
+ * a building cannot be added.
+ */
+const canEdit = () => contentFolder() !== null;
 
 /**
  * What is open, and what the tools are set to.
@@ -85,17 +107,126 @@ export const hasUnsavedChanges = () => dirty;
  * game floor can be opened and saved into the mod.
  */
 export async function refreshPanel() {
-    const folder = contentFolder();
+    // A null folder is a listing of the base game's buildings alone. Every function this
+    // calls takes one, and the file-system helpers under them return nothing rather than
+    // throwing when handed nothing, so the mod's half simply comes back empty.
+    //
+    // The base game's half is a fetch of the reference index, and that can fail -- no
+    // network, or the reference data not deployed beside the app. Caught here rather than
+    // left to propagate: every caller is a folder or mod change that has nothing useful to
+    // do with the error, and what it left behind was an empty panel that looked like a mod
+    // with nothing in it. Null is renderFilePanel's "nothing to list", which is where the
+    // message below is shown.
+    let categories = null;
+    try {
+        categories = await buildCategories(contentFolder());
+    } catch (error) {
+        console.error('Could not list buildings', error);
+    }
 
     renderFilePanel(
         FILE_LIST,
-        folder ? await buildCategories(folder) : null,
-        (entry) => openFloor(entry.openAs),
-        'Choose a mod and content folder to see the buildings in it.');
+        categories,
+        (entry) => { closeBrowse(); openFloor(entry.openAs); },
+        'Buildings failed to load');
+
+    bindBrowseDismissal();
+    bindBrowseSizing();
+
+    // This runs whenever the flow's markup is on screen and the folders have changed,
+    // which includes the first time it is shown with nothing open. Without them the
+    // status column and the Floor section would be empty bordered boxes until a floor
+    // was opened.
+    updateStatus();
+    updateFloorPanel();
 }
 
+/* -------------------------------------------------------------------------- */
+
+const BROWSE = '#building-browse';
+
+const closeBrowse = () => document.querySelector(BROWSE)?.removeAttribute('open');
+
+/**
+ * Close the Browse menu on a click outside it, which a `<details>` does not do.
+ *
+ * One listener for the life of the page rather than one per refresh: it is added once,
+ * and it looks the menu up each time, so it costs nothing on the many clicks that happen
+ * while another flow's markup is on screen and there is no menu to find.
+ */
+let browseDismissalBound = false;
+
+function bindBrowseDismissal() {
+    if (browseDismissalBound) return;
+    browseDismissalBound = true;
+
+    document.addEventListener('click', (event) => {
+        const menu = document.querySelector(BROWSE);
+        if (menu?.hasAttribute('open') && !menu.contains(event.target)) closeBrowse();
+    });
+
+    // The menu hangs off the bar, so nothing about the page moves when it opens and its
+    // height is only ever a cap. Re-measured on a resize because the thing it is measured
+    // against is the workspace, which is sized to the window.
+    window.addEventListener('resize', () => {
+        if (document.querySelector(BROWSE)?.hasAttribute('open')) sizeBrowseMenu();
+    });
+}
+
+/**
+ * Let the menu run down to where the columns end.
+ *
+ * A building of a dozen floors, each holding its layouts, is taller than the 28rem the
+ * menu was capped at, and a menu that scrolls inside a page that does not is a list read
+ * through a slot. There is nothing below the workspace for it to cover, so it goes as far
+ * as the workspace does and no further -- past that and the bottom of the menu would be
+ * off the page with no way to scroll to it.
+ *
+ * Measured rather than declared: this is a `position: absolute` box hanging off the flow
+ * bar, so its height in CSS could only be a fraction of the viewport, which is not what
+ * the columns beside it are.
+ */
+const BROWSE_MENU = `${BROWSE} .browse-menu`;
+const LEFT_COLUMN = '#building-left';
+
+/** Under this the cap is doing more harm than the overflow it prevents. */
+const MIN_BROWSE_HEIGHT = 160;
+
+function sizeBrowseMenu() {
+    const menu = document.querySelector(BROWSE_MENU);
+    const column = document.querySelector(LEFT_COLUMN);
+    if (!menu || !column) return;
+
+    const available = column.getBoundingClientRect().bottom
+        - menu.getBoundingClientRect().top;
+    menu.style.maxHeight = `${Math.max(available, MIN_BROWSE_HEIGHT)}px`;
+}
+
+/**
+ * Bound to the menu itself rather than to the document, because `toggle` does not bubble.
+ *
+ * The marker is on the element and not in a module-level flag: switching flows replaces
+ * this flow's markup, so the menu this is bound to is gone and the next one needs it
+ * again. See the note above about the dismissal handler, which can be bound once because
+ * it looks the menu up each time.
+ */
+function bindBrowseSizing() {
+    const details = document.querySelector(BROWSE);
+    if (!details || details.dataset.sized) return;
+
+    details.dataset.sized = 'true';
+    details.addEventListener('toggle', () => {
+        if (details.open) sizeBrowseMenu();
+    });
+}
+
+/** The two runs the menu is divided into. See `group` in core/filePanel.js. */
+const CUSTOM = 'Custom';
+const VANILLA = 'Vanilla';
+
 async function buildCategories(folder) {
-    const categories = [];
+    const custom = [];
+    const vanilla = [];
     const buildings = await listBuildings(folder);
     const modFloors = new Set(await listCustomBlueprints(folder));
 
@@ -103,45 +234,120 @@ async function buildCategories(folder) {
         const preset = building.preset ?? (await loadPreset(folder, building.name))?.preset;
         const slots = enumerateSlots(preset);
 
-        categories.push({
+        // The three BoundaryCoastal/BoundaryCorner buildings are the scenery along the
+        // edge of the city: nonEnterable, with no floors at all. A category that can
+        // never be opened is noise in a menu, so they are left out by what makes them
+        // useless rather than by name. A building the mod itself holds is listed either
+        // way -- an empty one is the author's own, and hiding it would hide the fact
+        // that adding it worked.
+        if (!slots.length && !building.isCustom) continue;
+
+        // Which of the two it is was a "(this mod)" on the end of the name, which put
+        // the answer in the middle of a list of twelve where it had to be read one
+        // category at a time. It is a heading now, so the division is the shape of the
+        // menu rather than something spelled out on each line.
+        //
+        // Adding and deleting floors is offered on the mod's own buildings only. A base
+        // game building has to become a stub in the mod before its floor list is
+        // anything this app can write -- which is what saving a floor against one does,
+        // and doing it silently from a delete button would be a mod gaining a building
+        // it never asked for.
+        (building.isCustom ? custom : vanilla).push({
             id: building.name,
-            label: building.isCustom ? `${building.name} (this mod)` : building.name,
-            entries: slots.map((option) => ({
-                id: `${building.name}/${option.blueprint}`,
-                label: `${option.label}: ${option.blueprint}`,
-                // Says where the file being opened will come from, which is the one
-                // thing that is not obvious from the name: a floor the mod holds
-                // shadows the base game copy of the same name.
-                tag: modFloors.has(option.blueprint) ? 'edited' : null,
-                openAs: {
-                    building: building.name,
-                    blueprint: option.blueprint,
-                    slot: option.slot,
-                },
+            label: building.name,
+            group: building.isCustom ? CUSTOM : VANILLA,
+            // Twelve buildings of a dozen floors each is a scroll, not a list, and the
+            // one being looked for is found by name.
+            open: false,
+            // A storey each, because that is the shape a building has: the blueprints in
+            // one setting are alternative layouts of the same floor, which the game picks
+            // between, and listing them all at one level said "twelve floors" where the
+            // building has four. See storeysOf in buildingLibrary.js.
+            sections: storeysOf(slots).map((storey) => ({
+                id: `${building.name}/${storey.key}`,
+                label: storey.label,
+                entries: storey.options.map((option) => floorEntry(
+                    building, option, modFloors)),
+                footer: building.isCustom ? {
+                    label: 'Add layout',
+                    title: `Add another layout of ${storey.label} to ${building.name}. `
+                        + 'The game picks between the layouts of one floor when it builds '
+                        + 'the city.',
+                    onClick: () => addFloor(building.name, storey),
+                } : null,
             })),
+            footer: building.isCustom ? {
+                label: 'Add floor',
+                title: `Add a floor to ${building.name}`,
+                onClick: () => addFloor(building.name),
+            } : null,
         });
     }
 
     // A floor the mod holds that no building refers to. Reachable rather than stranded:
     // renaming a floor, or removing it from a slot, leaves one behind.
-    const referenced = new Set(categories.flatMap(
-        (category) => category.entries.map((entry) => entry.openAs.blueprint)));
+    //
+    // Counted against every building, the base game's included: a mod floor named after
+    // a base game one shadows it and is reached through that building, so it is not
+    // stranded. But it is the mod's own, so it goes under Custom rather than after the
+    // list it was checked against.
+    const referenced = new Set([...custom, ...vanilla].flatMap(
+        (category) => category.sections.flatMap(
+            (section) => section.entries.map((entry) => entry.openAs.blueprint))));
     const orphans = [...modFloors].filter((name) => !referenced.has(name));
 
     if (orphans.length) {
-        categories.push({
+        custom.push({
             id: 'unused-floors',
             label: 'Floors no building uses',
+            group: CUSTOM,
+            open: false,
             entries: orphans.map((name) => ({
                 id: name,
                 label: name,
                 tag: 'unused',
+                // No building to take it out of, so this is the file and nothing else.
+                action: {
+                    label: '×',
+                    title: `Delete ${name}`,
+                    onClick: () => deleteFloor(null, name, null),
+                },
                 openAs: { building: null, blueprint: name, slot: null },
             })),
         });
     }
 
-    return categories;
+    return [...custom, ...vanilla];
+}
+
+/**
+ * One layout of one floor.
+ *
+ * Named by its blueprint and nothing else: the storey it belongs to is the section it is
+ * listed in, and repeating "Floor 3" on every line under a heading that says Floor 3 was
+ * most of the width of the menu. A control room variant still says so, in the same words
+ * the Floor panel's Layout select uses -- it is a different thing from the layout beside
+ * it rather than another of the same.
+ */
+function floorEntry(building, option, modFloors) {
+    return {
+        id: `${building.name}/${option.blueprint}`,
+        label: `${option.slot.isControlVariant ? 'Control: ' : ''}${option.blueprint}`,
+        // Says where the file being opened will come from, which is the one thing that is
+        // not obvious from the name: a floor the mod holds shadows the base game copy of
+        // the same name.
+        tag: modFloors.has(option.blueprint) ? 'edited' : null,
+        action: building.isCustom ? {
+            label: '×',
+            title: `Delete ${option.blueprint}`,
+            onClick: () => deleteFloor(building.name, option.blueprint, option.slot),
+        } : null,
+        openAs: {
+            building: building.name,
+            blueprint: option.blueprint,
+            slot: option.slot,
+        },
+    };
 }
 
 
@@ -156,10 +362,7 @@ async function buildCategories(folder) {
  * one piece of editor state a blueprint has nowhere to store.
  */
 export async function openFloor({ building, blueprint, slot }, selections = []) {
-    const folder = contentFolder();
-    if (!folder) return;
-
-    const found = await resolveBlueprint(folder, blueprint);
+    const found = await resolveBlueprint(contentFolder(), blueprint);
     if (!found) {
         alert(`Could not find a floor called "${blueprint}".`);
         return;
@@ -175,11 +378,99 @@ export async function openFloor({ building, blueprint, slot }, selections = []) 
         slot,
         isCustom: found.isCustom,
         model: parseFloor(found.data, { selections }),
+        // What the Floor panel steps through. Read here rather than each time that panel
+        // redraws, which is on every edit: it is a file read, and the building's floor
+        // list does not change while one of its floors is open.
+        storeys: await storeysForBuilding(building),
     };
 
     dirty = false;
 
+    // Every floor is opened to look at first. Painting stays where it was left for as
+    // long as one floor is open, but opening another is a fresh floor to be careful
+    // with -- and often a base game one, which the first stray click would copy into
+    // the mod.
+    toolState.mode = PaintMode.NONE;
+
+    // And what would be painted is this floor's, not the last one's. An address and a
+    // room are both positions in the floor that is open: address 3 is a different
+    // dwelling in every building, and a room slot within it is not even the same kind of
+    // room. Nothing else in the state means anything about a particular floor.
+    toolState.addressIndex = 0;
+    toolState.roomIndex = 0;
+
+    // What the last generation said was about the last building. Whether this one's mesh
+    // is out of date is a fresh question, answered below once the floor is on screen --
+    // it reads every floor of the building, so it is not something to wait for.
+    meshState = { busy: false, stale: null, status: '' };
+
     await showOpenFloor();
+    refreshMeshState();
+}
+
+/**
+ * The storeys of the building a floor was opened through.
+ *
+ * Empty for a floor no building refers to: there is no building to be a storey of, and
+ * the Floor panel says so rather than offering to climb one.
+ */
+async function storeysForBuilding(building) {
+    if (!building) return [];
+
+    const found = await loadPreset(contentFolder(), building);
+    return storeysOf(enumerateSlots(found?.preset));
+}
+
+/**
+ * Where the open floor sits in its building, for the Floor panel.
+ *
+ * The storey is found by the slot rather than by the blueprint's name. No base game
+ * building lists one blueprint twice, but nothing stops a mod doing it -- a floor used
+ * for two storeys is one file, not two -- and the answer to "which floor am I on" is the
+ * slot that was opened rather than the first one that happens to name this file.
+ */
+function openFloorContext() {
+    if (!open) return null;
+
+    const storeys = open.storeys ?? [];
+
+    return {
+        building: open.building,
+        blueprint: open.model?.floorName ?? open.blueprint,
+        slot: open.slot,
+        storeys,
+        storeyIndex: storeys.findIndex(
+            (storey) => storey.options.some((option) => sameSlot(option.slot, open.slot))),
+        // A floor no building refers to has no building to generate a model for.
+        mesh: {
+            canGenerate: canEdit() && !!open.building,
+            busy: meshState.busy,
+            stale: meshState.stale,
+            status: meshState.status,
+        },
+    };
+}
+
+/** Open another slot of the building already open. */
+const openSlot = (option) => openFloor({
+    building: open?.building ?? null, blueprint: option.blueprint, slot: option.slot,
+});
+
+/**
+ * The Floor section on its own.
+ *
+ * Drawn outside the panels as well as with them, because it is the one of them that has
+ * something to say when nothing is open -- and because saving a floor can move it into a
+ * slot it was not in before.
+ */
+function updateFloorPanel() {
+    const container = document.querySelector('#building-floor');
+    if (container) {
+        renderFloorPanel(container, openFloorContext(), {
+            onOpen: openSlot,
+            onGenerateMesh: generateMesh,
+        });
+    }
 }
 
 /** Put the open floor on screen: the view, the tools bound to it, and the panels. */
@@ -239,13 +530,80 @@ function onPainted(result) {
     updateLabels();
 }
 
-/** The pointer moved over the floor with nothing held. */
+/**
+ * The pointer moved over the floor with nothing held.
+ *
+ * Walls are kept as well as cells, which they were not when the only thing reading this
+ * was the cell label: the status column shows what is under the pointer, and a wall is
+ * one of the things that can be.
+ */
 function onHovered(target) {
-    hovered = target && target.kind === 'cell' ? { x: target.x, y: target.y } : null;
+    hoveredPick = target;
+    applyHover();
+}
+
+/** The last thing the pointer was over, before the tool had its say. See resolveHover. */
+let hoveredPick = null;
+
+let hovered = null;
+let hoveredKey = null;
+
+/**
+ * Work out what the last pick means under the chosen tool, and redraw if it moved.
+ *
+ * Split from onHovered because a tool change re-answers the question without the pointer
+ * having moved: switching to the wall tool over the middle of a cell turns what is under
+ * the pointer from that cell into one of its edges.
+ */
+function applyHover() {
+    const next = resolveHover(hoveredPick);
+
+    // A pointermove arrives every few pixels and most of them are over the same cell as
+    // the last. Rebuilding the column and the labels for each would be a redraw per
+    // pixel of a slow drag across the floor.
+    const key = next && `${next.kind}:${next.x},${next.y},${next.axis ?? ''}`;
+    if (key === hoveredKey) return;
+
+    hoveredKey = key;
+    hovered = next;
+
+    updateStatus();
     updateLabels();
 }
 
-let hovered = null;
+/**
+ * What the pointer is over, which depends on which tool is chosen.
+ *
+ * With the wall tool, a cell resolves to the edge of it nearest the pointer -- because
+ * that is what a click there would paint. An edge with no wall on it is a sliver a few
+ * pixels high, so a pick almost never lands on one directly, and reporting the cell
+ * instead would have the status column and the label describing the floor while the only
+ * thing a click could change is a wall.
+ *
+ * `nearestEdge` returns nothing at the outside of the grid, where a cell's outer edge is
+ * off it. Nothing is what that is: there is no wall there and no click can make one.
+ */
+function resolveHover(target) {
+    if (!target) return null;
+
+    if (target.kind === 'wall') {
+        return { kind: 'wall', x: target.x, y: target.y, axis: target.axis };
+    }
+
+    if (toolState.tool === Tool.WALL) {
+        const edge = nearestEdge(target);
+        return edge && { kind: 'wall', x: edge.x, y: edge.y, axis: edge.axis };
+    }
+
+    return { kind: 'cell', x: target.x, y: target.y };
+}
+
+/** The left column: what a click would paint, and what is under the pointer. */
+function updateStatus() {
+    const container = document.querySelector('#building-status');
+    if (container) renderStatusPanel(container, open?.model ?? null, toolState, hovered);
+}
+
 
 /**
  * A panel changed something.
@@ -269,17 +627,79 @@ function onPanelRebuild() {
 function renderPanels() {
     if (!open?.model) return;
 
+    // Nothing can turn painting on without a mod, but something could already have left
+    // it on -- opening a floor, then disconnecting the folder it came from. Settled here
+    // rather than guarded at every point a stroke passes through.
+    if (!canEdit()) toolState.mode = PaintMode.NONE;
+
     createPanels({
+        floor: document.querySelector('#building-floor'),
         tools: document.querySelector('#building-tools'),
+        status: document.querySelector('#building-status'),
         addresses: document.querySelector('#building-addresses'),
         rooms: document.querySelector('#building-rooms'),
+        floorTypes: document.querySelector('#building-floor-type'),
         walls: document.querySelector('#building-walls'),
-        selection: document.querySelector('#building-selection'),
+        tiles: document.querySelector('#building-tiles'),
     }, open.model, toolState, {
         onEdit: onPanelEdit,
         onRebuild: onPanelRebuild,
-        onToolChange: updateLabels,
+        onToolChange: onToolChanged,
+        getHovered: () => hovered,
+        getFloor: openFloorContext,
+        onOpenFloor: openSlot,
+        onGenerateMesh: generateMesh,
+        canPaint: canEdit(),
     });
+
+    syncView();
+}
+
+/**
+ * A tool button was pressed: what the floor is coloured by, the tile squares, and what
+ * the pointer is taken to be over.
+ */
+function onToolChanged() {
+    syncView();
+    applyHover();
+    updateLabels();
+}
+
+/**
+ * Point the view at whatever the chosen tool is about.
+ *
+ * The scene is told rather than asked to work it out: it is handed a model and draws it,
+ * and which tool is active is not part of a floor. This is the only place the two meet.
+ */
+function syncView() {
+    syncOverlay();
+    syncTileOverlay();
+}
+
+/**
+ * How the floor is coloured, chosen by the tool rather than by a control of its own.
+ *
+ * A dropdown in the bar was a second thing to set for a question the tool has already
+ * answered: you choose the room tool to work on rooms, so rooms are what the floor should
+ * be telling you apart. The three tools with no colouring of their own -- address, wall
+ * and tile -- fall back to the address colours, which is what makes a wall or a tile
+ * readable: both are placed with respect to where one dwelling ends and the next begins.
+ */
+const OVERLAY_FOR_TOOL = {
+    [Tool.ADDRESS]: Overlay.ADDRESS,
+    [Tool.WALL]: Overlay.ADDRESS,
+    [Tool.TILE]: Overlay.ADDRESS,
+    [Tool.ROOM]: Overlay.ROOM,
+    [Tool.FLOOR_TYPE]: Overlay.FLOOR_TYPE,
+};
+
+function syncOverlay() {
+    view?.setOverlay(OVERLAY_FOR_TOOL[toolState.tool] ?? Overlay.ADDRESS);
+}
+
+/** Show the tile squares while the tile tool is chosen. */
+function syncTileOverlay() {
+    view?.setTileOverlay(toolState.tool === Tool.TILE);
 }
 
 function updateHeading() {
@@ -303,65 +723,92 @@ function updateHeading() {
 /* Labels                                                                      */
 /* -------------------------------------------------------------------------- */
 
+/** How far above the floor a label floats: clear of the walls, which stand at 0.55. */
+const LABEL_HEIGHT = 0.8;
+
 /**
- * The hovered and selected cells, labelled with HTML positioned over the canvas.
+ * What the pointer is over, labelled with HTML positioned over the canvas.
  *
- * Two labels rather than 441. The reference tool puts the room preset, its id and the
- * coordinates on every cell with TextMeshPro; this shows the same three things for the
- * cell being looked at, which is the one it was for.
+ * One label rather than 441. The reference tool puts the room preset, its id and the
+ * coordinates on every cell with TextMeshPro; this shows what the cell being looked at
+ * carries instead, the coordinates left to the status column, which says them for the
+ * same hover. The selected cell has no label of its own: the status column already says
+ * what it is, and a second label that stayed put after a click sat over whatever you
+ * moved on to look at next.
+ *
+ * A wall is labelled where the wall is rather than over either of the cells it divides,
+ * and says what a click would replace: with the wall tool chosen that is the only thing
+ * a click can change, so the cell's room and address are not what is being asked about.
+ * A wall picked under any other tool is scenery, and a click on it does nothing at all:
+ * applyTool sends the pick to the cell tools, which take a cell and return unchanged for
+ * anything else. So nothing is labelled -- naming the wall would read as an offer to
+ * change it, and naming the cell behind it would describe something the click never
+ * reaches.
  */
 function updateLabels() {
     const host = document.querySelector(LABELS);
     if (!host || !view) return;
 
     host.replaceChildren();
-    if (!open?.model) return;
+    if (!open?.model || !hovered) return;
 
-    const wanted = [
-        hovered && { ...hovered, kind: 'hover' },
-        toolState.selectedNode && { ...toolState.selectedNode, kind: 'selected' },
-    ].filter(Boolean);
+    const { x, y } = hovered;
+    const wall = hovered.kind === 'wall';
+    if (wall && toolState.tool !== Tool.WALL) return;
 
-    // The same cell hovered and selected is one label, not two on top of each other.
-    const seen = new Set();
+    const text = wall ? describeWallAt(x, y, hovered.axis) : describeCellAt(x, y);
+    const at = wall
+        ? view.projectWall(x, y, hovered.axis, LABEL_HEIGHT)
+        : view.project(x, y, LABEL_HEIGHT);
+    if (!text || !at) return;
 
-    for (const { x, y, kind } of wanted) {
-        const key = `${x},${y}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-
-        const described = describeCell(open.model, x, y);
-        const at = view.project(x, y, 0.8);
-        if (!described || !at) continue;
-
-        const rect = view.canvas.getBoundingClientRect();
-        const label = document.createElement('div');
-        label.className = `cell-label ${kind}`;
-        label.style.left = `${at.left - rect.left}px`;
-        label.style.top = `${at.top - rect.top}px`;
-        label.textContent = `${described.room}\n${described.address}\n${described.coordinate}`;
-        host.appendChild(label);
-    }
-
-    for (const marker of tileMarkers(open.model)) {
-        const at = view.project(marker.nodeX, marker.nodeY, 1.4);
-        if (!at) continue;
-
-        const rect = view.canvas.getBoundingClientRect();
-        const pin = document.createElement('div');
-        pin.className = 'tile-marker';
-        pin.style.left = `${at.left - rect.left}px`;
-        pin.style.top = `${at.top - rect.top}px`;
-        pin.textContent = markerText(marker);
-        pin.title = `Tile ${marker.x}, ${marker.y}`;
-        host.appendChild(pin);
-    }
+    const rect = view.canvas.getBoundingClientRect();
+    const label = document.createElement('div');
+    label.className = 'cell-label hover';
+    label.style.left = `${at.left - rect.left}px`;
+    label.style.top = `${at.top - rect.top}px`;
+    label.textContent = text;
+    host.appendChild(label);
 }
 
-function markerText(marker) {
-    if (marker.stairwell === 'elevator') return `⇕ ${marker.rotation}°`;
-    if (marker.stairwell === 'stairs') return `⌁ ${marker.rotation}°`;
-    return marker.entrance === 'main' ? '★' : '▣';
+/**
+ * The three things a node carries that the floor is painted with: its room, its address
+ * and its floor type. All three whichever of those tools is chosen, because the floor is
+ * only coloured by one of them at a time and the label is where the other two are read.
+ *
+ * The tile tool is the exception. A tile is not a node -- it is the 3x3 block of them the
+ * squares are drawn over -- so its own label would sit over a cell describing something
+ * nine cells wide. What the tile carries is the one thing that tool can change, and is
+ * all the label says while it is chosen.
+ */
+function describeCellAt(x, y) {
+    if (toolState.tool === Tool.TILE) {
+        return tileDescription(tileForNode(open.model, x, y));
+    }
+
+    const described = describeCell(open.model, x, y);
+    if (!described) return null;
+
+    return `${described.room}\n${described.address}\n${
+        floorDescription(described.floorType, described.height)}`;
+}
+
+/**
+ * A wall, where there is one.
+ *
+ * A bare edge is left unlabelled. The wall tool puts the pointer on the nearest edge
+ * wherever in a cell it actually is, so most of a floor's edges are bare and a "None"
+ * following the pointer around said nothing you could not see. The status column still
+ * names it, for the hover that is asking.
+ */
+function describeWallAt(x, y, axis) {
+    const wall = getWall(open.model, x, y, axis);
+    if (!wall) return null;
+
+    const name = wallPresetName(wall.preset);
+    const where = `${x}, ${y} (${axis})`;
+
+    return wall.matched ? `${name}\n${where}` : `${name}\n${where}\nsides disagree`;
 }
 
 
@@ -380,7 +827,11 @@ const SAVE_DELAY = 600;
 
 function markDirty() {
     dirty = true;
-    updateSaveState();
+
+    // With no mod selected there is nowhere to write. Left to schedule, the autosave
+    // would come back in 600ms, alert that no mod is selected, and throw out of a timer
+    // where nothing can catch it. The floor is still editable in memory; the bar says so.
+    if (!canEdit()) return;
 
     if (!shouldSave(false)) return;
 
@@ -411,6 +862,7 @@ async function flushPendingSave() {
  */
 export async function saveFloor(force = false) {
     if (!open?.model) return;
+    if (!canEdit()) return;
     if (!shouldSave(force)) return;
 
     assertModSelected();
@@ -429,11 +881,20 @@ export async function saveFloor(force = false) {
     open.blueprint = open.model.floorName;
     open.isCustom = true;
 
+    // Saving can put a floor in a slot it was not in before -- a base game building
+    // becoming a stub, or a slot appended for one that had none -- so the storeys the
+    // Floor section steps through are read again rather than left as they were opened.
+    open.storeys = await storeysForBuilding(open.building);
+
     dirty = false;
-    updateSaveState();
 
     await refreshPanel();
     updateHeading();
+
+    // The floor that just changed is one the building's mesh may have been built from,
+    // which is the whole of what makes window data go stale. Not waited for: it reads
+    // every floor of the building, and this runs at the end of a 600ms autosave.
+    refreshMeshState();
 }
 
 /** The explicit Save button, which writes whatever the autosave switch says. */
@@ -443,55 +904,461 @@ export async function saveNow() {
     await saveFloor(true);
 }
 
-function updateSaveState() {
-    const button = document.querySelector('#building-save');
-    if (button) button.dataset.dirty = dirty ? 'true' : 'false';
+
+/* -------------------------------------------------------------------------- */
+/* The building's model                                                        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * What the last generation did, and whether the building's model still matches its
+ * floors.
+ *
+ * `stale` is three-valued on purpose. `true` and `false` are answers about a building
+ * whose mesh this app generated; `null` is *no question* -- a building copying its model
+ * from a base game one, or one that has never had a mesh generated, has nothing that
+ * could have gone out of date and nothing regenerating would fix.
+ */
+let meshState = { busy: false, stale: null, status: '' };
+
+/**
+ * A blueprint's data by name, which is what the generator reads floors through.
+ *
+ * The mod's copy first and the base game's second, exactly as opening a floor does -- a
+ * building whose floors are half its own and half the base game's is the ordinary case,
+ * and the model has to be built from what the game will actually load.
+ */
+const resolveFloorData = async (blueprint) =>
+    (await resolveBlueprint(contentFolder(), blueprint))?.data ?? null;
+
+/**
+ * Build the model, textures, prefab and window data for the open floor's building.
+ *
+ * Everything the game needs to draw a building that is not copying its appearance from a
+ * base game one: an OBJ, five PNGs, a prefab definition, and the `sortedWindows` block
+ * that decides which rectangle lights up when a room's light comes on.
+ *
+ * Unsaved edits are written first. The mesh is read off the *files*, so generating with a
+ * floor half-painted would produce a model of the version on disk and immediately declare
+ * itself stale against the one on screen -- which is true, and not what anyone pressing
+ * the button meant.
+ *
+ * On a base game building this creates the mod's stub of it first, the same way saving a
+ * floor against one does. That is not a side effect to be quiet about: the generated
+ * prefab and window data are exactly what stops the stub deferring to the original, so a
+ * stub is what has to exist for any of this to be written at all.
+ */
+export async function generateMesh() {
+    const folder = contentFolder();
+
+    // The button is disabled when either is missing. This is the guard against being
+    // called some other way.
+    if (!folder || !open?.building || meshState.busy) return;
+
+    if (dirty) await saveFloor(true);
+
+    const building = open.building;
+    meshState = { busy: true, stale: null, status: 'Reading the floors…' };
+    updateFloorPanel();
+
+    try {
+        const { preset } = await presetForSaving(folder, building);
+        const result = await generateBuilding(building, preset, resolveFloorData);
+
+        if (!result.ok) {
+            meshState = { busy: false, stale: null, status: result.reason };
+        } else {
+            // The prefab before the preset that points at it, for the same reason a floor
+            // is written before the building that names it: a preset naming a model that
+            // is not there is a building the city cannot draw, and the other way round is
+            // seven files nothing reads.
+            await writeGeneratedBuilding(folder, building, result.files);
+            await writeCustomPreset(folder, building, preset, { alsoWritten: GENERATED_FIELDS });
+
+            meshState = { busy: false, stale: false, status: describeGeneration(result) };
+        }
+    } catch (error) {
+        console.error('Could not generate the building mesh', error);
+        meshState = { busy: false, stale: null, status: `Could not generate: ${error.message}` };
+    }
+
+    // The building may have become the mod's just now, which changes what Browse lists
+    // and puts the Floor section's own storeys back in step.
+    if (open?.building === building) open.storeys = await storeysForBuilding(building);
+    await refreshPanel();
 }
+
+/** What was built, in the one line the panel has for it. */
+function describeGeneration(result) {
+    const parts = [
+        `${result.floorCount} window row${result.floorCount === 1 ? '' : 's'}`,
+        `${result.height.toFixed(1)} m`,
+        `${result.triangleCount} tris`,
+        `${result.windowCount} window${result.windowCount === 1 ? '' : 's'}`,
+    ];
+
+    // Both are worth saying out loud rather than only in the console. A floor that could
+    // not be read is a hole in the model, and the ground floor and rooftop being left out
+    // is deliberate but surprising -- the ground floor is drawn by the street frontage in
+    // front of it and an open rooftop has no facade.
+    const notes = [];
+    if (result.excluded.length) notes.push(`Not modelled: ${result.excluded.join(', ')}.`);
+    if (result.missing.length) notes.push(`Floors not found: ${result.missing.join(', ')}.`);
+
+    return [`${parts.join(', ')}.`, ...notes].join(' ');
+}
+
+/**
+ * Ask whether the open building's model still describes its floors, and redraw if so.
+ *
+ * Cheap for the buildings it does not apply to: `isMeshStale` answers null and reads
+ * nothing when the preset carries no hash, which is every building whose mesh this app
+ * never generated. Only one that *was* generated pays for reading its floors again.
+ *
+ * The building is checked again before the answer is used, because this runs unawaited
+ * from opening and saving and either can be overtaken by opening a different floor.
+ */
+async function refreshMeshState() {
+    const building = open?.building;
+    if (!building || !contentFolder()) return;
+
+    try {
+        const preset = await readCustomPreset(contentFolder(), building);
+        const stale = preset ? await isMeshStale(preset, resolveFloorData) : null;
+
+        if (open?.building !== building || meshState.busy) return;
+
+        meshState = { ...meshState, stale };
+        updateFloorPanel();
+    } catch (error) {
+        // Whether a mesh is out of date is a footnote. A folder that went away underneath
+        // this is not worth interrupting an edit over, and the next save asks again.
+        console.error('Could not check whether the building mesh is up to date', error);
+    }
+}
+
 
 
 /* -------------------------------------------------------------------------- */
 /* Buildings                                                                   */
 /* -------------------------------------------------------------------------- */
 
+const ADD_BUILDING_MODAL = '#new-building-modal';
+
+const field = (id) => document.getElementById(id);
+
 /**
- * Add a building to the mod.
+ * Ask what the new building is, before any of it is written.
+ *
+ * Three answers, because a building's name is two different things:
+ *
+ *   Title        what a player reads. It is used in one place only -- a row in the
+ *                mod's names.rooms.csv, keyed by the preset name -- so it may hold
+ *                spaces and punctuation like any other line of text.
+ *   Preset name  what everything else uses: the file it is written to, the `REF:`
+ *                string a floor's building points at, and the key that strings row is
+ *                stored against. So it has to be safe as an identifier and as a file
+ *                name, which is what makeNameFieldSafe means by safe.
+ *   Copy from    a base game building to take a prefab, mesh and window data from.
+ *
+ * Asked together in a dialog rather than one prompt after another, so they can be seen
+ * and changed against each other, and so cancelling leaves nothing behind.
  *
  * Offering a base game building to copy from is the point of this rather than an
  * extra: a building of its own has no prefab, no mesh and no window data, so the game
  * has nothing to draw until those are generated. One that copies from a base game
  * building has all three from the start and only its floors are the mod's.
  */
-export async function addBuilding() {
+export async function showAddBuilding() {
+    // The button is disabled without a content folder, so this is only the guard against
+    // being called some other way.
+    if (!canEdit()) {
+        alert('Choose a mod and content folder first');
+        return;
+    }
+
+    field('new-building-form').reset();
+
+    // reset() clears the fields but not what was learned about them, and a preset name
+    // that stayed "edited" from a previous building would sit empty while the title was
+    // typed.
+    delete field('new-building-preset-name').dataset.edited;
+
+    await fillCopyFromOptions();
+
+    document.querySelector(ADD_BUILDING_MODAL).setAttribute('open', '');
+    field('new-building-title').focus();
+}
+
+export function closeAddBuilding() {
+    document.querySelector(ADD_BUILDING_MODAL)?.removeAttribute('open');
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Help                                                                        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * What the editor is and how the pieces of a building fit together, plus the controls.
+ *
+ * Under the id the other two flows use for theirs, which is safe because only one flow is
+ * mounted at a time -- and the same reason these two handlers may take the names those
+ * flows give theirs. The registry removes the last flow's globals before installing the
+ * next flow's, so a name is only ever the active flow's.
+ */
+const HELP_MODAL = '#help-modal';
+
+export function showHelp() {
+    document.querySelector(HELP_MODAL)?.setAttribute('open', '');
+}
+
+export function closeHelp() {
+    document.querySelector(HELP_MODAL)?.removeAttribute('open');
+}
+
+/**
+ * The base game's buildings, listed for copying from.
+ *
+ * Rebuilt each time the dialog opens rather than once: the index is fetched once per
+ * page and cached, so this is a list rebuild, and the dialog's markup goes away with the
+ * flow's template when another editor is shown.
+ */
+async function fillCopyFromOptions() {
+    const select = field('new-building-copy-from');
+    const index = await loadFloorIndex();
+
+    // "None" is a real answer, not a placeholder, so it is the first option rather than
+    // an empty selection -- and it stays as the default, because a building of its own
+    // is the one choice that cannot be undone by picking differently later.
+    select.replaceChildren(new Option('None', ''));
+    for (const name of index.buildings) select.append(new Option(name, name));
+
+    select.value = '';
+}
+
+/**
+ * The preset name follows the title while it has not been typed into, made safe on the
+ * way -- "Grand Hotel" gives GrandHotel.
+ *
+ * Derived rather than asked for twice: the two are the same word for almost every
+ * building, and the difference between them is exactly what makeNameFieldSafe takes out.
+ * Typing in the field stops it following, because from then on it is an answer rather
+ * than a guess.
+ */
+export function syncPresetNameToTitle() {
+    const presetName = field('new-building-preset-name');
+    if (presetName.dataset.edited === 'true') return;
+
+    presetName.value = makeNameFieldSafe(field('new-building-title').value);
+}
+
+export function markPresetNameEdited() {
+    field('new-building-preset-name').dataset.edited = 'true';
+}
+
+export async function submitAddBuilding() {
     const folder = contentFolder();
     if (!folder) {
         alert('Choose a mod and content folder first');
         return;
     }
 
-    const name = prompt('Name for the new building')?.trim();
-    if (!name) return;
+    const title = field('new-building-title').value.trim();
+    const presetName = field('new-building-preset-name').value.trim();
+    const copyFrom = field('new-building-copy-from').value || null;
+
+    // Both are `required`, so the browser will not submit without them. This is the
+    // guard against being called some other way.
+    if (!title || !presetName) return;
+
+    // The input's pattern says the same thing, but a preset name that got past it would
+    // be a file name with a space in it and a `REF:` string nothing resolves.
+    if (!isNameFieldSafe(presetName)) {
+        alert('A preset name can hold only letters, digits, hyphens and underscores.');
+        return;
+    }
 
     const existing = await listCustomBuildings(folder);
-    if (existing.some((entry) => entry.name === name)) {
-        alert(`This mod already has a building called "${name}".`);
+    if (existing.some((entry) => entry.name === presetName)) {
+        alert(`This mod already has a building called "${presetName}".`);
         return;
     }
 
-    const index = await loadFloorIndex();
-    const copyFrom = prompt(
-        'Copy from which base game building?\n\n'
-        + 'Leave blank for a building of its own, which will need a mesh generating '
-        + 'before the game can show it.\n\n'
-        + index.buildings.join(', '),
-        'Hotel')?.trim();
+    // Only closed once the answers are known to be usable: a dialog that closes on a
+    // name the mod already has would leave the alert as the only sign of what happened,
+    // with everything typed thrown away.
+    closeAddBuilding();
 
-    if (copyFrom && !index.buildings.includes(copyFrom)) {
-        alert(`"${copyFrom}" is not a base game building.`);
-        return;
-    }
+    await createCustomBuilding(folder, presetName, { copyFrom, title });
+    await writeBuildingTitle(folder, presetName, title);
 
-    await createCustomBuilding(folder, name, { copyFrom: copyFrom || null });
     await refreshPanel();
+}
+
+/**
+ * The building's readable name, as a row in the mod's room names CSV.
+ *
+ * This is the only place a title is used: the preset carries it, but what the game
+ * shows a player is what this row says, looked up by the preset name.
+ *
+ * A failure here does not undo the building. The preset is the thing that was asked
+ * for and it is on disk by now; a missing row shows in game as the preset name, which
+ * is recoverable by hand and not worth throwing the building away over. So it is
+ * reported rather than thrown -- silently swallowing it would leave a building that
+ * quietly never gets its name.
+ */
+async function writeBuildingTitle(folder, presetName, title) {
+    try {
+        await writeStringsRow(folder, ROOM_NAMES_VIRTUAL, presetName, title);
+    } catch (error) {
+        alert(`The building was created, but its title could not be written: ${error.message}`);
+    }
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Floors                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Add a floor to one of the mod's buildings and open it, or another layout of a floor it
+ * already has.
+ *
+ * Two files again, and in the same order as saving: the blueprint, then the building
+ * that names it. A building pointing at a floor that is not there is the failure that
+ * shows in game as a missing floor.
+ *
+ * The two are one function because they differ only in which slot is asked for. A floor
+ * goes in a setting of its own -- `layoutIndex: -1` is setBlueprint's "a new one" -- and
+ * a layout goes on the end of an existing setting, which is what the blueprint list in a
+ * setting is: the alternatives the game picks between for that one storey.
+ *
+ * It is named rather than asked about. A floor's name is not content: it is what the
+ * building refers to it by, it is never shown to a player, and there is nothing to say
+ * about a floor before seeing it. Opening it immediately is the answer to "and now
+ * what" -- the name can be changed on the floor itself.
+ *
+ * @param storey a storey from storeysOf to add a layout to, or null for a new floor
+ */
+async function addFloor(buildingName, storey = null) {
+    const folder = contentFolder();
+    if (!folder) {
+        alert('Choose a mod and content folder first');
+        return;
+    }
+
+    closeBrowse();
+
+    const name = await nextFloorName(folder, buildingName, storey);
+
+    await writeCustomBlueprint(folder, name, blankFloor(name));
+
+    const { preset } = await presetForSaving(folder, buildingName);
+    // A blueprintIndex outside the list appends rather than leaving a hole, so a layout
+    // lands after the ones already in the storey. Never a control room variant: those
+    // are the same layouts with a control room in them, which is not something this can
+    // make out of a blank floor.
+    const slot = setBlueprint(preset, storey
+        ? {
+            isBasement: storey.isBasement,
+            isControlVariant: false,
+            layoutIndex: storey.layoutIndex,
+            blueprintIndex: -1,
+        }
+        : { isBasement: false, isControlVariant: false, layoutIndex: -1, blueprintIndex: 0 },
+        name);
+    await writeCustomPreset(folder, buildingName, preset);
+
+    await refreshPanel();
+    await openFloor({ building: buildingName, blueprint: name, slot });
+}
+
+/**
+ * `<Building>_Floor1`, or the first number after it that nothing has taken. A layout is
+ * named after the storey it is a layout of instead -- `<Building>_Floor0_v1` -- because
+ * the next free floor number would name a floor the building does not have.
+ *
+ * Checked against the base game's blueprints as well as the mod's: a mod floor named
+ * after a base game one shadows it everywhere it is used, so a name that collides by
+ * accident would silently replace a floor in some other building.
+ */
+async function nextFloorName(folder, buildingName, storey = null) {
+    const taken = new Set([
+        ...await listCustomBlueprints(folder),
+        ...(await loadFloorIndex()).blueprints ?? [],
+    ]);
+
+    const stem = storey
+        ? `${buildingName}_${storey.isBasement ? 'Basement' : 'Floor'}${storey.layoutIndex}_v`
+        : `${buildingName}_Floor`;
+
+    for (let n = 1; ; n++) {
+        const name = `${stem}${n}`;
+        if (!taken.has(name)) return name;
+    }
+}
+
+/**
+ * Take a floor out of a building, and delete the mod's copy of it.
+ *
+ * Both halves, because either on its own leaves something misleading behind: the file
+ * with nothing referring to it, or a building naming a floor that is not there.
+ *
+ * Only ever the mod's own file. A slot holding a base game blueprint has no file here to
+ * delete, and deleting the mod's copy of a floor the base game also has uncovers the
+ * original rather than losing it -- so on a stub, this means "stop overriding it".
+ *
+ * `slot` is null for a floor no building uses, which is a file and nothing else.
+ */
+async function deleteFloor(buildingName, blueprint, slot) {
+    const folder = contentFolder();
+    if (!folder) return;
+
+    if (!confirm(`Delete the floor "${blueprint}" from this mod?`)) return;
+
+    closeBrowse();
+
+    // Anything unsaved in the floor being deleted would otherwise be written back out
+    // moments after the file was removed.
+    if (open?.blueprint === blueprint) {
+        clearTimeout(saveTimer);
+        saveTimer = null;
+        closeFloor();
+    } else {
+        await flushPendingSave();
+    }
+
+    // The file first, then the building. A preset is written pointing at the floors the
+    // mod holds at that moment, so taking the slot out first would leave any *other* slot
+    // naming the same floor -- a building may list one twice -- pointing at a file that
+    // was about to be deleted. This way that slot comes back a bare name, which is the
+    // base game's copy if there is one and nothing if there is not.
+    await deleteCustomBlueprint(folder, blueprint);
+
+    if (buildingName && slot) {
+        const { preset } = await presetForSaving(folder, buildingName);
+        if (removeBlueprint(preset, slot)) {
+            await writeCustomPreset(folder, buildingName, preset);
+        }
+    }
+
+    await refreshPanel();
+}
+
+/** Put the editor back to nothing open. */
+function closeFloor() {
+    open = null;
+    hoveredPick = null;
+    hovered = null;
+    hoveredKey = null;
+    dirty = false;
+    meshState = { busy: false, stale: null, status: '' };
+
+    view?.setModel(null);
+    updateHeading();
+    updateStatus();
+    updateFloorPanel();
+    updateLabels();
 }
 
 /**
@@ -500,6 +1367,12 @@ export async function addBuilding() {
  * Returned to core/newContent.js, which calls it once the folder exists. The Floors
  * directory is created empty because it is what marks the folder as holding buildings
  * -- without it the folder would not be offered as content to edit at all.
+ *
+ * The manifest is written for the same reason it is written for a building added to an
+ * existing mod: a preset it does not name is a preset the loader never reads. This does
+ * not go through writeCustomPreset, which would list it -- the file written here is the
+ * bare minimum a building can be rather than a preset with its defaults dropped -- so it
+ * says so itself.
  */
 export function scaffoldBuildingFolder(name) {
     return async (folder) => {
@@ -514,6 +1387,8 @@ export function scaffoldBuildingFolder(name) {
             copyFrom: null,
         }, null, 2)}\n`);
 
+        await ensureListed(folder, name);
+
         await getFolder(folder, [FLOORS_DIR], true);
     };
 }
@@ -523,22 +1398,10 @@ export function scaffoldBuildingFolder(name) {
 /* View controls                                                               */
 /* -------------------------------------------------------------------------- */
 
-export function setOverlay(mode) {
-    view?.setOverlay(mode);
-    updateLabels();
-}
-
 export function resetView() {
     view?.resetView();
     updateLabels();
 }
-
-/** The overlay dropdown's options, so the markup does not repeat the enum. */
-export const OVERLAYS = [
-    [Overlay.ADDRESS, 'Colour by address'],
-    [Overlay.ROOM, 'Colour by room'],
-    [Overlay.FLOOR_TYPE, 'Colour by floor type'],
-];
 
 
 /* -------------------------------------------------------------------------- */
@@ -559,14 +1422,7 @@ export async function onFoldersConnected() {
 export async function onModSelected() {
     await flushPendingSave();
 
-    open = null;
-    hovered = null;
-    dirty = false;
-
-    view?.setModel(null);
-    updateHeading();
-    updateLabels();
-
+    closeFloor();
     await refreshPanel();
 }
 
