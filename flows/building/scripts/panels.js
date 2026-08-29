@@ -17,7 +17,7 @@ import {
     Tool, PaintMode, createToolState,
 } from './tools.js';
 import {
-    TileMode,
+    TileMode, tileParts,
     nodeAt, tileForNode, roomsOfAddress, roomAt, roomOfNode, getWall,
     addAddress, addRoom, removeRoom, seedRoomForLayout, selectVariation, addVariation,
     duplicateVariation, removeVariation,
@@ -945,23 +945,18 @@ export function wallPresetName(id) {
 }
 
 /**
- * What a tile carries. The rotation is a number in a labelled field here, which is where
- * a figure measured from the building's front belongs -- see the arrow in the scene.
+ * What a tile carries, as one line: the phrases tileParts reads off it, or "Nothing".
+ *
+ * The word rather than an empty string, because this goes in a field that has to say
+ * something -- a status column that went blank over an empty tile would read as the
+ * column having failed rather than as the tile being empty. The label written on the tile
+ * in the view has no such obligation and draws nothing there instead.
  *
  * Exported for the label over the canvas, which says this and nothing else while the tile
  * tool is chosen.
  */
 export function tileDescription(tile) {
-    if (!tile) return 'Nothing';
-
-    const parts = [];
-    if (tile.isStairwell) {
-        parts.push(`${tile.isInverted ? 'Elevator' : 'Stairs'} ${tile.stairwellRotation}°`);
-    }
-    if (tile.isMainEntrance) parts.push('Main entrance');
-    else if (tile.isEntrance) parts.push('Entrance');
-
-    return parts.join(' · ') || 'Nothing';
+    return tileParts(tile).join(' · ') || 'Nothing';
 }
 
 

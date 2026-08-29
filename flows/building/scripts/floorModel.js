@@ -132,32 +132,115 @@ const LOBBY_COLOUR = { r: 0, g: 1, b: 0.055487871170043945, a: 1 };
  * one room covering the whole lot, walled off from the margin: a floor that would load,
  * that can be walked into, and that is one flood fill away from being something else.
  *
+ * This is where a floor with nothing under it starts. One added above a floor that has
+ * already been drawn starts from that floor's walls instead -- see floorLike.
+ */
+export function blankFloor(floorName) {
+    return startingFloor(
+        floorName,
+        { size: { x: 1, y: 1 }, defaultFloorHeight: 0, defaultCeilingHeight: 42 },
+        (x, y) => ({ inside: isPaintable(x, y), walls: boundaryWalls(x, y) }));
+}
+
+/**
+ * A floor with the walls of another and nothing else of it.
+ *
+ * What a floor added above an existing one starts as. A building is one shape all the
+ * way up -- its exterior wall is where the model of it says it is, on every storey --
+ * so a floor added on top of one that has already been drawn starts from that shape
+ * rather than from the whole lot. The alternative is redrawing the same outline once
+ * per storey and having the building come out wrong wherever that went slightly
+ * differently.
+ *
+ * The walls come across; what is *in* them does not. Rooms, layout configurations,
+ * node heights and every tile flag start where a blank floor starts, because those are
+ * what makes one storey different from another -- copying the storey below's offices,
+ * its stairwell and its street entrance up onto the next floor would be a duplicate
+ * rather than a starting point, and each of them is wrong in a way that is easy to miss
+ * once it is already there.
+ *
+ * Everything inside the walls is one Lobby, exactly as a blank floor is -- so the
+ * interior partitions come through as drawn lines to fill in rather than as rooms.
+ *
+ * The lot size and the floor and ceiling heights are the source's: they describe the
+ * building rather than the storey, and a floor that disagreed with the one below it on
+ * any of them is a storey of a different building.
+ */
+export function floorLike(floorName, sourceData) {
+    const source = parseFloor(sourceData);
+
+    return startingFloor(
+        floorName,
+        {
+            size: clone(source.size),
+            defaultFloorHeight: source.defaultFloorHeight,
+            defaultCeilingHeight: source.defaultCeilingHeight,
+        },
+        (x, y) => {
+            const node = nodeAt(source, x, y);
+            return {
+                // The margin is never inside, whatever the source says. It is not
+                // paintable, so an interior square there is one the editor could never
+                // reach -- and the six base game floors that stop short of the full grid
+                // show that a blueprint's own idea of its edges is not to be trusted.
+                inside: isPaintable(x, y) && !!node && !isOutdoors(source, node),
+                // Verbatim, both halves. A wall is stored on each of the two nodes it
+                // sits between, and every node is walked, so copying each node's list as
+                // it stands keeps the pairs matched -- including the mismatched pairs the
+                // base game itself contains, which are the source's data and not
+                // something to silently repair here.
+                walls: (node?.walls ?? []).map((wall) => ({
+                    w_o: { x: wall.ox, y: wall.oy },
+                    p_n: wall.preset,
+                })),
+            };
+        });
+}
+
+/**
+ * Whether a square is outdoors, for the purpose of "where is this building's wall".
+ *
+ * Wider than isOutsideNode, which answers "is this filler": a Park or a Yard is a laid
+ * out address with rooms in it, and it is still not inside the building. So the outdoor
+ * layout configurations count here as well -- copying a ground floor's yard up onto the
+ * next storey would put the floor above out over open air.
+ */
+function isOutdoors(model, node) {
+    const address = model.addresses[node.addressIndex];
+    if (OUTDOOR_LAYOUT_CONFIGURATIONS.has(address?.layoutConfiguration)) return true;
+
+    return isOutsideNode(model, node);
+}
+
+/**
+ * The two addresses a floor starts as, filled in by whatever decides each square.
+ *
  * Built as data and put through the reader and the writer, so it comes out in exactly
  * the shape a saved floor is in -- 49 tiles included -- rather than in a second shape
  * that happens to look right.
+ *
+ * @param shape given a coordinate, whether it is inside and what walls it records
  */
-export function blankFloor(floorName) {
+function startingFloor(floorName, dimensions, shape) {
     const outside = [];
     const lobby = [];
 
     for (let y = 0; y < NODE_GRID; y++) {
         for (let x = 0; x < NODE_GRID; x++) {
-            const inside = isPaintable(x, y);
+            const { inside, walls } = shape(x, y);
             (inside ? lobby : outside).push({
                 f_c: { x, y },
                 f_h: 0,
                 f_t: inside ? FLOOR_AND_CEILING : FLOOR_TYPE_NONE,
                 f_r: '',
-                w_d: boundaryWalls(x, y),
+                w_d: walls,
             });
         }
     }
 
     return serialiseFloor(parseFloor({
         floorName,
-        size: { x: 1, y: 1 },
-        defaultFloorHeight: 0,
-        defaultCeilingHeight: 42,
+        ...dimensions,
         a_d: [
             {
                 p_n: OUTSIDE_LAYOUT,
@@ -865,6 +948,38 @@ export const TileMode = {
     ELEVATOR: 'elevator',
     ENTRANCE: 'entrance',
 };
+
+/**
+ * What a tile carries, one phrase per thing, in the order a tile is read.
+ *
+ * A list rather than a sentence because the three places that say it lay it out
+ * differently: the status column and the hover label want one line, and the label written
+ * on the tile in the view wants a line each, on a square three cells wide. Joining is the
+ * caller's; what a tile *is* is here, so none of them can end up calling a stairwell
+ * something the others do not.
+ *
+ * The rotation is a figure measured from the front of the building -- see the arrow off
+ * the front edge in the view -- and is said on the stairwell rather than beside it,
+ * because it is the stairwell's and a tile can carry an entrance as well.
+ *
+ * Empty for a tile that carries nothing, which is not the same as the word "Nothing":
+ * saying so is for a field that must say something, and a label over an empty tile is
+ * better off not being drawn.
+ */
+export function tileParts(tile) {
+    if (!tile) return [];
+
+    const parts = [];
+
+    if (tile.isStairwell) {
+        parts.push(`${tile.isInverted ? 'Elevator' : 'Stairs'} ${tile.stairwellRotation ?? 0}°`);
+    }
+
+    if (tile.isMainEntrance) parts.push('Main entrance');
+    else if (tile.isEntrance) parts.push('Entrance');
+
+    return parts;
+}
 
 /**
  * Advance a tile one step through its cycle, as the game's own FloorEditController does.

@@ -23,18 +23,22 @@
  * and a pair of 20 x 21 blocks for walls. So there is no scene graph to search and no
  * per-object userData to keep in step with the model.
  *
- * What is deliberately *not* drawn in 3D: text. The reference tool puts the room preset,
- * the room id and the coordinates on every one of its 441 cells with TextMeshPro, which
- * is 441 more objects and a font atlas to make a grid readable. Here the hovered and
- * selected cells get an HTML label positioned by projecting their centre to the screen,
- * which is two DOM nodes. Labelling the whole grid can follow if it turns out to be
- * wanted; starting there would have been the expensive way to find out it is not.
+ * Text in the scene is for the tiles and for nothing else. The reference tool puts the
+ * room preset, the room id and the coordinates on every one of its 441 cells with
+ * TextMeshPro, which is 441 more objects and a font atlas to make a grid readable; here
+ * the cell under the pointer gets an HTML label positioned by projecting its centre to
+ * the screen, which is one DOM node. A tile is the exception, and for a reason a cell
+ * does not have: what it carries is a stairwell's facing, which is a fact about the
+ * *world* -- turned a quarter at a time, measured from the front of the building -- and
+ * an HTML label over a canvas cannot be turned to lie in it. There are 49 tiles, at most
+ * a handful of them carrying anything, so this is a label per interesting tile rather
+ * than a label per coordinate.
  *
  * This module owns no model state. It is handed a floor model, reads it, and draws it.
  */
 import {
     NODE_GRID, NODES_PER_TILE, TILE_GRID, AXIS_X, AXIS_Y,
-    nodeAt, tileAt, getWall, isPaintable, isOutsideNode,
+    nodeAt, tileAt, getWall, isPaintable, isOutsideNode, tileParts,
 } from './floorModel.js';
 
 /** View units. A node is 1 wide, so the grid is 21 x 21 and the origin is a corner. */
@@ -285,6 +289,46 @@ const TILE_OVERLAY_OPACITY = 0.28;
 const TILE_OVERLAY_COLOUR = 0x6fb6ff;
 
 /**
+ * What is written on a tile: size, and how much of the square the words may take.
+ *
+ * A tile is 3 cells across and the longest thing one can say is "Main entrance", so the
+ * size is what fits that on one line inside a square 3 wide with a margin. `maxWidth`
+ * still matters, because a tile carrying a stairwell *and* an entrance says both, one
+ * per line -- wrapping is what stops the longer of the two running off its square and
+ * into the next one's.
+ *
+ * Just clear of the tile squares rather than level with them. Text laid at exactly their
+ * height would z-fight the sheet it is written on, which is the one way of making a label
+ * unreadable that no amount of contrast fixes.
+ */
+const TILE_LABEL_HEIGHT = TILE_OVERLAY_HEIGHT + 0.02;
+const TILE_LABEL_SIZE = 0.36;
+const TILE_LABEL_WIDTH = NODES_PER_TILE * CELL * 0.9;
+const TILE_LABEL_LINE_HEIGHT = 1.15;
+
+/**
+ * White with the background painted round it, which is what makes a label readable over
+ * a floor whose colours are the file's rather than the view's.
+ *
+ * The squares under the labels are addresses -- every colour a mod author chose, at
+ * whatever contrast they chose it -- so there is no one text colour that works over all
+ * of them. An outline in the scene's own background colour gives every glyph its own
+ * backing, so the label is read against the view rather than against the floor.
+ *
+ * Drawn after the room outlines rather than before. Those are `depthTest: false` with a
+ * late `renderOrder`, so they paint over whatever has already been drawn -- including,
+ * without this, a white strip across the middle of a label wherever a room boundary
+ * happened to run under it.
+ */
+const TILE_LABEL_COLOUR = 0xffffff;
+const TILE_LABEL_OUTLINE_COLOUR = 0x14161a;
+const TILE_LABEL_OUTLINE_WIDTH = '14%';
+const TILE_LABEL_ORDER = 11;
+
+/** Degrees, which is what a tile stores its rotation in, as radians. */
+const DEGREE = Math.PI / 180;
+
+/**
  * The room outlines: how many segments there can be, how high they lie, and how wide.
  *
  * One segment per seam where the room changes, plus the two sides of the grid that have
@@ -318,6 +362,7 @@ const MISMATCH_COLOUR = [0.85, 0.15, 0.15];
 export async function createScene(container) {
     const THREE = await import('three');
     const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
+    const { Text } = await import('troika-three-text');
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio ?? 1, 2));
@@ -518,9 +563,12 @@ export async function createScene(container) {
     const tileGrid = buildTileGrid(THREE);
     scene.add(tileGrid);
 
-    // One square per tile, hidden until the tile tool is chosen. See setTileOverlay.
+    // One square per tile, hidden until the tile tool is chosen, and what each of them
+    // says written on it. See setTileOverlay: the two are shown and hidden together,
+    // because a label is what the square it is on is for.
     const tileOverlay = buildTileOverlay(THREE);
-    scene.add(tileOverlay);
+    const tileLabels = buildTileLabels(THREE, Text);
+    scene.add(tileOverlay, tileLabels);
 
     // Where one room ends and the next begins. Rebuilt from the model on every refresh.
     const roomEdges = buildRoomEdges(THREE);
@@ -602,7 +650,10 @@ export async function createScene(container) {
     }
 
     /** Nothing is shown over a floor that is not open. */
-    const showTileOverlay = () => { tileOverlay.visible = wantTileOverlay && model !== null; };
+    const showTileOverlay = () => {
+        tileOverlay.visible = wantTileOverlay && model !== null;
+        tileLabels.visible = tileOverlay.visible;
+    };
 
     /** Re-read the model into the instance buffers. */
     function refresh() {
@@ -613,6 +664,7 @@ export async function createScene(container) {
         }, model, overlay);
         paintWalls(THREE, walls, wallParts, model);
         paintRoomEdges(THREE, roomEdges, model);
+        paintTileLabels(tileLabels, model, invalidate);
         invalidate();
     }
 
@@ -772,6 +824,13 @@ export async function createScene(container) {
         roomEdges.geometry.dispose();
         roomEdges.material.dispose();
 
+        // A troika Text disposes its own geometry and nothing else -- deliberately, so
+        // that a base material shared by several of them is not thrown away under the
+        // rest. All 49 do share one, so it is disposed once, here; troika listens for
+        // that and disposes the material it derived from it.
+        for (const label of tileLabels.children) label.dispose();
+        tileLabels.userData.material.dispose();
+
         // One material shared by both pieces, so it is disposed once rather than per
         // child -- disposing it twice is harmless, but saying so here is cheaper than
         // leaving the next reader to check.
@@ -792,7 +851,7 @@ export async function createScene(container) {
         // For tests and for anything that needs to reason about the view directly.
         _internals: {
             THREE, scene, camera, controls, cells, ghostCells, ceilingCaps, cellHits,
-            walls, wallParts, tileOverlay, roomEdges, renderer,
+            walls, wallParts, tileOverlay, tileLabels, roomEdges, renderer,
         },
     };
 }
@@ -1111,6 +1170,78 @@ function buildTileOverlay(THREE) {
     // A click goes through to the cell underneath, which is what the tile tool reads.
     mesh.visible = false;
     return mesh;
+}
+
+/**
+ * What each tile says, written on the square drawn over it.
+ *
+ * 49 of them, one per tile, built once and never moved -- the same arrangement as the
+ * squares they lie on, and for the same reason: a tile's index is arithmetic on its
+ * coordinates, so there is no list to keep in step with the model. The text is what
+ * changes, and a slot with nothing to say is left empty and hidden rather than removed.
+ *
+ * Text meshes rather than the HTML the hovered cell uses, because a tile label has to lie
+ * *in* the floor. A stairwell's rotation is measured from the front of the building, and
+ * the way to show a direction is to point in it; an HTML element over the canvas can be
+ * turned on the screen, which is a different plane and would say a different thing at
+ * every camera angle.
+ *
+ * One base material for all 49, which is troika's own design: what a label says and what
+ * colour it is are set per draw, so sharing costs nothing and means one shader program
+ * and one thing to dispose. It is kept on the group rather than reached through
+ * `label.material`, which returns the *derived* material -- and an array of two of them
+ * once an outline is configured.
+ */
+function buildTileLabels(THREE, Text) {
+    const group = new THREE.Group();
+    const side = NODES_PER_TILE * CELL;
+
+    const material = new THREE.MeshBasicMaterial({
+        color: TILE_LABEL_COLOUR,
+        transparent: true,
+
+        // A label is above every solid thing in the scene, so it has nothing to hide
+        // behind and nothing to write depth for -- and writing it would let a glyph of
+        // one label occlude the outline of its own.
+        depthWrite: false,
+
+        // A label faces up and the camera can get under one -- the tilt stops at the
+        // horizon, and these float most of a wall's height above it, so a close zoom is
+        // below them. troika's own default, and the better of the two: text seen from
+        // beneath is mirrored, and text on a single-sided plane is gone. At the grazing
+        // angle that reaches it neither is legible, and only one of them looks broken.
+        side: THREE.DoubleSide,
+    });
+
+    for (let y = 0; y < TILE_GRID; y++) {
+        for (let x = 0; x < TILE_GRID; x++) {
+            const label = new Text();
+
+            label.material = material;
+            label.fontSize = TILE_LABEL_SIZE;
+            label.maxWidth = TILE_LABEL_WIDTH;
+            label.lineHeight = TILE_LABEL_LINE_HEIGHT;
+            label.textAlign = 'center';
+            label.anchorX = 'center';
+            label.anchorY = 'middle';
+            label.outlineWidth = TILE_LABEL_OUTLINE_WIDTH;
+            label.outlineColor = TILE_LABEL_OUTLINE_COLOUR;
+            label.renderOrder = TILE_LABEL_ORDER;
+
+            label.position.set(mirrorX((x + 0.5) * side), TILE_LABEL_HEIGHT, (y + 0.5) * side);
+
+            // Nothing to say until a floor is read, and an empty label is never synced --
+            // see paintTileLabels. `visible` is what keeps a slot off screen; the group's
+            // own visibility is what the tile tool switches.
+            label.visible = false;
+
+            group.add(label);
+        }
+    }
+
+    group.userData.material = material;
+    group.visible = false;
+    return group;
 }
 
 /**
@@ -1585,13 +1716,79 @@ const shapeOf = (preset) =>
 /* -------------------------------------------------------------------------- */
 
 /**
- * What each tile carries: an entrance, a stairwell, an elevator, and which way it
+ * Write each tile's label, lying flat on its square and turned the way its stairwell
  * faces.
  *
- * Read out rather than drawn, so a caller can decide how to show them. Nothing shows
- * them at the moment: the pins that used to float over each tile are gone while how to
- * present a stairwell and its rotation is worked out. This side of it -- reading the
- * tiles out of the model -- is what that will want either way, so it stays.
+ * Flat and turned rather than flat and square to the view, because the turn is the point:
+ * a stairwell records a rotation and there is nothing else in the scene that shows what
+ * one looks like. The degrees are written out as well -- see tileParts -- so a label
+ * turned a quarter is still read as "90°" rather than counted.
+ *
+ * The orientation, in three steps. A Text reads along its own +x, stands up its +y and
+ * faces its +z, and the composed rotation lands those on:
+ *
+ *   +x -> scene -x     the reading direction, which is left to right in the default view
+ *   +y -> scene +z     the top of the glyphs, pointing away from the camera
+ *   +z -> scene +y     face up, so it is the floor the label is written on
+ *
+ * Scene -x is the floor's *increasing* x, because positions here are mirrored -- see
+ * mirrorX -- so an unturned label reads along the floor's x with its top toward the
+ * floor's +y. Which is the direction a rotation of 0 faces: the game's world is
+ * left-handed with y up, and a Unity rotation of 0 about y faces +z, which is this
+ * floor's +y. So the top of the words points where the stairwell points, at every step.
+ *
+ * The turn itself is negated for the same reason the reading direction came out mirrored.
+ * Reflecting one axis reverses the sense of every rotation about the vertical, so a
+ * quarter turn in the floor's frame is a quarter turn the other way in the scene's. It is
+ * applied on the z of the Euler, which the XYZ order applies first and which is therefore
+ * a spin in the label's own plane -- the horizontal one, once the other two are done.
+ *
+ * A tile with an entrance and no stairwell is not turned at all. Its `stairwellRotation`
+ * is whatever the file happens to have left there, and turning an entrance by a stairwell
+ * it does not have would draw a direction out of a number that means nothing.
+ */
+function paintTileLabels(labels, model, onSync) {
+    const shown = new Array(TILE_GRID * TILE_GRID).fill(null);
+    for (const marker of tileMarkers(model)) shown[marker.y * TILE_GRID + marker.x] = marker;
+
+    for (let index = 0; index < labels.children.length; index++) {
+        const label = labels.children[index];
+        const marker = shown[index];
+        const text = marker?.label ?? '';
+        const turn = marker?.stairwell ? (marker.rotation ?? 0) : 0;
+
+        // The order is spelled out rather than left to three's default, because which
+        // rotation is applied first is the whole of why the turn goes on the z.
+        label.rotation.set(-Math.PI / 2, 0, Math.PI - turn * DEGREE, 'XYZ');
+
+        // Assigning the same string is not a change: troika's setters compare before
+        // marking a label for re-layout, and this runs on every stroke of every brush.
+        label.text = text;
+        label.visible = text !== '';
+
+        // Laying out text is asynchronous -- a font to fetch and an atlas to build --
+        // so the frame this was called for is drawn without it and the callback asks
+        // for another once the glyphs exist. `sync` returns without calling back when
+        // nothing has changed, so a redraw is only ever asked for by a real change.
+        //
+        // Empty labels are never synced. Every one of the 49 starts dirty, so syncing
+        // them all would set 40-odd fonts building for text that is not drawn.
+        if (text) label.sync(onSync);
+    }
+}
+
+/**
+ * What each tile carries: an entrance, a stairwell, an elevator, which way it faces, and
+ * what to write on it.
+ *
+ * Only the tiles carrying something are listed. A floor has 49 and the base game's use a
+ * handful, so this is the difference between a label on each of the interesting ones and
+ * "Nothing" written forty times over a floor someone is trying to read.
+ *
+ * The wording is tileParts', which is also what the status column and the hover label
+ * say, so the three cannot describe the same tile differently. Joined with newlines
+ * rather than the column's separator: a label is written on a square 3 cells across, and
+ * a tile carrying a stairwell and an entrance has room for both only a line at a time.
  */
 export function tileMarkers(model) {
     const markers = [];
@@ -1610,6 +1807,7 @@ export function tileMarkers(model) {
                 entrance: tile.isMainEntrance ? 'main' : (tile.isEntrance ? 'entrance' : null),
                 stairwell: tile.isStairwell ? (tile.isInverted ? 'elevator' : 'stairs') : null,
                 rotation: tile.stairwellRotation,
+                label: tileParts(tile).join('\n'),
             });
         }
     }

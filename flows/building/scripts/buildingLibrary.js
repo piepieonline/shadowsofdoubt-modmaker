@@ -284,6 +284,38 @@ export function storeysOf(slots) {
 const height = (storey) => (storey.isBasement ? -(storey.layoutIndex + 1) : storey.layoutIndex);
 
 /**
+ * The storey a newly added one would sit against, or null for the first storey of all.
+ *
+ * A floor is added to the top of the building and a basement to the bottom -- that is
+ * what appending to floorLayouts and to basementLayouts means -- so the storey a new one
+ * touches is the topmost or the deepest the building already has. Storeys come lowest
+ * first, so it is one end of the list or the other.
+ *
+ * Both ends of the same list, deliberately: a building with basements and no floors gets
+ * its first floor laid against the basement directly under it, which is where the shape
+ * of that building is recorded. "Floors above" and "basements below" are one stack.
+ */
+export function adjoiningStorey(storeys, { isBasement = false } = {}) {
+    if (!storeys?.length) return null;
+    return isBasement ? storeys[0] : storeys[storeys.length - 1];
+}
+
+/**
+ * The blueprint a storey's layout is read from: the first ordinary one in it.
+ *
+ * The blueprints in a storey are alternative layouts of it that the game picks between,
+ * and they are alternatives of the *same* storey -- so any of them says where that
+ * storey's walls are, and the first is as good an answer as the last. A control room
+ * variant is the same layout again with a control room in it, so it is only reached for
+ * when a storey somehow holds nothing else.
+ */
+export function firstLayoutOf(storey) {
+    const options = storey?.options ?? [];
+    const chosen = options.find((option) => !option.slot.isControlVariant) ?? options[0];
+    return chosen?.blueprint || null;
+}
+
+/**
  * Whether two slots are the same place in a building.
  *
  * Compared field by field rather than by the blueprint in them, because nothing stops a

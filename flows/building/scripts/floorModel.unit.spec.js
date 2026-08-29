@@ -514,6 +514,41 @@ test('a backfilled node is given its half of the wall facing it', () => {
 
 
 /* -------------------------------------------------------------------------- */
+/* Tiles                                                                       */
+/* -------------------------------------------------------------------------- */
+
+test('a tile reads out as one phrase per thing it carries', () => {
+    expect(model.tileParts({ isStairwell: true, isInverted: false, stairwellRotation: 90 }))
+        .toEqual(['Stairs 90°']);
+    expect(model.tileParts({ isStairwell: true, isInverted: true, stairwellRotation: 0 }))
+        .toEqual(['Elevator 0°']);
+
+    // A main entrance is one thing, not two: isMainEntrance implies isEntrance.
+    expect(model.tileParts({ isEntrance: true, isMainEntrance: true })).toEqual(['Main entrance']);
+    expect(model.tileParts({ isEntrance: true, isMainEntrance: false })).toEqual(['Entrance']);
+
+    // A tile can carry both, and the stairwell is said first -- it is the one with a
+    // rotation, and the label written on the tile is turned by it.
+    expect(model.tileParts({
+        isStairwell: true, isInverted: false, stairwellRotation: 180,
+        isEntrance: true, isMainEntrance: true,
+    })).toEqual(['Stairs 180°', 'Main entrance']);
+});
+
+test('a tile carrying nothing reads out as nothing at all, not as the word', () => {
+    // Empty rather than 'Nothing', which is what lets the view leave an empty tile
+    // unlabelled while the status column still has something to put in its field. See
+    // tileDescription in panels.js, which is where the word comes from.
+    expect(model.tileParts(null)).toEqual([]);
+    expect(model.tileParts({ isStairwell: false, isEntrance: false, isMainEntrance: false }))
+        .toEqual([]);
+
+    // A stairwell with no rotation stored is one facing 0, not one facing "undefined".
+    expect(model.tileParts({ isStairwell: true })).toEqual(['Stairs 0°']);
+});
+
+
+/* -------------------------------------------------------------------------- */
 /* Rooms                                                                       */
 /* -------------------------------------------------------------------------- */
 
@@ -969,4 +1004,166 @@ test('a new floor is walled where the lobby meets the outside', () => {
     // The 15 x 15 interior has a 15-node side on each of four sides, and a wall belongs
     // to both of the nodes it sits between -- so 60 walls, each matched.
     expect(blank.walls).toBe(60);
+});
+
+
+/* -------------------------------------------------------------------------- */
+/* A floor laid out like the one below it                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A floor drawn on: a building that does not fill its lot, a yard beside it, rooms with
+ * names, a partition, a stairwell and a main entrance.
+ *
+ * Built through the model's own editing rather than as a literal, so that the walls it
+ * holds are paired the way the app writes them -- which is what the copy is checked
+ * against.
+ */
+function drawnFloor() {
+    const floor = model.parseFloor(model.blankFloor('Tower_Floor0'));
+
+    // A yard along one side: laid out, named, and still not inside the building. Nodes
+    // 3..5 of the paintable area, which is a full tile.
+    const yard = model.addAddress(floor, 'Yard', { r: 0, g: 0.5, b: 0, a: 1 });
+    model.seedRoomForLayout(floor, yard, ['Yard']);
+    for (let y = 3; y <= 17; y++) {
+        for (let x = 3; x <= 5; x++) {
+            const node = model.nodeAt(floor, x, y);
+            model.setNodeAddress(floor, node, yard);
+            model.setNodeFloor(floor, node, 0, 0);
+        }
+    }
+
+    // The building's own wall, now that its edge has moved in off the lot boundary.
+    for (let y = 3; y <= 17; y++) model.setWall(floor, 5, y, model.AXIS_X, '0');
+
+    // An interior the copy has no business carrying up: a partition, two named rooms,
+    // and node heights.
+    for (let x = 6; x <= 17; x++) model.setWall(floor, x, 10, model.AXIS_Y, '0');
+
+    const offices = model.addRoom(floor, 1, 'Office');
+    for (let y = 11; y <= 17; y++) {
+        for (let x = 6; x <= 17; x++) {
+            const node = model.nodeAt(floor, x, y);
+            model.setNodeRoom(floor, node, 1, offices.roomIndex);
+            model.setNodeFloor(floor, node, 1, 3);
+        }
+    }
+
+    model.paintTile(model.tileAt(floor, 3, 3), model.TileMode.STAIRWELL);
+    model.paintTile(model.tileAt(floor, 2, 1), model.TileMode.ENTRANCE);
+    model.paintTile(model.tileAt(floor, 2, 1), model.TileMode.ENTRANCE);
+
+    return model.serialiseFloor(floor);
+}
+
+/** Where every wall on a floor is, as a set of `x,y,axis` keys. */
+function wallsOf(floor) {
+    const keys = new Set();
+
+    for (let y = 0; y < model.NODE_GRID; y++) {
+        for (let x = 0; x < model.NODE_GRID; x++) {
+            for (const axis of [model.AXIS_X, model.AXIS_Y]) {
+                const wall = model.getWall(floor, x, y, axis);
+                if (wall) keys.add(`${x},${y},${axis}=${wall.preset}`);
+            }
+        }
+    }
+
+    return keys;
+}
+
+/** Which squares are inside the building, as a set of `x,y` keys. */
+const insideOf = (floor) => new Set(floor.nodes
+    .filter((node) => !model.isOutsideNode(floor, node)
+        && !model.OUTDOOR_LAYOUT_CONFIGURATIONS.has(
+            floor.addresses[node.addressIndex].layoutConfiguration))
+    .map((node) => `${node.x},${node.y}`));
+
+let drawn;
+let copied;
+
+beforeAll(() => {
+    drawn = model.parseFloor(drawnFloor());
+    copied = model.parseFloor(model.floorLike('Tower_Floor1', model.serialiseFloor(drawn)));
+});
+
+test('a floor laid out like another is a floor the game could load', () => {
+    const data = model.floorLike('Tower_Floor1', model.serialiseFloor(drawn));
+
+    expect(data.floorName).toBe('Tower_Floor1');
+    expect(data.t_d).toHaveLength(49);
+    expect(JSON.stringify(model.serialiseFloor(model.parseFloor(data)))).toBe(
+        JSON.stringify(data));
+
+    expect(model.describeIssues(copied)).toEqual([]);
+    expect(copied.nodes.filter(Boolean)).toHaveLength(21 * 21);
+    expect(copied.issues.wallMismatches).toHaveLength(0);
+});
+
+test('a floor laid out like another stands on the same walls', () => {
+    // Every wall, exterior and interior alike, in the same place and of the same preset.
+    // Both halves come across because every node's own list is copied.
+    expect([...wallsOf(copied)].sort()).toEqual([...wallsOf(drawn)].sort());
+
+    // And the same footprint. The yard is laid out and named in the source and is still
+    // not inside the building, so the floor above does not stand over it.
+    expect([...insideOf(copied)].sort()).toEqual([...insideOf(drawn)].sort());
+    expect(insideOf(copied).size).toBe(12 * 15);
+    expect(insideOf(copied).has('4,10')).toBe(false);
+});
+
+test('a floor laid out like another is empty inside those walls', () => {
+    // One Lobby, exactly as a blank floor is: the partitions come across as lines to
+    // fill in rather than as the storey below's rooms.
+    expect(copied.addresses.map((address) => address.layoutConfiguration))
+        .toEqual(['Outside', 'Lobby']);
+    expect(copied.rooms.map((room) => room.preset)).toEqual(['Null', 'Lobby']);
+
+    // Nothing of the storey below's fittings: no stairwell, no entrance, no raised
+    // floor. Each is wrong on the floor above in a way that is easy to miss once it is
+    // already there.
+    expect(copied.tiles.filter((tile) => tile.isStairwell || tile.isEntrance)).toEqual([]);
+    expect(copied.nodes.filter((node) => node.height !== 0)).toEqual([]);
+    expect(drawn.tiles.filter((tile) => tile.isStairwell || tile.isEntrance)).toHaveLength(2);
+});
+
+test('a floor laid out like another is a storey of the same building', () => {
+    const wide = model.parseFloor(model.serialiseFloor(drawn));
+    wide.size = { x: 2, y: 2 };
+    wide.defaultFloorHeight = 4;
+    wide.defaultCeilingHeight = 51;
+
+    const above = model.floorLike('Tower_Floor1', model.serialiseFloor(wide));
+
+    // The lot size and the heights describe the building rather than the storey, so a
+    // floor that disagreed with the one below on any of them is a different building.
+    expect(above.size).toEqual({ x: 2, y: 2 });
+    expect(above.defaultFloorHeight).toBe(4);
+    expect(above.defaultCeilingHeight).toBe(51);
+});
+
+test('a floor laid out like a base game one keeps its outline', async () => {
+    const source = await (await fetch('/refs/floors/blueprints/Tenement_MainFloor1.json')).json();
+    const above = model.parseFloor(model.floorLike('Copy_Floor1', source));
+
+    expect(model.describeIssues(above)).toEqual([]);
+    expect([...wallsOf(above)].sort()).toEqual([...wallsOf(model.parseFloor(source))].sort());
+
+    // A real floor's interior comes across as an interior rather than as an empty lot.
+    expect(insideOf(above).size).toBeGreaterThan(0);
+    expect(insideOf(above)).toEqual(insideOf(model.parseFloor(source)));
+});
+
+test('a floor laid out like a lot with no building in it is a blank lot', () => {
+    // The source's outline is what is copied, so a source with no interior gives a
+    // floor with no interior -- not the whole lot filled in as a fallback.
+    const empty = model.parseFloor(model.blankFloor('Empty'));
+    for (const node of empty.nodes) model.setNodeAddress(empty, node, 0);
+
+    const above = model.parseFloor(model.floorLike('Above', model.serialiseFloor(empty)));
+
+    expect(insideOf(above).size).toBe(0);
+    expect(above.nodes.filter(Boolean)).toHaveLength(21 * 21);
+    expect(model.describeIssues(above)).toEqual([]);
 });

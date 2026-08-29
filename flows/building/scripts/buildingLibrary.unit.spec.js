@@ -245,6 +245,71 @@ test('a building with no slots has no storeys', () => {
     expect(library.storeysOf(null)).toEqual([]);
 });
 
+/**
+ * Which storey a new one is laid against, which is what decides the walls it starts
+ * with. A floor is appended to the top of the building and a basement to the bottom, so
+ * the answer is one end of the storey list or the other.
+ */
+test('a new floor goes on top of the building and a new basement under it', () => {
+    const storeys = library.storeysOf([
+        slot(false, 0), slot(false, 1), slot(true, 0), slot(true, 1),
+    ]);
+
+    expect(library.adjoiningStorey(storeys).label).toBe('Floor 1');
+    expect(library.adjoiningStorey(storeys, { isBasement: true }).label).toBe('Basement 1');
+});
+
+test('a first floor is laid against the basement below it', () => {
+    // Floors above and basements below are one stack, so a building with basements and
+    // no floors already has a shape for its ground floor to follow.
+    const storeys = library.storeysOf([slot(true, 0), slot(true, 1)]);
+
+    expect(library.adjoiningStorey(storeys).label).toBe('Basement 0');
+});
+
+test('the first storey of a building has nothing to lay against', () => {
+    expect(library.adjoiningStorey([])).toBe(null);
+    expect(library.adjoiningStorey(null)).toBe(null);
+    expect(library.adjoiningStorey(undefined, { isBasement: true })).toBe(null);
+});
+
+/**
+ * The blueprints of one storey are alternative layouts of it that the game picks
+ * between, so any of them says where that storey's walls are.
+ */
+test('a storey is laid out by the first ordinary blueprint in it', () => {
+    const storeys = library.storeysOf([
+        { ...slot(false, 0, 0), blueprint: 'Tower_Ground' },
+        { ...slot(false, 0, 1), blueprint: 'Tower_Ground_Alt' },
+    ]);
+
+    expect(library.firstLayoutOf(storeys[0])).toBe('Tower_Ground');
+});
+
+test('a control room variant lays out a storey only when nothing else does', () => {
+    const withOrdinary = library.storeysOf([
+        { ...slot(false, 0, 0, true), blueprint: 'Tower_Ground_Control' },
+        { ...slot(false, 0, 0), blueprint: 'Tower_Ground' },
+    ]);
+    const controlOnly = library.storeysOf([
+        { ...slot(false, 0, 0, true), blueprint: 'Tower_Ground_Control' },
+    ]);
+
+    // A control variant is the same layout again with a control room in it, so it is a
+    // last resort rather than a wrong answer.
+    expect(library.firstLayoutOf(withOrdinary[0])).toBe('Tower_Ground');
+    expect(library.firstLayoutOf(controlOnly[0])).toBe('Tower_Ground_Control');
+});
+
+test('a storey that is not there lays nothing out', () => {
+    expect(library.firstLayoutOf(null)).toBe(null);
+    expect(library.firstLayoutOf({ options: [] })).toBe(null);
+
+    // A slot naming no blueprint is a name to fall back from, not one to open.
+    expect(library.firstLayoutOf({ options: [slot(false, 0)] })).toBe('X');
+    expect(library.firstLayoutOf({ options: [{ ...slot(false, 0), blueprint: '' }] })).toBe(null);
+});
+
 test('two slots are the same place only when every part of them agrees', () => {
     const place = { isBasement: false, isControlVariant: false, layoutIndex: 1, blueprintIndex: 2 };
 

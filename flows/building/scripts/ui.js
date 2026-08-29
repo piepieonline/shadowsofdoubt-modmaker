@@ -19,12 +19,13 @@ import { ensureListed } from '../../../core/murderManifest.js';
 import { writeStringsRow } from '../../../core/modStrings.js';
 
 import {
-    parseFloor, serialiseFloor, describeIssues, getWall, tileForNode, blankFloor,
+    parseFloor, serialiseFloor, describeIssues, getWall, tileForNode, blankFloor, floorLike,
 } from './floorModel.js';
 import {
     FLOORS_DIR, BUILDING_TYPE,
     listBuildings, listCustomBuildings, listCustomBlueprints, loadPreset, resolveBlueprint,
-    enumerateSlots, storeysOf, sameSlot, setBlueprint, removeBlueprint, presetForSaving,
+    enumerateSlots, storeysOf, adjoiningStorey, firstLayoutOf,
+    sameSlot, setBlueprint, removeBlueprint, presetForSaving,
     writeCustomPreset, writeCustomBlueprint, deleteCustomBlueprint, createCustomBuilding,
     loadFloorIndex, stubFor, readCustomPreset,
 } from './buildingLibrary.js';
@@ -1249,11 +1250,20 @@ async function addFloor(buildingName, storey = null) {
 
     closeBrowse();
 
+    // What the new floor starts as is read off the floor below, so a debounced save of
+    // the floor that is open has to land first. Otherwise drawing a wall and reaching
+    // straight for Add floor copies the floor as it was before that wall.
+    await flushPendingSave();
+
     const name = await nextFloorName(folder, buildingName, storey);
 
-    await writeCustomBlueprint(folder, name, blankFloor(name));
-
+    // The preset is read before the floor is written, because what the new floor starts
+    // as depends on what the building already has. Still only read: the write order is
+    // the blueprint and then the building, as below.
     const { preset } = await presetForSaving(folder, buildingName);
+
+    await writeCustomBlueprint(folder, name, await newFloorData(folder, name, preset, storey));
+
     // A blueprintIndex outside the list appends rather than leaving a hole, so a layout
     // lands after the ones already in the storey. Never a control room variant: those
     // are the same layouts with a control room in them, which is not something this can
@@ -1271,6 +1281,36 @@ async function addFloor(buildingName, storey = null) {
 
     await refreshPanel();
     await openFloor({ building: buildingName, blueprint: name, slot });
+}
+
+/**
+ * What a new floor starts as: the walls of the floor it belongs beside, or a blank floor
+ * if there is no such floor.
+ *
+ * Which floor that is depends on what was asked for. A new layout is an alternative of a
+ * storey that already exists, so it starts from that storey's own layout -- it is meant
+ * to be the same floor drawn differently. A new floor goes on top of the building, so it
+ * starts from the storey it will sit on. Either way it is the *first* blueprint of that
+ * storey: they are alternative layouts of one storey and share its walls.
+ *
+ * The storey is looked up again in the preset that was just read rather than taken from
+ * the one the panel was built with, so that a storey the panel is out of date about
+ * yields a blank floor instead of some other storey's walls.
+ *
+ * A floor the mod does not hold resolves to the base game's copy, which is what a stub
+ * building's floors are -- so adding a floor to a stub of a base game building starts
+ * from that building's own shape.
+ */
+async function newFloorData(folder, name, preset, storey) {
+    const storeys = storeysOf(enumerateSlots(preset));
+    const source = storey
+        ? storeys.find((candidate) => candidate.key === storey.key)
+        : adjoiningStorey(storeys);
+
+    const from = firstLayoutOf(source);
+    const data = from ? (await resolveBlueprint(folder, from))?.data : null;
+
+    return data ? floorLike(name, data) : blankFloor(name);
 }
 
 /**

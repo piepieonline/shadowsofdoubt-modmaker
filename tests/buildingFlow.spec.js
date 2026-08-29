@@ -653,6 +653,10 @@ test('a building the mod owns can be given a floor', async ({ page }) => {
 
     await addFloor(page, 'MyTower');
 
+    // The floor is opened last of all, so waiting for it is waiting for both files. Also
+    // the point of the button: there is nothing else to do with a floor just made.
+    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor1/);
+
     // Named after the building, because a floor's name is what the building refers to
     // it by rather than anything a player sees.
     await expect.poll(() => listDir(page, 'Plugins/MyTower/Floors'))
@@ -663,29 +667,191 @@ test('a building the mod owns can be given a floor', async ({ page }) => {
     const preset = JSON.parse(await readFile(page, 'Plugins/MyTower/MyTower.sodso.json'));
     expect(preset.floorLayouts).toHaveLength(2);
     expect(preset.floorLayouts[1].blueprints).toEqual(['FLOOR:Floors/MyTower_Floor1']);
-
-    // And it is opened, because there is nothing else to do with a floor that has just
-    // been made.
-    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor1/);
 });
 
-test('a new floor is a lobby that can be painted straight away', async ({ page }) => {
-    await openBuildingFlow(page);
+test('the first floor of a building is a lobby that can be painted straight away', async ({ page }) => {
+    // A building with no floors at all: nothing under this one to take a shape from, so
+    // it starts as the whole lot.
+    await openBuildingFlow(page, {
+        ...modWithBuilding,
+        'Plugins/MyTower/BareTower.sodso.json': json({
+            name: 'BareTower',
+            presetName: 'BareTower',
+            type: 'BuildingPreset',
+            fileType: 'BuildingPreset',
+            copyFrom: null,
+        }),
+    });
 
-    await addFloor(page, 'MyTower');
-    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor1/);
+    await addFloor(page, 'BareTower');
+    await expect(page.locator('#building-open-name')).toHaveText(/BareTower_Floor1/);
 
     // No gaps, no overlaps, no half-built walls -- the three things the editor reports
     // on a floor it has opened.
     await expect(page.locator('#building-open-issues')).toHaveClass(/hidden/);
 
-    const floor = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Floor1.json'));
+    const floor = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/BareTower_Floor1.json'));
     expect(floor.a_d.map((address) => address.p_n)).toEqual(['Outside', 'Lobby']);
 
     // The margin the city leaves, and the lot inside it.
     const [outside, lobby] = floor.a_d.map((address) => address.vs[0].r_d[0].n_d.length);
     expect(outside).toBe(21 * 21 - 15 * 15);
     expect(lobby).toBe(15 * 15);
+});
+
+/**
+ * A ground floor smaller than its lot: nine squares of lobby, walled along one side.
+ *
+ * Everything it does not list backfills to Outside, so this is a whole floor in eleven
+ * lines -- and a shape a floor added above it has to follow rather than invent.
+ */
+const smallGroundFloor = () => {
+    const nodes = [];
+    for (let x = 10; x <= 12; x++) {
+        for (let y = 10; y <= 12; y++) {
+            nodes.push({
+                f_c: { x, y },
+                f_h: 2,
+                f_t: 1,
+                f_r: '',
+                // The half on this side. The square opposite is backfilled, which mirrors
+                // the other half onto it -- so the pair is matched without listing it.
+                w_d: x === 10 ? [{ w_o: { x: -0.5, y: 0 }, p_n: '0' }] : [],
+            });
+        }
+    }
+
+    return JSON.stringify({
+        floorName: 'MyTower_Ground',
+        size: { x: 1, y: 1 },
+        defaultFloorHeight: 0,
+        defaultCeilingHeight: 51,
+        a_d: [
+            {
+                p_n: 'Outside',
+                e_c: { r: 1, g: 0, b: 0.4, a: 1 },
+                vs: [{ r_d: [{ id: 1, n_d: [], l: 'Null' }] }],
+            },
+            {
+                p_n: 'Lobby',
+                e_c: { r: 0, g: 1, b: 0, a: 1 },
+                vs: [{ r_d: [{ id: 2, n_d: nodes, l: 'Office' }] }],
+            },
+        ],
+        t_d: [{ f_c: { x: 3, y: 3 }, i_e: true, m_e: true, s_t: true, s_r: 0, e_l: false, e_r: 0 }],
+    });
+};
+
+/** The squares one address of a written floor holds, as `x,y` keys. */
+const squaresOf = (floor, addressIndex) => floor.a_d[addressIndex].vs[0].r_d
+    .flatMap((room) => room.n_d)
+    .map((node) => `${node.f_c.x},${node.f_c.y}`)
+    .sort();
+
+test('a floor added above another is laid out like it', async ({ page }) => {
+    await openBuildingFlow(page, {
+        ...modWithBuilding,
+        'Plugins/MyTower/Floors/MyTower_Ground.json': smallGroundFloor(),
+    });
+
+    await addFloor(page, 'MyTower');
+    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor1/);
+    await expect(page.locator('#building-open-issues')).toHaveClass(/hidden/);
+
+    const floor = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Floor1.json'));
+
+    // The same footprint, so the building is one shape all the way up rather than a
+    // storey of nine squares under a storey covering the whole lot.
+    expect(squaresOf(floor, 1)).toEqual([
+        '10,10', '10,11', '10,12', '11,10', '11,11', '11,12', '12,10', '12,11', '12,12',
+    ]);
+    expect(squaresOf(floor, 0)).toHaveLength(21 * 21 - 9);
+
+    // And the same wall, both halves of it.
+    const wallAt = (x, y) => floor.a_d.flatMap((address) => address.vs[0].r_d)
+        .flatMap((room) => room.n_d)
+        .find((node) => node.f_c.x === x && node.f_c.y === y).w_d;
+    expect(wallAt(10, 10)).toEqual([{ w_o: { x: -0.5, y: 0 }, p_n: '0' }]);
+    expect(wallAt(9, 10)).toEqual([{ w_o: { x: 0.5, y: 0 }, p_n: '0' }]);
+
+    // The walls and nothing else. What is inside them is a storey's own: the floor below
+    // is offices with a raised floor, a stairwell and the building's main entrance.
+    expect(floor.a_d.map((address) => address.p_n)).toEqual(['Outside', 'Lobby']);
+    expect(floor.a_d[1].vs[0].r_d.map((room) => room.l)).toEqual(['Lobby']);
+    expect(floor.a_d[1].vs[0].r_d[0].n_d.every((node) => node.f_h === 0)).toBe(true);
+    expect(floor.t_d.filter((tile) => tile.s_t || tile.i_e || tile.m_e)).toEqual([]);
+
+    // The lot size and the heights describe the building, not the storey.
+    expect(floor.size).toEqual({ x: 1, y: 1 });
+    expect(floor.defaultCeilingHeight).toBe(51);
+});
+
+test('a floor added straight after a stroke is laid out like what was just drawn', async ({ page }) => {
+    await openBuildingFlow(page, {
+        ...modWithBuilding,
+        'Plugins/MyTower/Floors/MyTower_Ground.json': smallGroundFloor(),
+    });
+
+    await open(page, 'MyTower', 'MyTower_Ground', {
+        isBasement: false, isControlVariant: false, layoutIndex: 0, blueprintIndex: 0,
+    });
+
+    // Painted through the canvas, so the save behind it is the debounced one -- which is
+    // the point of the test. Address 0 is Outside, so this takes a square off the
+    // building's footprint.
+    //
+    // Add floor is pressed in the same breath, from inside the page: a click driven from
+    // here is several round trips and would land after the 600ms autosave, which is the
+    // race not happening rather than the race being won.
+    await page.evaluate(async () => {
+        const { projectCell, currentToolState } = await import('/flows/building/scripts/ui.js');
+        const { Tool, PaintMode } = await import('/flows/building/scripts/tools.js');
+
+        Object.assign(currentToolState(), {
+            tool: Tool.ADDRESS, mode: PaintMode.PAINT, addressIndex: 0,
+        });
+
+        const canvas = document.querySelector('#building-canvas canvas');
+        const at = projectCell(10, 10);
+        const send = (type, buttons) => canvas.dispatchEvent(new PointerEvent(type, {
+            pointerId: 1, button: 0, buttons, bubbles: true,
+            clientX: at.left, clientY: at.top,
+        }));
+
+        send('pointermove', 0);
+        send('pointerdown', 1);
+        send('pointerup', 0);
+
+        document.querySelector(
+            '[data-category="MyTower"] > .file-panel-footer .file-panel-action').click();
+    });
+
+    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor1/);
+
+    const floor = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Floor1.json'));
+    expect(squaresOf(floor, 1)).toEqual([
+        '10,11', '10,12', '11,10', '11,11', '11,12', '12,10', '12,11', '12,12',
+    ]);
+});
+
+test('another layout of a floor is laid out like the floor it is a layout of', async ({ page }) => {
+    await openBuildingFlow(page, {
+        ...modWithBuilding,
+        'Plugins/MyTower/Floors/MyTower_Ground.json': smallGroundFloor(),
+    });
+
+    // The alternatives the game picks between for one storey are alternative layouts of
+    // the same storey, so a new one starts from that storey rather than from the one
+    // below it.
+    await addLayout(page, 'MyTower', 'f0');
+    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor0_v1/);
+
+    const floor = JSON.parse(
+        await readFile(page, 'Plugins/MyTower/Floors/MyTower_Floor0_v1.json'));
+
+    expect(squaresOf(floor, 1)).toEqual([
+        '10,10', '10,11', '10,12', '11,10', '11,11', '11,12', '12,10', '12,11', '12,12',
+    ]);
 });
 
 test('a second floor does not take the first one\'s name', async ({ page }) => {
@@ -707,6 +873,10 @@ test('a floor can be given another layout of itself', async ({ page }) => {
     // The mod's building has one storey, holding one layout: floorLayouts[0].
     await addLayout(page, 'MyTower', 'f0');
 
+    // Opened, like any other floor that has just been made -- and the last of what the
+    // button does, so the files below are on disk by the time this is true.
+    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor0_v1/);
+
     // Into the setting that was already there rather than a new one. Blueprints in one
     // setting are the layouts the game picks between for that storey, which is what
     // another layout of a floor means.
@@ -719,9 +889,6 @@ test('a floor can be given another layout of itself', async ({ page }) => {
     // floor the building does not have.
     await expect.poll(() => listDir(page, 'Plugins/MyTower/Floors'))
         .toEqual(['MyTower_Floor0_v1.json', 'MyTower_Ground.json']);
-
-    // And opened, like any other floor that has just been made.
-    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor0_v1/);
 });
 
 test('the menu lists a building as its floors, and each floor as its layouts', async ({ page }) => {

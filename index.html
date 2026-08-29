@@ -30,12 +30,25 @@
          map exists when it loads.
 
          Pinned rather than floating on ^0.185: a minor release changing InstancedMesh
-         raycast behaviour would break painting with no local change to point at. -->
+         raycast behaviour would break painting with no local change to point at.
+
+         troika-three-text draws the tile labels. Its own four dependencies are mapped
+         beside it rather than using jsDelivr's bundling `/+esm`, which resolves `three`
+         to a second copy of the same version at a different URL -- two module instances,
+         two sets of class identities, and a Text that is not the Mesh the rest of the
+         scene is made of. Mapping the bare specifiers is what makes troika's `three` and
+         the scene's `three` the one module. All four are leaves: only troika-three-utils
+         imports anything, and what it imports is three. -->
     <script type="importmap">
     {
         "imports": {
             "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/",
+            "troika-three-text": "https://cdn.jsdelivr.net/npm/troika-three-text@0.53.0/dist/troika-three-text.esm.js",
+            "troika-three-utils": "https://cdn.jsdelivr.net/npm/troika-three-utils@0.53.0/dist/troika-three-utils.esm.js",
+            "troika-worker-utils": "https://cdn.jsdelivr.net/npm/troika-worker-utils@0.53.0/dist/troika-worker-utils.esm.js",
+            "webgl-sdf-generator": "https://cdn.jsdelivr.net/npm/webgl-sdf-generator@1.1.1/dist/webgl-sdf-generator.mjs",
+            "bidi-js": "https://cdn.jsdelivr.net/npm/bidi-js@1.0.3/dist/bidi.mjs"
         }
     }
     </script>

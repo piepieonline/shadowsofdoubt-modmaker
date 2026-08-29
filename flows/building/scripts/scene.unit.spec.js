@@ -89,8 +89,38 @@ test('tile markers report entrances and stairwells, and nothing else', () => {
         // The centre node of a 3 x 3 tile, which is what a label is positioned over.
         expect(marker.nodeX).toBe(marker.x * 3 + 1);
         expect(marker.nodeY).toBe(marker.y * 3 + 1);
+
+        // Every listed tile has something to write on it -- the filter and the wording
+        // are the same question, so a marker with an empty label would be a marker for
+        // a tile carrying nothing.
+        expect(marker.label).not.toBe('');
     }
 
     // Hotel_GroundFloor is the way into the building, so it has a main entrance.
     expect(markers.some((marker) => marker.entrance === 'main')).toBe(true);
+});
+
+test('a marker is labelled with what it carries, a line at a time', () => {
+    const markers = tileMarkers(floor);
+
+    for (const marker of markers) {
+        const lines = marker.label.split('\n');
+
+        // One line per thing, and the stairwell's says which way it faces. The label is
+        // turned by that rotation as well; the degrees are written out so that a label
+        // lying at a quarter turn is read rather than measured.
+        expect(lines).toHaveLength((marker.stairwell ? 1 : 0) + (marker.entrance ? 1 : 0));
+
+        if (marker.stairwell) {
+            expect(lines[0]).toBe(
+                `${marker.stairwell === 'elevator' ? 'Elevator' : 'Stairs'} ${marker.rotation}°`);
+        }
+        if (marker.entrance) {
+            expect(lines.at(-1)).toBe(marker.entrance === 'main' ? 'Main entrance' : 'Entrance');
+        }
+    }
+
+    // Newlines rather than the status column's separator: a label is written on a square
+    // three cells across, so two things on one line would run off it.
+    expect(markers.some((marker) => marker.label.includes(' · '))).toBe(false);
 });

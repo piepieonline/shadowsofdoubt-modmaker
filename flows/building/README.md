@@ -168,6 +168,30 @@ square covering whatever is drawn there, is placed on every refresh, and is neve
 An `InstancedMesh` has one material and a material has one opacity, which is why "solid"
 and "see-through" are two meshes rather than one with a per-instance alpha.
 
+## How a tile is drawn
+
+A tile is a 3 × 3 block of nodes, and what it carries — an entrance, a stairwell, an
+elevator — is not a fact about any one of them. So the tile tool turns on a square per
+tile floating clear of the walls, which is the shape of the thing a click actually
+changes, and each tile carrying something is written on: `Stairs 90°`, `Main entrance`,
+or both a line at a time.
+
+The words are `tileParts`', which is also what the status column and the hover label say,
+so the three cannot describe the same tile differently. Only the tiles carrying something
+are labelled — 49 squares reading "Nothing" would be a floor nobody could read.
+
+The label lies **in** the floor rather than over it, and is turned the way its stairwell
+faces, because that is what a rotation is for. The top of the words points where the
+stairwell points: a rotation of 0 faces the game's +z, which is this floor's +y, and each
+quarter turns the label a quarter. The turn is negated going into the scene, for the same
+reason everything else here is mirrored — reflecting one axis reverses the sense of every
+rotation about the vertical. See `mirrorX`. The degrees are written out as well, so a
+label lying at a quarter turn is read rather than measured, and the arrow off the front
+edge is what the figure is measured from.
+
+An entrance with no stairwell is not turned at all: its `s_r` is whatever the file left
+there, and turning it would draw a direction out of a number that means nothing.
+
 ## Saving
 
 Base game presets are never written to — the copy under `refs/floors/` is a URL this app
@@ -279,7 +303,7 @@ scripts/
   loadRefs.js         wall preset tables, room/layout/building name lists
   floorModel.js       load, save, validate, backfill, variation handling, painting
   buildingLibrary.js  buildings, floor slots, stub presets, blueprint resolution
-  scene.js            three.js grid, walls, camera, hit-testing
+  scene.js            three.js grid, walls, camera, hit-testing, tile labels
   tools.js            the five painters, plus pick and erase
   panels.js           address/room/floor type/wall/tile panels and the tool bar
   ui.js               flow entry points
@@ -289,9 +313,15 @@ scripts/
 
 three.js loads through an import map declared in `index.html` before `main.js`, so bare
 specifiers resolve. Declaring a map fetches nothing, so the other two flows pay no cost;
-this flow dynamic-imports `three` and `OrbitControls` when its scene is first built. The
-version is pinned rather than floating — a minor release changing `InstancedMesh` raycast
-behaviour would break painting with no local change to point at.
+this flow dynamic-imports `three`, `OrbitControls` and `troika-three-text` when its scene
+is first built. The version is pinned rather than floating — a minor release changing
+`InstancedMesh` raycast behaviour would break painting with no local change to point at.
+
+troika's own four dependencies are mapped beside it rather than using jsDelivr's bundling
+`/+esm`, which resolves `three` to a second copy of the same version at a different URL —
+two module instances, and a `Text` that is not the `Mesh` the rest of the scene is made
+of. It fetches font data on first use, so the tile labels appear a moment after the floor
+does and not at all offline; nothing else in the view waits for them.
 
 ## Generating the building's model
 

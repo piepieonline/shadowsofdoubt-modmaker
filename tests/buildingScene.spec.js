@@ -829,6 +829,214 @@ test('the tile squares cover a tile each, clear of the walls, and only when aske
     expect(overlay.opacity).toBeLessThan(0.5);
 });
 
+
+/*
+ * What is written on the tile squares.
+ *
+ * The words themselves are tileParts', and unit-tested there and in scene.unit.spec.js;
+ * what needs a scene is where they end up -- one label per tile that carries something,
+ * over the right square, lying in the floor, turned the way its stairwell faces, and on
+ * screen only while the squares they are written on are.
+ *
+ * Nothing here waits for a glyph. Laying text out is asynchronous -- a font to fetch and
+ * an atlas to build -- but every property asserted on is set the moment the model is
+ * read, so this tests the app's own work rather than troika's or the network's.
+ */
+
+test('every tile that carries something is labelled with it, over its own square', async ({ page }) => {
+    const labels = await withScene(page, async (scene, container, floor) => {
+        const { tileMarkers } = await import('/flows/building/scripts/scene.js');
+        const { tileLabels, tileOverlay, THREE } = scene._internals;
+
+        const markers = tileMarkers(floor);
+        const at = (x, y) => tileLabels.children[y * 7 + x];
+
+        // Where each label sits against the square it belongs to. The squares are one
+        // mesh of 49 instances and the labels are 49 objects, indexed the same way, so
+        // this is what says the two indexings agree.
+        const matrix = new THREE.Matrix4();
+        const square = new THREE.Vector3();
+        const offsets = markers.map((marker) => {
+            tileOverlay.getMatrixAt(marker.y * 7 + marker.x, matrix);
+            square.setFromMatrixPosition(matrix);
+
+            const label = at(marker.x, marker.y);
+            return {
+                sideways: Math.hypot(label.position.x - square.x, label.position.z - square.z),
+                above: label.position.y - square.y,
+            };
+        });
+
+        return {
+            count: tileLabels.children.length,
+            markers: markers.map((marker) => ({ x: marker.x, y: marker.y, label: marker.label })),
+            written: markers.map((marker) => at(marker.x, marker.y).text),
+            shown: markers.map((marker) => at(marker.x, marker.y).visible),
+            offsets,
+
+            // Every slot the floor had nothing to say about.
+            empty: tileLabels.children.filter((label) => label.visible).length,
+
+            // A label is as wide as the square it is on, so a long one wraps rather than
+            // running into the next tile.
+            maxWidth: at(markers[0].x, markers[0].y).maxWidth,
+            fontSize: at(markers[0].x, markers[0].y).fontSize,
+        };
+    });
+
+    // The floor is the Hotel's ground floor, which is the way into the building.
+    expect(labels.count).toBe(49);
+    expect(labels.markers.length).toBeGreaterThan(0);
+    expect(labels.markers.some((marker) => marker.label === 'Main entrance')).toBe(true);
+    expect(labels.markers.some((marker) => /^Stairs \d+°$/.test(marker.label))).toBe(true);
+
+    // What the model said is what is written, on the tile it was said about.
+    expect(labels.written).toEqual(labels.markers.map((marker) => marker.label));
+    expect(labels.shown.every(Boolean)).toBe(true);
+
+    // Only the tiles carrying something: 49 labels reading "Nothing" would be a floor
+    // nobody could read.
+    expect(labels.empty).toBe(labels.markers.length);
+
+    // Over the middle of its own square, and just clear of it -- text at exactly the
+    // square's height z-fights the sheet it is written on.
+    for (const offset of labels.offsets) {
+        expect(offset.sideways).toBeCloseTo(0, 5);
+        expect(offset.above).toBeGreaterThan(0);
+        expect(offset.above).toBeLessThan(0.1);
+    }
+
+    // A tile is three cells across; the label may take nearly all of it and no more.
+    expect(labels.maxWidth).toBeLessThan(3);
+    expect(labels.maxWidth).toBeGreaterThan(2);
+    expect(labels.fontSize).toBeLessThan(0.5);
+});
+
+test('a label lies in the floor, and turns with the stairwell it names', async ({ page }) => {
+    const turned = await withScene(page, async (scene, container, floor) => {
+        const { paintTile, tileAt, TileMode } = await import('/flows/building/scripts/floorModel.js');
+        const { tileLabels, THREE } = scene._internals;
+
+        const label = tileLabels.children[3 * 7 + 3];
+
+        /**
+         * Where the label's own axes point in the scene, which is the whole of what an
+         * orientation means here: which way the words run, which way is up in them, and
+         * which way the surface they are written on faces.
+         */
+        const facing = () => {
+            label.updateMatrixWorld(true);
+
+            // Rounded, because a quarter turn is a cosine and a cosine of a right angle
+            // is 6e-17 rather than 0. And zero rather than -0: the two are equal to ===
+            // and not to a deep comparison, so an axis that lands on one is an axis that
+            // fails an assertion about which way it points.
+            const tidy = (component) => (Math.round(component * 1e6) / 1e6) || 0;
+            const basis = (axis) => axis.applyQuaternion(label.quaternion).toArray().map(tidy);
+
+            return {
+                reads: basis(new THREE.Vector3(1, 0, 0)),
+                up: basis(new THREE.Vector3(0, 1, 0)),
+                faces: basis(new THREE.Vector3(0, 0, 1)),
+            };
+        };
+
+        const seen = {};
+        const tile = tileAt(floor, 3, 3);
+
+        // A tile with nothing on it, then a stairwell stepped through its four rotations.
+        // paintTile is the tile tool's own cycle: on at 0, then a quarter at a time.
+        seen.bare = { ...facing(), text: label.text, visible: label.visible };
+
+        for (const rotation of [0, 90, 180, 270]) {
+            paintTile(tile, TileMode.STAIRWELL);
+            scene.refresh();
+            seen[rotation] = { ...facing(), text: label.text, visible: label.visible };
+            if (tile.stairwellRotation !== rotation) seen[rotation].mismatch = tile.stairwellRotation;
+        }
+
+        // One more step takes the stairwell off again.
+        paintTile(tile, TileMode.STAIRWELL);
+        scene.refresh();
+        seen.cleared = { ...facing(), text: label.text, visible: label.visible };
+
+        return seen;
+    });
+
+    // A tile carrying nothing is not written on, and a tile that stops carrying anything
+    // stops being written on.
+    expect(turned.bare.text).toBe('');
+    expect(turned.bare.visible).toBe(false);
+    expect(turned.cleared.text).toBe('');
+    expect(turned.cleared.visible).toBe(false);
+
+    for (const rotation of [0, 90, 180, 270]) {
+        expect(turned[rotation].mismatch).toBeUndefined();
+        expect(turned[rotation].text).toBe(`Stairs ${rotation}°`);
+        expect(turned[rotation].visible).toBe(true);
+
+        // Written on the floor at every rotation: the surface faces straight up, so
+        // turning it is a turn in the floor rather than a tilt out of it.
+        expect(turned[rotation].faces).toEqual([0, 1, 0]);
+    }
+
+    /*
+     * Unturned, the words run along the scene's -x and stand up its +z.
+     *
+     * Which is left to right and away from the camera in the default view, because the
+     * camera stands off the y = 0 edge looking back along +z. The scene's -x is the
+     * floor's *increasing* x -- positions here are mirrored, see mirrorX -- so the words
+     * run along the floor's x with their top toward the floor's +y, which is the
+     * direction a rotation of 0 faces.
+     */
+    expect(turned[0].reads).toEqual([-1, 0, 0]);
+    expect(turned[0].up).toEqual([0, 0, 1]);
+
+    /*
+     * Each quarter turns the top of the words a quarter, in the floor's own frame.
+     *
+     * The floor's +y is the scene's +z and the floor's +x is the scene's -x, so a
+     * rotation of 90 -- which turns the game's forward from +z to +x -- puts the top of
+     * the words on the scene's -x. Reflecting one axis reverses the sense of a rotation
+     * about the vertical, which is why it goes this way round rather than the other.
+     */
+    expect(turned[90].up).toEqual([-1, 0, 0]);
+    expect(turned[180].up).toEqual([0, 0, -1]);
+    expect(turned[270].up).toEqual([1, 0, 0]);
+
+    // And the words stay square to their own top: a turned label is read sideways, not
+    // letter by letter down the tile.
+    expect(turned[90].reads).toEqual([0, 0, -1]);
+    expect(turned[180].reads).toEqual([1, 0, 0]);
+    expect(turned[270].reads).toEqual([0, 0, 1]);
+});
+
+test('the labels come and go with the squares they are written on', async ({ page }) => {
+    const shown = await withScene(page, (scene) => {
+        const { tileLabels, tileOverlay } = scene._internals;
+
+        const before = { labels: tileLabels.visible, squares: tileOverlay.visible };
+
+        scene.setTileOverlay(true);
+        const asked = { labels: tileLabels.visible, squares: tileOverlay.visible };
+
+        // Closing the floor takes both off screen, whatever the tool is set to.
+        scene.setModel(null);
+        const closed = { labels: tileLabels.visible, squares: tileOverlay.visible };
+
+        scene.setTileOverlay(false);
+        const dropped = { labels: tileLabels.visible, squares: tileOverlay.visible };
+
+        return { before, asked, closed, dropped };
+    });
+
+    // A label is what its square is for, so the two are never one without the other.
+    expect(shown.before).toEqual({ labels: false, squares: false });
+    expect(shown.asked).toEqual({ labels: true, squares: true });
+    expect(shown.closed).toEqual({ labels: false, squares: false });
+    expect(shown.dropped).toEqual({ labels: false, squares: false });
+});
+
 test('a room is outlined where the room beside it changes, and Outside is not a room', async ({ page }) => {
     const edges = await withScene(page, (scene, container, floor) => {
         // 21 nodes to a side. Written out rather than imported, because the body of a
