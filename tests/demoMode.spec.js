@@ -59,11 +59,14 @@ test('demo mode says so, and an ordinary visit does not', async ({ page }) => {
     await gotoFlow(page, '?demo');
     await expect(page.locator('#demo-banner')).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('data-demo', '');
+    // The tab title carries it too, for a demo tab sitting next to a real one.
+    await expect(page).toHaveTitle(/^DEMO - /);
 
     await allowNonDemo(page);
     await gotoFlow(page, './');
     await expect(page.locator('#demo-banner')).toBeHidden();
     await expect(page.locator('html')).not.toHaveAttribute('data-demo', '');
+    await expect(page).not.toHaveTitle(/^DEMO - /);
 });
 
 test('an ordinary visit connects nothing and seeds nothing', async ({ page }) => {
@@ -167,8 +170,8 @@ test('it lands in a populated content folder rather than an empty editor', async
 
 /**
  * Every flow, from the same selection. The building flow is the one that would notice a
- * missing Floors directory and the case flow the one that would notice a missing
- * manifest, so this is what pins that the demo folder carries all three markers.
+ * preset the manifest does not name and the DDS flow the one that would notice a missing
+ * DDSContent, so this is what pins that the demo folder carries every marker.
  */
 for (const [flow, panel, content] of [
     ['dds', '#dds-file-list', 'NeonNoir_Doorman'],

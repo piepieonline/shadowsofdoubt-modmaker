@@ -102,6 +102,93 @@ const clone = (value) => (value === undefined ? undefined : JSON.parse(JSON.stri
 
 
 /* -------------------------------------------------------------------------- */
+/* The colours addresses and rooms are drawn in                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The colours handed out to addresses and to rooms, in the order they are handed out.
+ *
+ * Twelve pastels, no two of them closer than 19 in CIE L*a*b*, against the 2 or so at
+ * which two colours stop being one colour -- far enough apart to be told apart at a glance
+ * rather than by comparison. Pastel because a floor is read as flat sheets of these with
+ * labels standing on them: at full saturation it is the labels that suffer, and the
+ * outline every glyph is given (see scene.js) is what has to make up the difference.
+ *
+ * The order is deliberately not a walk around the hue circle. Neighbours in this list sit
+ * on opposite sides of it, which does two things. Two addresses created one after the
+ * other never come out looking similar. And -- because rooms take this list from the back,
+ * where an address takes it from the front -- the colour at slot i and the colour at slot
+ * 11 - i are far apart at every position, so switching between the address tool and the
+ * room tool repaints the floor into something unmistakably different rather than into a
+ * near neighbour of what was there. That switch is the only thing saying which of the two
+ * a click is about to paint, so it has to be impossible to miss.
+ *
+ * Twelve is a cycle rather than a limit, and it is the number that makes the cycle rare:
+ * the base game's busiest floor has 13 addresses, and its busiest address 12 rooms, so a
+ * room list never repeats a colour and an address list only just can.
+ */
+export const PAINT_PALETTE = [
+    { r: 0.947, g: 0.585, b: 0.573, a: 1 }, // salmon
+    { r: 0.518, g: 0.733, b: 0.922, a: 1 }, // sky
+    { r: 0.898, g: 0.835, b: 0.422, a: 1 }, // mustard
+    { r: 0.813, g: 0.708, b: 0.932, a: 1 }, // lilac
+    { r: 0.544, g: 0.856, b: 0.586, a: 1 }, // mint
+    { r: 0.960, g: 0.680, b: 0.792, a: 1 }, // blossom
+    { r: 0.449, g: 0.791, b: 0.723, a: 1 }, // teal
+    { r: 0.856, g: 0.544, b: 0.814, a: 1 }, // orchid
+    { r: 0.801, g: 0.932, b: 0.708, a: 1 }, // lime
+    { r: 0.584, g: 0.594, b: 0.896, a: 1 }, // periwinkle
+    { r: 0.953, g: 0.726, b: 0.527, a: 1 }, // peach
+    { r: 0.676, g: 0.891, b: 0.924, a: 1 }, // aqua
+];
+
+/**
+ * The colour of the address in a given slot, read from the front of the palette.
+ *
+ * A fresh object each time. An address owns its colour -- the picker in the address panel
+ * writes over it in place -- so handing out the palette entry itself would let one address
+ * recolour every other address sharing it, and the palette with them.
+ */
+export function addressColour(index) {
+    return { ...PAINT_PALETTE[index % PAINT_PALETTE.length] };
+}
+
+/**
+ * The colour of the room in a given slot, read from the *back* of the palette.
+ *
+ * Rooms hold no colour of their own: the game's format has nowhere to put one, so this is
+ * the whole of what a room is coloured by, derived from its slot every time it is drawn.
+ * Slots are per address, so the third room of one address and the third room of another
+ * come out the same colour -- the room overlay is there to tell apart the rooms of the
+ * address being painted with, and it buys the guarantee above, that no room is ever the
+ * colour the address under it would have been.
+ */
+export function roomColour(roomIndex) {
+    return { ...PAINT_PALETTE[PAINT_PALETTE.length - 1 - (roomIndex % PAINT_PALETTE.length)] };
+}
+
+/**
+ * An address's stored colour, unless it has none it can be seen by.
+ *
+ * A floor is drawn as flat sheets of these, so a black address is a hole in the plan
+ * rather than an address, and one with no colour at all is worse -- it would take the
+ * one default every other colourless address gets. Both are given their slot's palette
+ * colour instead.
+ *
+ * This is a repair and not a display trick: the colour it lands on is written back the
+ * next time the floor is saved. Nothing in the base game needs it -- all 602 of its
+ * addresses carry a colour and none is black -- so what it covers is floors written
+ * somewhere else.
+ */
+function paintableColour(stored, index) {
+    if (!stored) return addressColour(index);
+
+    const invisible = (stored.r ?? 0) === 0 && (stored.g ?? 0) === 0 && (stored.b ?? 0) === 0;
+    return invisible ? addressColour(index) : clone(stored);
+}
+
+
+/* -------------------------------------------------------------------------- */
 /* A floor to start from                                                       */
 /* -------------------------------------------------------------------------- */
 
@@ -118,10 +205,6 @@ const DEFAULT_WALLS = '0';
 
 /** FloorTileType.floorAndCeiling -- an interior anyone can stand in. */
 const FLOOR_AND_CEILING = 1;
-
-/** The two addresses' colours, taken from the base game's own Outside and Lobby. */
-const OUTSIDE_COLOUR = { r: 1, g: 0, b: 0.4136190414428711, a: 1 };
-const LOBBY_COLOUR = { r: 0, g: 1, b: 0.055487871170043945, a: 1 };
 
 /**
  * A floor to start editing, rather than an empty grid.
@@ -164,10 +247,47 @@ export function blankFloor(floorName) {
  *
  * The lot size and the floor and ceiling heights are the source's: they describe the
  * building rather than the storey, and a floor that disagreed with the one below it on
- * any of them is a storey of a different building.
+ * any of them is a storey of a different building. Node heights are not -- `f_h` is a
+ * step or a plinth in one storey's floor, which is content like the room it is part of.
+ *
+ * How much of the source comes across is the author's answer to what a new storey
+ * starts as, asked when the floor is added:
+ *
+ * @param outline only the walls between inside and out -- the building's shell, with
+ *                the interior partitions dropped. The lot's own boundary is kept: it is
+ *                the edge of the plot rather than anything drawn on this storey, and a
+ *                blank floor starts with it too.
+ * @param tiles   the 7 x 7 tile grid: stairwells and their rotation, and the entrances.
+ *                A stairwell has to sit in the same tile on every storey it passes
+ *                through, so carrying it is what stops it being placed again by eye.
  */
-export function floorLike(floorName, sourceData) {
+export function floorLike(floorName, sourceData, { outline = false, tiles = false } = {}) {
     const source = parseFloor(sourceData);
+
+    // The margin is never inside, whatever the source says. It is not paintable, so an
+    // interior square there is one the editor could never reach -- and the six base game
+    // floors that stop short of the full grid show that a blueprint's own idea of its
+    // edges is not to be trusted.
+    const insideAt = (x, y) => {
+        const node = nodeAt(source, x, y);
+        return isPaintable(x, y) && !!node && !isOutdoors(source, node);
+    };
+
+    /**
+     * Whether a wall is part of the outline: it has different things on its two sides.
+     *
+     * Read from the wall's offset, which points at the neighbour it sits against. Both
+     * halves of one wall answer the same, because the question is about the pair of
+     * nodes rather than about either of them -- so a wall is kept on both sides or on
+     * neither, and the pairs stay matched.
+     */
+    const isOutlineWall = (x, y, wall) => {
+        const dx = Math.sign(wall.ox);
+        const dy = Math.sign(wall.oy);
+
+        return insideAt(x, y) !== insideAt(x + dx, y + dy)
+            || isPaintable(x, y) !== isPaintable(x + dx, y + dy);
+    };
 
     return startingFloor(
         floorName,
@@ -175,26 +295,47 @@ export function floorLike(floorName, sourceData) {
             size: clone(source.size),
             defaultFloorHeight: source.defaultFloorHeight,
             defaultCeilingHeight: source.defaultCeilingHeight,
+            tiles: tiles ? clone(sourceData?.t_d ?? []) : [],
         },
         (x, y) => {
             const node = nodeAt(source, x, y);
             return {
-                // The margin is never inside, whatever the source says. It is not
-                // paintable, so an interior square there is one the editor could never
-                // reach -- and the six base game floors that stop short of the full grid
-                // show that a blueprint's own idea of its edges is not to be trusted.
-                inside: isPaintable(x, y) && !!node && !isOutdoors(source, node),
+                inside: insideAt(x, y),
                 // Verbatim, both halves. A wall is stored on each of the two nodes it
                 // sits between, and every node is walked, so copying each node's list as
                 // it stands keeps the pairs matched -- including the mismatched pairs the
                 // base game itself contains, which are the source's data and not
                 // something to silently repair here.
-                walls: (node?.walls ?? []).map((wall) => ({
-                    w_o: { x: wall.ox, y: wall.oy },
-                    p_n: wall.preset,
-                })),
+                walls: (node?.walls ?? [])
+                    .filter((wall) => !outline || isOutlineWall(x, y, wall))
+                    .map((wall) => ({
+                        w_o: { x: wall.ox, y: wall.oy },
+                        p_n: wall.preset,
+                    })),
             };
         });
+}
+
+/**
+ * A floor that is another floor under a different name.
+ *
+ * What Add layout writes. The blueprints in one floor setting are alternative layouts of
+ * the *same* storey -- the game picks one when it builds the city -- so a new one is that
+ * storey again, to be altered rather than drawn. Which is the opposite of floorLike's
+ * reasoning and for the same reason: what makes two storeys differ is what is inside their
+ * walls, so between two layouts of one storey that is exactly what has to come across.
+ *
+ * Everything comes: addresses with their layout configurations and colours, every room and
+ * the nodes in it, node heights, tile flags, and each address's other variations. Copied
+ * verbatim rather than rebuilt through the reader, so a base game floor duplicated here is
+ * byte for byte the file the game shipped -- including the fields this model carries
+ * without interpreting, like `f_r`, and any the game adds that it has never seen.
+ *
+ * The name is the one thing that changes. A floor is referred to by it, and two files
+ * naming the same floor is one of them shadowing the other.
+ */
+export function floorCopy(floorName, sourceData) {
+    return { ...clone(sourceData), floorName };
 }
 
 /**
@@ -219,9 +360,13 @@ function isOutdoors(model, node) {
  * the shape a saved floor is in -- 49 tiles included -- rather than in a second shape
  * that happens to look right.
  *
+ * `dimensions.tiles` is the saved tile grid to start from, empty for the defaults. The
+ * writer fills in all 49 either way; what is passed here decides which of them arrive
+ * carrying a stairwell or an entrance.
+ *
  * @param shape given a coordinate, whether it is inside and what walls it records
  */
-function startingFloor(floorName, dimensions, shape) {
+function startingFloor(floorName, { tiles = [], ...dimensions }, shape) {
     const outside = [];
     const lobby = [];
 
@@ -242,18 +387,22 @@ function startingFloor(floorName, dimensions, shape) {
         floorName,
         ...dimensions,
         a_d: [
+            // The first two of the palette rather than the base game's own Outside red
+            // and Lobby green, so that a floor started here is coloured by the same list
+            // every address added to it afterwards is coloured by. The game reads this
+            // field as the colour to draw the address in and nothing else.
             {
                 p_n: OUTSIDE_LAYOUT,
-                e_c: OUTSIDE_COLOUR,
+                e_c: addressColour(0),
                 vs: [{ r_d: [{ id: 1, l: OUTSIDE_ROOM, n_d: outside }] }],
             },
             {
                 p_n: LOBBY,
-                e_c: LOBBY_COLOUR,
+                e_c: addressColour(1),
                 vs: [{ r_d: [{ id: 2, l: LOBBY, n_d: lobby }] }],
             },
         ],
-        t_d: [],
+        t_d: tiles,
     }));
 }
 
@@ -306,7 +455,7 @@ export function parseFloor(data, { selections = [] } = {}) {
 
         return {
             layoutConfiguration: address.p_n ?? '',
-            colour: clone(address.e_c) ?? { r: 0, g: 1, b: 1, a: 1 },
+            colour: paintableColour(address.e_c, index),
             variations,
             selectedVariation: selected,
         };
@@ -321,6 +470,13 @@ export function parseFloor(data, { selections = [] } = {}) {
         defaultCeilingHeight: data?.defaultCeilingHeight ?? 42,
         addresses,
         tiles: parseTiles(data?.t_d),
+        // Whether the stairwell each kind of tile resolves to carries a lift, as
+        // `{ plain, inverted }`. A fact about the *building* rather than about this floor
+        // -- which stairwell preset stands in a tile is the BuildingPreset's to say -- so
+        // it is filled in by whoever opened the floor knowing which building that was, and
+        // is null in a model parsed on its own. See buildingLibrary.stairwellElevators,
+        // and tileParts for what a tile says when nobody has looked it up.
+        stairwellElevators: null,
         nodes: [],
         rooms: [],
         issues: { overlaps: [], gaps: [], wallMismatches: [] },
@@ -334,6 +490,19 @@ export function parseFloor(data, { selections = [] } = {}) {
  * The 7 x 7 tile grid. Every base game floor stores all 49, x-major, so a missing or
  * out-of-range entry is a malformed file rather than a shorthand -- it is dropped, and
  * the tile it would have set keeps its defaults.
+ *
+ * What the four stairwell fields mean, because their names do not say and one of them
+ * says the wrong thing:
+ *
+ *   s_t  the tile carries a stairwell
+ *   s_r  which way it faces, in degrees off the front of the building
+ *   e_l  the stairwell is the *Inverted* preset -- the mirrored one, whose steps run the
+ *        other way round. It is the asset the game picks, and nothing more: it does not
+ *        say the tile is a lift rather than stairs, which is what every stairwell preset
+ *        the game ships turns out to carry anyway. See tileParts.
+ *   e_r  nothing. It is 0 on all 4,557 tiles of the 93 base game floors shipped here, and
+ *        it is written back out because a field this app does not understand is not a
+ *        field for it to drop.
  */
 function parseTiles(saved) {
     const tiles = [];
@@ -346,7 +515,7 @@ function parseTiles(saved) {
                 isStairwell: false,
                 isInverted: false,
                 stairwellRotation: 0,
-                elevatorRotation: 0,
+                unusedElevatorRotation: 0,
             });
         }
     }
@@ -360,7 +529,7 @@ function parseTiles(saved) {
         tile.isStairwell = !!saved_.s_t;
         tile.isInverted = !!saved_.e_l;
         tile.stairwellRotation = saved_.s_r ?? 0;
-        tile.elevatorRotation = saved_.e_r ?? 0;
+        tile.unusedElevatorRotation = saved_.e_r ?? 0;
     }
 
     return tiles;
@@ -479,7 +648,7 @@ function backfillOutside(model) {
 }
 
 /** The address named Outside, or the first one -- address 0 is Outside by convention. */
-function outsideAddressIndex(model) {
+export function outsideAddressIndex(model) {
     const named = model.addresses.findIndex((a) => a.layoutConfiguration === OUTSIDE_LAYOUT);
     return named >= 0 ? named : 0;
 }
@@ -804,16 +973,21 @@ export function setNodeFloor(model, node, floorType, height) {
  * It arrives holding a Null room. A square has to be in a room, so an address with none
  * is one nothing can be painted into -- and Null is what the game calls a square that
  * has not been laid out, which is exactly what a new address's are.
+ *
+ * And it arrives with the colour of the slot it lands in, so that adding one is a single
+ * click rather than a click and a colour to choose. `colour` overrides that; nothing in
+ * the app passes one, since a floor being read comes through parseFloor instead.
  */
 export function addAddress(model, layoutConfiguration, colour) {
+    const addressIndex = model.addresses.length;
+
     model.addresses.push({
         layoutConfiguration,
-        colour: clone(colour) ?? { r: 0, g: 1, b: 1, a: 1 },
+        colour: clone(colour) ?? addressColour(addressIndex),
         variations: [{ raw: { r_d: [] } }],
         selectedVariation: 0,
     });
 
-    const addressIndex = model.addresses.length - 1;
     appendRoom(model, addressIndex, OUTSIDE_ROOM, nextRoomId(model));
     return addressIndex;
 }
@@ -843,6 +1017,66 @@ export function seedRoomForLayout(model, addressIndex, roomPresets = []) {
     if (nodesOfRoom(model, addressIndex, rooms[0].roomIndex).length > 0) return null;
 
     return appendRoom(model, addressIndex, address.layoutConfiguration, nextRoomId(model));
+}
+
+/**
+ * Take an address off the floor, and hand its squares back to Outside.
+ *
+ * An address is a slot -- a square names the one it belongs to by position in the list,
+ * and so does every room -- so removing one shifts every address above it down by one,
+ * on the addresses, the rooms, the squares and the overlaps alike. That renumbering is
+ * the whole risk here: a square left naming its old slot would silently belong to a
+ * different address than the one it was painted with.
+ *
+ * The squares it held go to the Outside address's Null room, which is where removing a
+ * room sends them and what backfill puts an unclaimed square in. They are not dropped:
+ * a square has to be in a room its own address has, and one that is not is the single
+ * error serialising refuses to write.
+ *
+ * Outside itself cannot go. It is the floor's fallback -- every unclaimed square, every
+ * square of a removed address and every square of a removed room ends up in it -- so a
+ * floor without one has nowhere to put the things it is asked to hold.
+ */
+export function removeAddress(model, addressIndex) {
+    if (!model.addresses[addressIndex]) return false;
+
+    const outside = outsideAddressIndex(model);
+    if (addressIndex === outside) return false;
+
+    // Before the splice, while both indices still mean what they say. The room is found
+    // or made in Outside, exactly as backfill would.
+    const held = model.nodes.filter((node) => node?.addressIndex === addressIndex);
+    if (held.length) {
+        const fallback = findOrAddRoom(model, outside, OUTSIDE_ROOM);
+        for (const node of held) {
+            node.addressIndex = fallback.addressIndex;
+            node.roomIndex = fallback.roomIndex;
+            node.backfilled = false;
+        }
+    }
+
+    model.addresses.splice(addressIndex, 1);
+    model.rooms = model.rooms.filter((room) => room.addressIndex !== addressIndex);
+
+    // An overlap is two addresses claiming one square. With one of them gone the square
+    // is claimed once, so the pair goes rather than being renumbered to a survivor.
+    model.issues.overlaps = model.issues.overlaps.filter(
+        (overlap) => overlap.heldBy !== addressIndex && overlap.alsoClaimedBy !== addressIndex);
+
+    const shift = (index) => (index > addressIndex ? index - 1 : index);
+    for (const room of model.rooms) room.addressIndex = shift(room.addressIndex);
+    for (const node of model.nodes) if (node) node.addressIndex = shift(node.addressIndex);
+    for (const overlap of model.issues.overlaps) {
+        overlap.heldBy = shift(overlap.heldBy);
+        overlap.alsoClaimedBy = shift(overlap.alsoClaimedBy);
+    }
+
+    return true;
+}
+
+/** How many squares an address holds, which is what removing it would move to Outside. */
+export function nodesOfAddress(model, addressIndex) {
+    return model.nodes.filter((node) => node?.addressIndex === addressIndex);
 }
 
 /**
@@ -942,21 +1176,47 @@ export function nextRoomId(model) {
 /* Painting a tile                                                             */
 /* -------------------------------------------------------------------------- */
 
-/** What the tile tool is cycling. */
+/**
+ * What the tile tool is changing.
+ *
+ * Two of the three are cycles and one is a toggle. Inverted is a stairwell too -- the
+ * mirrored preset, which is the whole of what `e_l` chooses -- but it is one fact about a
+ * stairwell rather than a kind of its own, so the mode that paints it turns that fact on
+ * and off and leaves the rest of the tile as it found it. See paintTile.
+ */
 export const TileMode = {
     STAIRWELL: 'stairwell',
-    ELEVATOR: 'elevator',
+    INVERTED: 'inverted',
     ENTRANCE: 'entrance',
 };
 
 /**
- * What a tile carries, one phrase per thing, in the order a tile is read.
+ * What a tile carries, one line per thing, in the order a tile is read.
  *
  * A list rather than a sentence because the three places that say it lay it out
  * differently: the status column and the hover label want one line, and the label written
  * on the tile in the view wants a line each, on a square three cells wide. Joining is the
  * caller's; what a tile *is* is here, so none of them can end up calling a stairwell
  * something the others do not.
+ *
+ * A stairwell is three lines, and they answer three separate questions:
+ *
+ *   Stairs 90°  that there is a stairwell, and which way it faces. Always "Stairs": what
+ *               stands in the tile is a stairwell whatever preset it is, and the file says
+ *               nothing else about it.
+ *   Inverted    `e_l`, which picks the mirrored preset -- WoodenStairwellElevatorInverted
+ *               rather than WoodenStairwellElevator. Its own line because it is a fact
+ *               about the tile, and the one a click on the tile tool changes.
+ *   Elevator    that the preset standing there carries a lift, which is a fact about the
+ *               *building's* stairwell preset and not about this tile at all. Every
+ *               StairwellPreset the game ships has featuresElevator true, so this is
+ *               ordinarily said of every stairwell; only a mod defining its own can turn
+ *               it off. See buildingLibrary.stairwellElevators.
+ *
+ * The middle and last are written as empty lines when they do not apply, so that the three
+ * rows of a label line up across the tiles of a floor rather than sliding up under each
+ * other. That is the view's need alone: the two callers that join to one line drop the
+ * empties first, because "Stairs 90° ·  · " is a line with holes punched in it.
  *
  * The rotation is a figure measured from the front of the building -- see the arrow off
  * the front edge in the view -- and is said on the stairwell rather than beside it,
@@ -965,14 +1225,20 @@ export const TileMode = {
  * Empty for a tile that carries nothing, which is not the same as the word "Nothing":
  * saying so is for a field that must say something, and a label over an empty tile is
  * better off not being drawn.
+ *
+ * @param stairwellElevators the model's, or nothing at all for a tile being read outside
+ *                           any building. Absent reads as a lift, because that is what
+ *                           every stairwell the game ships has.
  */
-export function tileParts(tile) {
+export function tileParts(tile, stairwellElevators = null) {
     if (!tile) return [];
 
     const parts = [];
 
     if (tile.isStairwell) {
-        parts.push(`${tile.isInverted ? 'Elevator' : 'Stairs'} ${tile.stairwellRotation ?? 0}°`);
+        parts.push(`Stairs ${tile.stairwellRotation ?? 0}°`);
+        parts.push(tile.isInverted ? 'Inverted' : '');
+        parts.push(hasElevator(tile, stairwellElevators) ? 'Elevator' : '');
     }
 
     if (tile.isMainEntrance) parts.push('Main entrance');
@@ -982,12 +1248,38 @@ export function tileParts(tile) {
 }
 
 /**
+ * Whether the stairwell standing in this tile carries a lift.
+ *
+ * Two answers rather than one, because `e_l` picks between two presets when the building
+ * names none of its own -- so a mod can define the mirrored one with featuresElevator off
+ * and leave the other alone.
+ */
+const hasElevator = (tile, stairwellElevators) => (
+    (tile.isInverted ? stairwellElevators?.inverted : stairwellElevators?.plain) ?? true);
+
+/**
  * Advance a tile one step through its cycle, as the game's own FloorEditController does.
  *
- * A stairwell goes on, turns through its four rotations, and comes off again; an
- * entrance goes on, becomes the main entrance, and comes off. Painting the other kind
- * over an existing stairwell converts it rather than making you clear the tile first,
- * which is the one place the reference tool improves on the game and is kept.
+ * A stairwell goes on, turns through its four rotations, and comes off again; an entrance
+ * goes on, becomes the main entrance, and comes off.
+ *
+ * **Inverted is a toggle rather than a cycle.** A click in that mode turns the mirroring
+ * on or off and changes nothing else: not the rotation, and not whether there is a
+ * stairwell there at all. It used to be a third cycle -- a click on an already-inverted
+ * stairwell turned it, and a fifth click took it away -- which made mirroring a stairwell
+ * you had already aimed a job of counting clicks, because one click too many spun it off
+ * its rotation and one more removed it.
+ *
+ * The two cycles therefore leave each other's fact alone, which is what makes either one
+ * safe to click twice: the rotation is the stairwell cycle's and the mirroring is the
+ * toggle's, and neither is an answer to the other's question. A stairwell is turned by
+ * the stairwell cycle whether it is mirrored or not.
+ *
+ * The one thing each still does to the other's fact is at the ends, where there is no
+ * stairwell for the fact to be about: a tile with nothing on it gets one, mirrored or
+ * plain to match the mode -- placing is the only way into the toggle -- and a stairwell
+ * cycled off clears the mirroring with it, because a tile carrying no stairwell is not
+ * carrying a mirrored one.
  */
 export function paintTile(tile, mode) {
     if (!tile) return false;
@@ -999,14 +1291,20 @@ export function paintTile(tile, mode) {
         return true;
     }
 
-    const inverted = mode === TileMode.ELEVATOR;
+    if (mode === TileMode.INVERTED) {
+        if (tile.isStairwell) tile.isInverted = !tile.isInverted;
+        else {
+            tile.isStairwell = true;
+            tile.isInverted = true;
+            tile.stairwellRotation = 0;
+        }
+        return true;
+    }
 
     if (!tile.isStairwell) {
         tile.isStairwell = true;
-        tile.isInverted = inverted;
+        tile.isInverted = false;
         tile.stairwellRotation = 0;
-    } else if (tile.isInverted !== inverted) {
-        tile.isInverted = inverted;
     } else if (tile.stairwellRotation < 270) {
         tile.stairwellRotation += 90;
     } else {
@@ -1206,10 +1504,11 @@ export function serialiseFloor(model) {
                     : clone(variation.raw)
             )),
         })),
-        // Field order is the game's own -- s_r before e_l, which reads like a mistake
-        // and is not one. Nothing parses JSON by key order, but matching it keeps the
-        // diff between a floor the game wrote and a floor this app wrote to the lines
-        // that actually changed.
+        // Field order is the game's own, down to `e_r` -- which means nothing to the game
+        // or to this app and is written anyway, because a floor that went through this
+        // editor should come back out as the file it went in as. Nothing parses JSON by
+        // key order, but matching it keeps the diff between a floor the game wrote and a
+        // floor this app wrote to the lines that actually changed.
         t_d: model.tiles.map((tile) => ({
             f_c: { x: tile.x, y: tile.y },
             i_e: tile.isEntrance,
@@ -1217,7 +1516,7 @@ export function serialiseFloor(model) {
             s_t: tile.isStairwell,
             s_r: tile.stairwellRotation,
             e_l: tile.isInverted,
-            e_r: tile.elevatorRotation,
+            e_r: tile.unusedElevatorRotation,
         })),
     };
 }
@@ -1236,54 +1535,102 @@ export function serialiseFloor(model) {
  * room is something the author does on purpose, not something saving decides.
  */
 function buildVariation(model, addressIndex) {
+    return {
+        r_d: variationNodeKeys(model, addressIndex).map(({ room, keys }) => ({
+            id: room.id,
+            n_d: keys.map((key) => saveNode(nodeAt(model, ...parseKey(key)))),
+            l: room.preset,
+        })),
+    };
+}
+
+/**
+ * Which nodes each of an address's rooms will be written holding, in the order they will
+ * be written in.
+ *
+ * Split out from the serialiser because two callers need this order and they must not be
+ * able to disagree about it. The other is `nodeSaveOrder`, which is what tells a divider
+ * end which way round the game will build it -- an orientation read off one traversal and
+ * a file written by another would put the post on the side the editor did not draw.
+ */
+function variationNodeKeys(model, addressIndex, { onOrphan = 'throw' } = {}) {
     const rooms = roomsOfAddress(model, addressIndex);
     const claimed = new Set();
 
     const built = rooms.map((room) => {
-        const nodes = [];
+        const keys = [];
 
         for (const key of room.order) {
-            const [x, y] = key.split(',').map(Number);
+            const [x, y] = parseKey(key);
             const node = nodeAt(model, x, y);
             if (!node || node.addressIndex !== addressIndex || node.roomIndex !== room.roomIndex) {
                 continue;
             }
-            nodes.push(saveNode(node));
+            keys.push(key);
             claimed.add(key);
         }
 
-        return { room, nodes };
+        return { room, keys };
     });
 
     // Anything the grid gives this address that no room listed: painted in since the
     // floor was read, or backfilled. Grid order, since they have no order of their own.
-    const byRoom = new Map(built.map((entry) => [entry.room.roomIndex, entry.nodes]));
+    const byRoom = new Map(built.map((entry) => [entry.room.roomIndex, entry.keys]));
     for (let y = 0; y < NODE_GRID; y++) {
         for (let x = 0; x < NODE_GRID; x++) {
             const node = nodeAt(model, x, y);
             if (!node || node.addressIndex !== addressIndex) continue;
-            if (claimed.has(coordKey(x, y))) continue;
 
-            const nodes = byRoom.get(node.roomIndex);
+            const key = coordKey(x, y);
+            if (claimed.has(key)) continue;
+
+            const keys = byRoom.get(node.roomIndex);
 
             // A node pointing at a room this address does not have would be dropped
             // here without a word, which is the exact failure this file exists to
-            // prevent. Nothing should be able to produce one; say so if it does.
-            if (!nodes) {
+            // prevent. Nothing should be able to produce one; say so if it does --
+            // except while drawing, which cannot take the scene down over one bad node.
+            if (!keys) {
+                if (onOrphan === 'skip') continue;
                 throw new Error(
                     `Node (${x}, ${y}) belongs to address ${addressIndex} room `
                     + `${node.roomIndex}, which does not exist`);
             }
 
-            nodes.push(saveNode(node));
+            keys.push(key);
         }
     }
 
-    return {
-        r_d: built.map((entry) => ({
-            id: entry.room.id, n_d: entry.nodes, l: entry.room.preset,
-        })),
-    };
+    return built;
+}
+
+/** `coordKey` undone. */
+const parseKey = (key) => key.split(',').map(Number);
+
+/**
+ * Every node on the grid, ranked by where saving will write it.
+ *
+ * The game builds a wall from whichever of the two nodes it sits between it reaches
+ * first, and it reads a blueprint in the order the file lists it -- address by address,
+ * room by room, node by node. So this order is not a detail of the format: it decides
+ * which way a wall faces, and a divider end's post goes on whichever side that facing
+ * makes its left. `dividerEnds.js` is the rest of that.
+ *
+ * Built from what saving *will* write rather than from what loading read, because an
+ * author who paints a square changes it. A node with no rank -- off the grid, or orphaned
+ * from its room -- sorts last, which is where saving would put it.
+ */
+export function nodeSaveOrder(model) {
+    const rank = new Map();
+    let next = 0;
+
+    model.addresses.forEach((_, addressIndex) => {
+        for (const { keys } of variationNodeKeys(model, addressIndex, { onOrphan: 'skip' })) {
+            for (const key of keys) rank.set(key, next++);
+        }
+    });
+
+    return rank;
 }
 
 /** One node in the game's shape. `f_r` goes back out as it came in. */

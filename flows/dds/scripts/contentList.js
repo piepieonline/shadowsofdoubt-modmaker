@@ -62,6 +62,10 @@ async function readEntries(contentFolder, category) {
             type: category.type,
             kind: patch ? 'patch' : 'new',
             name: patch ? vanillaName(id) : await nameInside(entry),
+            // The file the GUID is stored in. A mod's own document and a patch of the
+            // base game's differ only by extension, so the GUID alone does not say which
+            // of the two is on disk -- which deleting one has to know.
+            file: entry.name,
         });
     }
 
@@ -146,6 +150,8 @@ export async function listContent(contentFolder) {
                 label: entry.name || entry.id,
                 tag: entry.kind === 'patch' ? 'patch' : null,
                 openAs: entry.type,
+                // What is on disk, which is what deleting the entry removes.
+                file: entry.file,
             })),
         });
     }

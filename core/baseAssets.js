@@ -1,0 +1,100 @@
+/**
+ * The base game's ScriptableObjects, read rather than opened.
+ *
+ * Two flows need these and neither needs a window showing one. The ScriptableObject
+ * editor reads an asset to diff a patch against it; the building editor reads one to work
+ * out what a patch does to the furniture chain. Both want the same document from the same
+ * two places in the same order, and a second copy of that would be a second answer to
+ * "which version of the game is this".
+ *
+ * ## Where an asset comes from
+ *
+ * The author's own export first, when they have connected one: it is the game they are
+ * modding at the version they are running, and it holds every type. What ships with this
+ * tool under `refs/assets/` is what there is otherwise, and it is a subset -- nine types
+ * of the game's hundreds. So a type is reachable here only if the author connected a
+ * folder or it is one of those nine, and `reason` says which of the two failed.
+ */
+import { readFileContent, tryGetFile } from './fs.js';
+import { resolveReferences } from './soReferences.js';
+
+/**
+ * The base game assets shipped with this tool.
+ *
+ * Resolved against this module rather than the page: these are served from the repo root
+ * alongside the rest of the reference data, and a page-absolute path would depend on
+ * where the app is mounted. Fetched rather than imported -- 12 MB across 1500 files, and
+ * one is read at a time.
+ */
+export const ASSET_DATA = new URL('../refs/assets/', import.meta.url);
+
+/**
+ * The base game's asset, with Unity's references named.
+ *
+ * @returns `{ document }`, or `{ reason }` saying what an author can do about it
+ */
+export async function readBaseAsset(type, name) {
+    if (!type || !name) return { reason: 'the file does not say which asset it patches' };
+
+    const path = `${type}/${name}.json`;
+    let text = null;
+
+    if (window.dirHandleExportedSOPath) {
+        const handle = await tryGetFile(window.dirHandleExportedSOPath, path.split('/'));
+        if (handle) text = await readFileContent(handle);
+    }
+
+    if (text == null) {
+        const response = await fetch(new URL(path, ASSET_DATA));
+        if (response.ok) text = await response.text();
+    }
+
+    if (text == null) {
+        return {
+            reason: window.dirHandleExportedSOPath
+                ? `neither your exported ScriptableObjects nor this tool has a ${type} called ${name}`
+                : `${type} is not one of the types this tool ships assets for. Load your `
+                    + 'exported ScriptableObjects folder to patch it',
+        };
+    }
+
+    try {
+        return { document: resolveReferences(JSON.parse(text), await pathIdMap()) };
+    } catch {
+        // Five of the shipped assets hold `Infinity`, which is not JSON and which no
+        // browser will parse. An unreadable base is an unpatchable asset.
+        return { reason: `${path} is not valid JSON, so there is nothing to compare against` };
+    }
+}
+
+/**
+ * Unity's file ids, mapped to `Type|Name`.
+ *
+ * The ScriptableObject flow publishes this on activation and every read there goes through
+ * the global, which is left alone: it is 1.6 MB of generated JSON and that flow pays for it
+ * on load because every document it opens needs it.
+ *
+ * The building flow does not, and should not start: it reads an asset only when a mod holds
+ * a patch of a furniture type, which most do not. So this imports the file on the first
+ * read that has no global to use, and holds it thereafter. Skipping it is not an option --
+ * an unresolved reference is an `{ m_FileID }` object where a name should be, which reads
+ * downstream as a list with nothing in it.
+ *
+ * Exported for the one caller that has a single id to name rather than a document to
+ * resolve: a dumped BuildingPreset points at its stairwell this way, and naming it through
+ * a second copy of this map would be a second answer to the same question.
+ */
+let lazyMap = null;
+
+export async function pathIdMap() {
+    if (window.pathIdMap) return window.pathIdMap;
+
+    // The same derivation the ScriptableObject flow's loadRefs.js makes: an id maps to a
+    // list of names, of which the first is the asset.
+    lazyMap ??= import('../refs/generated/soPathIds.json', { with: { type: 'json' } })
+        .then(({ default: ids }) =>
+            Object.fromEntries(Object.entries(ids).map(([id, names]) => [id, names[0]])))
+        .catch(() => ({}));
+
+    return lazyMap;
+}

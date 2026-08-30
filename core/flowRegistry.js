@@ -40,6 +40,21 @@
  *                 content button, asking what this flow needs to know before the
  *                 folder exists; answer with a function that lays the folder out, or
  *                 null to cancel. A flow that needs nothing omits it.
+ *   sessionState  optional () => flat object of URL parameter values -- what the flow
+ *                 has open. Named by the flow, which owns every parameter core does
+ *                 not (see core/urlState.js). Must be cheap and must change nothing:
+ *                 it is asked several times a minute, and on leaving. A null value
+ *                 means the parameter is absent.
+ *   restoreSession optional (params) => Promise, the same bag handed back, on a switch
+ *                 back to this flow and on a page load. Tolerant of what it names
+ *                 having been deleted or renamed since -- the URL is corrected
+ *                 afterwards from what actually came back.
+ *   canRestore    optional (params) => boolean, whether restoring could work yet.
+ *                 A restore that opens nothing is written back as an empty workspace,
+ *                 so a flow that needs a folder says so here and is asked again when
+ *                 one is connected.
+ *   suspend       optional () => Promise, run when switching away. For what a flow must
+ *                 give up rather than record -- an unwritten save, a WebGL context.
  */
 
 const flows = new Map();

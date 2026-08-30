@@ -136,7 +136,7 @@ test('saving against a base game building produces a stub that copies from it', 
 
     expect(result.created).toBe(true);
 
-    const written = JSON.parse(await readFile(page, 'Plugins/TallTower/Hotel.sodso.json'));
+    const written = JSON.parse(await readFile(page, 'Plugins/TallTower/Hotel.BuildingPreset.sodso.json'));
 
     expect(written.name).toBe('Hotel');
     expect(written.presetName).toBe('Hotel');
@@ -180,7 +180,7 @@ test('a new building of its own gets a preset and a Floors folder', async ({ pag
         library.createCustomBuilding(contentFolder, 'BrandNew')
     ));
 
-    const written = JSON.parse(await readFile(page, 'Plugins/TallTower/BrandNew.sodso.json'));
+    const written = JSON.parse(await readFile(page, 'Plugins/TallTower/BrandNew.BuildingPreset.sodso.json'));
     expect(written.name).toBe('BrandNew');
     expect(written.copyFrom).toBeNull();
 
@@ -213,7 +213,7 @@ test('a building\'s readable title is not what identifies it', async ({ page }) 
     expect(preset.presetName).toBe('MyHotel');
     expect(preset.name).toBe('My Lovely Hotel');
 
-    expect(await readFile(page, 'Plugins/TallTower/MyHotel.sodso.json')).not.toBeNull();
+    expect(await readFile(page, 'Plugins/TallTower/MyHotel.BuildingPreset.sodso.json')).not.toBeNull();
 });
 
 test('a floor saved into the mod is readable back through the building', async ({ page }) => {
@@ -252,7 +252,7 @@ test('a base game preset is never written to when a floor is saved against it', 
 
     // The shipped copy is a fetched URL, not a file handle -- there is nothing to write
     // to. What ends up in the mod is the stub and the floor.
-    const stub = JSON.parse(await readFile(page, 'Plugins/TallTower/Hotel.sodso.json'));
+    const stub = JSON.parse(await readFile(page, 'Plugins/TallTower/Hotel.BuildingPreset.sodso.json'));
     expect(stub.copyFrom).toBe('REF:BuildingPreset|Hotel');
 
     // Pointed at the mod's copy, which is what the floor in the fixture is. See the
@@ -282,7 +282,7 @@ test('a new building is named in a manifest written for the mod that had none', 
     ));
 
     expect(await manifestIn(page))
-        .toEqual({ enabled: true, fileOrder: ['REF:BrandNew'], loadBefore: '', version: 1 });
+        .toEqual({ enabled: true, fileOrder: ['REF:BrandNew.BuildingPreset'], loadBefore: '', version: 1 });
 });
 
 test('a building joins the load order a mod already has, and is named once', async ({ page }) => {
@@ -308,7 +308,7 @@ test('a building joins the load order a mod already has, and is named once', asy
     const manifest = await manifestIn(page);
 
     // Last, and the entries the author already had are where they were.
-    expect(manifest.fileOrder).toEqual(['REF:SomeWeapon', 'REF:TallTower', 'REF:BrandNew']);
+    expect(manifest.fileOrder).toEqual(['REF:SomeWeapon', 'REF:TallTower', 'REF:BrandNew.BuildingPreset']);
     expect(manifest.loadBefore).toBe('SomeOtherMod');
 });
 
@@ -320,7 +320,7 @@ test('the stub written for a base game building is named too', async ({ page }) 
 
     // The stub is a file in the mod like any other: unlisted, it is a floor edited into
     // a building the game goes on building the base game's way.
-    expect((await manifestIn(page)).fileOrder).toEqual(['REF:Hotel']);
+    expect((await manifestIn(page)).fileOrder).toEqual(['REF:Hotel.BuildingPreset']);
 });
 
 test('a building already named in lowercase is not named again', async ({ page }) => {
@@ -352,7 +352,7 @@ test('a manifest that will not parse is left alone, and the building is still wr
 
     // The building is the thing that was asked for, and it is on disk to be listed by
     // hand.
-    expect(await readFile(page, 'Plugins/TallTower/BrandNew.sodso.json')).not.toBeNull();
+    expect(await readFile(page, 'Plugins/TallTower/BrandNew.BuildingPreset.sodso.json')).not.toBeNull();
 });
 
 
@@ -371,8 +371,8 @@ test('a manifest that will not parse is left alone, and the building is still wr
  *
  * Reading normalises both forms back to a name, and is covered beside the module.
  */
-const presetIn = async (page, name) =>
-    JSON.parse(await readFile(page, `Plugins/TallTower/${name}.sodso.json`));
+const presetIn = async (page, stem) =>
+    JSON.parse(await readFile(page, `Plugins/TallTower/${stem}.sodso.json`));
 
 test('a floor the mod holds is written as a reference to the mod\'s copy', async ({ page }) => {
     await withLibrary(page, async (library, contentFolder) => {
@@ -398,7 +398,7 @@ test('a floor named after a base game one points at the mod\'s copy', async ({ p
         await library.writeCustomPreset(contentFolder, 'Hotel', preset);
     });
 
-    const written = await presetIn(page, 'Hotel');
+    const written = await presetIn(page, 'Hotel.BuildingPreset');
     expect(written.floorLayouts[0].blueprints[0]).toBe('FLOOR:Floors/Hotel_GroundFloor');
 
     // Every other slot of the stub is still the base game's to resolve.
@@ -455,7 +455,7 @@ test('a floor deleted from the mod uncovers the base game\'s again', async ({ pa
         await library.writeCustomPreset(contentFolder, 'Hotel', reread);
     });
 
-    expect((await presetIn(page, 'Hotel')).floorLayouts[0].blueprints[0]).toBe('Hotel_GroundFloor');
+    expect((await presetIn(page, 'Hotel.BuildingPreset')).floorLayouts[0].blueprints[0]).toBe('Hotel_GroundFloor');
 });
 
 test('the slots read back are the floors, whichever way they are written', async ({ page }) => {

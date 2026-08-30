@@ -22,3 +22,8 @@ refs/assets/**/*.json -diff linguist-generated
 # yet -- see GENERATOR.md section 5 -- but game data all the same, and a floor is one
 # 60 KB line, so a diff of one is no more readable than a diff of the others.
 refs/floors/**/*.json -diff linguist-generated
+
+# Derived from a dump of the game by flows/building/tools/buildFurnitureChain.js.
+# Written as one line and never edited by hand, so its diffs say nothing the script's
+# diff does not say better. See refs/README.md.
+refs/derived/*.json -diff linguist-generated

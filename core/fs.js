@@ -55,6 +55,33 @@ export async function tryGetFolder(handle, path, create) {
     }
 }
 
+/**
+ * Delete a file below a directory handle.
+ *
+ * Absent counts as removed. The caller's reason for asking is that the file should not be
+ * there afterwards, and a file that was already gone satisfies that -- treating it as a
+ * failure would leave the manifest still naming it.
+ *
+ * @param path segments below `handle`, the last of which is the file
+ * @returns false only when the folder or the removal itself refused
+ */
+export async function removeFile(handle, path) {
+    const segments = [...path];
+    const name = segments.pop();
+    if (!name) return false;
+
+    // getFolder consumes the array it is given, so it gets its own copy.
+    const folder = segments.length ? await tryGetFolder(handle, [...segments]) : handle;
+    if (!folder) return false;
+
+    try {
+        await folder.removeEntry(name);
+        return true;
+    } catch (error) {
+        return error?.name === 'NotFoundError';
+    }
+}
+
 export async function writeFile(fileHandle, contents, append) {
     const writeable = await fileHandle.createWritable({ keepExistingData: append });
 

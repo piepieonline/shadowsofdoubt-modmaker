@@ -229,7 +229,8 @@ body {
     }
 }
 
-/* Its own row, so it is free to be as wide as its label needs. */
+/* On the second row rather than among the short actions, so it is free to be as wide as
+   its label needs. Open Base sits beside it there and is short enough to. */
 .jsontree-editor-bar-field-select-button {
     min-width: 300px;
 }
@@ -249,6 +250,59 @@ body {
     padding: 0 0.3em;
     vertical-align: middle;
     cursor: pointer;
+}
+
+/*
+ * The +, −, copy and paste buttons on an array and on each of its elements.
+ * See core/arrayControls.js, which decides where in the line they go.
+ *
+ * Set in a UI font rather than the tree's monospace, for the same reason .open-target
+ * is: the monospace stack draws U+29C9 and U+21A7 at a fraction of their em box.
+ */
+.array-controls {
+    display: inline-flex;
+    /* A value wrapper is a flex row where the value is a control; these keep their
+       size there rather than being the thing that gives way. */
+    flex: none;
+    gap: 2px;
+    margin: 0 0.4em;
+    /* On the line's baseline, so the row sits with the bracket or the value it
+       follows rather than riding above it. An inline-flex box takes its baseline from
+       its first item, which is the glyph inside the first button. */
+    vertical-align: baseline;
+}
+
+.array-controls .array-control {
+    /*
+     * Pico sizes a button for a form. This is a glyph in a line of text, so the box is
+     * stripped back to the glyph and squared off against the row it sits in.
+     */
+    width: 1.6em;
+    height: 1.6em;
+    padding: 0;
+    margin: 0;
+    border-radius: 3px;
+    font-family: system-ui, sans-serif;
+    font-size: 0.85em;
+    line-height: 1;
+    cursor: pointer;
+
+    /*
+     * Fixed colours rather than Pico's, which are the whole page's and follow the
+     * system theme. The tree area does not: libs/jsonTree hardcodes dark text, so it
+     * forces the light palette (see the top of this file) -- and a button taking
+     * --pico-color under a dark theme came out white on that light background.
+     */
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    background: #fff;
+    color: #000;
+}
+
+.array-controls .array-control:hover {
+    /* The accent both flows already use for anything clickable in a tree. */
+    background: #c52f21;
+    border-color: #c52f21;
+    color: #fff;
 }
 
 /* Applied per-item by list typeaheads. Used by both flows. */
@@ -410,6 +464,63 @@ body.driver-active .driver-popover-next-btn {
  */
 :root {
     --file-panel-width: 300px;
+
+    /*
+     * One row's worth of button: the size a file name is set at, and the box Pico draws
+     * around it.
+     *
+     * Named here because two rules have to agree on it. The button that opens a file gets
+     * its height from these; the square one beside it that deletes the file has a single
+     * glyph in it and no height of its own worth having, and is sized to match. Writing
+     * that height out a second time is what would let the two drift apart.
+     */
+    --file-panel-row-font: 0.75rem;
+    --file-panel-row-padding: 0.25rem;
+    --file-panel-row-height: calc(
+        var(--file-panel-row-font) * var(--pico-line-height, 1.5)
+        + var(--file-panel-row-padding) * 2
+        + 2px);
+
+    /*
+     * How far a category heading stands off the items under it, everywhere in the app: a
+     * dropdown's `<optgroup>`, a building in the Browse menu, a floor inside it, a group
+     * in the building flow's furniture list.
+     *
+     * None. A heading and its items are one block, and what separates the two lines is
+     * the padding each already has -- which is set in `em` in each list, so a heading is
+     * the same distance from its items whatever size that list is set in. Air between
+     * them is what made a heading read as a row of its own with a gap beneath it.
+     *
+     * It is a name rather than a `0` written four times because the number is not the
+     * point: every list is meant to agree, and the way they stopped agreeing was one of
+     * them being adjusted on its own. The searchSelect dropdowns are the model -- see
+     * `.select2-results__group` in core/components/searchSelect/searchSelect.css.
+     *
+     * Mostly it is spent undoing Pico, which puts `--pico-spacing` -- a whole 1rem --
+     * under any open `<details>` summary. That is right for a disclosure holding a
+     * paragraph and wrong for one holding a list of names, and every disclosure in this
+     * app is the second kind.
+     */
+    --list-heading-gap: 0;
+}
+
+/*
+ * The box that narrows the panel, in place of a title over it.
+ *
+ * Sized down from Pico's default, which is a form field on a page: this one sits in a
+ * 300px column above rows of 0.75rem file names, and at full height it reads as the
+ * subject of the panel rather than as a way through it.
+ */
+.file-panel-search {
+    margin: 0;
+    padding: 0;
+
+    input {
+        margin: 0 0 0.5rem;
+        padding: 0.3rem 0.5rem;
+        height: auto;
+        font-size: 0.8rem;
+    }
 }
 
 /* Heads a run of categories -- see `group` in core/filePanel.js. Quieter than the
@@ -433,6 +544,11 @@ body.driver-active .driver-popover-next-btn {
         cursor: pointer;
         font-size: 0.85rem;
     }
+
+    /* See --list-heading-gap. */
+    &[open] > summary {
+        margin-bottom: var(--list-heading-gap);
+    }
 }
 
 /*
@@ -443,7 +559,11 @@ body.driver-active .driver-popover-next-btn {
  * ever one level of it.
  */
 .file-panel-subcategory {
-    margin: 0.3rem 0 0.3rem 0.7rem;
+    /* The same 0.25rem the entries put between themselves and the summary above them, so
+       a category's first floor stands off its building's name exactly as far as a floor's
+       first layout stands off the floor's. It was a 20th of a rem more, which is nothing
+       to look at and enough to see. */
+    margin: 0.25rem 0 0.25rem 0.7rem;
 
     summary {
         cursor: pointer;
@@ -452,9 +572,10 @@ body.driver-active .driver-popover-next-btn {
     }
 
     /* Open by default, so this is the common case: the entries under it should not read
-       as a second list stacked under the first. */
+       as a second list stacked under the first. The same gap the category above it keeps
+       from its own items, which is none -- see --list-heading-gap. */
     &[open] > summary {
-        margin-bottom: 0.15rem;
+        margin-bottom: var(--list-heading-gap);
     }
 }
 
@@ -467,6 +588,13 @@ body.driver-active .driver-popover-next-btn {
  */
 .file-panel-footer {
     margin: 0.15rem 0 0.5rem 0.7rem;
+
+    /* Two of them where a category offers two things -- a floor on top, a basement
+       underneath. Side by side rather than stacked: they are alternatives to each
+       other, and a column of buttons reads as a list of what the section holds. */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
 }
 
 /*
@@ -504,6 +632,52 @@ body.driver-active .driver-popover-next-btn {
     line-height: 1.4;
 }
 
+/*
+ * The one that destroys something: red, and a square at the end of the row.
+ *
+ * The height comes from the row, which the file button beside it decides. The width is the
+ * same figure written as a length, rather than `aspect-ratio: 1`: a flex item's main size
+ * is resolved before `align-self: stretch` gives it a cross size, so there is no ratio for
+ * the width to be derived from at the point the width is decided. Both come off
+ * --file-panel-row-height, so neither is a number anyone has to keep in step by hand.
+ *
+ * The glyph is centred rather than left-aligned, against the rule further down that lays
+ * out a name.
+ */
+.file-panel-danger {
+    align-self: stretch;
+    width: var(--file-panel-row-height);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* As .array-controls, and for the same reason: a glyph wants a font that has it. */
+    font-family: system-ui, sans-serif;
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+
+    /* Outlined until it is pointed at, so a row of files does not read as a row of red
+       buttons with the names as captions. */
+    border: 1px solid var(--pico-del-color);
+    background: transparent;
+    color: var(--pico-del-color);
+}
+
+/*
+ * Filled in when it is pointed at, so the row says what the click is going to do before
+ * the confirm box has to.
+ *
+ * The border is restated rather than left to the rule above. Pico's button hover sets
+ * --pico-border-color from a selector more specific than that one, which would put a grey
+ * outline around a red button.
+ */
+.file-panel-danger:is(:hover, :focus-visible) {
+    background: var(--pico-del-color);
+    border-color: var(--pico-del-color);
+    color: var(--pico-primary-inverse);
+}
+
 .file-panel-entries {
     padding: 0.25rem 0 0;
     margin: 0;
@@ -533,6 +707,13 @@ body.driver-active .driver-popover-next-btn {
     }
 
     .file-panel-open {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* An entry with nothing to open is a name rather than a button, and it is still the
+       half of the row that gives when the action beside it needs the space. */
+    > .file-panel-name {
         flex: 1;
         min-width: 0;
     }
@@ -585,8 +766,8 @@ body.driver-active .driver-popover-next-btn {
 .manifest-section .files-order button {
     width: 100%;
     margin: 0;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
+    padding: var(--file-panel-row-padding) 0.5rem;
+    font-size: var(--file-panel-row-font);
     text-align: left;
 }
 

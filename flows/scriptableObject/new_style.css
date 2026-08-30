@@ -94,7 +94,10 @@ ul li {
     font-family: inherit;
     font-size: inherit;
 }
-.select2-dropdown input, .jsontree-container input, .jsontree-container select {
+/* The dropdown's own search box is styled with the control, in
+   core/components/searchSelect/searchSelect.css: the padding shorthand that used to be
+   here took Pico's search-icon inset with it. */
+.jsontree-container input, .jsontree-container select {
     padding: 2px 10px;
     height: 100%;
     width: 90%;
@@ -119,6 +122,52 @@ ul li {
 }
 
 /* MODALS */
+
+/*
+ * The asset explorer's two typeaheads, and the button under them.
+ *
+ * Pico's bottom margin on a `<select>` is what used to space these. select2 leaves that
+ * element in the document but clipped to nothing, and what stands in its place is a `<span>`
+ * Pico has no rule for -- so the type picker, the asset picker and the button below them
+ * ended up flush against each other, reading as one three-storey control.
+ *
+ * `> article >` deliberately: both dropdowns are parented to the dialog itself rather than
+ * to the article -- see ASSET_EXPLORER in scripts/ui.js -- and are `.select2-container`s
+ * too. They are positioned absolutely, so a margin would do them no harm, but the two this
+ * is about are the ones in the layout.
+ */
+#asset-explorer-modal > article > .select2-container {
+    margin-bottom: var(--pico-spacing);
+}
+
+/*
+ * Both of the explorer's lists are long -- every type the game has, and with no type named
+ * every asset of every one of them -- and this dialog, unlike the panels the control was
+ * built for, is the only thing on the screen. select2's own 200px shows eight names of five
+ * thousand, so the height is taken from the window instead.
+ *
+ * Capped as well as proportional. select2 decides between opening downwards and flipping
+ * upwards by measuring the dropdown against the room on each side, and the asset list is
+ * the lower of the two controls: a list sized at half the window from there has room on
+ * neither side, and lands overflowing whichever it picks.
+ *
+ * The outer list only. A section's own `<ul>` carries the same class, and a height on that
+ * would put a second scrollbar inside the first for any type with more assets than fit.
+ */
+#asset-explorer-modal .select2-results > .select2-results__options {
+    max-height: min(38vh, 26rem);
+}
+
+/*
+ * Why an asset did not open. Muted rather than loud: it is the answer to a click, not a
+ * failure to recover from, and what to do about it is the button directly beneath it.
+ */
+#asset-explorer-note {
+    display: block;
+    margin-bottom: var(--pico-spacing);
+    color: var(--pico-muted-color);
+}
+
 #select-fields-modal-field-list {
     display: block;
     overflow-y: auto;
@@ -198,7 +247,17 @@ ul li {
     font-size: inherit;
 }
 
-.select2-dropdown input, #trees input, #trees select {
+/*
+ * The tree's own fields.
+ *
+ * The search box inside a dropdown is excluded, and the exclusion is load-bearing rather
+ * than tidiness: these dropdowns are parented into `#trees`, so their search box is a
+ * `#trees input` too, and this rule out-specifies the `[type=search]` inset Pico uses to
+ * keep text clear of the magnifier it paints. That is what put every character typed
+ * underneath the icon. Sizing the box is the control's job either way -- see
+ * core/components/searchSelect/searchSelect.css.
+ */
+#trees input:not(.select2-search__field), #trees select {
     padding: 2px 10px;
     height: 100%;
     width: 90%;
@@ -219,18 +278,32 @@ ul li {
     padding: 0;
 }
 
-.select2-dropdown {
+/*
+ * This flow's dropdowns read as part of the tree, so they take the tree's face. Scoped to
+ * `#trees`, which is where these dropdowns are parented, because the control is shared now
+ * and the building flow's furniture checker should not inherit a monospace palette chosen
+ * for a JSON tree.
+ */
+#trees .select2-dropdown,
+#trees .select2-container--default .select2-selection--single {
     font-family:monospace;
     font-size: 14px;
     color: black;
+
+    /* Pinned rather than inherited. The control takes its colours from Pico now -- see
+       core/components/searchSelect/searchSelect.css -- and Pico follows the OS scheme,
+       which would leave this black text on a dark box. The trees are a light surface
+       whatever the rest of the page is doing, for the same reason chrome.css forces
+       `color-scheme: light` on them: jsonTree's palette is hardcoded. */
+    background-color: #fff;
 }
 
-.select2 {
+#trees .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: inherit;
+}
+
+#trees .select2 {
     width: 90% !important;
-}
-
-#trees .select2-search__field {
-    width: 100%;
 }
 
 /*JSON tree's styles*/
@@ -244,20 +317,4 @@ ul li {
 
 #trees .jsontree_child-nodes {
     margin-left: 0;
-}
-
-#asset-model-asset-list {
-    height: 100%;
-    overflow-y: scroll;
-
-    &.asset-loaded-link {
-        .link-element {
-            color: lightblue;
-            text-decoration: underline;
-    
-            &:hover {
-                text-decoration: none;
-            }
-        }
-    }
 }

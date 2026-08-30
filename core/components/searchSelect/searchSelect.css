@@ -1,0 +1,291 @@
+/*
+ * The searchable select, styled where its behaviour lives. See searchSelect.js.
+ *
+ * select2 ships a theme of its own: a white background, black text, and fixed pixel sizes
+ * built for a full-width form. Beside a Pico `<select>` it reads as a control from another
+ * application -- and on a dark colour scheme it is a white slab. So most of what is here
+ * hands those decisions back to Pico, whose variables are what every other control on the
+ * page is already drawn from, and the control follows the theme for free.
+ *
+ * Sizes are in `em` throughout, so a panel that sets a smaller type size gets a smaller
+ * control rather than the same one with smaller text in it.
+ *
+ * The one thing a flow still owns is the dropdown's own type and palette, because the
+ * dropdown is parented away from the control -- see `parent` in searchSelect.js -- and
+ * inherits from wherever it landed. `dropdownClass` is how a flow reaches it.
+ */
+
+
+/* -------------------------------------------------------------------------- */
+/* The closed control                                                          */
+/* -------------------------------------------------------------------------- */
+
+/* Inherit, so a panel's type size reaches the control rather than stopping at it. */
+.select2-container {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/*
+ * A Pico `<select>`, as near as select2's markup allows.
+ *
+ * select2 sets a fixed 28px height and a 28px line-height on the text inside it, neither of
+ * which can follow a panel that sets a smaller type size. Height comes off the line box
+ * instead, so the control scales with its text.
+ *
+ * The padding is `em` and deliberately tighter than Pico's own form spacing. Both flows
+ * that use this already override Pico to a compact control -- the building flow's `.field`
+ * selects and the case flow's `#trees` inputs are within a pixel or two of each other --
+ * so taking Pico's full-size spacing here would make this the one oversized control on
+ * either panel. What it matches is the app, not the framework.
+ */
+.select2-container--default .select2-selection--single {
+    height: auto;
+    padding: 0.25em 0.5em;
+    background-color: var(--pico-form-element-background-color);
+    border: var(--pico-border-width) solid var(--pico-form-element-border-color);
+    border-radius: var(--pico-border-radius);
+}
+
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: var(--pico-form-element-active-border-color);
+    box-shadow: 0 0 0 var(--pico-outline-width) var(--pico-form-element-focus-color);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    /* select2 pads and line-heights this to centre text in the fixed height above. The
+       padding is the parent's now, and the line height is the control's own -- inheriting
+       a panel's prose line height makes for a needlessly tall box. */
+    padding: 0;
+    padding-inline-end: 1.5em;
+    line-height: 1.35;
+    color: var(--pico-form-element-color);
+
+    /* A preset name can outrun 9rem. Clipped with an ellipsis rather than wrapped: the
+       control is one line, and the dropdown is where the whole name is readable. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: var(--pico-form-element-placeholder-color);
+}
+
+/* Sized and placed against the box rather than against select2's 28px. */
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+    top: 0;
+    inset-inline-end: calc(var(--pico-form-element-spacing-horizontal) / 2);
+    width: 1.2em;
+}
+
+/*
+ * The `×` that takes a selection back off, for a caller that allowed it -- see `allowClear`.
+ *
+ * select2 writes this as a real `<button>`, and Pico paints every button as a full-width
+ * primary one: red, padded, and as tall as a form control. So most of what is here is that
+ * undone. What is left is a glyph inside the control, sitting just inside the arrow --
+ * select2's own rule floats it right with a flat 20px margin, which was measured against
+ * the fixed-height control this stylesheet already replaced.
+ */
+.select2-container--default .select2-selection--single .select2-selection__clear {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    /* Clear of the arrow, which is 1.2em wide at the same inset. */
+    inset-inline-end: calc(var(--pico-form-element-spacing-horizontal) / 2 + 1.2em);
+    width: 1.2em;
+
+    float: none;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+
+    font-size: inherit;
+    line-height: 1;
+    color: var(--pico-form-element-placeholder-color);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__clear:hover,
+.select2-container--default .select2-selection--single .select2-selection__clear:focus {
+    background: none;
+    color: var(--pico-color);
+}
+
+/* The name already has the arrow's width kept clear of it; this is the `×` as well, so a
+   long name is clipped before it reaches either. select2 puts the class on for exactly as
+   long as the button is there -- it is taken off again the moment the control is cleared. */
+.select2-container--default .select2-selection--single.select2-selection--clearable
+.select2-selection__rendered {
+    padding-inline-end: 2.7em;
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* The dropdown                                                                */
+/* -------------------------------------------------------------------------- */
+
+.select2-dropdown {
+    background-color: var(--pico-form-element-background-color);
+    border-color: var(--pico-form-element-active-border-color);
+    border-radius: var(--pico-border-radius);
+    color: var(--pico-color);
+}
+
+/*
+ * The search box at the top of the dropdown.
+ *
+ * select2 writes this as `<input type="search">`, which Pico paints a magnifier onto:
+ *
+ *     [type=search] {
+ *         padding-inline-start: calc(var(--pico-form-element-spacing-horizontal) + 1.75rem);
+ *         background-image: var(--pico-icon-search);
+ *     }
+ *
+ * So the inset that keeps the text clear of the icon is Pico's, and it is `padding-inline-start`.
+ * The case flow used to set `padding: 2px 10px` here, and a shorthand sets all four sides:
+ * the inset went with it and every character typed ran underneath the magnifier. Vertical
+ * padding is set on its own for that reason -- there is a whole side of this control that
+ * belongs to Pico, and a shorthand cannot help but claim it.
+ */
+.select2-dropdown .select2-search__field {
+    /*
+     * Height, not just padding. Pico sizes every input twice over --
+     *
+     *     input:not([type=checkbox],[type=radio],[type=range]) {
+     *         height: calc(1rem * var(--pico-line-height)
+     *                      + var(--pico-form-element-spacing-vertical) * 2
+     *                      + var(--pico-border-width) * 2);
+     *     }
+     *
+     * -- and that `height` is in absolute `rem` against a full-size form. Overriding the
+     * padding alone left it standing, and the box came out around three times the height
+     * of the rows beneath it. Both of Pico's rules are one class less specific than this
+     * one, so neither needs `!important`.
+     */
+    /*
+     * Pico sets `font-size: 1rem` on form elements outright, so this box does not follow
+     * the dropdown's type the way everything else in it does. That is the other half of
+     * the height: the em-based padding below was being measured against 1rem rather than
+     * against the panel's smaller text.
+     */
+    font-size: inherit;
+
+    height: auto;
+    padding-block: 0.25em;
+    line-height: 1.35;
+
+    /* Pico gives form elements a bottom margin, for fields stacked down a form. This one
+       is the head of a list, and the gap read as a break between it and the results. */
+    margin-block: 0;
+
+    /* select2 sets an inline width in pixels, measured before the dropdown is laid out,
+       which leaves the box short of the edge. */
+    width: 100% !important;
+    box-sizing: border-box;
+}
+
+/* select2 pads the box that holds the search field with a flat 4px. In `em` it keeps step
+   with the field it frames rather than being a fixed gap above a smaller one. */
+.select2-dropdown .select2-search--dropdown {
+    padding: 0.3em;
+}
+
+/*
+ * The list.
+ *
+ * `overflow-x: hidden` with the names wrapped, rather than a scrollbar: a furniture preset
+ * is a `CamelCase` name that can outrun a narrow panel, and a horizontal scrollbar under a
+ * list you are already scrolling vertically is two axes to read one column of names.
+ */
+.select2-dropdown .select2-results__options {
+    overflow-x: hidden;
+}
+
+/*
+ * A row.
+ *
+ * The margin is Pico's, from `li { margin-bottom: calc(var(--pico-spacing) * 0.25) }`, and
+ * it is a fixed 0.25rem however small the list's type is -- so a dropdown at 0.75rem got
+ * proportionally more air between its rows than one at full size, and neither wanted any:
+ * these are rows of a list you run your eye down, not paragraphs. Padding alone separates
+ * them, which is in `em` and so keeps step with whatever type the dropdown is set in.
+ */
+.select2-dropdown .select2-results__option {
+    margin-bottom: 0;
+    padding: 0.3em 0.6em;
+    overflow-wrap: anywhere;
+}
+
+/*
+ * The row under the pointer, and the one already chosen. select2's defaults for both are
+ * its own blue and a light grey, neither of which is a colour this app uses anywhere else.
+ */
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
+}
+
+.select2-container--default .select2-results__option[aria-selected="true"] {
+    background-color: var(--pico-secondary-background);
+    color: var(--pico-secondary-inverse);
+}
+
+/*
+ * A section, heading and options together.
+ *
+ * select2 marks the `<li>` that wraps an `<optgroup>` with `role="group"`, and Pico claims
+ * that attribute outright for its button groups:
+ *
+ *     [role=group], [role=search] {
+ *         display: inline-flex;
+ *         width: 100%;
+ *         margin-bottom: var(--pico-spacing);
+ *         box-shadow: var(--pico-group-box-shadow, ...);
+ *     }
+ *
+ * -- so every section came out as a row with its heading in one column and its options in
+ * the next, a whole `--pico-spacing` of air beneath it. Which is a semantic attribute being
+ * read as a styling hook, and nothing on the select2 side to notice it by; the two agree on
+ * the word "group" and mean unrelated things by it. Undone here rather than per flow,
+ * because it is every grouped list in the app.
+ */
+.select2-dropdown .select2-results__option--group {
+    display: block;
+    margin-bottom: 0;
+    box-shadow: none;
+    transition: none;
+}
+
+/*
+ * Section headings -- "Included", "Exported".
+ *
+ * select2 renders an `<optgroup>` label as a non-selectable row in the same list as the
+ * options, so the whole thing scrolls together and a heading has to look unlike the
+ * things under it or it reads as an option you cannot click.
+ *
+ * The line height is set rather than inherited. Pico's 1.5 is leading for prose, and this
+ * is one word: at the size the asset explorer's lists are set in it made a 39.6px box
+ * around an 18px label, which is the heading standing further from its own items than
+ * the items stand from each other. Everything here is in `em` so a heading is the same
+ * shape in a dropdown at any size -- see --list-heading-gap in core/chrome.css for the
+ * rule the app's other lists follow, which this is the model for.
+ */
+.select2-dropdown .select2-results__group {
+    padding: 0.35em 0.6em 0.1em;
+    font-size: 0.9em;
+    line-height: 1.2;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--pico-muted-color);
+}
+
+/* Indented under their heading, so the grouping is visible while scrolling past it. */
+.select2-dropdown .select2-results__group + .select2-results__options .select2-results__option {
+    padding-inline-start: 1.2em;
+}

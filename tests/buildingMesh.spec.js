@@ -52,6 +52,12 @@ const spareFloor = JSON.stringify({
  * storeys, so that trimming the ground floor still leaves a body to build.
  */
 const modWithBuilding = {
+    // The manifest naming the preset is what makes the shell offer this folder at all.
+    // See core/modFolders.js.
+    'Plugins/MyTower/murdermanifest.sodso.json': json({
+        enabled: true, fileOrder: ['REF:MyTower'], loadBefore: '', version: 1,
+    }),
+
     'Plugins/MyTower/MyTower.sodso.json': json({
         name: 'MyTower',
         presetName: 'MyTower',
@@ -239,7 +245,7 @@ test('a base game building becomes the mod\'s own before anything is written', a
 
     await generate(page);
 
-    const written = JSON.parse(await readFile(page, 'Plugins/MyTower/Townhouse.sodso.json'));
+    const written = JSON.parse(await readFile(page, 'Plugins/MyTower/Townhouse.BuildingPreset.sodso.json'));
 
     expect(written.copyFrom).toBe('REF:BuildingPreset|Townhouse');
     expect(written.prefab).toBe('PREFAB:TownhousePrefab/Townhouse');
@@ -263,6 +269,9 @@ test('a floor no building refers to has nothing to generate', async ({ page }) =
 test('a building with nothing above its ground floor says so rather than writing half of one',
     async ({ page }) => {
         await openBuildingFlow(page, {
+            'Plugins/MyTower/murdermanifest.sodso.json': json({
+                enabled: true, fileOrder: ['REF:MyTower'], loadBefore: '', version: 1,
+            }),
             'Plugins/MyTower/MyTower.sodso.json': json({
                 name: 'MyTower',
                 presetName: 'MyTower',

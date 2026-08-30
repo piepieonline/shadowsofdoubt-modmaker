@@ -106,14 +106,21 @@ test('a marker is labelled with what it carries, a line at a time', () => {
     for (const marker of markers) {
         const lines = marker.label.split('\n');
 
-        // One line per thing, and the stairwell's says which way it faces. The label is
-        // turned by that rotation as well; the degrees are written out so that a label
-        // lying at a quarter turn is read rather than measured.
-        expect(lines).toHaveLength((marker.stairwell ? 1 : 0) + (marker.entrance ? 1 : 0));
+        // A stairwell is three rows -- what it is and which way it faces, whether it is
+        // the mirrored preset, and whether that preset carries a lift -- and the ones that
+        // do not apply are written as blanks so the rows line up across a floor.
+        expect(lines).toHaveLength((marker.stairwell ? 3 : 0) + (marker.entrance ? 1 : 0));
 
         if (marker.stairwell) {
-            expect(lines[0]).toBe(
-                `${marker.stairwell === 'elevator' ? 'Elevator' : 'Stairs'} ${marker.rotation}°`);
+            // Always "Stairs": what stands in the tile is a stairwell whichever preset it
+            // is. The label is turned by the rotation as well; the degrees are written out
+            // so that a label lying at a quarter turn is read rather than measured.
+            expect(lines[0]).toBe(`Stairs ${marker.rotation}°`);
+            expect(lines[1]).toBe(marker.stairwell === 'inverted' ? 'Inverted' : '');
+
+            // Nothing has told the model what its building's stairwell is, and every one
+            // the game ships carries a lift.
+            expect(lines[2]).toBe('Elevator');
         }
         if (marker.entrance) {
             expect(lines.at(-1)).toBe(marker.entrance === 'main' ? 'Main entrance' : 'Entrance');

@@ -3,14 +3,14 @@
  */
 import {
     toggleManifestPanel, shareOpen, enableAssetOnlyMode, toggleEditMode, toggleDefaultValues,
-    updateAssetModel, updateNewFileCopyFrom, newFileMode, setNewFileMode, updateNewFileSubmitState,
-    updateSelectAllCopyFrom, loadExportedSOs,
+    updateNewFileCopyFrom, newFileMode, setNewFileMode, updateNewFileSubmitState,
+    updateSelectAllCopyFrom, filterFilePanel,
 } from './scripts/ui.js';
 import { cancelNewCasePopup } from './index.js';
 
 export default {
     toggleManifestPanel, shareOpen, enableAssetOnlyMode, toggleEditMode, toggleDefaultValues,
-    updateAssetModel, updateNewFileCopyFrom, newFileMode, setNewFileMode, updateNewFileSubmitState,
-    updateSelectAllCopyFrom, loadExportedSOs,
+    updateNewFileCopyFrom, newFileMode, setNewFileMode, updateNewFileSubmitState,
+    updateSelectAllCopyFrom, filterFilePanel,
     cancelNewCasePopup,
 };

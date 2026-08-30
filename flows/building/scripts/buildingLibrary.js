@@ -10,7 +10,16 @@
  *   refs/floors/buildings/<Name>.json   the base game's, dumped out of the game. Unity
  *                                       asset references (`{m_FileID, m_PathID}`),
  *                                       enums as integers, every field present.
- *   <Name>.sodso.json in a mod          the mod loader's, which is what this writes.
+ *   <Name>.BuildingPreset.sodso.json    the mod loader's, which is what this writes.
+ *      in a mod
+ *
+ * The flow deals in bare building names throughout -- a name is what a slot belongs to,
+ * what the base game index is searched by, and what `copyFrom` points at. The file it is
+ * stored in carries the type as well (see core/soFileName.js), so which file a name means
+ * is settled by looking in the folder rather than by spelling it out: a mod written
+ * before that convention holds `<Name>.sodso.json`, that file is still what the manifest
+ * names and still what the game loads, and saving a floor against it must go back into
+ * it rather than beside it.
  *
  * The two agree on the fields that matter here -- floorLayouts and basementLayouts are
  * plain data in both -- so a slot list can be read from either. Only the mod loader's
@@ -34,7 +43,11 @@
  * which is what makes the loader read it at all. See core/murderManifest.js.
  */
 import { readFileContent, tryGetFile, tryGetFolder, getFile, getFolder, writeFile } from '../../../core/fs.js';
+import { BUILDING_TYPE } from '../../../core/modFolders.js';
 import { ensureListed } from '../../../core/murderManifest.js';
+import { assetNameOf, fileNameFor, PRESET_SUFFIX } from '../../../core/soFileName.js';
+import { pathIdMap } from '../../../core/baseAssets.js';
+import { refName } from './furnitureOverlay.js';
 
 /**
  * The game's own default for every BuildingPreset field, which is what "default-valued"
@@ -47,10 +60,14 @@ import { ensureListed } from '../../../core/murderManifest.js';
  */
 import soDefaults from '../../../refs/generated/soDefaults.json' with { type: 'json' };
 
-export const BUILDING_TYPE = 'BuildingPreset';
-export const PRESET_SUFFIX = '.sodso.json';
+/**
+ * What a building's `fileType` says. From core/modFolders.js because the folder search
+ * has to recognise one too -- a content folder is a building folder when its manifest
+ * names a preset saying this -- and the two cannot be allowed to disagree about it.
+ */
+export { BUILDING_TYPE, PRESET_SUFFIX };
 
-/** The folder a mod keeps its floors in, and the marker core/modFolders.js looks for. */
+/** The folder a mod keeps its floors in. */
 export const FLOORS_DIR = 'Floors';
 
 /**
@@ -132,9 +149,15 @@ export async function loadVanillaBlueprint(name) {
 /**
  * The buildings a content folder defines.
  *
- * A building is a `<Name>.sodso.json` saying `fileType: "BuildingPreset"`. A folder may
- * hold several, all sharing the one Floors directory -- which is why the directory is
- * what marks the folder rather than any one preset being.
+ * A building is a `.sodso.json` saying `fileType: "BuildingPreset"`. A folder may hold
+ * several, all sharing the one Floors directory. What each one is called is the file's
+ * name with its type taken off, which for a file written before that convention is the
+ * whole of it.
+ *
+ * Every one is listed here, whether or not the mod's manifest names it. What the manifest
+ * settles is whether the *folder* is offered at all (see core/modFolders.js); once an
+ * author is in it, a preset the manifest has lost track of is the one thing they most
+ * need to see -- and saving it puts it back in the manifest.
  */
 export async function listCustomBuildings(contentFolder) {
     if (!contentFolder) return [];
@@ -146,8 +169,14 @@ export async function listCustomBuildings(contentFolder) {
         const preset = await readJson(entry);
         if (preset?.fileType !== BUILDING_TYPE) continue;
 
+        const stem = entry.name.slice(0, -PRESET_SUFFIX.length);
+
         found.push({
-            name: entry.name.slice(0, -PRESET_SUFFIX.length),
+            // The building, not the file: the type comes off, and a file named before
+            // that convention has none to come off. This is what the base game index is
+            // matched against and what `copyFrom` is written with, so it has to be the
+            // name and nothing else.
+            name: assetNameOf(stem, BUILDING_TYPE),
             isCustom: true,
             preset,
         });
@@ -174,10 +203,32 @@ export async function listBuildings(contentFolder) {
     return [...custom, ...vanilla];
 }
 
+/**
+ * The file an asset of a type is stored in, or null when the mod does not hold it.
+ *
+ * Two names to try, and the order is the whole of it. The typed one is what this writes
+ * now; the bare one is what mods written before that convention hold, and it is a file
+ * the manifest already names and the game already loads. Preferring the typed name means
+ * a folder holding both -- which only a hand-edited mod can be -- is read the way it is
+ * written, rather than one file being read and the other written.
+ *
+ * Buildings are what this mostly looks for, and are what the type defaults to. A stairwell
+ * is the other one, and is looked for the same way because a mod names its files the same
+ * way whatever is in them.
+ */
+async function findPresetFile(contentFolder, name, type = BUILDING_TYPE) {
+    for (const fileName of [fileNameFor(name, type), `${name}${PRESET_SUFFIX}`]) {
+        const handle = await tryGetFile(contentFolder, [fileName]);
+        if (handle) return { fileName, handle };
+    }
+
+    return null;
+}
+
 /** A mod's building preset, or null if the folder has no such file. */
 export async function readCustomPreset(contentFolder, name) {
-    const handle = await tryGetFile(contentFolder, [`${name}${PRESET_SUFFIX}`]);
-    return handle ? readJson(handle) : null;
+    const found = await findPresetFile(contentFolder, name);
+    return found ? readJson(found.handle) : null;
 }
 
 /**
@@ -192,6 +243,103 @@ export async function loadPreset(contentFolder, name) {
 
     const vanilla = await loadVanillaPreset(name);
     return vanilla ? { preset: vanilla, isCustom: false } : null;
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* The stairwell standing in a tile                                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The type of the asset a building names as its stairwell, and the two the game falls
+ * back to when it names none.
+ *
+ * The fallbacks are the game's own: a building with no `stairwellRegular` gets
+ * WoodenStairwellElevator, and the tile's `e_l` swaps it for the mirrored one of the pair.
+ * That flag is *only* this choice -- see parseTiles in floorModel.js.
+ */
+const STAIRWELL_TYPE = 'StairwellPreset';
+const DEFAULT_STAIRWELL = 'WoodenStairwellElevator';
+const DEFAULT_STAIRWELL_INVERTED = 'WoodenStairwellElevatorInverted';
+
+/**
+ * Whether the stairwell a tile shows carries a lift, for both of the presets a tile in
+ * this building can resolve to: `{ plain, inverted }`, keyed by the tile's `e_l`.
+ *
+ * **Both are true unless the mod says otherwise.** `featuresElevator` defaults to true in
+ * the game -- see soDefaults -- and all five StairwellPresets it ships leave it there, so
+ * the only thing that can make a stairwell lift-less is a mod defining a StairwellPreset
+ * of its own. This tool ships no reference data for the type because there is nothing in
+ * it worth shipping: five assets that all say the same thing.
+ *
+ * Two answers rather than one only where the two can differ. A building that names its own
+ * stairwell has named the asset for every stairwell tile in it, mirrored or not; it is the
+ * fallback that `e_l` chooses between, and a mod is free to define one of that pair and
+ * not the other.
+ */
+export async function stairwellElevators(contentFolder, preset) {
+    const named = await stairwellPresetName(preset);
+
+    if (named) {
+        const carries = await featuresElevator(contentFolder, named);
+        return { plain: carries, inverted: carries };
+    }
+
+    return {
+        plain: await featuresElevator(contentFolder, DEFAULT_STAIRWELL),
+        inverted: await featuresElevator(contentFolder, DEFAULT_STAIRWELL_INVERTED),
+    };
+}
+
+/**
+ * The StairwellPreset a building names, or null when it names none.
+ *
+ * The two shapes this file exists to reconcile, again. A mod's preset holds
+ * `REF:StairwellPreset|MarbleStairwellElevator`; a dumped one holds the Unity reference
+ * `{m_FileID: 18034, m_PathID: 0}`, which is a position in the game's asset files and says
+ * nothing until it is looked up. `m_FileID: 0` is Unity's "no reference at all", and is
+ * what 13 of the 15 buildings shipped here hold.
+ *
+ * An id that names something other than a stairwell, or nothing at all, is treated as
+ * unset. It is not a name this can use, and guessing at one would put a preset in the tile
+ * that the game never places there.
+ *
+ * The path id map is reached for only when there is an id to look up, which is what keeps
+ * 1.6 MB of generated JSON out of the ordinary case: 13 of the 15 buildings shipped here
+ * name no stairwell at all, and a mod's own preset names one in words. See
+ * core/baseAssets.js.
+ */
+async function stairwellPresetName(preset) {
+    const reference = preset?.stairwellRegular;
+    if (!reference) return null;
+
+    if (typeof reference === 'string') return refName(reference);
+    if (!reference.m_FileID) return null;
+
+    const asset = (await pathIdMap())[String(reference.m_FileID)];
+    return asset?.startsWith(`${STAIRWELL_TYPE}|`) ? asset.slice(STAIRWELL_TYPE.length + 1) : null;
+}
+
+/**
+ * Whether one named StairwellPreset carries a lift.
+ *
+ * Only the mod's own file is read. The base game's stairwells are not shipped with this
+ * tool and do not need to be: every one of them says true, which is what a name with no
+ * file behind it answers. A mod file that says nothing about the field answers true as
+ * well -- a preset written with `copyFrom` and no opinion has not turned anything off.
+ */
+async function featuresElevator(contentFolder, name) {
+    if (!contentFolder || !name) return true;
+
+    const found = await findPresetFile(contentFolder, name, STAIRWELL_TYPE);
+    const preset = found ? await readJson(found.handle) : null;
+
+    // The bare file name is a name with no type in it, so a mod holding
+    // `WoodenStairwellElevator.sodso.json` for something else entirely would be read here
+    // as a stairwell. What the file says it is settles it.
+    const isStairwell = preset?.fileType === STAIRWELL_TYPE || preset?.type === STAIRWELL_TYPE;
+
+    return !isStairwell || preset.featuresElevator !== false;
 }
 
 
@@ -219,18 +367,35 @@ export function enumerateSlots(preset) {
 function slotsIn(layouts, isBasement) {
     const options = [];
 
+    // The first floor of the setting being read. A setting is not a floor: it says "the
+    // next N floors look like this", so the one after a setting covering four floors is
+    // four floors further up. Counting the settings instead named a twelve storey
+    // building's top floor Floor 7.
+    let first = isBasement ? FIRST_BASEMENT : 0;
+
     // The shipped dumps always write the list, empty or not. A mod preset need not:
     // writing a stub drops any list still at its default, so a building copied from
     // another and never given basements has no basementLayouts field at all.
     (layouts ?? []).forEach((layout, layoutIndex) => {
+        // Read as readFootprints reads it, so the numbering agrees with the building the
+        // mesh is built from: a setting still puts one floor in the building when the
+        // count is 0 or missing.
+        const covers = Math.max(1, layout?.floorsWithThisSetting ?? 1);
+        const storeyLabel = storeyName(isBasement, first, covers);
+        first += covers;
+
         for (const isControlVariant of [false, true]) {
             const blueprints = isControlVariant ? layout?.controlRoomVariants : layout?.blueprints;
 
             (blueprints ?? []).forEach((blueprint, blueprintIndex) => {
                 options.push({
                     slot: { isBasement, isControlVariant, layoutIndex, blueprintIndex },
+                    // Which floors of the building this slot is one layout of, worked out
+                    // here because this is where the preset is: storeysOf is handed slots
+                    // and has no setting to count from.
+                    storeyLabel,
                     label: slotLabel(
-                        isBasement, layoutIndex, blueprintIndex,
+                        storeyLabel, blueprintIndex,
                         (blueprints ?? []).length, isControlVariant),
                     // The name, not the entry. A slot is opened, labelled and saved by
                     // the floor it names; how the preset spells that out is settled when
@@ -256,6 +421,10 @@ function slotsIn(layouts, isBasement) {
  * Basements come first and deepest first, because basementLayouts[0] is the one just
  * below the ground floor and each after it is further down. That is the order they are
  * in in the building, which is what up and down have to mean.
+ *
+ * A storey is named by the floors of the building it covers rather than by its place in
+ * the setting list, which is `storeyLabel` on the slots enumerateSlots produced. See
+ * storeyName.
  */
 export function storeysOf(slots) {
     const byKey = new Map();
@@ -269,7 +438,7 @@ export function storeysOf(slots) {
                 key,
                 isBasement,
                 layoutIndex,
-                label: `${isBasement ? 'Basement' : 'Floor'} ${layoutIndex}`,
+                label: option.storeyLabel,
                 options: [],
             });
         }
@@ -280,7 +449,11 @@ export function storeysOf(slots) {
     return [...byKey.values()].sort((a, b) => height(a) - height(b));
 }
 
-/** Where a storey sits in the building: basement 0 is one below floor 0. */
+/**
+ * Where a storey sits in the building, for ordering: basementLayouts[0] is one below
+ * floorLayouts[0]. The settings run in the same order as the floors they cover, so
+ * counting settings orders them as counting floors would.
+ */
 const height = (storey) => (storey.isBasement ? -(storey.layoutIndex + 1) : storey.layoutIndex);
 
 /**
@@ -328,11 +501,26 @@ export const sameSlot = (a, b) => !!a && !!b
     && a.layoutIndex === b.layoutIndex
     && a.blueprintIndex === b.blueprintIndex;
 
-function slotLabel(isBasement, layoutIndex, blueprintIndex, count, isControlVariant) {
-    let label = `${isBasement ? 'Basement' : 'Floor'} ${layoutIndex}`;
+function slotLabel(storeyLabel, blueprintIndex, count, isControlVariant) {
+    let label = storeyLabel;
     if (count > 1) label += ` v${blueprintIndex}`;
     if (isControlVariant) label += ' (control)';
     return label;
+}
+
+/** Basement 1 is the first below the ground floor: the floor in basement 0's place is Floor 0. */
+const FIRST_BASEMENT = 1;
+
+/**
+ * What the floors one setting covers are called.
+ *
+ * A range where the setting covers more than one -- "Floors 5–8" -- because a setting is
+ * a run of floors and not a floor. Naming it by the first alone would leave the list
+ * skipping from Floor 5 to Floor 9 with nothing saying where 6, 7 and 8 went.
+ */
+function storeyName(isBasement, first, covers) {
+    const word = isBasement ? 'Basement' : 'Floor';
+    return covers > 1 ? `${word}s ${first}–${first + covers - 1}` : `${word} ${first}`;
 }
 
 /**
@@ -545,16 +733,26 @@ export function withoutDefaults(preset, alsoWritten = []) {
  *
  * The preset is written first. If listing then fails the building is still on disk to be
  * listed by hand, which is the recoverable half of the two.
+ *
+ * A building the mod already holds goes back into the file it came out of, under whatever
+ * name that file has. Only a building reaching the folder for the first time is named
+ * here, and it is named with its type. Moving an existing one would mean renaming its
+ * manifest entry to match, over a save the author asked nothing of -- and a mod whose
+ * files move when it is opened is worse than a mod with two naming conventions in it.
  */
 export async function writeCustomPreset(contentFolder, name, preset, { alsoWritten = [] } = {}) {
     const written = pointAtModFloors(
         withoutDefaults(preset, alsoWritten),
         new Set(await listCustomBlueprints(contentFolder)));
 
-    const handle = await getFile(contentFolder, [`${name}${PRESET_SUFFIX}`], true);
+    const existing = await findPresetFile(contentFolder, name);
+    const fileName = existing?.fileName ?? fileNameFor(name, BUILDING_TYPE);
+
+    const handle = existing?.handle ?? await getFile(contentFolder, [fileName], true);
     await writeFile(handle, `${JSON.stringify(written, null, 2)}\n`);
 
-    await ensureListed(contentFolder, name);
+    // The manifest lists files, so it is the file's name that goes in it.
+    await ensureListed(contentFolder, fileName.slice(0, -PRESET_SUFFIX.length));
 
     return handle;
 }

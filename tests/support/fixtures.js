@@ -128,6 +128,67 @@ export const soModDir = {
 };
 
 /**
+ * The same case, plus three more MurderMOs covering what a reference field has to decide
+ * about the mod's own content.
+ *
+ * `copyFrom` on a MurderMO points at another MurderMO -- see index.js, where copyFrom is
+ * typed as the document's own type -- so one field exercises all three at once:
+ *
+ * | | |
+ * |---|---|
+ * | `MyOtherMO` | the mod's own, listed. Offered under Modded. |
+ * | `ExCopSniper` | a patch of a base game asset, listed. Under Modded *and* still under Vanilla, since the name is the shipped one and the values are the mod's. |
+ * | `ForgottenMO` | the mod's own, absent from `fileOrder`. Not offered at all: the game would never load it, so a reference to it resolves for its author and for nobody else. |
+ *
+ * `SameName` is the awkward one, and it is two tests in one file. It is a `MurderPreset`
+ * that calls itself `testcase` -- the same name as the document being edited, which is a
+ * `MurderMO`. Hundreds of the game's own names belong to more than one type, so a document
+ * has to be kept out of its own lists by name *and* type, not by name: this one must still
+ * be offered to `compatibleWith`, which points at MurderPresets.
+ *
+ * Its file is called something else again, which is the other half. A `REF:` resolves
+ * against `presetName`, not against what the file is called, and only a mod written by
+ * hand ever has the two disagree -- this app renames the file with the preset.
+ */
+export const soModDirWithAssets = {
+    ...soModDir,
+    'Mods/TestCase/murdermanifest.sodso.json': json({
+        enabled: true,
+        fileOrder: ['REF:testcase', 'REF:MyOtherMO', 'REF:ExCopSniper', 'REF:SameName'],
+        loadBefore: '',
+        version: 1,
+    }),
+    'Mods/TestCase/SameName.sodso.json': json({
+        fileType: 'MurderPreset', name: 'testcase', presetName: 'testcase',
+    }),
+    'Mods/TestCase/MyOtherMO.sodso.json': json({
+        fileType: 'MurderMO', name: 'MyOtherMO', presetName: 'MyOtherMO', copyFrom: null,
+    }),
+    // A patch as createOverrideIfNotExisting writes one: the name it overrides, and the
+    // type, since a patch is a diff and cannot be typed from its contents.
+    'Mods/TestCase/ExCopSniper.sodso_patch.json': json({
+        name: 'ExCopSniper', fileType: 'MurderMO',
+    }),
+    'Mods/TestCase/ForgottenMO.sodso.json': json({
+        fileType: 'MurderMO', name: 'ForgottenMO', presetName: 'ForgottenMO', copyFrom: null,
+    }),
+    // The document under test gains a MurderPreset reference, which is the field the
+    // same-name-different-type case is read through.
+    'Mods/TestCase/testcase.sodso.json': json({
+        fileType: 'MurderMO',
+        name: 'testcase',
+        presetName: 'testcase',
+        notes: 'fixture',
+        copyFrom: null,
+        compatibleWith: [null],
+        nested: { alpha: 'a', beta: 'b' },
+        MOleads: [{ chance: 0.5, traitModifiers: [{ mustPassForApplication: true }] }],
+    }),
+};
+
+export const soFixtureWithAssets = { ...soModDirWithAssets };
+
+/**
  * A mod's own DDS content: files it adds, a patch overriding base game content, and
  * the strings its blocks resolve against.
  */
@@ -183,6 +244,33 @@ export const ddsQuotedStringsFixture = {
 export const ddsFixture = { ...streamingAssets, ...ddsModDir };
 export const ddsFixtureWithContent = { ...ddsFixture, ...ddsModContent };
 export const soFixture = { ...soModDir };
+
+/** The GUIDs of the mod's own content above, for tests that follow one to another. */
+export const MOD_TREE_GUID = 'aaaaaaaa-1111-4111-8111-111111111111';
+export const MOD_MSG_GUID = 'bbbbbbbb-2222-4222-8222-222222222222';
+export const MOD_BLOCK_GUID = 'cccccccc-3333-4333-8333-333333333333';
+
+/**
+ * The same mod, wired up the way DDS content actually nests: the tree holds the message,
+ * the message holds the block, and the block's line is already in the mod's CSV.
+ *
+ * `ddsModContent` leaves those arrays empty, which is what a fresh document looks like and
+ * is right for the tests that list the folder. This one exists for the tests that have to
+ * follow a link -- deleting a message and being told which tree was using it.
+ */
+export const ddsLinkedContent = {
+    ...ddsFixtureWithContent,
+    [`Mods/TestMod/Content/DDSContent/DDS/Trees/${MOD_TREE_GUID}.tree`]: json({
+        id: MOD_TREE_GUID,
+        name: 'ModTree',
+        messages: [{ msgID: MOD_MSG_GUID, instanceID: 'mod-instance-1', order: 0 }],
+    }),
+    [`Mods/TestMod/Content/DDSContent/DDS/Messages/${MOD_MSG_GUID}.msg`]: json({
+        id: MOD_MSG_GUID,
+        name: 'ModMessage',
+        blocks: [{ blockID: MOD_BLOCK_GUID, instanceID: 'mod-instance-2', alwaysDisplay: true }],
+    }),
+};
 
 /**
  * A mod laid out the way a ddsmanifest allows: a flat DDSContent whose CSVs are given
@@ -298,7 +386,6 @@ export const pluginsFixture = {
     // Several content folders as direct subfolders; one has no DDS content.
     'Plugins/AdditionalEvidence/AdditionalEvidence.dll': 'binary',
     'Plugins/AdditionalEvidence/BinPasscodes/murdermanifest.sodso.json': manifest([]),
-    'Plugins/AdditionalEvidence/GroupFlyers/murdermanifest.sodso.json': manifest([]),
     'Plugins/AdditionalEvidence/GroupFlyers/DDSContent/DDS/Trees/.keep': '',
 
     // Under the plugins/ convention, one level down.
@@ -306,16 +393,30 @@ export const pluginsFixture = {
     'Plugins/DialogAdditions/plugins/WhatIsYourPasscode/murdermanifest.sodso.json': manifest([]),
     'Plugins/DialogAdditions/plugins/WhatIsYourPasscode/DDSContent/DDS/Trees/.keep': '',
 
-    // Deeper again.
+    // Deeper again. It holds a building preset the manifest does not name, which is a
+    // file the loader never reads -- so this folder is a case and not a building.
     'Plugins/WhiteCollarSideJobs/plugins/Cases/test/murdermanifest.sodso.json': manifest([]),
+    'Plugins/WhiteCollarSideJobs/plugins/Cases/test/SideTower.sodso.json':
+        json({ fileType: 'BuildingPreset', name: 'SideTower' }),
 
-    // A building mod: no manifest and no DDSContent, just a preset named after the
-    // building and the floors it uses. The only thing marking it is the Floors folder.
+    // A building mod: no DDSContent, just a manifest naming a preset named after the
+    // building, and the floors it uses. Listed in lowercase, as mods in the wild do, so
+    // finding the preset cannot be a case-sensitive match on the entry.
+    'Plugins/TallTower/murdermanifest.sodso.json': manifest(['REF:talltower']),
     'Plugins/TallTower/TallTower.sodso.json': json({ fileType: 'BuildingPreset', name: 'TallTower' }),
     'Plugins/TallTower/Floors/TallTower_GroundFloor.json': json({ floorName: 'TallTower_GroundFloor' }),
 
     // A mod holding both a case and a building, to pin that the markers compose.
+    'Plugins/AdditionalEvidence/GroupFlyers/murdermanifest.sodso.json': manifest(['REF:FlyerTower']),
+    'Plugins/AdditionalEvidence/GroupFlyers/FlyerTower.sodso.json':
+        json({ fileType: 'BuildingPreset', name: 'FlyerTower' }),
     'Plugins/AdditionalEvidence/GroupFlyers/Floors/Flyer_Roof.json': json({ floorName: 'Flyer_Roof' }),
+
+    // A building mod from before this app listed the presets it wrote: a preset and its
+    // floors, and nothing naming either. The game does not load it and neither do we.
+    'Plugins/UnlistedTower/UnlistedTower.sodso.json':
+        json({ fileType: 'BuildingPreset', name: 'UnlistedTower' }),
+    'Plugins/UnlistedTower/Floors/UnlistedTower_Ground.json': json({ floorName: 'UnlistedTower_Ground' }),
 
     // A content folder with another manifest below it. Not something a real install
     // does, but it pins that the search stops at a match rather than walking on.
@@ -330,6 +431,12 @@ export const pluginsFixture = {
 /**
  * A case content folder holding more than its manifest references: several types of
  * asset, and a patch of a base game asset the manifest does not name.
+ *
+ * Both file naming conventions are represented, because a real folder holds both. Most
+ * of these are `<name>.sodso.json`, which is what mods written before the type joined
+ * the file name look like and what this app must go on reading and writing in place.
+ * `EP_Flyer` is the shape this app writes now -- see core/soFileName.js -- and it is
+ * there so that the panel is exercised on a file whose name is not what it is called.
  */
 export const soFolderContent = {
     'Mods/TestCase/murdermanifest.sodso.json': json({
@@ -337,8 +444,14 @@ export const soFolderContent = {
     }),
     'Mods/TestCase/testcase.sodso.json': json({ fileType: 'MurderMO', name: 'testcase' }),
     'Mods/TestCase/AnotherMurder.sodso.json': json({ fileType: 'MurderMO', name: 'AnotherMurder' }),
-    'Mods/TestCase/IP_Note.sodso.json': json({ fileType: 'InteractablePreset', name: 'IP_Note' }),
-    'Mods/TestCase/EP_Flyer.sodso.json': json({ fileType: 'EvidencePreset', name: 'EP_Flyer' }),
+    // The one asset here written as this app writes them, name and presetName together,
+    // so that renaming it can be exercised against this folder.
+    'Mods/TestCase/IP_Note.sodso.json': json({
+        fileType: 'InteractablePreset', name: 'IP_Note', presetName: 'IP_Note',
+    }),
+    'Mods/TestCase/EP_Flyer.EvidencePreset.sodso.json': json({
+        fileType: 'EvidencePreset', name: 'EP_Flyer', presetName: 'EP_Flyer',
+    }),
 
     // An override of a base game asset: the fields to apply over it, and nothing else.
     // No fileType, so the type has to come from the asset's name. ExCopSniper is a
@@ -379,10 +492,13 @@ export const caseWithDdsReference = {
 /**
  * A case whose references cover both places a ScriptableObject can be read from.
  *
- * copyFrom names a base game MurderMO, one of the types this tool ships assets for,
- * so it is read from those. denStyleOverride holds DesignStylePresets -- a type the
+ * compatibleWith names a base game MurderPreset, one of the types this tool ships assets
+ * for, so it is read from those. denStyleOverride holds DesignStylePresets -- a type the
  * base game has seven of and that is not among the online types -- and names one the
  * game has never heard of, which is the arrangement that reads from the mod folder.
+ *
+ * Neither is copyFrom, which was the base game half of this until it stopped being shown
+ * on a file the mod owns: a reference that cannot be reached cannot be followed.
  *
  * No field the game does not have: an unknown one walks the type layout into nothing
  * and throws out of the tree's setup, which would drown out anything asserted here.
@@ -395,7 +511,7 @@ export const caseWithCustomReference = {
         fileType: 'MurderMO',
         name: 'testcase',
         presetName: 'testcase',
-        copyFrom: 'REF:MurderMO|Hitman',
+        compatibleWith: ['REF:MurderPreset|Hitman'],
         denStyleOverride: ['REF:DesignStylePreset|HouseStyle'],
     }),
     'Mods/TestCase/HouseStyle.sodso.json': json({

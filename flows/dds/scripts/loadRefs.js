@@ -12,6 +12,7 @@
  */
 import ddsMap from '../../../refs/generated/ddsContentIndex.json' with { type: 'json' };
 
+import baseGameStringsFiles from '../../../refs/authored/baseGameStringsFiles.json' with { type: 'json' };
 import templates from '../../../refs/authored/ddsTemplates.json' with { type: 'json' };
 import fieldDescriptions from '../../../refs/authored/fieldDescriptions.json' with { type: 'json' };
 
@@ -29,6 +30,7 @@ export default {
         idNameMap: ddsMap.IdNameMap,
         reverseIdMap: ddsMap.ReverseIdMap
     },
+    baseGameStringsFiles,
     templates,
     typeLayout,
     enums,

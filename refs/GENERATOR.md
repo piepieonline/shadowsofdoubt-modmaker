@@ -98,16 +98,46 @@ data copied by hand drifts from the game. The repo holds a transcription of that
 `refs/generated/soDoorPairIds.json` so the flow can be built now; it should be the
 generator's at the next run.
 
-Two details the transcription cannot answer, and the generator can:
+Two details the transcription could not answer. **Both are now answered**, from a dump of
+the `DoorPairPreset` assets themselves — so what follows is a record of what was found
+rather than a request.
 
-- **Ids 3 and 28–30.** The hand-written table skips 3 and names 28–30 `Unknown01`–`03`.
-  Whether those indices exist at all is unknown. Emit whatever the game has, gaps and all.
-- **`sectionClass` per preset.** Which presets are walls, windows, doors or blanks. The
-  reference infers it from a second hand-written table, and flags ids 14, 26 and 27 as
-  unverified. `sectionClass` is a field on the asset, so if the dump can carry it, add it
-  and the second table goes away. See §7.
+- **Ids 3 and 28–30 do not exist.** The type holds exactly 27 assets, ids 0–2 and 4–27.
+  The gap at 3 is real and 28–30 are nothing. Emit the game's order and keep the gap; the
+  three `null`s currently carried for 28–30 can go.
+- **`sectionClass` per preset is not the answer it was assumed to be.** It is on the asset
+  and every value is now known (table below), but it does not say which presets are
+  windows — see the next heading. `wallPresetKinds.json` stays hand-written. §7 was wrong
+  about this and has been corrected.
 
 Index order is load-bearing here for the same reason it is for enums — see §9.
+
+### What `sectionClass` actually says
+
+Values for all 27 presets, with `isFence` beside them because no rule fits without it:
+
+| `sectionClass` | Presets |
+|---|---|
+| 0 `wall` | DefaultWalls, RooftopVentilation |
+| 1 `window` | WindowDiner, WindowMediumRectangle |
+| 2 `windowLarge` | WindowLargeArch, WindowLargeRectangle, AlleyBlockWalls, **Bannister01**, **NothingWall**, **WoodenFence**, **WoodenFenceJoinLeft**, **WoodenFenceJoinRight**, **DecoHandrail** |
+| 3 `entrance` | DividerCentre, DividerEndLeft, DividerEndRight, InteriorDoorway, InteriorDoorwayFlat, InteriorDoorwayUpper, **NothingEntrance**, **WoodenFenceEntrance** |
+| 4 `ventUpper` | WindowSmallRaised, WindowSmallTop, WindowSmallWithUpperSpace |
+| 5 `ventLower` | WindowSmallLower, WindowSmallLowWithUpperSpace, RooftopVentilationVent |
+| 6 `ventTop` | — |
+
+Bold entries have `isFence: true`.
+
+Class 2 puts WindowLargeRectangle beside NothingWall and a wooden fence; class 5 puts
+WindowSmallLower beside RooftopVentilationVent. So the field describes where the opening
+sits in the wall panel's mesh, not whether the section is glazed, and it cannot stand in
+for `wallPresetKinds.json`. The nearest rule that fits is `sectionClass ∈ {1, 2, 4, 5}
+and not isFence`, which reproduces the hand table exactly except that it also calls
+AlleyBlockWalls and RooftopVentilationVent windows. Neither appears in any base game
+blueprint, so the hand table's entries for them were never checkable either.
+
+The enum order above is `WallSectionClass` from `soEnums.json`, not the `sectionClass`
+key beside it — see §9.
 
 ---
 
@@ -178,12 +208,16 @@ These files are hand-maintained and the generator must leave them alone:
 | `fieldDescriptions.json` | prose field descriptions, shown as tooltips |
 | `wallPresetKinds.json` | whether each `DoorPairPreset` is a wall, window, door or blank |
 
-`wallPresetKinds.json` is the one entry here that wants to stop being hand-written. It
-exists because the building flow has to draw a wall differently depending on what it is,
-and decide which walls count as windows when generating a building's window data. The
-underlying answer is each preset's `sectionClass`, which is a field on the asset — so if
-§3 can carry it, this file moves to `generated/` and the hand-written guesses at ids 14,
-26 and 27 stop mattering.
+`wallPresetKinds.json` wanted to stop being hand-written, and it now looks as though it
+cannot. It exists because the building flow has to draw a wall differently depending on
+what it is, and decide which walls count as windows when generating a building's window
+data. That was assumed to be each preset's `sectionClass` — but the dump in §3 shows
+`sectionClass` grouping WindowLargeRectangle with NothingWall and a wooden fence, so it
+describes the wall panel's mesh and not its glazing. The file stays here.
+
+It is still worth carrying `sectionClass` into `generated/` alongside `soDoorPairIds.json`,
+because it narrows the hand-written part to a handful of entries rather than all 27. What
+it cannot do is replace them.
 
 `ddsTemplates.json` was the DDS Viewer's `templates.json`, which sat in a folder named
 `ref/` alongside generated files. If the generator writes anything under that name today,
@@ -198,24 +232,76 @@ rather than an inconvenience.
 
 ---
 
-## 8. Emit each type's base type
+## 8. Emit inherited fields — the checked-in file has them patched in by hand
 
 `soTypeLayout.json` lists only the fields a type declares itself, and nothing says what it
-inherits from. Both editors now resolve every field through it, so an inherited field
-resolves to nothing: it gets no tooltip, no enum dropdown, and no type.
+inherits from. Both editors resolve every field through it, so an inherited field resolved
+to nothing: no tooltip, no enum dropdown, no type, and a reference field rendered as a
+free-text box.
 
-This is not hypothetical. Every DDS document type — `DDSTreeSave`, `DDSMessageSave`,
-`DDSBlockSave` — inherits `name` and `id` from `DDSComponent`, and those are the two fields
-an author touches first.
+This was not hypothetical. `CompanyStructurePreset.companyStructure.occupation` is an
+`OccupationPreset` reference and got a text box, because `BossConfig` declares only
+`subordinates` and inherits the rest from `OccupationSettings`. Every DDS document type —
+`DDSTreeSave`, `DDSMessageSave`, `DDSBlockSave` — was missing the `name` and `id` it
+inherits from `DDSComponent`, which are the two fields an author touches first.
 
-A base-type name per entry is enough; the editor can walk the chain:
+**The checked-in `soTypeLayout.json` has been edited by hand** to inline each base type's
+fields into its derived types, base fields first, as the game serialises them. That is a
+hand edit to generated data — the thing §1 exists to prevent — and it is undone by the next
+regeneration. It buys working dropdowns until then and nothing more.
+
+### What the generator should do instead
+
+Either inline inherited fields the same way, or emit a base-type name per entry and let the
+editor walk the chain:
 
 ```
 "DDSTreeSave": { "$base": "DDSComponent", "fields": { ... } }
 ```
 
 Shape is your call — a sibling map of type → base would not require touching the existing
-one. Whichever, say so here and the editor follows in the same change.
+one. Whichever, say so here and the editor follows in the same change. Inlining keeps
+`core/typeHints.js` as it is; a base-type map means `resolveField` grows a chain walk.
+
+### The map that was applied, so it can be checked
+
+92 derived types across five bases. All but the inferred rows were derived from the data
+rather than guessed: a type's missing field set was matched against the declared field set
+of every other type, and every match below was exact.
+
+| Base | Derived types | Evidence |
+|---|---|---|
+| `SoCustomComparison` (`presetName`) | the 80 preset/SO types whose `soDefaults.json` template carries `presetName` while their layout entry did not declare it | template |
+| `OccupationSettings` | `BossConfig` | exact field-set match |
+| `OccupationSettings` | `Hierarchy1Config`, `Hierarchy2Config`, `Hierarchy3Config`, `Hierarchy4Config` | **inferred** — see below |
+| `SelectableSettings_Base` | `SelectableSettings`, `SliderSettings`, `ScrollbarSettings` | field-set match |
+| `DDSComponent` (`name`, `id`) | `DDSTreeSave`, `DDSMessageSave`, `DDSBlockSave` | `ddsTemplates.json` |
+| `ScriptableObjectIDSystem` (`id`) | `DoorPairPreset` | template |
+
+The four `HierarchyNConfig` rows are the one inference. No `CompanyStructurePreset` asset
+ships in `refs/assets/` and the default template's `subordinates` is `[]`, so no data
+reaches them — but they sit on the same chain as `BossConfig`
+(`companyStructure` → `BossConfig` → `Hierarchy1Config` → … → `OccupationSettings`) and each
+declares only `subordinates`, exactly as `BossConfig` did. `Hierarchy4Config` is orphaned:
+`Hierarchy3Config.subordinates` points at `OccupationSettings` directly, so nothing reaches
+it either way. **Confirm these five against the game.**
+
+### Six fields still unresolved, and none of them is inheritance
+
+Do not patch these the same way — they are the layout and the data disagreeing, and the
+generator is where the answer is:
+
+| Type | Field(s) | What it looks like |
+|---|---|---|
+| `TraitPick` | `appliedFrequencyMin`, `appliedFrequencyMax` | assets have these two; layout declares `appliedFrequency` |
+| `TraitPickRule` | `baseChance`, `reasonChance` | assets have these two; layout declares `addChance` |
+| `NewspaperArticle` | `possibleImages` | in `ddsTemplates.json`, declared by no type |
+| `DDSBlockCondition` | `forceScope` | in `ddsTemplates.json`, declared by no type. Possibly a `DDSScope` reference, in which case it is a missing dropdown too |
+| `CustomColorBlock` | `m_NormalColor` and its seven siblings | the type declares the property names (`normalColor`) but not the `m_`-prefixed serialised fields. `CustomSpriteState` and `CustomAnimationTriggers` carry both forms |
+| `AnimationCurve.Keyframe` | `inSlope`, `outSlope`, `serializedVersion` | ours, in `refs/authored/basicTypeLayouts.json` — not the generator's |
+
+The first two read as version drift between the shipped assets and the reflected types. If
+the generator and the asset export run against the same build, they should not disagree.
 
 ---
 
@@ -228,7 +314,8 @@ one. Whichever, say so here and the editor follows in the same change.
 - **Key order is stable output, not decoration.** Enum values are addressed *by index*:
   the game serialises those fields as integers, so reordering the values inside an enum
   silently rewrites the meaning of every mod using it. Order within each enum must follow
-  the game's own order, not sort order.
+  the game's own order, not sort order. **`soEnums.json` currently breaks this for half
+  its keys** — see §9a.
 - **`soDoorPairIds.json` is index-addressed too**, and worse: its indices are written into
   saved floorplans as strings. A reordering does not merely change what a field means, it
   rewrites every wall in every floor anyone has authored. Emit the game's order, keep the
@@ -238,20 +325,140 @@ one. Whichever, say so here and the editor follows in the same change.
 
 ---
 
+## 9a. Half of `soEnums.json` is sorted, and sorting an enum destroys it
+
+Every enum in the file appears under a type name, and 202 of them appear a second time
+under a field name as well. The two copies do not agree:
+
+```
+FloorTileType  ["none", "floorAndCeiling", "floorOnly", "CeilingOnly", "noneButIndoors"]
+f_t            ["CeilingOnly", "floorAndCeiling", "floorOnly", "none", "noneButIndoors"]
+
+WallSectionClass  ["wall", "window", "windowLarge", "entrance", "ventUpper", ...]
+sectionClass      ["entrance", "ventLower", "ventTop", "ventUpper", "wall", ...]
+```
+
+The type-name copy is the game's declaration order. The field-name copy is alphabetical,
+and therefore says the wrong thing about every index it does not happen to fix. `f_t: 0`
+is `none`; the sorted copy calls it `CeilingOnly`, which is a solid square rather than an
+absent one — the building flow reads exactly this field to decide a building's footprint.
+
+It is systemic rather than a one-off: 267 of the 297 field-name keys are in sort order,
+against 28 of the 275 type-name keys.
+
+**Nothing reads the broken copies today.** Both editors resolve a field through
+`soTypeLayout.json`, which names types; all 725 types it references miss the 267 sorted
+keys entirely. But `core/refs.js` flattens the file into one namespace, so the two live
+side by side under names that look equally reasonable, and any future lookup by field name
+finds the wrong list without erroring.
+
+Two ways out, either acceptable:
+
+- Stop emitting the field-name keys. `soTypeLayout.json` reaches every enum the editors
+  need, and the field-name half is what got sorted.
+- Emit both in declaration order.
+
+What must not happen is the current mix, where the correctness of a lookup depends on
+which of two spellings the caller picked.
+
+---
+
+## 9b. Keying enums on the bare name is lossy, and it has already lost one
+
+Separate from the sorting, and found while reading `FurnitureClass.wallRules`: the game
+declares the same enum name on two types, and only one of them survives into the file.
+
+```
+FurnitureClass.WallRule    17 members   nothing, wall, window, windowLarge, entrance, …
+FurnitureCluster.WallRule   7 members   nothing, wallNoDoor, onlyWall, doorway, door, …
+```
+
+`soEnums.json` has one `WallRule`, and it is the cluster's. `soTypeLayout.json` points
+`FurnitureWallRule.tag` and `FurnitureCluster.zeroNodeWallRules` at that same bare name, so
+resolving the first through it returns the wrong list — and returns it confidently, with
+every index past the sixth meaning something else. The assets use tags up to 15, so more
+than half of them resolve to nothing at all.
+
+**Nothing reads it today**, because the building flow carries its own copy — see
+`flows/building/scripts/furnitureRules.js`, which says where it got the order from and why
+it did not come from here.
+
+Emitting enums keyed on `Type.Name` would settle this and §9a together: a declaring type
+disambiguates the collision, and there is no second copy left to sort. The generator
+already knows the declaring type — it is how `soTypeLayout.json` names the field's type in
+the first place.
+
+**Where the right answer lives**: the dump host serves an `enums.json` holding all 333
+enums decompiled from `Assembly-CSharp`, each with `fullName`, source file, line, and
+members in declaration order. That is the file to check against when an index-addressed
+value reads oddly, and it is what settled this one.
+
+---
+
+## 10. The ten furniture-chain types — can you export these too?
+
+**A question, not an instruction**, and the same shape as §5.
+
+The building flow says what furniture could spawn on the square under the pointer. It gets
+there by walking the game's own chain — `LayoutConfiguration` → `AddressPreset` →
+`RoomConfiguration` → `RoomClassPreset` → `RoomTypeFilter` → `FurnitureCluster` →
+`FurnitureClass` → `FurniturePreset` — which needs ten types the generator does not
+currently export:
+
+```
+AddressPreset  RoomConfiguration  RoomTypePreset  RoomTypeFilter  RoomClassPreset
+FurnitureCluster  FurnitureClass  FurniturePreset  LayoutConfiguration  DoorPairPreset
+```
+
+They are ordinary ScriptableObjects and would fit `assets/` unchanged, alongside the nine
+types already there. Nothing about them is special except that nobody asked for them yet.
+
+`DoorPairPreset` is the tenth and the newest. The flow reads `sectionClass`, `divider` and
+`isFence` off it to answer a `FurnitureClass`'s wall rules — which is what §3's request to
+carry `sectionClass` per preset was for, now that something depends on it.
+
+Today they come from a dump served off a machine on a desk, reduced to
+`refs/derived/furnitureChain.json` by `flows/building/tools/buildFurnitureChain.js`. The
+script is checked in and the output is checked in; the input is not, so nobody but its
+author can regenerate it. Adding these ten to `index.json` and the assets export would
+make `refs/derived/` reproducible from this repo plus the game, which is the only thing
+wrong with it.
+
+If they are exported, the tool should read `refs/assets/` instead of a URL. Its `TYPES`
+list is the whole of what it needs.
+
+Two notes for whoever does it:
+
+- The dump this was built from carries references as `{m_FileID, m_PathID}` with the
+  **pathID in `m_FileID`**, resolved through `soPathIds.json`. If the generator's own
+  asset export uses a different convention, the tool's `nameOf` is the one place to change.
+- 149 of the 10,296 references across the original nine resolve to nothing, because they
+  point at prefabs, sprites and materials rather than ScriptableObjects. That is expected
+  and none of them is a reference the tool reads.
+
+---
+
 ## Checklist
 
 - [ ] Collapse the two export paths into one ref path plus one asset path (§1)
 - [ ] Rename the six generated files, `ddsScopeMap.json` → `ddsScopes.json` among them (§2, §6)
 - [ ] Split `soMap.json` into `soAssetsByType.json` + `soEnums.json` + `soDoorPairIds.json` (§3)
-- [ ] Keep `ScriptableObjectID` — the building flow reads it. Emit ids 3 and 28–30 as the
-      game actually has them (§3)
-- [ ] Carry `sectionClass` per `DoorPairPreset`, if the dump can reach it (§3, §7)
+- [ ] Keep `ScriptableObjectID` — the building flow reads it. Ids 3 and 28–30 are confirmed
+      absent: emit the gap, and drop the three `null`s (§3)
+- [ ] Carry `sectionClass` per `DoorPairPreset`. It does not replace `wallPresetKinds.json`
+      as §7 once claimed, but it narrows what stays hand-written (§3, §7)
+- [ ] Fix `soEnums.json`: either drop the field-name keys or emit them in declaration
+      order, never sorted (§9a) — and key on `Type.Name`, which settles §9a and §9b at
+      once. `WallRule` is currently one enum standing in for two (§9b)
 - [ ] Write `ddsContentIndex.json` exactly once (§1)
 - [ ] Write assets to the asset path; rename `onlineTypes.json` to `index.json` (§4)
 - [ ] Say whether floor blueprints can be exported, and export `BuildingPreset` with the
       other assets (§5)
 - [ ] Stop writing the DDS `templates.json` / `enums.json`, if it does (§7)
-- [ ] Emit each type's base type, so inherited fields resolve (§8)
+- [ ] Emit inherited fields, so they resolve — and check the five inferred rows and the six
+      unresolved fields in §8, which the hand patch could not settle (§8)
+- [ ] Say whether the ten furniture-chain types can join the asset export, so
+      `refs/derived/` becomes reproducible from this repo (§10)
 
 ## Verifying a regeneration
 
@@ -267,3 +474,20 @@ npm test                          # the reference-data tests assert every global
 globals are non-empty, which catches a file that moved, was renamed, or came out with the
 wrong shape. They do not assert counts, so they will not catch content that regenerated
 short — check `git diff --stat` for a file that suddenly lost half its size.
+
+---
+
+## 6. `roomCyclePriority.json`
+
+`RoomTypePreset.cyclePriority` per preset name, as `{ "Lobby": 3, "LivingRoom": 10, ... }`.
+
+The building flow needs it to say which way round a divider end goes: of the two walls
+facing each other across a divider, the parent is the one whose room has the higher
+`cyclePriority`, and the preset's post sits at the end of the run that is on the left seen
+from the parent room. Without the table the editor cannot draw a divider end on the side
+the game will put it — see `flows/building/README.md`.
+
+Checked in from the game's own `RoomTypePreset` assets so the flow works today, the same
+way `soDoorPairIds.json` is. It should be the generator's: it is one field off an asset
+type the generator already walks, and a mod adding a `RoomTypePreset` is a room this
+editor currently falls back to the field's default of 5 for.

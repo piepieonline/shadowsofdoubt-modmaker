@@ -10,9 +10,10 @@
  * async `values()` iteration and nested `getDirectoryHandle(..., { create })`. A mock
  * would encode our assumptions about those; OPFS exercises the real implementations.
  *
- * Verified precondition: neither app calls queryPermission/requestPermission, which are
- * the OPFS-vs-picker behavioural difference that would otherwise bite. See the API
- * inventory in .local/PLAN.md.
+ * core/folders.js does call queryPermission/requestPermission, and OPFS answers both
+ * with 'granted' -- the same answer a picked folder gives once its permission is held.
+ * So the re-grant shortcut a remembered folder takes is exercised here rather than
+ * skipped, which is what lets a test tell it apart from opening the picker.
  */
 
 /**
@@ -41,7 +42,28 @@ export async function installFsHarness(page) {
             window.__promptCalls.push({ message: String(message), defaultValue });
             return window.__promptQueue.length ? window.__promptQueue.shift() : null;
         };
-        window.confirm = () => true;
+        // What each confirm() asked, and what a test wants answered. Recorded because
+        // for a delete the question *is* the feature: it lists what the file being
+        // removed was referenced by, and nothing else reports that.
+        window.__confirmCalls = [];
+        window.__confirmQueue = [];
+        window.confirm = (message) => {
+            window.__confirmCalls.push(String(message));
+            return window.__confirmQueue.length ? window.__confirmQueue.shift() : true;
+        };
+
+        // Copying and pasting array elements goes through the async Clipboard API,
+        // which reads only with a permission the browser grants per context and which
+        // Playwright would have to be configured to hand out. An in-page buffer stands
+        // in: what the app writes is what it reads back, and a test can seed it.
+        window.__clipboard = '';
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: {
+                writeText: async (text) => { window.__clipboard = String(text); },
+                readText: async () => window.__clipboard,
+            },
+        });
 
         // Recorded so tests can assert what the app asked for -- notably `startIn`,
         // which is how a remembered folder is offered back to the user.
@@ -192,6 +214,23 @@ export const openDdsDocument = (page, guid, type = null) =>
     page.evaluate(([g, t]) => window.setIdAndLoad(g, t), [guid, type]);
 
 /**
+ * Answer the Add new... dialog's File question.
+ *
+ * Typed rather than set. The list is the game's strings files as a searchable select,
+ * and select2 searches on the keystrokes -- writing the element's value leaves the
+ * control showing something else, and the control is what the answer is read from.
+ *
+ * The whole path is typed, so the term matches an option exactly. That is also what
+ * keeps the free-text entry select2 offers for an unmatched term off the top of the
+ * results, where the highlighted one is.
+ */
+export async function pickStringsFile(page, path) {
+    await page.locator('#new-dds-file-strings-field .select2-selection').click();
+    await page.locator('.select2-search__field').pressSequentially(path);
+    await page.locator('.select2-results__option--highlighted').click();
+}
+
+/**
  * Create DDS content through the Add new... dialog.
  *
  * @param fields type, and then name and line for a document, or strings for a CSV
@@ -201,7 +240,7 @@ export async function addDdsContent(page, { type, name, line = '', strings }) {
     await page.selectOption('#new-dds-file-type', type);
 
     if (type === 'strings') {
-        await page.selectOption('#new-dds-file-strings', strings);
+        await pickStringsFile(page, strings);
     } else {
         await page.fill('#new-dds-file-name', name);
         await page.fill('#new-dds-file-line', line);
@@ -234,9 +273,23 @@ export const queuePrompts = (page, values) =>
 /** Every window.prompt() the app raised, as `{ message, defaultValue }`. */
 export const prompts = (page) => page.evaluate(() => window.__promptCalls);
 
+/** Every window.confirm() the app raised, in order. */
+export const confirms = (page) => page.evaluate(() => window.__confirmCalls);
+
+/** Answer the app's next window.confirm() calls. Anything past the queue is a yes. */
+export const queueConfirms = (page, answers) =>
+    page.evaluate((v) => { window.__confirmQueue.push(...v); }, answers);
+
 /** Overwrite a single fixture file in place. */
 export const writeFixture = (page, path, contents) =>
     page.evaluate(([p, c]) => window.__opfsSeed({ [p]: c }), [path, contents]);
+
+/** What the app has put on the clipboard. */
+export const clipboard = (page) => page.evaluate(() => window.__clipboard);
+
+/** Put text on the clipboard for the app to paste. */
+export const setClipboard = (page, text) =>
+    page.evaluate((t) => { window.__clipboard = t; }, text);
 
 export const readFile = (page, path) => page.evaluate((p) => window.__opfsRead(p), path);
 export const listDir = (page, path) => page.evaluate((p) => window.__opfsList(p), path);

@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest';
-import { toVirtual, toReal, placeStringsFile, withMapping, isActive, virtualPathOf } from './ddsManifest.js';
+import { toVirtual, toReal, placeStringsFile, withMapping, withoutMapping, isActive, virtualPathOf } from './ddsManifest.js';
 
 /**
  * Translating between where a strings file sits and where the loader reads it from.
@@ -99,4 +99,31 @@ test('a mapping is appended, leaving the order the author chose alone', () => {
     // And the manifest it came from is untouched, so a write that fails changes nothing.
     expect(manifest([BLOCKS]).files).toEqual([BLOCKS]);
     expect(grown.present).toBe(true);
+});
+
+test('a deleted file\'s mapping is dropped and the rest keep their order', () => {
+    const rooms = { real: 'MyStrings/names.rooms.csv', virtualDir: 'Strings/English' };
+    const before = manifest([BLOCKS, rooms]);
+
+    expect(withoutMapping(before, rooms.real).files).toEqual([BLOCKS]);
+
+    // The manifest it came from is untouched, so a write that fails changes nothing.
+    expect(before.files).toEqual([BLOCKS, rooms]);
+});
+
+test('every entry claiming a deleted path goes, not just the one that won', () => {
+    // Two entries can claim one file; order decides which the loader reads it through.
+    // Leaving the loser behind leaves the loader looking for a file that has gone.
+    const second = { real: BLOCKS.real, virtualDir: 'Strings/French/DDS' };
+    const stripped = withoutMapping(manifest([BLOCKS, second]), BLOCKS.real);
+
+    expect(stripped.files).toEqual([]);
+});
+
+test('a file nothing maps leaves the mappings alone', () => {
+    // The file sat where the game reads it from and needed no entry, so there is nothing
+    // to rewrite -- which is what stops a delete touching the author's manifest at all.
+    const before = manifest([BLOCKS]);
+
+    expect(withoutMapping(before, 'Strings/English/names.rooms.csv').files).toEqual([BLOCKS]);
 });

@@ -46,36 +46,34 @@ export default {
         await openDdsFile(id, type);
     },
 
-    /** Remember and restore what is open across a switch to another editor. */
-    async captureSession() {
-        const { captureSession } = await import('./scripts/ui.js');
-        return captureSession();
+    /**
+     * What is open, as URL parameters, and putting it back -- across a switch to
+     * another editor and across a reload.
+     *
+     *   open     the drill-down, one entry per level: the file each window is showing,
+     *            or a bare GUID for a document whose kind is to be worked out
+     *   strings  the strings CSV open beside it, if any
+     */
+    async sessionState() {
+        const { sessionState } = await import('./scripts/ui.js');
+        return sessionState();
     },
 
-    async restoreSession(state) {
+    async restoreSession(params) {
         const { restoreSession } = await import('./scripts/ui.js');
-        await restoreSession(state);
+        await restoreSession(params);
     },
+
+    /**
+     * Every document here is a base game file, patched by the mod where the mod says so,
+     * so there is nothing to open until the game folder is connected -- and a restore
+     * that opened nothing would be written back as an empty workspace.
+     */
+    canRestore: () => Boolean(window.dirHandleStreamingAssets),
 
     /** A content folder was chosen in the shell. */
     async onModSelected(selection) {
         const { onModSelected } = await import('./scripts/ui.js');
         await onModSelected(selection);
-    },
-
-    /**
-     * The old DDS Viewer's deep link, which the modding wiki still points at.
-     *
-     * It used to fill in the GUID field and leave the Load button to the reader. There
-     * is no field to fill in now, so the document is opened -- but not here: this runs
-     * before any folder is connected, and a document cannot be read until one is.
-     */
-    async start() {
-        if (window?.queryParams?.caseEditorLink !== 'true') return;
-        if (!window.queryParams.documentId) return;
-
-        const { openWhenReady } = await import('./scripts/ui.js');
-        const type = window.queryParams.documentType;
-        openWhenReady(window.queryParams.documentId, type === 'unknown' ? null : type);
     },
 };

@@ -16,18 +16,22 @@ import { getFolder, getFile, writeFile } from '../../../core/fs.js';
 import { isNameFieldSafe, makeNameFieldSafe } from '../../../core/strings.js';
 import { ROOM_NAMES_VIRTUAL } from '../../../core/ddsManifest.js';
 import { ensureListed } from '../../../core/murderManifest.js';
+import { PRESET_SUFFIX, stemFor } from '../../../core/soFileName.js';
 import { writeStringsRow } from '../../../core/modStrings.js';
+import { scheduleSync } from '../../../core/urlState.js';
 
 import {
-    parseFloor, serialiseFloor, describeIssues, getWall, tileForNode, blankFloor, floorLike,
+    parseFloor, serialiseFloor, describeIssues, getWall, tileForNode,
+    blankFloor, floorLike, floorCopy,
 } from './floorModel.js';
+import { generateRoof } from './roofGenerator.js';
 import {
     FLOORS_DIR, BUILDING_TYPE,
     listBuildings, listCustomBuildings, listCustomBlueprints, loadPreset, resolveBlueprint,
     enumerateSlots, storeysOf, adjoiningStorey, firstLayoutOf,
     sameSlot, setBlueprint, removeBlueprint, presetForSaving,
     writeCustomPreset, writeCustomBlueprint, deleteCustomBlueprint, createCustomBuilding,
-    loadFloorIndex, stubFor, readCustomPreset,
+    loadFloorIndex, stubFor, readCustomPreset, stairwellElevators,
 } from './buildingLibrary.js';
 import {
     generateBuilding, writeGeneratedBuilding, isMeshStale, GENERATED_FIELDS,
@@ -35,9 +39,11 @@ import {
 import { createScene, Overlay, describeCell } from './scene.js';
 import { createToolState, attachPainting, nearestEdge, Tool, PaintMode } from './tools.js';
 import {
-    createPanels, renderStatusPanel, renderFloorPanel,
+    createPanels, renderStatusPanel, renderFloorPanel, setModFurnitureSource, releaseSelects,
     wallPresetName, floorDescription, tileDescription,
 } from './panels.js';
+import { loadFurnitureChain, applyModOverlay, baseFurnitureChain } from './furnitureChain.js';
+import { readModAssets } from './furnitureOverlay.js';
 
 const CANVAS = '#building-canvas';
 const LABELS = '#building-labels';
@@ -85,11 +91,20 @@ export const openFloorModel = () => open?.model ?? null;
 export const openFloorName = () => (open ? { building: open.building, blueprint: open.blueprint } : null);
 export const currentToolState = () => toolState;
 
-/** Whether a WebGL context is being held. See ensureView and captureSession. */
+/** Whether a WebGL context is being held. See ensureView and suspend. */
 export const viewIsLive = () => view !== null;
 
 /** Where a cell is on screen. Null when there is no view, or it is behind the camera. */
 export const projectCell = (x, y, height) => view?.project(x, y, height) ?? null;
+
+/**
+ * The square the view is marking, which should be the one the tool state has selected.
+ *
+ * The two are set together by `clearSelection` and by a pick, and nothing else may move
+ * either -- so a caller comparing them is checking the one invariant that spans the panel
+ * and the floor.
+ */
+export const markedSquare = () => view?.selected ?? null;
 
 /** Whether the open floor has changes that have not reached disk. */
 export const hasUnsavedChanges = () => dirty;
@@ -134,12 +149,57 @@ export async function refreshPanel() {
     bindBrowseDismissal();
     bindBrowseSizing();
 
+    // The mod's own furniture assets, which the chain has to be asked against rather
+    // than the base game's alone -- see furnitureOverlay.js. Here because this is the one
+    // funnel every folder and mod change comes through, and because every write that puts
+    // an asset in the mod ends by calling it.
+    await refreshModOverlay();
+
     // This runs whenever the flow's markup is on screen and the folders have changed,
     // which includes the first time it is shown with nothing open. Without them the
     // status column and the Floor section would be empty bordered boxes until a floor
     // was opened.
     updateStatus();
     updateFloorPanel();
+
+    // And the panels, because the overlay above is where their name lists get the mod's
+    // half from: changing mod changes what the address and room dropdowns offer, and
+    // nothing else on this path would redraw them. A no-op with no floor open.
+    renderPanels();
+}
+
+/**
+ * What the mod adds to the chain, what it would add if the manifest named it, and what
+ * could not be read at all.
+ *
+ * Held for the panel to report. Rebuilt rather than added to, so a file deleted from the
+ * mod stops counting -- and rebuilt from the folder rather than from what this app wrote,
+ * because a mod is edited by hand as often as through here.
+ */
+let modAssets = { applied: [], unlisted: [], unresolved: [] };
+
+/** What the mod contributes to the furniture chain, for the status column to say. */
+export const modFurniture = () => modAssets;
+
+// The panels draw what they are handed and reach for nothing themselves. This is the one
+// thing they need that is neither the model nor the tool state, so it is handed over once
+// rather than imported across the seam.
+setModFurnitureSource(modFurniture);
+
+async function refreshModOverlay() {
+    // Nothing to lay them over yet. The chain is fetched when the first floor opens, and
+    // this is called again once it lands -- so until then the folder is not read at all,
+    // which matters because this runs on every panel refresh and one of those follows
+    // every autosave. Reading the folder is already what listing the mod's buildings
+    // costs; there is no reason to pay it twice before there is anything to merge.
+    if (!baseFurnitureChain()) {
+        modAssets = { applied: [], unlisted: [], unresolved: [] };
+        return;
+    }
+
+    const { assets, unlisted, unresolved } = await readModAssets(contentFolder());
+
+    modAssets = { applied: applyModOverlay(assets), unlisted, unresolved };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -271,17 +331,30 @@ async function buildCategories(folder) {
                     building, option, modFloors)),
                 footer: building.isCustom ? {
                     label: 'Add layout',
-                    title: `Add another layout of ${storey.label} to ${building.name}. `
-                        + 'The game picks between the layouts of one floor when it builds '
-                        + 'the city.',
-                    onClick: () => addFloor(building.name, storey),
+                    title: `Add another layout of ${storey.label} to ${building.name}, `
+                        + 'as a copy of the one already there. The game picks between the '
+                        + 'layouts of one floor when it builds the city.',
+                    onClick: () => addLayout(building.name, storey),
                 } : null,
             })),
-            footer: building.isCustom ? {
-                label: 'Add floor',
-                title: `Add a floor to ${building.name}`,
-                onClick: () => addFloor(building.name),
-            } : null,
+            // A building grows in two directions, and the game keeps the two apart:
+            // floorLayouts up from the ground floor, basementLayouts down from it. So
+            // they are two buttons rather than one asking which -- the answer is the
+            // thing being asked for.
+            footer: building.isCustom ? [
+                {
+                    id: 'add-floor',
+                    label: 'Add floor',
+                    title: `Add a floor to the top of ${building.name}`,
+                    onClick: () => addStorey(building.name, { isBasement: false }),
+                },
+                {
+                    id: 'add-basement',
+                    label: 'Add basement',
+                    title: `Add a basement under ${building.name}`,
+                    onClick: () => addStorey(building.name, { isBasement: true }),
+                },
+            ] : null,
         });
     }
 
@@ -362,10 +435,10 @@ function floorEntry(building, option, modFloors) {
  * `selections` puts back which layout variation each address was showing, which is the
  * one piece of editor state a blueprint has nowhere to store.
  */
-export async function openFloor({ building, blueprint, slot }, selections = []) {
+export async function openFloor({ building, blueprint, slot }, selections = [], { quiet = false } = {}) {
     const found = await resolveBlueprint(contentFolder(), blueprint);
     if (!found) {
-        alert(`Could not find a floor called "${blueprint}".`);
+        if (!quiet) alert(`Could not find a floor called "${blueprint}".`);
         return;
     }
 
@@ -373,16 +446,27 @@ export async function openFloor({ building, blueprint, slot }, selections = []) 
     // rather than be written over the new floor later.
     await flushPendingSave();
 
+    // The building this floor belongs to, read once for the two things that want it. Both
+    // are read here rather than each time they are drawn, which is on every edit: it is a
+    // file read, and neither the building's floor list nor its stairwell changes while one
+    // of its floors is open.
+    const preset = await presetOfBuilding(building);
+
+    const model = parseFloor(found.data, { selections });
+
+    // What stands in this floor's stairwell tiles, which is the building's to say and not
+    // the floor's. Awaited before the floor is drawn so that the labels are right the
+    // first time rather than losing a line a moment after they appear.
+    model.stairwellElevators = await stairwellElevators(contentFolder(), preset);
+
     open = {
         building,
         blueprint,
         slot,
         isCustom: found.isCustom,
-        model: parseFloor(found.data, { selections }),
-        // What the Floor panel steps through. Read here rather than each time that panel
-        // redraws, which is on every edit: it is a file read, and the building's floor
-        // list does not change while one of its floors is open.
-        storeys: await storeysForBuilding(building),
+        model,
+        // What the Floor panel steps through.
+        storeys: storeysOf(enumerateSlots(preset)),
     };
 
     dirty = false;
@@ -400,6 +484,8 @@ export async function openFloor({ building, blueprint, slot }, selections = []) 
     toolState.addressIndex = 0;
     toolState.roomIndex = 0;
 
+    clearSelection();
+
     // What the last generation said was about the last building. Whether this one's mesh
     // is out of date is a fresh question, answered below once the floor is on screen --
     // it reads every floor of the building, so it is not something to wait for.
@@ -407,6 +493,44 @@ export async function openFloor({ building, blueprint, slot }, selections = []) 
 
     await showOpenFloor();
     refreshMeshState();
+
+    scheduleSync();
+
+    // What could spawn on a square, which the status column shows once it has arrived
+    // and omits until then. Not awaited: it is a 20 KB fetch that nothing else needs,
+    // and a floor should be on screen before it rather than behind it. The redraw is
+    // what makes the section appear, and is a no-op if the floor was closed meanwhile.
+    loadFurnitureChain().then(async () => {
+        if (!open) return;
+
+        // The overlay is laid over the base, and on the first floor of a session the
+        // base did not exist when the mod was read. Re-applied here rather than awaited
+        // above, which would put a 20 KB fetch in front of the floor appearing.
+        await refreshModOverlay();
+        if (!open) return;
+
+        updateStatus();
+
+        // The address and room dropdowns read the mod's half of their lists off the same
+        // overlay. On the first floor of a session it did not exist when they were drawn,
+        // so without this the mod's own layouts are missing from them until the next edit.
+        renderPanels();
+    });
+}
+
+/**
+ * The preset of the building a floor was opened through, or null for a floor no building
+ * refers to.
+ *
+ * Null rather than an empty preset, because the two are different answers: a building with
+ * nothing in it still names a stairwell and still has storeys to be one of, and a floor
+ * belonging to no building has neither.
+ */
+async function presetOfBuilding(building) {
+    if (!building) return null;
+
+    const found = await loadPreset(contentFolder(), building);
+    return found?.preset ?? null;
 }
 
 /**
@@ -416,10 +540,7 @@ export async function openFloor({ building, blueprint, slot }, selections = []) 
  * the Floor panel says so rather than offering to climb one.
  */
 async function storeysForBuilding(building) {
-    if (!building) return [];
-
-    const found = await loadPreset(contentFolder(), building);
-    return storeysOf(enumerateSlots(found?.preset));
+    return storeysOf(enumerateSlots(await presetOfBuilding(building)));
 }
 
 /**
@@ -515,6 +636,12 @@ export function releaseView() {
 
     view?.dispose();
     view = null;
+
+    // The panels' dropdowns are select2 controls kept across redraws, and their dropdowns
+    // are parented to this flow's markup -- which is replaced when another flow is shown.
+    // Nothing else destroys them, and an instance whose element has left the document
+    // keeps the scroll handlers it bound to a column that is no longer there.
+    releaseSelects();
 }
 
 
@@ -522,9 +649,34 @@ export function releaseView() {
 /* Editing                                                                     */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Forget which square was selected, in the tool state and in the view together.
+ *
+ * A selection is a square *of a floor*, and node 10,10 exists on every one of them: it is
+ * a different room in a different address on each, so carrying one across is carrying a
+ * coordinate and calling it a place.
+ *
+ * The view has to be told rather than left to work it out. `setModel` re-places the mark
+ * rather than clearing it -- a layout variation switch rebuilds the grid under a selection
+ * that should survive it -- so nothing else in the scene would take the mark off the floor
+ * a new blueprint is drawn on.
+ */
+function clearSelection() {
+    toolState.selectedNode = null;
+    toolState.selectedTile = null;
+    toolState.selectedWall = null;
+
+    view?.setSelected(null);
+}
+
 /** A stroke changed the floor, or picked a value off it. */
 function onPainted(result) {
     if (result.changed) markDirty();
+
+    // Before the refresh, which is what puts the mark on the square's surface -- see
+    // placeSelection. A pick is the only thing that moves the selection, but a stroke
+    // can move the surface it lies on, so this runs for both.
+    view?.setSelected(toolState.selectedNode);
 
     view?.refresh();
     renderPanels();
@@ -575,14 +727,18 @@ function applyHover() {
 /**
  * What the pointer is over, which depends on which tool is chosen.
  *
- * With the wall tool, a cell resolves to the edge of it nearest the pointer -- because
- * that is what a click there would paint. An edge with no wall on it is a sliver a few
- * pixels high, so a pick almost never lands on one directly, and reporting the cell
- * instead would have the status column and the label describing the floor while the only
- * thing a click could change is a wall.
+ * With the wall tool, a cell resolves to one of its edges -- because that is what a click
+ * there would paint. An edge with no wall on it is a sliver a few pixels high, so a pick
+ * almost never lands on one directly, and reporting the cell instead would have the status
+ * column and the label describing the floor while the only thing a click could change is
+ * a wall.
  *
- * `nearestEdge` returns nothing at the outside of the grid, where a cell's outer edge is
- * off it. Nothing is what that is: there is no wall there and no click can make one.
+ * `nearestEdge` returns nothing at the corners of a cell, which belong to no edge, and
+ * nothing at the outside of the grid, where a cell's outer edge is off it. Nothing is what
+ * both of those are: there is no wall there and no click can make one. Showing that is the
+ * point rather than a shortcoming -- the corners are where the pointer is between two
+ * perpendicular edges and a guess would put a stray wall down, so the label going out is
+ * how an author sees where an edge starts and stops answering.
  */
 function resolveHover(target) {
     if (!target) return null;
@@ -611,11 +767,19 @@ function updateStatus() {
  *
  * Panels edit the model directly, so this only has to redraw and remember that the
  * floor no longer matches what is on disk.
+ *
+ * The URL is asked to catch up here rather than at the one panel that changes something
+ * it records -- which layout variation an address is showing. This flow has no windows
+ * for core to watch, so the choice is between naming every such site and asking after
+ * every edit; asking is the one that cannot be left behind by a new panel. It is cheap:
+ * the write is debounced, and skipped when the URL would not change, which is what
+ * almost every edit here leaves it.
  */
 function onPanelEdit() {
     markDirty();
     view?.refresh();
     updateLabels();
+    scheduleSync();
 }
 
 /** A change that moves nodes about, so the whole grid has to be read again. */
@@ -623,6 +787,7 @@ function onPanelRebuild() {
     markDirty();
     view?.setModel(open?.model ?? null);
     updateLabels();
+    scheduleSync();
 }
 
 function renderPanels() {
@@ -664,6 +829,7 @@ function onToolChanged() {
     syncView();
     applyHover();
     updateLabels();
+    scheduleSync();
 }
 
 /**
@@ -784,7 +950,7 @@ function updateLabels() {
  */
 function describeCellAt(x, y) {
     if (toolState.tool === Tool.TILE) {
-        return tileDescription(tileForNode(open.model, x, y));
+        return tileDescription(tileForNode(open.model, x, y), open.model.stairwellElevators);
     }
 
     const described = describeCell(open.model, x, y);
@@ -1222,47 +1388,120 @@ async function writeBuildingTitle(folder, presetName, title) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Add a floor to one of the mod's buildings and open it, or another layout of a floor it
- * already has.
+ * The content folder to write in, or nothing and a word about why not.
  *
- * Two files again, and in the same order as saving: the blueprint, then the building
- * that names it. A building pointing at a floor that is not there is the failure that
- * shows in game as a missing floor.
- *
- * The two are one function because they differ only in which slot is asked for. A floor
- * goes in a setting of its own -- `layoutIndex: -1` is setBlueprint's "a new one" -- and
- * a layout goes on the end of an existing setting, which is what the blueprint list in a
- * setting is: the alternatives the game picks between for that one storey.
- *
- * It is named rather than asked about. A floor's name is not content: it is what the
- * building refers to it by, it is never shown to a player, and there is nothing to say
- * about a floor before seeing it. Opening it immediately is the answer to "and now
- * what" -- the name can be changed on the floor itself.
- *
- * @param storey a storey from storeysOf to add a layout to, or null for a new floor
+ * Every one of these is reached from a button the panel only draws for a mod's own
+ * building, so this is the guard against being called some other way rather than
+ * something an author is expected to meet.
  */
-async function addFloor(buildingName, storey = null) {
+function folderToWriteIn() {
     const folder = contentFolder();
-    if (!folder) {
-        alert('Choose a mod and content folder first');
-        return;
-    }
+    if (!folder) alert('Choose a mod and content folder first');
+    return folder;
+}
+
+/**
+ * How much of the storey it sits against a new storey starts as.
+ *
+ * The order they are offered in, which is most to least: a floor that copies everything
+ * is a floor to alter, and one that starts empty is a floor to draw.
+ */
+export const StoreyStart = {
+    /** Everything: rooms, addresses, fittings. */
+    WHOLE: 'whole',
+    /** The walls, and the tiles holding the stairwells and the entrances. */
+    FITTINGS: 'fittings',
+    /** The wall between inside and out, without the partitions inside it. */
+    OUTLINE: 'outline',
+    /** The roof over it: its shape as a rooftop. See scripts/roofGenerator.js. */
+    ROOF: 'roof',
+    /** Nothing: the whole lot as one room, as a building's first floor starts. */
+    EMPTY: 'empty',
+};
+
+/**
+ * Add a storey to one of the mod's buildings and open it.
+ *
+ * A building grows in two directions and the game keeps the two apart -- `floorLayouts`
+ * counts up from the ground floor, `basementLayouts` down from it -- so which of them is
+ * being added is the caller's, from the button that was pressed.
+ *
+ * What the new storey starts as is asked before anything is written, because there is no
+ * one right answer: a tower's floors are mostly the same shape with different rooms in
+ * them, its lobby is not, and its roof is neither.
+ */
+async function addStorey(buildingName, { isBasement = false } = {}) {
+    const folder = folderToWriteIn();
+    if (!folder) return;
 
     closeBrowse();
 
-    // What the new floor starts as is read off the floor below, so a debounced save of
-    // the floor that is open has to land first. Otherwise drawing a wall and reaching
-    // straight for Add floor copies the floor as it was before that wall.
+    // What the new storey starts as is read off the storey it sits against, so a
+    // debounced save of the floor that is open has to land first. Otherwise drawing a
+    // wall and reaching straight for Add floor copies the floor as it was before that
+    // wall -- and here it would also be described in the dialog as the floor it was.
     await flushPendingSave();
 
-    const name = await nextFloorName(folder, buildingName, storey);
+    // Read before the question is asked, because what the building already has is what
+    // decides which answers are worth offering. Nothing is written by reading it.
+    const { preset } = await presetForSaving(folder, buildingName);
+    const against = adjoiningStorey(storeysOf(enumerateSlots(preset)), { isBasement });
 
-    // The preset is read before the floor is written, because what the new floor starts
-    // as depends on what the building already has. Still only read: the write order is
-    // the blueprint and then the building, as below.
+    const start = await askStoreyStart(buildingName, { isBasement, against });
+    if (!start) return;
+
+    await writeNewFloor(folder, buildingName, { isBasement, start });
+}
+
+/**
+ * Add another layout of a storey the building already has, and open it.
+ *
+ * Not asked about, unlike a storey: the blueprints in one setting are alternatives of
+ * the same storey that the game picks between, so a new one is that storey again, to be
+ * altered rather than drawn. Anything less than the whole of it would be a different
+ * storey wearing its number.
+ */
+async function addLayout(buildingName, storey) {
+    const folder = folderToWriteIn();
+    if (!folder) return;
+
+    closeBrowse();
+    await flushPendingSave();
+
+    await writeNewFloor(folder, buildingName, { storey });
+}
+
+/**
+ * Write the floor and point the building at it.
+ *
+ * Two files, and in the same order as saving: the blueprint, then the building that
+ * names it. A building pointing at a floor that is not there is the failure that shows
+ * in game as a missing floor.
+ *
+ * Adding a storey and adding a layout are one function because they differ only in which
+ * slot is asked for. A storey goes in a setting of its own -- `layoutIndex: -1` is
+ * setBlueprint's "a new one" -- and a layout goes on the end of an existing setting,
+ * which is what the blueprint list in a setting is: the alternatives the game picks
+ * between for that one storey.
+ *
+ * The floor is named rather than asked about. A floor's name is not content: it is what
+ * the building refers to it by, it is never shown to a player, and there is nothing to
+ * say about a floor before seeing it. Opening it immediately is the answer to "and now
+ * what" -- the name can be changed on the floor itself.
+ *
+ * @param storey a storey from storeysOf to add a layout to, or null for a new storey
+ */
+async function writeNewFloor(folder, buildingName, { storey = null, isBasement = false, start = null }) {
+    const name = await nextFloorName(folder, buildingName, { storey, isBasement });
+
+    // Read again here rather than passed in, because what the new floor starts as
+    // depends on what the building has now -- the dialog above is not modal, and the
+    // building may have gained a floor while it was open. Still only read: the write
+    // order is the blueprint and then the building, as below.
     const { preset } = await presetForSaving(folder, buildingName);
 
-    await writeCustomBlueprint(folder, name, await newFloorData(folder, name, preset, storey));
+    const data = await newFloorData(folder, name, preset, { storey, isBasement, start });
+    await writeCustomBlueprint(folder, name, data);
 
     // A blueprintIndex outside the list appends rather than leaving a hole, so a layout
     // lands after the ones already in the storey. Never a control room variant: those
@@ -1275,7 +1514,7 @@ async function addFloor(buildingName, storey = null) {
             layoutIndex: storey.layoutIndex,
             blueprintIndex: -1,
         }
-        : { isBasement: false, isControlVariant: false, layoutIndex: -1, blueprintIndex: 0 },
+        : { isBasement, isControlVariant: false, layoutIndex: -1, blueprintIndex: 0 },
         name);
     await writeCustomPreset(folder, buildingName, preset);
 
@@ -1284,37 +1523,146 @@ async function addFloor(buildingName, storey = null) {
 }
 
 /**
- * What a new floor starts as: the walls of the floor it belongs beside, or a blank floor
- * if there is no such floor.
+ * What a new floor starts as: some floor already in the building, or a blank floor if
+ * there is none.
  *
- * Which floor that is depends on what was asked for. A new layout is an alternative of a
- * storey that already exists, so it starts from that storey's own layout -- it is meant
- * to be the same floor drawn differently. A new floor goes on top of the building, so it
- * starts from the storey it will sit on. Either way it is the *first* blueprint of that
- * storey: they are alternative layouts of one storey and share its walls.
+ * Which floor it reads is settled here; how much of that floor comes across is the
+ * author's answer, or the whole of it for a layout.
+ *
+ * A new *layout* is an alternative of a storey that already exists, which the game picks
+ * between when it builds the city -- so it starts as that storey copied whole, addresses
+ * and rooms and fittings included.
+ *
+ * A new *storey* goes on the top of the building or under the bottom of it, so it starts
+ * from the storey it will sit against -- as much of that storey as was asked for. A
+ * building is one shape all the way up; what is inside the walls is what makes one
+ * storey differ from the next, which is why the whole of it is not the default.
+ *
+ * Either way it is read off the *first* blueprint of that storey: they are alternative
+ * layouts of one storey and share its walls.
  *
  * The storey is looked up again in the preset that was just read rather than taken from
  * the one the panel was built with, so that a storey the panel is out of date about
- * yields a blank floor instead of some other storey's walls.
+ * yields a blank floor instead of some other storey's walls. A building with nothing in
+ * it yet yields one too, whatever was asked for: there is nothing to copy, which is what
+ * the dialog says while it offers the answer this falls back to.
  *
  * A floor the mod does not hold resolves to the base game's copy, which is what a stub
  * building's floors are -- so adding a floor to a stub of a base game building starts
  * from that building's own shape.
  */
-async function newFloorData(folder, name, preset, storey) {
+async function newFloorData(folder, name, preset, { storey = null, isBasement = false, start = null }) {
+    if (!storey && start === StoreyStart.EMPTY) return blankFloor(name);
+
     const storeys = storeysOf(enumerateSlots(preset));
     const source = storey
         ? storeys.find((candidate) => candidate.key === storey.key)
-        : adjoiningStorey(storeys);
+        : adjoiningStorey(storeys, { isBasement });
 
     const from = firstLayoutOf(source);
     const data = from ? (await resolveBlueprint(folder, from))?.data : null;
+    if (!data) return blankFloor(name);
 
-    return data ? floorLike(name, data) : blankFloor(name);
+    if (storey || start === StoreyStart.WHOLE) return floorCopy(name, data);
+    if (start === StoreyStart.OUTLINE) return floorLike(name, data, { outline: true });
+    if (start === StoreyStart.ROOF) return generateRoof(name, data);
+
+    return floorLike(name, data, { tiles: true });
+}
+
+const ADD_STOREY_MODAL = '#add-storey-modal';
+const STOREY_START_INPUTS = '#add-storey-options input[name="storey-start"]';
+
+/**
+ * The answer the open Add floor / Add basement dialog is waiting for.
+ *
+ * The dialog is asked from the middle of adding a storey, so it hands back a promise
+ * rather than a value and this is what settles it. Dismissing settles it too, with null:
+ * a promise left pending would be an Add floor that never finished and never said so.
+ */
+let storeyStartResolve = null;
+
+/**
+ * Ask what the new storey should start as.
+ *
+ * Every answer but the last copies from the storey the new one will sit against, so the
+ * dialog says which storey that is: "the floor below" is not something an author can
+ * check, and on a building whose panel is out of date it would be wrong.
+ *
+ * A building with no storeys yet has nothing to copy, so those answers are shown
+ * disabled with the reason rather than hidden. The button then does what it always does
+ * -- the shape of what it is offering is what changes, which is a thing to read rather
+ * than a thing to notice the absence of.
+ *
+ * @param against the storey the new one will sit against, or null if there is none
+ * @returns one of StoreyStart, or null if the dialog was dismissed
+ */
+async function askStoreyStart(buildingName, { isBasement = false, against = null } = {}) {
+    const dialog = document.querySelector(ADD_STOREY_MODAL);
+    if (!dialog) return null;
+
+    // A dialog opened over one that was never answered. The first caller is waiting on a
+    // promise nothing else will settle, and it asked about the building as it was.
+    storeyStartResolve?.(null);
+    storeyStartResolve = null;
+
+    const title = isBasement ? 'Add basement' : 'Add floor';
+    field('add-storey-title').textContent = `${title} to ${buildingName}`;
+    field('add-storey-submit').textContent = title;
+
+    field('add-storey-source').textContent = against
+        ? `Copying from ${against.label}, the storey this one will sit `
+            + `${isBasement ? 'under' : 'on'}.`
+        : `${buildingName} has no storeys yet, so there is nothing to copy from.`;
+
+    // Walls, stairs and entrances is the default where there is something to copy: a
+    // building is one shape all the way up, and its stairwell has to be in the same
+    // place on every storey it passes through, so those are the parts that are wrong
+    // if they are not carried rather than the parts that are wrong if they are.
+    const fallback = against ? StoreyStart.FITTINGS : StoreyStart.EMPTY;
+
+    for (const input of document.querySelectorAll(STOREY_START_INPUTS)) {
+        // A roof goes on the top of a building. Under the bottom of one it is not an
+        // answer that is unavailable, it is not an answer -- so it is taken away rather
+        // than dimmed, which is what the answers that need something to copy are.
+        const roofDownwards = isBasement && input.value === StoreyStart.ROOF;
+        input.closest('label').hidden = roofDownwards;
+
+        input.disabled = roofDownwards || (!against && input.value !== StoreyStart.EMPTY);
+        input.checked = input.value === fallback;
+    }
+
+    dialog.setAttribute('open', '');
+
+    return new Promise((resolve) => { storeyStartResolve = resolve; });
+}
+
+/** Settle the dialog and put it away. */
+function answerStoreyStart(answer) {
+    document.querySelector(ADD_STOREY_MODAL)?.removeAttribute('open');
+
+    const resolve = storeyStartResolve;
+    storeyStartResolve = null;
+    resolve?.(answer);
+}
+
+export function closeAddStorey() {
+    answerStoreyStart(null);
+}
+
+export function submitAddStorey() {
+    const chosen = document.querySelector(`${STOREY_START_INPUTS}:checked`);
+
+    // One is always checked, so this is the guard against being called some other way.
+    if (!chosen) return;
+
+    answerStoreyStart(chosen.value);
 }
 
 /**
- * `<Building>_Floor1`, or the first number after it that nothing has taken. A layout is
+ * `<Building>_Floor1`, or the first number after it that nothing has taken. A basement
+ * is `<Building>_Basement1`, because the two are separate lists in the preset and a
+ * basement called Floor is a file whose name says where it is and is wrong. A layout is
  * named after the storey it is a layout of instead -- `<Building>_Floor0_v1` -- because
  * the next free floor number would name a floor the building does not have.
  *
@@ -1322,7 +1670,7 @@ async function newFloorData(folder, name, preset, storey) {
  * after a base game one shadows it everywhere it is used, so a name that collides by
  * accident would silently replace a floor in some other building.
  */
-async function nextFloorName(folder, buildingName, storey = null) {
+async function nextFloorName(folder, buildingName, { storey = null, isBasement = false } = {}) {
     const taken = new Set([
         ...await listCustomBlueprints(folder),
         ...(await loadFloorIndex()).blueprints ?? [],
@@ -1330,7 +1678,7 @@ async function nextFloorName(folder, buildingName, storey = null) {
 
     const stem = storey
         ? `${buildingName}_${storey.isBasement ? 'Basement' : 'Floor'}${storey.layoutIndex}_v`
-        : `${buildingName}_Floor`;
+        : `${buildingName}_${isBasement ? 'Basement' : 'Floor'}`;
 
     for (let n = 1; ; n++) {
         const name = `${stem}${n}`;
@@ -1394,11 +1742,16 @@ function closeFloor() {
     dirty = false;
     meshState = { busy: false, stale: null, status: '' };
 
+    // Before the model goes: what was selected was a square of the floor being closed.
+    clearSelection();
+
     view?.setModel(null);
     updateHeading();
     updateStatus();
     updateFloorPanel();
     updateLabels();
+
+    scheduleSync();
 }
 
 /**
@@ -1418,7 +1771,11 @@ export function scaffoldBuildingFolder(name) {
     return async (folder) => {
         const preset = stubFor(name, null, { copyFrom: null });
 
-        const handle = await getFile(folder, [`${name}${'.sodso.json'}`], true);
+        // Named for the building and for what it is, as everything written here is:
+        // see core/soFileName.js. The manifest names the file, so it gets the stem.
+        const stem = stemFor(name, BUILDING_TYPE);
+
+        const handle = await getFile(folder, [`${stem}${PRESET_SUFFIX}`], true);
         await writeFile(handle, `${JSON.stringify({
             name: preset.name,
             presetName: preset.presetName,
@@ -1427,7 +1784,7 @@ export function scaffoldBuildingFolder(name) {
             copyFrom: null,
         }, null, 2)}\n`);
 
-        await ensureListed(folder, name);
+        await ensureListed(folder, stem);
 
         await getFolder(folder, [FLOORS_DIR], true);
     };
@@ -1467,38 +1824,110 @@ export async function onModSelected() {
 }
 
 /**
- * What is open, for coming back from another editor.
+ * A floor slot as one parameter, and back.
+ *
+ * A slot is not a number: it is the four coordinates enumerateSlots names -- above or
+ * below ground, which floor setting, ordinary or control variant, and which of that
+ * setting's list. Writing one with `String` put "[object Object]" in the URL, so coming
+ * back left the floor open with no slot the building recognised: the Floor section said
+ * "Not in this building", up and down went nowhere, and the layout select was gone. The
+ * blueprint name cannot stand in for it -- nothing stops a building listing one floor in
+ * two slots, which is why the storey is found by slot in the first place.
+ *
+ * The four in that order, comma-separated for the same reason `variations` is: they are
+ * plain numbers, and this is shorter and no less readable than JSON. Decoding is strict
+ * and gives back nothing rather than a wrong answer -- a hand-edited or truncated value
+ * should leave the floor open with no slot, which is the state a floor no building refers
+ * to is already in and which the panels already say.
+ */
+function encodeSlot(slot) {
+    if (!slot) return null;
+
+    return [
+        slot.isBasement ? 1 : 0,
+        slot.isControlVariant ? 1 : 0,
+        slot.layoutIndex,
+        slot.blueprintIndex,
+    ].join(',');
+}
+
+function decodeSlot(value) {
+    const parts = (value ?? '').split(',');
+    if (parts.length !== 4) return null;
+
+    const [isBasement, isControlVariant, layoutIndex, blueprintIndex] = parts.map(Number);
+
+    if (isBasement !== 0 && isBasement !== 1) return null;
+    if (isControlVariant !== 0 && isControlVariant !== 1) return null;
+    // Negative means "somewhere new" to setBlueprint, which is not a place to reopen.
+    if (!Number.isInteger(layoutIndex) || layoutIndex < 0) return null;
+    if (!Number.isInteger(blueprintIndex) || blueprintIndex < 0) return null;
+
+    return {
+        isBasement: isBasement === 1,
+        isControlVariant: isControlVariant === 1,
+        layoutIndex,
+        blueprintIndex,
+    };
+}
+
+/**
+ * The floor that is open, as URL parameters.
  *
  * The variation each address is showing is part of it: a blueprint has nowhere to
  * record which of an address's layouts you were editing, so without this, coming back
- * would silently drop you onto layout 0 of every one of them.
+ * would silently drop you onto layout 0 of every one of them. They are plain numbers,
+ * so a comma-separated list is enough and shorter than JSON would be.
  *
- * This is also the only signal the flow gets that it is being switched away from, so it
- * is where the WebGL context is given back. See ensureView.
+ * Read-only, and cheap: the URL asks several times a minute. Leaving the flow is
+ * `suspend`.
  */
-export async function captureSession() {
-    await flushPendingSave();
+export function sessionState() {
+    if (!open) return {};
 
-    const session = open && {
-        building: open.building,
+    return {
+        building: open.building || null,
         blueprint: open.blueprint,
-        slot: open.slot,
-        selections: open.model.addresses.map((address) => address.selectedVariation),
+        slot: encodeSlot(open.slot),
+        variations: open.model.addresses.map((address) => address.selectedVariation).join(',') || null,
         tool: toolState.tool,
     };
-
-    releaseView();
-    return session;
 }
 
-export async function restoreSession(session) {
-    if (!session?.blueprint) return;
+/**
+ * Leaving this editor for another.
+ *
+ * The only signal the flow gets that it is being switched away from, so it is where
+ * anything unsaved is written and where the WebGL context is given back. See ensureView:
+ * a browser allows a handful of contexts across the whole page, and holding one for an
+ * editor nobody is looking at is how the next one fails to get one.
+ */
+export async function suspend() {
+    await flushPendingSave();
+    releaseView();
+}
 
-    if (session.tool && Object.values(Tool).includes(session.tool)) {
-        toolState.tool = session.tool;
+export async function restoreSession(params) {
+    if (!params?.blueprint) return;
+
+    if (params.tool && Object.values(Tool).includes(params.tool)) {
+        toolState.tool = params.tool;
     }
 
+    const selections = (params.variations ?? '')
+        .split(',')
+        .filter((entry) => entry !== '')
+        .map(Number)
+        .filter((entry) => Number.isInteger(entry) && entry >= 0);
+
     await openFloor(
-        { building: session.building, blueprint: session.blueprint, slot: session.slot },
-        session.selections ?? []);
+        {
+            building: params.building ?? null,
+            blueprint: params.blueprint,
+            slot: decodeSlot(params.slot),
+        },
+        selections,
+        // What the URL names may have been renamed or deleted since, and arriving to an
+        // alert about a floor you did not ask for is worse than arriving to no floor.
+        { quiet: true });
 }

@@ -56,9 +56,9 @@ async function directoryAt(root, path) {
 /**
  * Lay the demo content out fresh.
  *
- * A key ending in `/` is a directory rather than a file -- an empty `Floors/` is what
- * marks a building mod that has not saved a floor yet, and there is no file that would
- * imply it.
+ * A key ending in `/` is a directory rather than a file -- a building mod that has not
+ * saved a floor yet still has an empty `Floors/`, and there is no file that would imply
+ * it.
  */
 async function seed(root, demoFiles) {
     for (const [path, contents] of Object.entries(demoFiles)) {

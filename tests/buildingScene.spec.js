@@ -379,26 +379,35 @@ test('a divider middle is drawn as a rail across the whole wall, with no posts',
     expect(await shapeOf(page, '4')).toEqual([RAIL]);
 });
 
-test('each divider end is drawn with the post on its own side', async ({ page }) => {
+test('the two divider ends are drawn on opposite sides of each other', async ({ page }) => {
     await asBlanks(page);
 
-    // The two ends take opposite sides, which is the whole of what distinguishes the
-    // pair: `EndLeft` is the one at the near end of the wall. See the note on
-    // PRESET_SHAPES for why that is not a claim about the game's own convention.
-    expect(await shapeOf(page, '5')).toEqual([POST_LEFT, RAIL]);
-    expect(await shapeOf(page, '6')).toEqual([POST_RIGHT, RAIL]);
+    // Which of the two is drawn at the near end depends on which side of the wall the
+    // parent room is -- see dividerEnds.js -- so what is fixed is only that they differ.
+    // On a floor of one room the parent falls to the low node, which puts EndRight's post
+    // at the near end of a wall along x.
+    const [left, right] = [await shapeOf(page, '5'), await shapeOf(page, '6')];
+
+    expect([left, right]).toContainEqual([POST_LEFT, RAIL]);
+    expect([left, right]).toContainEqual([POST_RIGHT, RAIL]);
+    expect(left).not.toEqual(right);
 });
 
 /**
- * The same preset, on the two axes, drawn the same way round.
+ * The same preset, on the two axes, drawn *opposite* ways round.
  *
- * The scene mirrors the floor's x axis, so a piece offset along a wall that lies on that
- * axis moves the opposite way to one on a wall that does not. That did not matter while
- * every shape was symmetrical about the middle of its wall. It does for a divider end:
- * without it, a run ending at a corner would have its two last walls capped at opposite
- * ends of themselves, and which one an author saw would depend on which way the wall ran.
+ * Two things are going on and they must not be confused. The scene mirrors the floor's x
+ * axis, so a piece offset along a wall on that axis moves the opposite way to one on a
+ * wall that does not -- `placePart` undoes that, and this is what proves it still does.
+ *
+ * On top of it, the game's own rule genuinely does mirror between the axes: with the
+ * parent on the same side, a wall along x has its left end at high y while a wall along y
+ * has its left end at low x. So reading both back in the floor's own coordinates, the
+ * same preset lands on opposite ends of the two walls. That is not the mirror leaking --
+ * it is the rule, and a view that drew them alike would be hiding it.
  */
-test('an asymmetric preset is drawn the same way round on both axes', async ({ page }) => {
+test('an asymmetric preset is drawn mirrored between the axes, as the rule has it',
+    async ({ page }) => {
     await asBlanks(page);
 
     const post = await withBareFloor(page, (scene, floor, model, sceneModule) => {
@@ -424,7 +433,7 @@ test('an asymmetric preset is drawn the same way round on both axes', async ({ p
         return { x: offsetOf(model.AXIS_X), y: offsetOf(model.AXIS_Y) };
     });
 
-    expect(post).toEqual({ x: -0.375, y: -0.375 });
+    expect(post).toEqual({ x: 0.375, y: -0.375 });
 });
 
 test('a nothing entrance is drawn as a threshold at a divider\'s height', async ({ page }) => {
@@ -888,7 +897,11 @@ test('every tile that carries something is labelled with it, over its own square
     expect(labels.count).toBe(49);
     expect(labels.markers.length).toBeGreaterThan(0);
     expect(labels.markers.some((marker) => marker.label === 'Main entrance')).toBe(true);
-    expect(labels.markers.some((marker) => /^Stairs \d+°$/.test(marker.label))).toBe(true);
+    // Three rows for a stairwell, the middle one empty on the tile whose stairwell is not
+    // the mirrored preset. The Hotel's ground floor has one of each.
+    expect(labels.markers.some((marker) => marker.label === 'Stairs 90°\n\nElevator')).toBe(true);
+    expect(labels.markers.some((marker) => marker.label === 'Stairs 90°\nInverted\nElevator'))
+        .toBe(true);
 
     // What the model said is what is written, on the tile it was said about.
     expect(labels.written).toEqual(labels.markers.map((marker) => marker.label));
@@ -972,7 +985,7 @@ test('a label lies in the floor, and turns with the stairwell it names', async (
 
     for (const rotation of [0, 90, 180, 270]) {
         expect(turned[rotation].mismatch).toBeUndefined();
-        expect(turned[rotation].text).toBe(`Stairs ${rotation}°`);
+        expect(turned[rotation].text).toBe(`Stairs ${rotation}°\n\nElevator`);
         expect(turned[rotation].visible).toBe(true);
 
         // Written on the floor at every rotation: the surface faces straight up, so
@@ -981,34 +994,34 @@ test('a label lies in the floor, and turns with the stairwell it names', async (
     }
 
     /*
-     * Unturned, the words run along the scene's -x and stand up its +z.
+     * At 0 the words run along the scene's +x and stand up its -z: upside down in the
+     * default view, where the camera stands off the y = 0 edge looking back along +z.
      *
-     * Which is left to right and away from the camera in the default view, because the
-     * camera stands off the y = 0 edge looking back along +z. The scene's -x is the
-     * floor's *increasing* x -- positions here are mirrored, see mirrorX -- so the words
-     * run along the floor's x with their top toward the floor's +y, which is the
-     * direction a rotation of 0 faces.
+     * Which is the turn doing its job rather than failing at it. A label is upright to
+     * whoever the stairs open onto, and a stairwell at 0 opens on the floor's +y -- away
+     * from the front -- so this one is read from the far side. See paintTileLabels, and
+     * the base game's own floors that the direction is taken from.
      */
-    expect(turned[0].reads).toEqual([-1, 0, 0]);
-    expect(turned[0].up).toEqual([0, 0, 1]);
+    expect(turned[0].reads).toEqual([1, 0, 0]);
+    expect(turned[0].up).toEqual([0, 0, -1]);
 
     /*
-     * Each quarter turns the top of the words a quarter, in the floor's own frame.
+     * Each quarter turns the top of the words a quarter, against the sense of the number
+     * in the file: positions here are mirrored, and reflecting one axis reverses every
+     * rotation about the vertical. See mirrorX.
      *
-     * The floor's +y is the scene's +z and the floor's +x is the scene's -x, so a
-     * rotation of 90 -- which turns the game's forward from +z to +x -- puts the top of
-     * the words on the scene's -x. Reflecting one axis reverses the sense of a rotation
-     * about the vertical, which is why it goes this way round rather than the other.
+     * 180 is the one that reads upright in the default view. Those stairs open on the
+     * floor's -y, which is the edge the camera stands off.
      */
-    expect(turned[90].up).toEqual([-1, 0, 0]);
-    expect(turned[180].up).toEqual([0, 0, -1]);
-    expect(turned[270].up).toEqual([1, 0, 0]);
+    expect(turned[90].up).toEqual([1, 0, 0]);
+    expect(turned[180].up).toEqual([0, 0, 1]);
+    expect(turned[270].up).toEqual([-1, 0, 0]);
 
     // And the words stay square to their own top: a turned label is read sideways, not
     // letter by letter down the tile.
-    expect(turned[90].reads).toEqual([0, 0, -1]);
-    expect(turned[180].reads).toEqual([1, 0, 0]);
-    expect(turned[270].reads).toEqual([0, 0, 1]);
+    expect(turned[90].reads).toEqual([0, 0, 1]);
+    expect(turned[180].reads).toEqual([-1, 0, 0]);
+    expect(turned[270].reads).toEqual([0, 0, -1]);
 });
 
 test('the labels come and go with the squares they are written on', async ({ page }) => {
@@ -1406,4 +1419,103 @@ test('disposing gives back the canvas and the context', async ({ page }) => {
     // A flow that is switched away from and back must not leave contexts behind: a
     // browser drops the oldest once about sixteen are live.
     expect(after.children).toBe(0);
+});
+
+
+/*
+ * The mark on the selected square.
+ *
+ * Which square is selected is the tools' state, so the scene is told rather than working
+ * it out -- the same arrangement as the tile overlay. What is worth driving here is that
+ * being told puts the mark on the right square, that clearing it takes the mark away, and
+ * that it follows a square whose top surface moves.
+ */
+
+test('the selected square is marked, and clearing the selection unmarks it', async ({ page }) => {
+    const shown = await withScene(page, async (scene) => {
+        const mark = scene._internals.selectionMark;
+        const before = mark.visible;
+
+        scene.setSelected({ x: 10, y: 11 });
+
+        // Laying out a glyph is asynchronous -- a font to fetch and an atlas to build --
+        // and where the mark ends up depends on the glyph, see centreMarkInk. Waiting for
+        // it is what makes this a test of where the mark lands rather than of how fast a
+        // font arrives.
+        //
+        // Polled rather than awaited through `mark.sync(resolve)`: troika does not call
+        // back when it has nothing to do, and the scene has already asked for this very
+        // layout, so a second request can be answered by doing nothing at all and the
+        // promise never settles. The frame after is for the scene's own callback, which
+        // is what applies the correction.
+        for (let waited = 0; waited < 100 && !mark.textRenderInfo; waited++) {
+            await new Promise((resolve) => setTimeout(resolve, 20));
+        }
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+        const bounds = mark.textRenderInfo.visibleBounds;
+        const ink = new scene._internals.THREE.Vector3(0, (bounds[1] + bounds[3]) / 2, 0);
+        mark.localToWorld(ink);
+
+        const on = { visible: mark.visible, text: mark.text, ink: { x: ink.x, z: ink.z } };
+
+        scene.setSelected(null);
+        return { before, on, off: mark.visible };
+    });
+
+    // Nothing is selected until something is clicked.
+    expect(shown.before).toBe(false);
+
+    expect(shown.on.visible).toBe(true);
+    expect(shown.on.text).toBe('*');
+
+    // The asterisk's *ink* is on the square's centre, which is the thing being claimed.
+    // Its position is not: troika lays a glyph out in a box a whole line tall and an
+    // asterisk sits in the top of it, so a mark positioned on the centre draws above it.
+    //
+    // x is mirrored the way everything else in the scene is -- see mirrorX -- and z is
+    // not, so the two are asserted separately rather than as a pair that could both be
+    // wrong in the same direction.
+    expect(shown.on.ink.z).toBeCloseTo(11.5, 4);
+    expect(shown.on.ink.x).toBeCloseTo(21 - 10.5, 4);
+
+    expect(shown.off).toBe(false);
+});
+
+test('closing the floor takes the mark off with it', async ({ page }) => {
+    const shown = await withScene(page, (scene) => {
+        const mark = scene._internals.selectionMark;
+
+        scene.setSelected({ x: 10, y: 11 });
+        const open = mark.visible;
+
+        // What closeFloor does. refresh() draws nothing without a model and so cannot
+        // take the mark down from inside its own guard -- setModel is what has to.
+        scene.setModel(null);
+
+        return { open, closed: mark.visible };
+    });
+
+    expect(shown.open).toBe(true);
+    expect(shown.closed).toBe(false);
+});
+
+test('the mark rides the square it is on when the floor under it changes', async ({ page }) => {
+    const heights = await withScene(page, async (scene, container, floor, sceneModule) => {
+        const model = await import('/flows/building/scripts/floorModel.js');
+        const mark = scene._internals.selectionMark;
+
+        scene.setSelected({ x: 10, y: 11 });
+        const flat = mark.position.y;
+
+        // Raise the square, in the overlay that draws raised squares raised. A mark left
+        // at the old height would be buried in the plinth the square now stands on.
+        scene.setOverlay(sceneModule.Overlay.FLOOR_TYPE);
+        model.setNodeFloor(floor, model.nodeAt(floor, 10, 11), 1, 20);
+        scene.refresh();
+
+        return { flat, raised: mark.position.y };
+    });
+
+    expect(heights.raised).toBeGreaterThan(heights.flat);
 });

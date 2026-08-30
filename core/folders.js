@@ -136,8 +136,9 @@ export function useFolder(id, handle) {
 /**
  * Ask for a folder. Must be called from a user gesture.
  *
- * If we already have a remembered handle for it, try re-granting that first: the user
- * gets a one-click permission prompt instead of the file dialog.
+ * If we have a remembered handle for a folder that is not connected, try re-granting
+ * that first: the user gets a one-click permission prompt instead of the file dialog.
+ * A folder already connected skips that and goes straight to the picker -- see below.
  */
 export async function selectFolder(id) {
     // Demo mode's promise is that no real folder is read or written. Connecting one here
@@ -152,7 +153,11 @@ export async function selectFolder(id) {
 
     const remembered = pendingHandles.get(id) ?? (await rememberedHandle(kind));
 
-    if (remembered?.requestPermission) {
+    // Not for a folder already connected, whose button says Change rather than
+    // Reconnect. Being connected means the permission is granted, and Chrome answers a
+    // request for a permission it has already granted without asking anyone -- so this
+    // would hand back the very folder being changed, and the button would do nothing.
+    if (!folderHandle(id) && remembered?.requestPermission) {
         try {
             if ((await remembered.requestPermission({ mode: kind.mode })) === 'granted') {
                 return accept(kind, remembered);

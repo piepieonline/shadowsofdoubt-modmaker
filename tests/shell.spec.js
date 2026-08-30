@@ -56,20 +56,26 @@ test('an unknown or missing flow falls back rather than failing', async ({ page 
     expect(await activeId(page)).toBe('scriptableObject');
 });
 
-test('a DDS deep link selects the DDS flow and opens the document', async ({ page }) => {
-    // The old DDS Viewer was a separate site and the modding wiki links to it, so
-    // its parameters have to keep working.
-    await gotoFlow(page, `?documentId=${TREE_GUID}&documentType=tree&caseEditorLink=true`);
+test('a link naming a document by GUID opens it, with no mod selected', async ({ page }) => {
+    // A GUID says which document without saying which of the three kinds it is, which
+    // is all a link to one can reasonably know -- the modding wiki's links say only
+    // this, and so does a reference followed out of a case file. The kind is worked out
+    // from the reference data.
+    await gotoFlow(page, `?flow=dds&open=${encodeURIComponent(`["${TREE_GUID}"]`)}`);
     expect(await activeId(page)).toBe('dds');
 
-    // It used to fill in the GUID field and leave the reader to press Load. There is
-    // no field now, so the link has to open it -- which it can only do once the game
-    // folder is connected, since that is where the document is read from.
+    // Nothing can be opened until the game folder is connected, since that is where the
+    // document is read from. The link waits rather than giving up.
     await seedFs(page, ddsFixture);
     await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
 
     await expect(page.locator('#file-window-0'))
         .toHaveAttribute('path', `DDS/Trees/${TREE_GUID}.tree`);
+
+    // And the URL now names the file rather than the GUID: the same state, said the way
+    // everything else says it.
+    await expect.poll(() => new URL(page.url()).searchParams.get('open'))
+        .toContain(`DDS/Trees/${TREE_GUID}.tree`);
 });
 
 test('the picker lists every flow and switching navigates', async ({ page }) => {
@@ -103,13 +109,13 @@ test('each flow gets only its own stylesheets', async ({ page }) => {
 });
 
 test('the old per-flow URLs redirect and keep their parameters', async ({ page }) => {
-    await page.goto('/flows/dds/?documentId=abc');
+    await page.goto('/flows/dds/?strings=Strings/english.csv');
     await page.locator('html[data-flow-ready]').waitFor();
 
     const url = new URL(page.url());
     expect(url.pathname).toBe('/index.html');
     expect(url.searchParams.get('flow')).toBe('dds');
-    expect(url.searchParams.get('documentId')).toBe('abc');
+    expect(url.searchParams.get('strings')).toBe('Strings/english.csv');
     expect(await activeId(page)).toBe('dds');
 });
 

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, connectFolders, gotoFlow, alerts, queuePrompts, readFile,
-    listDir,
+    listDir, pickStringsFile,
 } from './support/harness.js';
 import { ddsBareFixture } from './support/fixtures.js';
 
@@ -19,6 +19,32 @@ const POPOVER = '.driver-popover';
 
 /** The step on screen now. */
 const heading = (page) => page.locator(`${POPOVER} .driver-popover-title`);
+
+/**
+ * Fail if the popover is sitting on a control the step is asking the player to use.
+ *
+ * The overlay lets clicks through, so the popover is the one thing left that can swallow
+ * them. A step that points at a button and then covers what it told you to click next is
+ * a walkthrough that cannot be walked -- and it is invisible to a test that drives the
+ * control through `fill` or `selectOption`, neither of which does a hit test.
+ */
+async function expectPopoverClearOf(page, selector, what) {
+    const target = await page.locator(selector).boundingBox();
+    const popover = await page.locator(POPOVER).boundingBox();
+
+    const overlaps = popover.x < target.x + target.width
+        && popover.x + popover.width > target.x
+        && popover.y < target.y + target.height
+        && popover.y + popover.height > target.y;
+
+    const box = (b) => `x ${Math.round(b.x)}-${Math.round(b.x + b.width)}, `
+        + `y ${Math.round(b.y)}-${Math.round(b.y + b.height)}`;
+
+    expect(
+        overlaps,
+        `the popover is covering ${what} -- popover ${box(popover)}, ${what} ${box(target)}`,
+    ).toBe(false);
+}
 
 /**
  * Where the hole in the overlay starts -- which is to say, what is being highlighted.
@@ -151,7 +177,7 @@ test('it walks from an empty mod to an open case', async ({ page }) => {
 
     // The case really was scaffolded into the mod, not somewhere the walkthrough invented.
     const saved = JSON.parse(
-        await readFile(page, 'Mods/BareMod/theftgonewrong/theftgonewrong.sodso.json'));
+        await readFile(page, 'Mods/BareMod/theftgonewrong/theftgonewrong.MurderMO.sodso.json'));
     expect(saved.fileType).toBe('MurderMO');
 
     expect(await alerts(page)).toEqual([]);
@@ -166,7 +192,7 @@ test('a step reading the saved file waits for the value to reach disk', async ({
     /** Set compatibleWith in the open case, the way the editor would leave it. */
     const setCompatibleWith = (ref) => page.evaluate(async (value) => {
         const handle = await window.selectedMod.baseFolder
-            .getFileHandle('theftgonewrong.sodso.json');
+            .getFileHandle('theftgonewrong.MurderMO.sodso.json');
         const data = JSON.parse(await (await handle.getFile()).text());
         data.compatibleWith = [value];
         const writable = await handle.createWritable();
@@ -233,16 +259,9 @@ test('a DDS step waits for the document, not merely for the dialog', async ({ pa
     await page.fill('#new-dds-file-line', 'Hand everything over!');
     await expect(heading(page)).toHaveText('Say what it is and what it says');
 
-    // The popover must not sit over the dialog it is talking about. The overlay lets
-    // clicks through, so the popover is the one thing left that can swallow them --
-    // and this dialog is tall enough that a popover below it has nowhere to go.
-    const submit = await page.locator('#new-dds-file-submit').boundingBox();
-    const popover = await page.locator(POPOVER).boundingBox();
-    const overlaps = popover.x < submit.x + submit.width
-        && popover.x + popover.width > submit.x
-        && popover.y < submit.y + submit.height
-        && popover.y + popover.height > submit.y;
-    expect(overlaps, 'the popover is covering Create').toBe(false);
+    // The popover must not sit over the dialog it is talking about, and this dialog is
+    // tall enough that one below it has nowhere to go.
+    await expectPopoverClearOf(page, '#new-dds-file-submit', 'Create');
 
     await page.locator('#new-dds-file-submit').click();
     await expect(heading(page)).toHaveText('What the note says');
@@ -268,27 +287,35 @@ test('a DDS step waits for the document, not merely for the dialog', async ({ pa
     await expect(page.locator('#file-window-0')).toHaveAttribute('path', /\.msg$/);
     await page.locator('.driver-popover-next-btn').click();
 
-    // A strings file is chosen from the paths the game reads rather than named, so this
-    // step ends when the CSV is open, not when the dialog is.
+    // Two steps, for the same reason the tree and the message are two: the button and
+    // the dialog it opens cannot both be pointed at from one place. The first ends when
+    // the dialog appears.
     await expect(heading(page)).toHaveText('One more thing to name');
     await page.locator('#new-file-button').click();
-    await page.selectOption('#new-dds-file-type', 'strings');
-    await expect(heading(page)).toHaveText('One more thing to name');
 
-    await page.selectOption('#new-dds-file-strings', 'Evidence/evidence.names');
+    // A strings file is chosen from the paths the game reads rather than named, so the
+    // second ends when the CSV is open, not when the dialog is.
+    await expect(heading(page)).toHaveText('The file the name goes in');
+    await page.selectOption('#new-dds-file-type', 'strings');
+    await expect(heading(page)).toHaveText('The file the name goes in');
+
+    // Reachable rather than uncovered, which is the most this step can promise: the
+    // dialog is centred and 660px wide, so in a 1280px viewport neither side has room
+    // for a 300px popover and driver.js lays it over the dialog whatever `side` says.
+    // A trial click is Playwright's own actionability check -- it hit-tests the point
+    // the player would click and presses nothing -- so it fails exactly when the
+    // popover would swallow the click, which is the thing that makes a step unwalkable.
+    await page.locator('#new-dds-file-strings-field .select2-selection')
+        .click({ trial: true });
+
+    await pickStringsFile(page, 'Evidence/evidence.names');
     await page.locator('#new-dds-file-submit').click();
 
     await expect(heading(page)).toHaveText('Call it a crumpled paper');
 
     // Same hazard as the Create button: the player has to reach this control, so the
     // popover must not be sitting on it.
-    const box = await page.locator('#strings-window .strings-add').boundingBox();
-    const over = await page.locator(POPOVER).boundingBox();
-    expect(
-        over.x < box.x + box.width && over.x + over.width > box.x
-        && over.y < box.y + box.height && over.y + over.height > box.y,
-        'the popover is covering the text box',
-    ).toBe(false);
+    await expectPopoverClearOf(page, '#strings-window .strings-add', 'the text box');
 
     // Added, typed and blurred, which is what autosave writes on.
     await page.locator('#strings-window .strings-add').click();

@@ -48,10 +48,15 @@ import { encodePng } from './pngWriter.js';
 /**
  * Which wall presets are windows.
  *
- * The game reads `sectionClass` off the `DoorPairPreset` asset; there is no dump of
- * those, so this is the reference tool's hand-maintained table, and ids 14, 26 and 27 in
- * it are unconfirmed. A single wrong entry shifts every block after it on that side of
- * that floor -- see limitation 4. Imported directly rather than through loadRefs.js
+ * A hand-maintained table, and it stays one. `sectionClass` on the `DoorPairPreset` asset
+ * was expected to replace it, and a dump of the assets shows it cannot: it groups
+ * `WindowLargeRectangle` with `NothingWall` and a wooden fence, describing where the
+ * opening sits in the wall panel's mesh rather than whether the section is glazed.
+ *
+ * Ids 1, 13, 26 and 27 are unconfirmed, and none of them appears in a base game
+ * blueprint, so no test here reaches one. A single wrong entry shifts every block after
+ * it on that side of that floor -- see limitation 4. Imported directly rather than through
+ * loadRefs.js
  * because nothing in this flow is reached from main.js, so it costs nothing at page
  * load; buildingLibrary.js imports soDefaults.json the same way.
  */
@@ -87,8 +92,8 @@ const TEXTURE_HEIGHT = 512;
 
 /** How much of a node's wall a window takes, and where it sits within its storey. */
 const WINDOW_WIDTH_RATIO = 0.55;
-const WINDOW_BOTTOM_RATIO = 0.12;
-const WINDOW_TOP_RATIO = 0.56;
+const WINDOW_BOTTOM_RATIO = 0.153;
+const WINDOW_TOP_RATIO = 0.626;
 
 /**
  * The four sides take the left three quarters of the texture and the roof takes a square
@@ -145,6 +150,11 @@ const DOWN = { x: 0, y: -1, z: 0 };
  * A square is inside the building's shell if it has a ceiling over it or is explicitly
  * indoors, and open air if it has a floor and nothing above. The game asks the *room*
  * whether it is outside; this asks the geometry, which is limitation 2.
+ *
+ * The order is `soEnums.json`'s `FloorTileType`, which starts at `none` -- confirmed
+ * against the game. Not its `f_t` key, which holds the same five values sorted
+ * alphabetically and so starts at `CeilingOnly`: reading these indices out of that one
+ * turns every empty square into a roofed one. See `refs/GENERATOR.md` §9a.
  */
 const FLOOR_ONLY = 2;
 const ENCLOSED_TILE_TYPES = new Set([
@@ -923,7 +933,13 @@ export async function sourceFloorHash(preset, resolveFloor) {
         }
     }
 
-    return fnv1a(parts.join(' '));
+    // Written as an escape rather than as the character itself. A separator that cannot
+    // appear in a part is the right one -- `JSON.stringify` escapes a null, and no
+    // blueprint is named with one -- but a literal control character in the source made
+    // this whole file read as binary: `grep` skips it and a diff of it says the files
+    // differ without saying how. Same bytes at runtime, so every hash already written
+    // still matches and no mesh is made to look stale by this.
+    return fnv1a(parts.join('\u0000'));
 }
 
 function fnv1a(text) {

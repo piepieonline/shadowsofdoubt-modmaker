@@ -2,10 +2,12 @@ import { GUID_PATTERN } from '../../../core/guid.js';
 import { loadVanillaStrings } from './fileManager.js';
 import { createNewFile } from './modFileManager.js';
 import { renderFilePanel } from '../../../core/filePanel.js';
-import { WINDOW_DEPTHS } from './jsonTreeAdditions.js';
+import { WINDOW_DEPTHS, deleteTree } from './jsonTreeAdditions.js';
 import { listContent, STRINGS_OPEN_AS } from './contentList.js';
+import { deleteDocument, deleteStringsFile } from './deleteDocument.js';
 import { refreshManifestPanel } from './manifestPanel.js';
 import { closeStringsWindow, openStringsFile, openStringsPath } from './stringsEditor.js';
+import { decodeList, encodeList } from '../../../core/urlState.js';
 import { initAndLoad, loadI18n, loadFile } from '../index.js';
 
 /**
@@ -17,23 +19,6 @@ export async function onFoldersConnected() {
     if (!window.dirHandleStreamingAssets) return;
 
     await loadVanillaStrings();
-
-    // A deep link arrives before any folder is connected, and a document cannot be
-    // read until one is. Taken rather than read, so a second folder change does not
-    // reopen it over whatever is being looked at by then.
-    const pending = pendingDocument;
-    pendingDocument = null;
-    if (pending) await loadDocument(pending.id, pending.type);
-}
-
-/**
- * A document to open as soon as there is somewhere to read it from. See flow.js: the
- * old DDS Viewer's URLs name one, and the wiki links to them.
- */
-let pendingDocument = null;
-
-export function openWhenReady(id, type) {
-    pendingDocument = { id, type };
 }
 
 /**
@@ -61,10 +46,94 @@ export async function onModSelected(selection) {
 export async function refreshPanel() {
     renderFilePanel(
         '#dds-file-list',
-        await listContent(window.selectedMod?.baseFolder ?? null),
+        withDeleteActions(await listContent(window.selectedMod?.baseFolder ?? null)),
         openPanelEntry,
         'Choose a mod and content folder to see what it contains.'
     );
+}
+
+/**
+ * Give every entry the button that removes it.
+ *
+ * Every one of them, strings CSVs included: this panel lists the mod's own DDSContent and
+ * nothing else, so all of it is the author's. A patch is the interesting case -- deleting
+ * one is how a mod stops overriding a piece of base game content, and the base game file
+ * it was written against is untouched by it.
+ *
+ * Attached here rather than in `contentList.js`, which answers what the folder holds and
+ * has no view on what may be done about it.
+ */
+function withDeleteActions(categories) {
+    if (!categories) return categories;
+
+    return categories.map((category) => ({
+        ...category,
+        entries: category.entries.map((entry) => ({
+            ...entry,
+            action: {
+                label: '×',
+                title: `Delete ${entry.label} from this mod`,
+                danger: true,
+                onClick: () => removeEntry(entry),
+            },
+        })),
+    }));
+}
+
+/**
+ * Delete what an entry stands for, once its author has seen what pointed at it.
+ *
+ * Whatever was showing the file is closed first, and only once the file is really gone. A
+ * window left open over a deleted file is one save away from writing it back out, and
+ * nothing would say that had happened.
+ */
+async function removeEntry(entry) {
+    const folder = window.selectedMod?.baseFolder;
+    if (!folder) return;
+
+    if (entry.openAs === STRINGS_OPEN_AS) {
+        // A strings entry's id is the path it really sits at below DDSContent, which is
+        // what the manifest maps and what identifies it -- two languages hold files of
+        // the same name.
+        if (!await deleteStringsFile(folder, { id: entry.id, label: entry.label })) return;
+
+        if (openStringsPath() === entry.id) closeStringsWindow(true);
+
+        // Block text is resolved into a document as it loads, so the documents still open
+        // are showing lines that have just been deleted.
+        await loadI18n();
+        await reloadOpenDocuments();
+
+        // The deleted file may have been one the manifest placed.
+        await refreshManifestPanel();
+    } else {
+        // `openAs` is which of the three kinds of document it is, which says both where
+        // the file sits and, with `file`, which of the two forms of it is on disk.
+        const target = { id: entry.id, file: entry.file, type: entry.openAs, label: entry.label };
+        if (!await deleteDocument(folder, target)) return;
+
+        closeDocumentWindows(entry.id);
+    }
+
+    await refreshPanel();
+}
+
+/**
+ * Close the window showing a document, and the levels below it.
+ *
+ * By GUID rather than by path, because the window records the path of the *base game*
+ * file -- a patch is a sibling of it and is never what a window is opened under. The
+ * levels below go too: they were reached by drilling down through the document that has
+ * just been deleted.
+ */
+function closeDocumentWindows(id) {
+    for (let depth = 0; depth < WINDOW_DEPTHS; depth++) {
+        const path = document.getElementById(`file-window-${depth}`)?.getAttribute('path');
+        if (path?.includes(id)) {
+            deleteTree(depth);
+            return;
+        }
+    }
 }
 
 /**
@@ -386,6 +455,23 @@ function captureDocuments() {
     return open;
 }
 
+/**
+ * Open one level of the drill-down.
+ *
+ * An entry is normally the path of the file the window is showing. A bare GUID is the
+ * other form: it names a document without saying which of the three kinds it is, which
+ * is what a link to a document can reasonably know -- the modding wiki's links say only
+ * a GUID, and so does a reference followed out of a case file. `loadDocument` works the
+ * kind out from the reference data.
+ */
+async function openEntry(entry, depth) {
+    if (GUID_PATTERN.test(entry)) {
+        await loadDocument(entry);
+    } else {
+        await loadFile(entry, depth);
+    }
+}
+
 async function restoreDocuments(documents) {
     if (!documents?.length) return;
 
@@ -407,16 +493,30 @@ export async function reloadOpenDocuments() {
     await restoreDocuments(captureDocuments());
 }
 
-/** What is open, so it can be put back after a trip to another editor. */
-export function captureSession() {
-    return { documents: captureDocuments(), strings: openStringsPath() };
+/**
+ * What is open, as URL parameters: the drill-down, and the strings file beside it.
+ *
+ * The drill-down is a list indexed by depth rather than a single document, because
+ * reopening only the top level would rebuild the cascade from its first message and
+ * block -- which is not necessarily where you were.
+ */
+export function sessionState() {
+    return {
+        open: encodeList(captureDocuments().map(({ path }) => path)),
+        strings: openStringsPath(),
+    };
 }
 
-export async function restoreSession(session) {
-    if (!session) return;
+export async function restoreSession(params) {
+    if (!params) return;
 
-    await restoreDocuments(session.documents);
+    // The index in the list is the depth: with three levels of one drill-down, a level
+    // cannot be open without the one above it, so the list has no gaps to record.
+    const entries = decodeList(params.open);
+    for (const [depth, entry] of entries.entries()) {
+        await openEntry(entry, depth);
+    }
 
     // Last, so a reload triggered by the documents cannot land on a half-open window.
-    if (session.strings) await openStringsFile(session.strings);
+    if (params.strings) await openStringsFile(params.strings);
 }

@@ -47,9 +47,16 @@ test('a tile is described by what it carries, and by nothing when it carries non
         .toBe('Nothing');
 
     expect(tileDescription({ isStairwell: true, isInverted: false, stairwellRotation: 90 }))
-        .toBe('Stairs 90°');
+        .toBe('Stairs 90° · Elevator');
     expect(tileDescription({ isStairwell: true, isInverted: true, stairwellRotation: 0 }))
-        .toBe('Elevator 0°');
+        .toBe('Stairs 0° · Inverted · Elevator');
+
+    // The blank lines a label uses to keep its rows in step are not separators to join
+    // over: a stairwell with nothing to say beyond what it is says only that.
+    expect(tileDescription(
+        { isStairwell: true, isInverted: false, stairwellRotation: 90 },
+        { plain: false, inverted: false },
+    )).toBe('Stairs 90°');
 });
 
 test('a main entrance is said to be one rather than both', () => {
@@ -61,7 +68,7 @@ test('a main entrance is said to be one rather than both', () => {
     expect(tileDescription({
         isStairwell: true, isInverted: false, stairwellRotation: 180,
         isEntrance: true, isMainEntrance: true,
-    })).toBe('Stairs 180° · Main entrance');
+    })).toBe('Stairs 180° · Elevator · Main entrance');
 });
 
 test('a colour survives a round trip through the picker, and keeps its alpha out of it', () => {

@@ -52,6 +52,7 @@ test('every base game building enumerates its slots', async () => {
             wellFormed: slots.every((option) => (
                 typeof option.blueprint === 'string' && option.blueprint.length > 0
                 && typeof option.label === 'string'
+                && typeof option.storeyLabel === 'string' && option.storeyLabel.length > 0
                 && Number.isInteger(option.slot.layoutIndex)
                 && Number.isInteger(option.slot.blueprintIndex)
                 && typeof option.slot.isBasement === 'boolean'
@@ -85,10 +86,70 @@ test('a slot list covers basements and control room variants', async () => {
     // Hotel has one setting whose three blueprints the game picks between, and a
     // basement setting with two. Both have to be reachable, or a floor becomes
     // uneditable because nothing offers its slot.
-    expect(slots).toContainEqual(['Floor 5 v0', 'Hotel_TopFloors']);
-    expect(slots).toContainEqual(['Floor 5 v2', 'Hotel_TopFloors3']);
-    expect(slots).toContainEqual(['Basement 0 v0', 'Hotel_Basement1']);
-    expect(slots).toContainEqual(['Basement 0 v1', 'Hotel_Basement2']);
+    expect(slots).toContainEqual(['Floors 5–8 v0', 'Hotel_TopFloors']);
+    expect(slots).toContainEqual(['Floors 5–8 v2', 'Hotel_TopFloors3']);
+    expect(slots).toContainEqual(['Basement 1 v0', 'Hotel_Basement1']);
+    expect(slots).toContainEqual(['Basement 1 v1', 'Hotel_Basement2']);
+});
+
+/**
+ * A setting is a run of floors, not a floor: `floorsWithThisSetting` says how many of
+ * them look like this. So the settings are numbered 0..7 and the building is twelve
+ * storeys, and every setting above a tall one is named several floors below where it is.
+ */
+test('a storey is named by the floors it covers, not by its place in the setting list', async () => {
+    const preset = await library.loadVanillaPreset('Hotel');
+    const storeys = library.storeysOf(library.enumerateSlots(preset));
+
+    // floorsWithThisSetting reads [1, 1, 1, 1, 1, 4, 1, 2] up from the ground floor, and
+    // the one basement setting covers a single floor.
+    expect(storeys.map((storey) => storey.label)).toEqual([
+        'Basement 1',
+        'Floor 0', 'Floor 1', 'Floor 2', 'Floor 3', 'Floor 4',
+        'Floors 5–8', 'Floor 9', 'Floors 10–11',
+    ]);
+});
+
+test('a setting covering one floor is named as one floor', async () => {
+    const preset = await library.loadVanillaPreset('CityHall');
+    const storeys = library.storeysOf(library.enumerateSlots(preset));
+
+    // Five settings of one floor each: the range form would be "Floors 0–0", which is a
+    // way of writing 0 that makes the reader stop.
+    expect(storeys.map((storey) => storey.label)).toEqual([
+        'Floor 0', 'Floor 1', 'Floor 2', 'Floor 3', 'Floor 4',
+    ]);
+});
+
+test('a basement setting covering several floors is counted down from the ground floor', () => {
+    const storeys = library.storeysOf(library.enumerateSlots({
+        floorLayouts: [{ floorsWithThisSetting: 1, blueprints: ['Ground'] }],
+        basementLayouts: [
+            { floorsWithThisSetting: 2, blueprints: ['UpperBasement'] },
+            { floorsWithThisSetting: 1, blueprints: ['Vault'] },
+        ],
+    }));
+
+    // Deepest first, and the deeper setting starts below the two floors the one above it
+    // covers. There is no Basement 0: the floor in that place is Floor 0.
+    expect(storeys.map((storey) => storey.label)).toEqual([
+        'Basement 3', 'Basements 1–2', 'Floor 0',
+    ]);
+});
+
+test('a setting with no floor count still covers one floor', () => {
+    const storeys = library.storeysOf(library.enumerateSlots({
+        floorLayouts: [
+            { blueprints: ['Ground'] },
+            { floorsWithThisSetting: 0, blueprints: ['Second'] },
+            { floorsWithThisSetting: 1, blueprints: ['Third'] },
+        ],
+    }));
+
+    // Read the way readFootprints reads it. A setting the building lists puts a floor
+    // there whatever the count says, so 0 and a missing field both mean one -- and the
+    // labels have to agree with the model the mesh is built from.
+    expect(storeys.map((storey) => storey.label)).toEqual(['Floor 0', 'Floor 1', 'Floor 2']);
 });
 
 test('a control room variant is offered as its own slot', async () => {
@@ -214,18 +275,26 @@ test('a control room variant is set without disturbing the ordinary blueprint', 
 /* Storeys, and telling one slot from another                                  */
 /* -------------------------------------------------------------------------- */
 
-const slot = (isBasement, layoutIndex, blueprintIndex = 0, isControlVariant = false) =>
-    ({ blueprint: 'X', label: 'X', slot: { isBasement, layoutIndex, blueprintIndex, isControlVariant } });
+/**
+ * A slot as enumerateSlots would have made it, for a building of single floor settings:
+ * one setting per floor, so the storey a slot is in is its place in the setting list.
+ */
+const slot = (isBasement, layoutIndex, blueprintIndex = 0, isControlVariant = false) => ({
+    blueprint: 'X',
+    label: 'X',
+    storeyLabel: `${isBasement ? 'Basement' : 'Floor'} ${isBasement ? layoutIndex + 1 : layoutIndex}`,
+    slot: { isBasement, layoutIndex, blueprintIndex, isControlVariant },
+});
 
 test('storeys are ordered as they sit in the building', () => {
     const storeys = library.storeysOf([
         slot(false, 1), slot(true, 0), slot(false, 0), slot(true, 1),
     ]);
 
-    // Basement 0 is one below floor 0, and each basement after it is further down --
+    // Basement 1 is one below floor 0, and each basement after it is further down --
     // which is what up and down have to mean for the arrows that step through them.
     expect(storeys.map((storey) => storey.label)).toEqual([
-        'Basement 1', 'Basement 0', 'Floor 0', 'Floor 1',
+        'Basement 2', 'Basement 1', 'Floor 0', 'Floor 1',
     ]);
 });
 
@@ -256,7 +325,7 @@ test('a new floor goes on top of the building and a new basement under it', () =
     ]);
 
     expect(library.adjoiningStorey(storeys).label).toBe('Floor 1');
-    expect(library.adjoiningStorey(storeys, { isBasement: true }).label).toBe('Basement 1');
+    expect(library.adjoiningStorey(storeys, { isBasement: true }).label).toBe('Basement 2');
 });
 
 test('a first floor is laid against the basement below it', () => {
@@ -264,7 +333,7 @@ test('a first floor is laid against the basement below it', () => {
     // no floors already has a shape for its ground floor to follow.
     const storeys = library.storeysOf([slot(true, 0), slot(true, 1)]);
 
-    expect(library.adjoiningStorey(storeys).label).toBe('Basement 0');
+    expect(library.adjoiningStorey(storeys).label).toBe('Basement 1');
 });
 
 test('the first storey of a building has nothing to lay against', () => {

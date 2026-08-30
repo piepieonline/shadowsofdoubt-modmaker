@@ -15,6 +15,7 @@
  */
 import { listMods, findContentFolders, describeContentFolder } from './modFolders.js';
 import { folderHandle } from './folders.js';
+import { abandonRestore, scheduleSync } from './urlState.js';
 
 const MOD_SELECT = '#select-mod';
 const CONTENT_SELECT = '#select-content';
@@ -150,6 +151,11 @@ async function applySelection() {
         await window.activeFlow?.onModSelected?.(window.selectedMod);
     }
 
+    // After telling the flow, not before: being told is what makes it close the
+    // documents belonging to the folder just left, and the URL should describe where
+    // that leaves things rather than the moment in between.
+    scheduleSync();
+
     notify();
 }
 
@@ -160,10 +166,18 @@ async function applySelection() {
 export const reapplySelection = () => applySelection();
 
 export function initModSelection() {
+    // Chosen by hand, which settles anything the URL was still waiting to put back: what
+    // is being asked for now is this, not what the page was opened holding.
     document.querySelector(MOD_SELECT)
-        .addEventListener('change', () => refreshContentFolders({ keepSelection: false }));
+        .addEventListener('change', async () => {
+            await abandonRestore();
+            await refreshContentFolders({ keepSelection: false });
+        });
     document.querySelector(CONTENT_SELECT)
-        .addEventListener('change', () => applySelection());
+        .addEventListener('change', async () => {
+            await abandonRestore();
+            await applySelection();
+        });
 }
 
 /**
@@ -182,7 +196,7 @@ export async function selectContentFolder(modName, contentPath, handle) {
             handle,
             hasManifest: false,
             hasDdsContent: false,
-            hasFloors: false,
+            hasBuildings: false,
         });
     }
 

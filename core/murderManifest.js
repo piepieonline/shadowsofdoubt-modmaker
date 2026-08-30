@@ -23,12 +23,16 @@
  * fresh manifest would throw away the rest of the mod's load order to add one line.
  */
 import { readFileContent, tryGetFile } from './fs.js';
-// The file name is modFolders.js's because finding one is what marks a folder as a
-// mod's content. One constant, so the two cannot disagree about what to look for.
-import { MANIFEST_FILE } from './modFolders.js';
 import { writeWholeFile } from './persistence.js';
 
-export { MANIFEST_FILE };
+/**
+ * The file's name, owned here rather than in modFolders.js.
+ *
+ * It sat there while finding one was all modFolders.js did with it. Now that finding a
+ * building means *reading* the manifest, modFolders.js imports this module -- so the
+ * name has to live on the side that does not import back, or the two form a cycle.
+ */
+export const MANIFEST_FILE = 'murdermanifest.sodso.json';
 
 /** What a mod that had no manifest gets. The ScriptableObject flow's template. */
 export const blankManifest = () => ({ enabled: true, fileOrder: [], loadBefore: '', version: 1 });
@@ -68,6 +72,50 @@ export function withListing(manifest, fileName) {
 
     const fileOrder = Array.isArray(manifest?.fileOrder) ? manifest.fileOrder : [];
     return { ...manifest, fileOrder: [...fileOrder, refFor(fileName)] };
+}
+
+/**
+ * The manifest with whatever entry names `oldName` now naming `newName`, or the same
+ * object back when nothing names it.
+ *
+ * Rewritten where it sits rather than dropped and re-added at the end: the position of
+ * an entry in `fileOrder` is a statement about what loads before what, and renaming a
+ * file does not change what it has to load after.
+ *
+ * The replacement is written in this app's own form, `REF:<name>`. An author's spacing,
+ * casing or missing prefix is not carried across, because the name is the whole of what
+ * the entry says and the rest is punctuation.
+ */
+export function withRenamed(manifest, oldName, newName) {
+    if (!isListed(manifest, oldName)) return manifest;
+
+    const wanted = entryName(oldName);
+    return {
+        ...manifest,
+        fileOrder: manifest.fileOrder.map((entry) => (
+            typeof entry === 'string' && entryName(entry) === wanted ? refFor(newName) : entry
+        )),
+    };
+}
+
+/**
+ * The manifest with every entry naming the file taken out, or the same object back when
+ * nothing names it.
+ *
+ * Every entry, not the first: a hand-written load order can name one file twice, and
+ * leaving the second behind would leave the loader looking for a file that has gone.
+ * Everything else keeps its position, so what has to load before what is unchanged.
+ */
+export function withoutListing(manifest, fileName) {
+    if (!isListed(manifest, fileName)) return manifest;
+
+    const wanted = entryName(fileName);
+    return {
+        ...manifest,
+        fileOrder: manifest.fileOrder.filter((entry) => (
+            !(typeof entry === 'string' && entryName(entry) === wanted)
+        )),
+    };
 }
 
 /** A manifest whose `fileOrder` is something other than a list is not ours to rewrite. */
@@ -133,4 +181,81 @@ export async function ensureListed(contentFolder, fileName) {
 
     await writeWholeFile(contentFolder, [MANIFEST_FILE], `${JSON.stringify(updated, null, 2)}\n`);
     return present ? 'added' : 'created';
+}
+
+/**
+ * Follow a renamed file in the mod's load order.
+ *
+ * A file the manifest names by its old name is a file the loader goes looking for and
+ * does not find, so renaming one without this is how an asset silently stops being part
+ * of the mod. A file no entry names is left that way: it was not loaded before the
+ * rename and listing it now would be a decision this did not make.
+ *
+ * A manifest that will not parse is left alone for the same reason `ensureListed` leaves
+ * it alone -- the text is the author's, and it may be one comma from working.
+ *
+ * @param contentFolder the mod's content folder
+ * @param oldName       the file's previous name, without its `.sodso.json`
+ * @param newName       what it is called now
+ * @returns `renamed`, `unlisted` for a file no entry named, or `unreadable`
+ */
+export async function renameListing(contentFolder, oldName, newName) {
+    if (!contentFolder || !oldName || !newName) return 'unreadable';
+
+    const { present, malformed, data } = await readManifest(contentFolder);
+
+    if (!present || malformed) {
+        console.warn(
+            `${MANIFEST_FILE} could not be read, so it has been left as it is. `
+            + `It may still name "${oldName}", which is now "${newName}".`);
+        return 'unreadable';
+    }
+
+    const updated = withRenamed(data, oldName, newName);
+
+    // Same object back means no entry named it, and a mod's file is not rewritten to say
+    // what it already says.
+    if (updated === data) return 'unlisted';
+
+    await writeWholeFile(contentFolder, [MANIFEST_FILE], `${JSON.stringify(updated, null, 2)}\n`);
+    return 'renamed';
+}
+
+/**
+ * Take a deleted file out of the mod's load order.
+ *
+ * The counterpart of `ensureListed`, and it exists for the same reason: `fileOrder` is
+ * what makes a file part of the mod, so a deleted file that is still named there is a
+ * loader going looking for something that is not on disk. Every mod loads that entry as an
+ * error rather than as a missing asset, which is a worse thing to leave behind than the
+ * file was.
+ *
+ * A manifest that will not parse is left alone, as everywhere else here: the text is the
+ * author's, and it may be one comma from working.
+ *
+ * @param contentFolder the mod's content folder
+ * @param fileName      the file, without its `.sodso.json`
+ * @returns `removed`, `unlisted` for a file no entry named, or `unreadable`
+ */
+export async function removeListing(contentFolder, fileName) {
+    if (!contentFolder || !fileName) return 'unreadable';
+
+    const { present, malformed, data } = await readManifest(contentFolder);
+
+    if (!present || malformed) {
+        // Only worth saying when there was a manifest to fail on. A mod without one never
+        // listed the file, so there is nothing left pointing at it.
+        if (present) {
+            console.warn(
+                `${MANIFEST_FILE} could not be read, so it has been left as it is. `
+                + `It may still name "${fileName}", which has been deleted.`);
+        }
+        return 'unreadable';
+    }
+
+    const updated = withoutListing(data, fileName);
+    if (updated === data) return 'unlisted';
+
+    await writeWholeFile(contentFolder, [MANIFEST_FILE], `${JSON.stringify(updated, null, 2)}\n`);
+    return 'removed';
 }

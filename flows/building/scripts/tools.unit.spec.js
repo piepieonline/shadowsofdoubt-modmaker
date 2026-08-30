@@ -1,6 +1,7 @@
 import { test, expect } from 'vitest';
 import * as tools from './tools.js';
 import * as model from './floorModel.js';
+import * as dividerEnds from './dividerEnds.js';
 
 /**
  * The painting tools.
@@ -91,9 +92,79 @@ test('ctrl+click takes the address from under the pointer', () => {
 
     const result = { addressIndex: state.addressIndex, outcome, selected: state.selectedNode };
 
-    expect(result.outcome).toEqual({ changed: false, picked: true });
+    expect(result.outcome.picked).toBe(true);
+    expect(result.outcome.changed).toBe(false);
     expect(result.addressIndex).toBe(0);
     expect(result.selected).toEqual({ x: 5, y: 5 });
+});
+
+/**
+ * A pick is of the square, not of the tool.
+ *
+ * This is the behaviour that changed: it used to take only the active tool's value, so
+ * finding out a square's floor type meant switching to the floor type tool -- which also
+ * changed what the next click would paint. Every value now comes off one click, whichever
+ * tool happens to be active, which is what makes the panel's "Selected square" true.
+ */
+test('a pick takes all five values, whichever tool is active', () => {
+    const floor = build();
+
+    // Something to find on the square: a floor type, a wall on one of its edges, and a
+    // stairwell on the tile it sits in. The address and room are the Lobby's, painted on.
+    const paint = tools.createToolState({ tool: tools.Tool.ADDRESS, addressIndex: 1 });
+    tools.applyTool(floor, paint, { kind: 'cell', x: 10, y: 10 });
+    model.setNodeFloor(floor, model.nodeAt(floor, 10, 10), 3, 7);
+    model.setWall(floor, 10, 10, model.AXIS_X, '22');
+    model.paintTile(model.tileAt(floor, 3, 3), model.TileMode.INVERTED);
+
+    // The tile tool is active, which under the old behaviour took the tile and nothing
+    // else. The click lands nearest the +x edge, which is the wall that was set.
+    const state = tools.createToolState({
+        tool: tools.Tool.TILE,
+        addressIndex: 0,
+        floorType: 1,
+        extraHeight: 0,
+        wallPreset: '0',
+        tileMode: model.TileMode.ENTRANCE,
+    });
+
+    tools.applyTool(floor, state, {
+        kind: 'cell', x: 10, y: 10, point: { x: 10.9, z: 10.5 },
+    }, { pick: true });
+
+    expect(state.selectedNode).toEqual({ x: 10, y: 10 });
+    expect(state.addressIndex).toBe(1);
+    expect(state.floorType).toBe(3);
+    expect(state.extraHeight).toBe(7);
+    expect(state.wallPreset).toBe('22');
+    expect(state.selectedWall).toEqual({ x: 10, y: 10, axis: 'x' });
+    expect(state.selectedTile).toEqual({ x: 3, y: 3 });
+
+    // What the tile is, not a value read off it: a stairwell takes the setting that turns
+    // one, mirrored or not, so picking it and then turning it is two clicks rather than
+    // three. Inverted is not taken -- it toggles the mirroring, so a pick that left the
+    // tool there would answer "which way does this face" with a click that mirrors it.
+    expect(state.tileMode).toBe(model.TileMode.STAIRWELL);
+});
+
+test('a pick leaves alone what the square cannot answer', () => {
+    const floor = build();
+
+    // A bare edge and a tile carrying nothing. Neither has a value to take, and neither
+    // may quietly reset the setting it would have taken one into: there is no preset
+    // meaning "no wall", and a tile in no cycle names none of the three.
+    const state = tools.createToolState({ wallPreset: '22', tileMode: model.TileMode.INVERTED });
+
+    tools.applyTool(floor, state, {
+        kind: 'cell', x: 12, y: 12, point: { x: 12.9, z: 12.5 },
+    }, { pick: true });
+
+    expect(state.wallPreset).toBe('22');
+    expect(state.tileMode).toBe(model.TileMode.INVERTED);
+
+    // The square is still selected, and the wall row has nothing to name.
+    expect(state.selectedNode).toEqual({ x: 12, y: 12 });
+    expect(state.selectedWall).toBeNull();
 });
 
 
@@ -496,15 +567,22 @@ test('ctrl+click takes the wall preset off the floor', () => {
     const outcome = tools.applyTool(
         floor, picker, { kind: 'wall', x: 6, y: 6, axis: 'x' }, { pick: true });
 
-    // Picking an edge with nothing on it must not set the preset to nothing.
-    const empty = tools.applyTool(
-        floor, picker, { kind: 'wall', x: 12, y: 12, axis: 'y' }, { pick: true });
+    // Picking an edge with nothing on it must not set the preset to nothing. It still
+    // selects the square -- a pick is of the square, and every square can be selected --
+    // so what is asserted is the preset it left behind rather than that nothing happened.
+    tools.applyTool(floor, picker, { kind: 'wall', x: 12, y: 12, axis: 'y' }, { pick: true });
 
-    const state = { preset: picker.wallPreset, outcome: outcome.picked, empty: empty.picked };
+    const state = {
+        preset: picker.wallPreset,
+        outcome: outcome.picked,
+        selected: picker.selectedNode,
+        wall: picker.selectedWall,
+    };
 
     expect(state.preset).toBe('22');
     expect(state.outcome).toBe(true);
-    expect(state.empty).toBe(false);
+    expect(state.selected).toEqual({ x: 12, y: 12 });
+    expect(state.wall).toBeNull();
 });
 
 test('a click on a cell paints the edge of it that was nearest', () => {
@@ -564,23 +642,82 @@ test('the tile tool steps a stairwell through its cycle and off again', () => {
     expect(steps).toEqual(['on 0', 'on 90', 'on 180', 'on 270', 'off', 'on 0']);
 });
 
-test('painting an elevator over a stairwell converts it', () => {
+test('the inverted setting only ever turns the mirroring on and off', () => {
     const floor = build();
     const stairs = tools.createToolState({
         tool: tools.Tool.TILE, tileMode: model.TileMode.STAIRWELL,
     });
-    tools.applyTool(floor, stairs, { kind: 'cell', x: 10, y: 10 });
 
-    const lift = tools.createToolState({
-        tool: tools.Tool.TILE, tileMode: model.TileMode.ELEVATOR,
+    // A stairwell aimed at 180: two more clicks of the stairwell cycle after the one that
+    // put it there. What the mirroring must not disturb.
+    for (let i = 0; i < 3; i++) tools.applyTool(floor, stairs, { kind: 'cell', x: 10, y: 10 });
+
+    const mirrored = tools.createToolState({
+        tool: tools.Tool.TILE, tileMode: model.TileMode.INVERTED,
     });
-    tools.applyTool(floor, lift, { kind: 'cell', x: 10, y: 10 });
+
+    const steps = [];
+    for (let i = 0; i < 3; i++) {
+        tools.applyTool(floor, mirrored, { kind: 'cell', x: 10, y: 10 });
+        const tile = model.tileAt(floor, 3, 3);
+        steps.push({
+            isStairwell: tile.isStairwell,
+            isInverted: tile.isInverted,
+            stairwellRotation: tile.stairwellRotation,
+        });
+    }
+
+    // On, off, on: nothing else moves, however many times it is clicked. It used to be a
+    // third cycle, where the second of these clicks turned the stairwell to 270 and the
+    // third took it off the tile.
+    expect(steps).toEqual([
+        { isStairwell: true, isInverted: true, stairwellRotation: 180 },
+        { isStairwell: true, isInverted: false, stairwellRotation: 180 },
+        { isStairwell: true, isInverted: true, stairwellRotation: 180 },
+    ]);
+});
+
+test('the inverted setting places a mirrored stairwell on a tile carrying nothing', () => {
+    const floor = build();
+    const mirrored = tools.createToolState({
+        tool: tools.Tool.TILE, tileMode: model.TileMode.INVERTED,
+    });
+
+    tools.applyTool(floor, mirrored, { kind: 'cell', x: 10, y: 10 });
 
     const tile = model.tileAt(floor, 3, 3);
-    const state = { isStairwell: tile.isStairwell, isInverted: tile.isInverted };
 
-    // The one place the reference improves on the game: no need to clear the tile first.
-    expect(state).toEqual({ isStairwell: true, isInverted: true });
+    // Placing is the only way into the toggle: there is nothing on an empty tile to
+    // mirror, and a click that did nothing at all would leave the setting unusable until
+    // a stairwell had been put down from the other one.
+    expect({ isStairwell: tile.isStairwell, isInverted: tile.isInverted, at: tile.stairwellRotation })
+        .toEqual({ isStairwell: true, isInverted: true, at: 0 });
+});
+
+test('the stairwell cycle turns a mirrored stairwell rather than un-mirroring it', () => {
+    const floor = build();
+    const mirrored = tools.createToolState({
+        tool: tools.Tool.TILE, tileMode: model.TileMode.INVERTED,
+    });
+    tools.applyTool(floor, mirrored, { kind: 'cell', x: 10, y: 10 });
+
+    const stairs = tools.createToolState({
+        tool: tools.Tool.TILE, tileMode: model.TileMode.STAIRWELL,
+    });
+
+    const steps = [];
+    for (let i = 0; i < 5; i++) {
+        tools.applyTool(floor, stairs, { kind: 'cell', x: 10, y: 10 });
+        const tile = model.tileAt(floor, 3, 3);
+        steps.push(tile.isStairwell ? `${tile.isInverted ? 'mirrored' : 'plain'} ${tile.stairwellRotation}` : 'off');
+    }
+
+    // The mirroring rides along through every rotation and goes with the stairwell when it
+    // comes off -- a tile carrying no stairwell is not carrying a mirrored one -- so the
+    // one put down after that is plain.
+    expect(steps).toEqual([
+        'mirrored 90', 'mirrored 180', 'mirrored 270', 'off', 'plain 0',
+    ]);
 });
 
 test('the entrance cycle goes on, main, off', () => {
@@ -623,4 +760,138 @@ test('ctrl+click on a tile selects it without cycling it', () => {
     expect(result.outcome.changed).toBe(false);
     expect(result.outcome.picked).toBe(true);
     expect(result.isStairwell).toBe(false);
+});
+
+
+/* -------------------------------------------------------------------------- */
+/* Divider ends                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The wall tool offers one divider end and works out which of the two ids to write.
+ *
+ * The rule the game uses to decide which end of a run a post lands on is not known -- see
+ * the note at the top of dividerEnds.js -- so what is tested here is the control an
+ * author is given over it: place and the editor chooses, erase and replace and the run
+ * turns round.
+ */
+const wallTool = (wallPreset) => tools.createToolState({
+    tool: tools.Tool.WALL, mode: tools.PaintMode.PAINT, wallPreset,
+});
+
+/**
+ * Which end of its run a wall's post lands on: true for the low end, false for the high.
+ *
+ * Asserted instead of the preset id because the id is not the invariant -- which of the
+ * two ids puts a post outward depends on which side of the wall the parent room is, so a
+ * test naming an id would be testing the fixture's rooms rather than the tool.
+ */
+const postAt = (floor, x, y) => dividerEnds.dividerPostAtLowEnd(
+    floor, x, y, model.AXIS_X, model.getWall(floor, x, y, model.AXIS_X)?.preset ?? null);
+
+const wallTarget = (x, y) => ({ kind: 'wall', x, y, axis: model.AXIS_X });
+
+test('the wall tool writes the two divider ends from one setting', () => {
+    const floor = build();
+    const state = wallTool(dividerEnds.DIVIDER_END);
+
+    model.setWall(floor, 6, 16, model.AXIS_X, dividerEnds.DIVIDER_CENTRE);
+    tools.applyTool(floor, state, wallTarget(6, 15));
+    tools.applyTool(floor, state, wallTarget(6, 17));
+
+    // Each post on the outer end of the run it caps.
+    expect([postAt(floor, 6, 15), postAt(floor, 6, 17)]).toEqual([true, false]);
+});
+
+test('erasing an end and replacing it turns the run round', () => {
+    const floor = build();
+    const state = wallTool(dividerEnds.DIVIDER_END);
+
+    model.setWall(floor, 6, 16, model.AXIS_X, dividerEnds.DIVIDER_CENTRE);
+    tools.applyTool(floor, state, wallTarget(6, 15));
+    tools.applyTool(floor, state, wallTarget(6, 17));
+
+    tools.applyTool(floor, state, wallTarget(6, 15), { erase: true });
+    tools.applyTool(floor, state, wallTarget(6, 15));
+
+    expect([postAt(floor, 6, 15), postAt(floor, 6, 17)]).toEqual([false, true]);
+});
+
+test('erasing and replacing a second time puts the run back', () => {
+    const floor = build();
+    const state = wallTool(dividerEnds.DIVIDER_END);
+
+    model.setWall(floor, 6, 16, model.AXIS_X, dividerEnds.DIVIDER_CENTRE);
+    tools.applyTool(floor, state, wallTarget(6, 15));
+    tools.applyTool(floor, state, wallTarget(6, 17));
+
+    for (let turn = 0; turn < 2; turn++) {
+        tools.applyTool(floor, state, wallTarget(6, 15), { erase: true });
+        tools.applyTool(floor, state, wallTarget(6, 15));
+    }
+
+    expect([postAt(floor, 6, 15), postAt(floor, 6, 17)]).toEqual([true, false]);
+});
+
+// The flip is one repair of one run. Erasing an end and then placing somewhere else is
+// two ordinary edits, and the run left behind must not have been turned round by it.
+test('a flip is spent on the wall it was erased from, not carried to the next one', () => {
+    const floor = build();
+    const state = wallTool(dividerEnds.DIVIDER_END);
+
+    model.setWall(floor, 6, 16, model.AXIS_X, dividerEnds.DIVIDER_CENTRE);
+    tools.applyTool(floor, state, wallTarget(6, 15));
+    tools.applyTool(floor, state, wallTarget(6, 17));
+
+    tools.applyTool(floor, state, wallTarget(6, 15), { erase: true });
+    tools.applyTool(floor, state, wallTarget(10, 4));
+    tools.applyTool(floor, state, wallTarget(6, 15));
+
+    expect([postAt(floor, 6, 15), postAt(floor, 6, 17)]).toEqual([true, false]);
+});
+
+test('erasing an ordinary wall arms no flip', () => {
+    const floor = build();
+    const state = wallTool(dividerEnds.DIVIDER_END);
+
+    model.setWall(floor, 6, 15, model.AXIS_X, '0');
+    tools.applyTool(floor, state, wallTarget(6, 15), { erase: true });
+    tools.applyTool(floor, state, wallTarget(6, 15));
+
+    expect(postAt(floor, 6, 15)).toBe(true);
+});
+
+test('picking a divider end takes the piece, not the id it happens to carry', () => {
+    const floor = build();
+    const state = wallTool('0');
+
+    model.setWall(floor, 6, 17, model.AXIS_X, dividerEnds.DIVIDER_END_RIGHT);
+    tools.applyTool(floor, state, wallTarget(6, 17), { pick: true });
+
+    expect(state.wallPreset).toBe(dividerEnds.DIVIDER_END);
+});
+
+// Picking the right-hand end of one run and painting the low end of another would
+// otherwise write a second right, leaving a run with no left in it.
+test('a picked divider end is worked out again where it lands', () => {
+    const floor = build();
+    const state = wallTool('0');
+
+    model.setWall(floor, 6, 17, model.AXIS_X, dividerEnds.DIVIDER_END_RIGHT);
+    tools.applyTool(floor, state, wallTarget(6, 17), { pick: true });
+
+    model.setWall(floor, 10, 5, model.AXIS_X, dividerEnds.DIVIDER_CENTRE);
+    tools.applyTool(floor, state, wallTarget(10, 4));
+
+    expect(postAt(floor, 10, 4)).toBe(true);
+});
+
+test('picking an ordinary wall still takes its id', () => {
+    const floor = build();
+    const state = wallTool(dividerEnds.DIVIDER_END);
+
+    model.setWall(floor, 6, 17, model.AXIS_X, '7');
+    tools.applyTool(floor, state, wallTarget(6, 17), { pick: true });
+
+    expect(state.wallPreset).toBe('7');
 });

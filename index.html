@@ -6,8 +6,6 @@
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
 
     <script>
-        window.queryParams = Object.fromEntries(new URLSearchParams(location.search));
-
         if (localStorage.getItem('favs') == null) localStorage.setItem('favs', '[]');
     </script>
 
@@ -58,6 +56,9 @@
     <link href="./libs/jsonTree/jsonTree.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.red.min.css" />
     <link href="./core/chrome.css" rel="stylesheet" />
+    <!-- After Pico, which is where the search field's icon inset comes from, and after
+         select2's own stylesheet above. Both are what this corrects. -->
+    <link href="./core/components/searchSelect/searchSelect.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -261,15 +262,14 @@
                                 recognisable as this mod's wherever it is listed.</small>
                         </label>
                         <!-- Which file, not what to call it: the game reads these from
-                             fixed paths, so a mod's own is only ever one of them. -->
+                             fixed paths, so a mod's own is usually one of them. Filled
+                             and made searchable by showNewDdsFile, which also allows a
+                             path to be typed for text the base game has no file for. -->
                         <label id="new-dds-file-strings-field" hidden>
                             File
-                            <select id="new-dds-file-strings">
-                                <option value="DDS/dds.blocks">DDS/dds.blocks</option>
-                                <option value="Evidence/evidence.names">Evidence/evidence.names</option>
-                            </select>
-                            <small>Below Strings/English. Opening one this mod already
-                                has leaves what is in it alone.</small>
+                            <select id="new-dds-file-strings"></select>
+                            <small>Below Strings/English, without the .csv. Opening one
+                                this mod already has leaves what is in it alone.</small>
                         </label>
                         <!-- A tree and a message each carry a block, so all three end in
                              one line of text. -->
@@ -508,6 +508,72 @@
                 </article>
             </dialog>
 
+            <!-- Adding a storey: a floor on top of a building or a basement under it.
+
+                 What it starts as is asked because there is no one right answer. A
+                 tower's floors are mostly the same shape with different rooms in them,
+                 its lobby is not, and its roof is neither -- so the choice is between
+                 copying the storey it sits against whole, taking the parts of it that
+                 have to line up storey to storey, taking the building's outline alone,
+                 deriving the roof over it, or drawing it from nothing.
+
+                 The roof is offered on Add floor only. A building's roof goes on the
+                 top of it, and the answer to what a basement starts as is never one.
+
+                 The heading, the button and the line above the options are written when
+                 it opens: which building, and which storey there is to copy from. -->
+            <dialog id="add-storey-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" class="close-button"
+                            onclick="closeAddStorey()"></button>
+                        <h5><strong id="add-storey-title">Add floor</strong></h5>
+                    </header>
+                    <form id="add-storey-form"
+                        onsubmit="event.preventDefault();submitAddStorey()">
+                        <p id="add-storey-source" class="add-storey-source"></p>
+                        <fieldset id="add-storey-options">
+                            <label>
+                                <input type="radio" name="storey-start" value="whole" />
+                                Copy it whole
+                                <small>Every room, address and fitting of it, to alter
+                                    rather than draw again.</small>
+                            </label>
+                            <label>
+                                <input type="radio" name="storey-start" value="fittings"
+                                    checked />
+                                Its walls, stairs and entrances
+                                <small>The shape of the building, and the tiles holding
+                                    its stairwells and doorways -- the parts that have to
+                                    line up from one storey to the next. The rooms inside
+                                    start blank.</small>
+                            </label>
+                            <label>
+                                <input type="radio" name="storey-start" value="outline" />
+                                Its outline only
+                                <small>The wall between inside and out, with nothing drawn
+                                    inside it.</small>
+                            </label>
+                            <label data-start="roof">
+                                <input type="radio" name="storey-start" value="roof" />
+                                A roof over it
+                                <small>Rooftop wherever the storey below is indoors, open
+                                    air everywhere else. What is inside its walls is not
+                                    part of a roof, so none of it comes across.</small>
+                            </label>
+                            <label>
+                                <input type="radio" name="storey-start" value="empty" />
+                                Start empty
+                                <small>The whole lot as one room, the way a building's
+                                    first floor starts.</small>
+                            </label>
+                        </fieldset>
+                        <button id="add-storey-submit" type="submit"
+                            style="width: 100%">Add floor</button>
+                    </form>
+                </article>
+            </dialog>
+
             <!-- Help. The other two flows each carry one under this same id, which is
                  deliberate: only ever one flow is mounted, so the name belongs to
                  whichever that is. See the note on #flow-root.
@@ -569,9 +635,10 @@
                             <li><b>Wall:</b> sits between two nodes and is stored on both of them,
                                 which this editor always writes together. Its preset is what
                                 makes it read as a wall, a window, a door or a blank.</li>
-                            <li><b>Tile:</b> 3 × 3 nodes, 49 to a floor. Where stairwells,
-                                elevators and entrances go — one entrance being the main one —
-                                each with a rotation of its own.</li>
+                            <li><b>Tile:</b> 3 × 3 nodes, 49 to a floor. Where stairwells and
+                                entrances go — one entrance being the main one. A stairwell
+                                carries a rotation, and may be the <b>inverted</b> one, which is
+                                the same stairwell built the other way round.</li>
                         </ul>
 
                         <h6>Painting</h6>
@@ -582,12 +649,67 @@
                             <li><b>The five tools</b> — Address, Room, Floor type, Wall, Tile —
                                 are what a click paints with. The panels on the right choose the
                                 value each of them uses.</li>
-                            <li><b>Ctrl+click</b>, or <b>Cmd+click</b>, picks the value under the
-                                pointer instead of painting it, in any mode.
-                                <b>Shift+click</b> removes a wall.</li>
+                            <li><b>Ctrl+click</b>, or <b>Cmd+click</b>, selects the square
+                                under the pointer instead of painting it, in any mode. In
+                                None a plain click does the same. <b>Shift+click</b>
+                                removes a wall.</li>
+                            <li><b>Selecting takes all five values at once</b> — address and
+                                room, floor type and height, the wall on the nearest edge,
+                                and what the tile carries — whichever tool is active. The
+                                square is marked <b>*</b> on the floor, and the column
+                                describes it under <i>Selected square</i>. Switch to Paint
+                                and those are what a click puts down.</li>
                             <li>The Tile tool cycles rather than sets. A stairwell turns through
                                 its four rotations and then comes off; an entrance becomes the
                                 main entrance before it goes.</li>
+                        </ul>
+
+                        <h6>Furniture, under the pointer</h6>
+                        <p>
+                            A blueprint says nothing about furniture. It says which layout
+                            configuration an address has and which type each room is, and
+                            the game turns that into objects when it builds the city — so
+                            what the column lists is what <i>could</i> spawn on the square,
+                            never what will.
+                        </p>
+                        <ul>
+                            <li><b>One group per address preset.</b> A blueprint does not
+                                name one: every preset compatible with the layout competes
+                                for the unit, and each sends the room to a room
+                                configuration of its own. Two groups over one square is
+                                two genuinely different answers, not a duplicate.</li>
+                            <li><b>Furniture is listed under the slot class it fills</b> —
+                                the class is where an arrangement puts something, and the
+                                presets under it are the models that could land there.</li>
+                            <li><b>Room class is the name to watch.</b> It is on each
+                                group's second line, and is what nearly every filter below
+                                it keys off.</li>
+                            <li><b>Your mod's own furniture counts.</b> Presets, classes,
+                                clusters and address types the selected mod adds or patches
+                                are merged over the base game's before anything is
+                                answered — including <code>copyFrom</code> clones. Only
+                                files the mod's <code>murdermanifest.sodso.json</code>
+                                names, because those are the ones the game loads; the rest
+                                are counted and called out.</li>
+                            <li><b>Walls matter, and are the one thing answered per
+                                square.</b> Two thirds of the game's slot classes need a
+                                wall and the corner pieces need two, so the middle of a
+                                room is offered far less than its edge. The count is on the
+                                summary line, and what it ruled out is at the foot of each
+                                group.</li>
+                            <li><b>Why not…</b> under the list asks the opposite question:
+                                start typing any furniture preset and get <b>Possible</b> or
+                                <b>No</b> with the reason. A "No" is sound — every gate is
+                                a hard filter. "Possible" only means nothing in the
+                                blueprint rules it out. The reason given is the
+                                <i>first</i> gate that fails, walking down from the
+                                address: a preset failing several fails the first because
+                                of which the rest are true.</li>
+                            <li>District, wealth, grubbiness, inhabitants, building, floor
+                                and design style are decided when the city is built and are
+                                not filtered on, so the list errs wide. A name shown
+                                <span style="text-decoration: underline dotted">like
+                                this</span> also depends on the room's decor style.</li>
                         </ul>
 
                         <h6>Moving the camera</h6>
@@ -656,8 +778,17 @@
                                 style="width: 100%; margin-bottom: 0.5rem">Add new file</button>
 
                             <!-- Everything in the folder, not just what the manifest
-                                 references. Same panel the DDS flow uses. -->
-                            <header><strong>All files</strong></header>
+                                 references. Same panel the DDS flow uses.
+
+                                 The search box stands where the title was: a case
+                                 folder is a long flat list of assets, and what to
+                                 do with a list that long is worth more of the room
+                                 than a word saying what it is. -->
+                            <header class="file-panel-search">
+                                <input id="so-file-search" type="search" autocomplete="off"
+                                    placeholder="Search files" aria-label="Search files"
+                                    oninput="filterFilePanel(this.value)" />
+                            </header>
                             <div id="so-file-list"></div>
 
                             <!-- The manifest last: what the loader is told, below what
@@ -733,13 +864,17 @@
                             <strong>Shadows Of Doubt: ScriptableObjects</strong>
                         </h5>
                     </header>
-                    <select id="asset-model-type-list" onchange="updateAssetModel(false)"></select>
-                    <small style="overflow: auto; height: 50vh">
-                        <table>
-                            <tbody id="asset-model-asset-list"></tbody>
-                        </table>
-                    </small>
-                    <button onclick="loadExportedSOs()" class="secondary" style="width: 100%">Load local exported ScriptableObjects</button>
+                    <!-- A type, then one of its assets -- or, with no type named, any asset
+                         there is, searched by name. Both are filled and made searchable by
+                         updateAssetModel; the second is rebuilt whenever the first changes,
+                         and choosing on it opens the asset. -->
+                    <select id="asset-model-type-list" aria-label="ScriptableObject type"></select>
+                    <select id="asset-model-asset-list" aria-label="Asset"></select>
+                    <!-- Why an asset did not open, when it did not: this tool ships assets
+                         for nine of the game's types and names every one of them, so most
+                         of what can be picked here needs the author's own export. That
+                         folder is connected from the Folders modal, along with the rest. -->
+                    <small id="asset-explorer-note" class="hidden" role="status"></small>
                 </article>
             </dialog>
     
@@ -779,11 +914,9 @@
                         </label>
                         <label>
                             File Type
-                            <select id="new-file-modal-file-type" onchange="updateNewFileCopyFrom()">
-                                <option value="MurderMO">File for new Murder Case</option>
-                                <option value="InteractablePreset">File for new Interactable</option>
-                                <option value="EvidencePreset">File for new Evidence</option>
-                            </select>
+                            <!-- Filled from the type map by updateAssetModel, the same
+                                 list in the same order as the asset explorer's. -->
+                            <select id="new-file-modal-file-type" onchange="updateNewFileCopyFrom()"></select>
                         </label>
                         <!-- Copy From and Override are the two halves of one choice, so they
                              sit side by side. The list below is whichever half is selected,
@@ -798,6 +931,10 @@
                             onchange="updateNewFileSubmitState()">
                             <option value="None">None</option>
                         </select>
+                        <!-- Why the button below is off, when it is. An override is now a
+                             difference from the asset it overrides, so there has to be one
+                             this tool can read -- see updateNewFileSubmitState. -->
+                        <small id="new-file-modal-note" class="hidden"></small>
                         <button id="new-file-modal-submit" type="submit" style="width: 100%">Create File</button>
                     </form>
                 </article>

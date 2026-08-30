@@ -28,6 +28,29 @@ export async function createFileIfMissing(folder, pathSegments, buildContent) {
     return handle;
 }
 
+/**
+ * Give a file in a directory a new name, with the contents it should have under it.
+ *
+ * Written and then removed rather than moved: `FileSystemFileHandle.move()` is not
+ * something this app can rely on being there, and doing it in this order means a failure
+ * part way through leaves the document under one of the two names -- never under
+ * neither. The caller supplies the contents because it already has them; the file on
+ * disk may be a save behind.
+ *
+ * A name already taken is refused rather than overwritten. It belongs to another asset,
+ * and quietly replacing one because a field was edited is not a rename.
+ *
+ * @returns true if the file was renamed, false if `toName` was already taken
+ */
+export async function renameFile(folder, fromName, toName, contents) {
+    if (fromName === toName) return true;
+    if (await tryGetFile(folder, [toName])) return false;
+
+    await writeFile(await getFile(folder, [toName], true), contents);
+    await folder.removeEntry(fromName);
+    return true;
+}
+
 /** Structural copy, used wherever a template is instantiated. */
 export function deepClone(value) {
     return JSON.parse(JSON.stringify(value));

@@ -6,7 +6,7 @@
  * are listed or not depending on how they were made.
  *
  * Two kinds of file, as in the DDS flow:
- *   <name>.sodso.json         an asset the mod adds; its type is inside it
+ *   <name>.<type>.sodso.json  an asset the mod adds; its type is inside it too
  *   <name>.sodso_patch.json   an override of a base game asset
  *
  * A patch is a partial file which gets applied over the existing object, so its type is recovered by
@@ -15,11 +15,17 @@
  * A file that answers neither question -- no name, or no type the game has -- cannot be
  * grouped or opened, so it is listed on its own under Invalid rather than filed
  * somewhere it does not belong.
+ *
+ * An entry's `id` is the file and its `label` is the asset, which are two different
+ * strings now that a file name carries the type -- see core/soFileName.js. The panel
+ * opens what `id` names and shows what `label` says.
  */
 import { readFileContent } from '../../../core/fs.js';
+import { readManifest, isListed } from '../../../core/murderManifest.js';
+import { assetNameOf, PATCH_SUFFIX, PRESET_SUFFIX } from '../../../core/soFileName.js';
 
-export const NEW_SUFFIX = '.sodso.json';
-export const PATCH_SUFFIX = '.sodso_patch.json';
+export const NEW_SUFFIX = PRESET_SUFFIX;
+export { PATCH_SUFFIX };
 
 /** The manifest describes the mod rather than being an asset of its own. */
 const MANIFEST = 'murdermanifest';
@@ -46,23 +52,38 @@ function buildAssetTypeIndex() {
 }
 
 /**
+ * What a file is, and what it calls itself.
+ *
  * A file says what it is, and a patch says so too when it was made here. Only a patch
  * written by hand can be silent about it, and then the asset's name is the one clue
  * left -- good enough when the name belongs to a single type, a guess otherwise.
+ *
+ * The asset's own name is read from the same parse rather than assumed to be the file
+ * name. This app keeps the two together -- renaming a preset renames its file -- but a
+ * hand-written mod need not, and it is `presetName` the game resolves a `REF:` against.
+ * The file name is what the panel opens; this is what a reference to it has to say.
+ * A patch states the base game asset it overrides in `name`, which is the right answer
+ * there for the same reason.
  */
-async function typeOf(entry, name, isPatch, assetTypes) {
-    let stated = null;
+async function identify(entry, name, isPatch, assetTypes) {
+    let parsed = null;
     try {
-        stated = JSON.parse(await readFileContent(entry))?.fileType ?? null;
+        parsed = JSON.parse(await readFileContent(entry));
     } catch {
-        stated = null;
+        parsed = null;
     }
+
+    let stated = parsed?.fileType ?? null;
 
     // A type the game does not have is no better than none: it names no template to
     // edit against and no group to file the asset under.
     if (stated && !(stated in (window.typeMap ?? {}))) stated = null;
 
-    return stated ?? (isPatch ? assetTypes.get(name) : null) ?? null;
+    const type = stated ?? (isPatch ? assetTypes.get(name) : null) ?? null;
+
+    // Falling back to the file name means falling back to the *asset's* half of it. A
+    // patch's name carries no type to take off, so the one expression serves both.
+    return { type, assetName: parsed?.presetName ?? parsed?.name ?? assetNameOf(name, type) };
 }
 
 /**
@@ -70,10 +91,18 @@ async function typeOf(entry, name, isPatch, assetTypes) {
  * core/filePanel.js renders.
  */
 export async function listContent(contentFolder) {
-    if (!contentFolder) return null;
+    // Forgotten rather than left behind: deselecting a mod has to take its assets out of
+    // the reference fields too, or they go on offering the last mod's files.
+    if (!contentFolder) { remember([]); return null; }
 
     const assetTypes = buildAssetTypeIndex();
     const byType = new Map();
+
+    // Read once for the folder rather than per file. What it decides is not what the panel
+    // shows -- everything in the folder is shown, listed or not, because a file the
+    // manifest has forgotten is exactly the one an author needs to see -- but whether the
+    // file is offered elsewhere as something to point at. See `moddedNamesOfType`.
+    const manifest = (await readManifest(contentFolder)).data;
 
     for await (const entry of contentFolder.values()) {
         if (entry.kind !== 'file') continue;
@@ -85,7 +114,7 @@ export async function listContent(contentFolder) {
         const name = entry.name.slice(0, -(isPatch ? PATCH_SUFFIX : NEW_SUFFIX).length);
         if (name === MANIFEST) continue;
 
-        const type = await typeOf(entry, name, isPatch, assetTypes);
+        const { type, assetName } = await identify(entry, name, isPatch, assetTypes);
 
         // A file the app cannot name or type is degenerate: there is no template to
         // edit it against and no group it belongs in. Kept in sight, since something
@@ -94,8 +123,12 @@ export async function listContent(contentFolder) {
 
         if (!byType.has(group)) byType.set(group, []);
         byType.get(group).push({
+            // The file, which is what opens it and what the manifest lists.
             id: name || entry.name,
-            label: name || entry.name,
+            // The asset, which is what an author calls it. A file with no type to take
+            // off reads the same either way; one under Invalid has no type to take off
+            // and is shown exactly as it sits in the folder.
+            label: group === INVALID ? (name || entry.name) : assetNameOf(name, type),
             tag: isPatch ? 'patch' : null,
             // Which file the name belongs to: the two live side by side in the folder
             // and differ only by extension.
@@ -103,6 +136,11 @@ export async function listContent(contentFolder) {
             // A patch holds a document of its own, so it opens like any other file.
             // Its type is not always inside it, which is why it is passed along here.
             openAs: group === INVALID ? null : type,
+            // Whether the game would load it at all. The panel does not act on this; the
+            // reference dropdowns do.
+            listed: isListed(manifest, name),
+            // What a `REF:` to it says, which is not always what the file is called.
+            assetName,
         });
     }
 
@@ -113,10 +151,88 @@ export async function listContent(contentFolder) {
     // Last: it is the exception, and nothing is found by looking for it.
     if (byType.has(INVALID)) groups.push([INVALID, byType.get(INVALID)]);
 
-    return groups
+    const listing = groups
         .map(([type, entries]) => ({
             id: type,
             label: type,
             entries: entries.sort((a, b) => a.label.localeCompare(b.label)),
         }));
+
+    remember(listing);
+    return listing;
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* What the mod defines, for the reference fields                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The last listing, by type.
+ *
+ * A reference field asks what the mod has of its type while the tree is being rendered,
+ * which is synchronous and cannot go near a folder. So the answer is whatever the last
+ * walk found -- and that walk is the one the file panel already does, on the same folder,
+ * at every point this could go stale: choosing a mod or a content folder, creating a
+ * file, renaming a preset, deleting one. `refreshPanel` is the single path through all of
+ * those, so there is no separate thing to remember to invalidate.
+ *
+ * Null when there is no folder, which is not the same as a folder holding nothing: with
+ * no mod selected the fields fall back to the base game's list alone.
+ */
+let byTypeIndex = null;
+
+function remember(listing) {
+    byTypeIndex = new Map(listing.map((group) => [group.id, group.entries]));
+}
+
+/**
+ * What the mod defines of one type, for a field that points at that type.
+ *
+ * Only what the game would load. A file the manifest does not name is not offered as
+ * something to point at -- writing a reference to it produces a mod that resolves for the
+ * author and not for anyone else, which is worse than not offering it.
+ *
+ * Patches are included, and a patch of a base game asset is deliberately **not** removed
+ * from the base game's list: it is the mod's, and it is still the shipped asset of that
+ * name, and both of those are true at once. The name appears under each heading.
+ *
+ * `exclude` is the document doing the asking, so that a file is not offered as something
+ * to point at from inside itself. It is a name *and* a type because neither settles it
+ * alone: hundreds of asset names belong to more than one type -- `Bar` is six things --
+ * so a MurderMO called `Bar` must still be able to point at the `AddressPreset` of that
+ * name. Only the file that is both is left out.
+ */
+export function moddedNamesOfType(type, exclude = null) {
+    if (!byTypeIndex || !type) return [];
+
+    const self = exclude?.type === type ? exclude.name : null;
+
+    return (byTypeIndex.get(type) ?? [])
+        .filter((entry) => entry.listed && entry.assetName !== self)
+        .map((entry) => entry.assetName);
+}
+
+/**
+ * The file one of the mod's assets is stored as, for opening what a reference names.
+ *
+ * A `REF:` carries an asset name and a type, and neither the name nor the two together
+ * are the file: an asset is stored as `<name>.<type>.sodso.json`, a patch as
+ * `<name>.sodso_patch.json`, and a mod written by hand may call the file anything at all
+ * -- a `REF:` resolves against `presetName`, not against what the file is named. So this
+ * answers from the folder listing rather than by building a name and hoping.
+ *
+ * Both halves are needed. `Bar` is six of the game's types, so a name on its own picks
+ * whichever file happened to be walked first, which is how a reference to one asset came
+ * to open another of the same name.
+ *
+ * Unlisted files are included, unlike `moddedNamesOfType`: that decides what may be
+ * *offered* as something to point at, and this opens what a document already points at.
+ * A reference to a file the manifest has forgotten is exactly the one worth being able to
+ * go and look at.
+ */
+export function modFileOfAsset(type, assetName) {
+    if (!byTypeIndex || !type || !assetName) return null;
+
+    return (byTypeIndex.get(type) ?? []).find((entry) => entry.assetName === assetName) ?? null;
 }

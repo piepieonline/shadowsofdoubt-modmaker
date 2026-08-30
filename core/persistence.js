@@ -15,12 +15,25 @@
 import { autosaveEnabled } from './autosave.js';
 import { tryGetFile, writeFile } from './fs.js';
 
-/** Saving needs somewhere to write. Both flows alerted and threw; kept as-is. */
+/**
+ * Saving needs somewhere to write. Says so if there is nowhere.
+ *
+ * @returns whether there is a mod to save into
+ */
+export function requireModSelected() {
+    if (window.selectedMod) return true;
+    alert('Please select a mod to save in first');
+    return false;
+}
+
+/**
+ * The same check, for callers that are inside something that has to stop.
+ *
+ * Both flows alerted and threw; kept as-is. A thrown string is this codebase's idiom
+ * for "the user has already been told" -- see core/valueEditors.js.
+ */
 export function assertModSelected() {
-    if (!window.selectedMod) {
-        alert('Please select a mod to save in first');
-        throw 'Please select a mod to save in first';
-    }
+    if (!requireModSelected()) throw 'Please select a mod to save in first';
 }
 
 /** Autosave is opt-out, but explicit Save always writes. */

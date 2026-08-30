@@ -10,9 +10,9 @@
  * Paths are relative to the demo root and are seeded into the Origin Private File System
  * (see demoMode.js), so nothing here ever reaches a real folder.
  *
- * A key ending in `/` is a directory to create rather than a file. `Floors/` is the
- * marker that makes a folder a building mod, and a building mod that has not saved a
- * floor yet has an empty one -- there is no file to imply it into existence.
+ * A key ending in `/` is a directory to create rather than a file. A building mod that
+ * has not saved a floor yet still has an empty `Floors/`, because that is what creating
+ * a building does -- and there is no file that would imply the directory into existence.
  *
  * **The base game content below is invented.** The GUIDs and names are real ones taken
  * from `refs/generated/ddsContentIndex.json`, so the Browse list names them correctly and
@@ -96,14 +96,20 @@ const caseMod = {
     // not a content folder -- the search has to walk past it.
     [`Plugins/${CASE_MOD}/${CASE_MOD}.dll`]: 'not a real assembly',
 
+    // The building is listed alongside the case: a preset the manifest does not name is
+    // one the loader never reads, and it is what marks this folder as a building folder
+    // too. See core/murderManifest.js and core/modFolders.js.
     [`${CASE_ROOT}/murdermanifest.sodso.json`]: json({
         enabled: true,
-        fileOrder: ['REF:NeonNoirMurder'],
+        fileOrder: ['REF:NeonNoirMurder.MurderMO', 'REF:NeonNoirTower.BuildingPreset'],
         loadBefore: '',
         version: 1,
     }),
 
-    [`${CASE_ROOT}/NeonNoirMurder.sodso.json`]: json({
+    // Named as this app names a file it writes -- the asset, then its type. See
+    // core/soFileName.js. The second mod below is deliberately not, because a real
+    // plugins folder holds mods written before that convention and they load fine.
+    [`${CASE_ROOT}/NeonNoirMurder.MurderMO.sodso.json`]: json({
         fileType: 'MurderMO',
         name: 'NeonNoirMurder',
         presetName: 'NeonNoirMurder',
@@ -114,7 +120,7 @@ const caseMod = {
         ],
     }),
 
-    [`${CASE_ROOT}/IP_Matchbook.sodso.json`]: json({
+    [`${CASE_ROOT}/IP_Matchbook.InteractablePreset.sodso.json`]: json({
         fileType: 'InteractablePreset',
         name: 'IP_Matchbook',
         presetName: 'IP_Matchbook',
@@ -170,7 +176,7 @@ const caseMod = {
     // compose -- and it is what makes one selection serve every flow: switching editors
     // keeps the content folder, on purpose, because a folder holds a case and its DDS
     // text and its floors together. See core/navigation.js.
-    [`${CASE_ROOT}/NeonNoirTower.sodso.json`]: buildingStub('NeonNoirTower', 'Neon Noir Tower'),
+    [`${CASE_ROOT}/NeonNoirTower.BuildingPreset.sodso.json`]: buildingStub('NeonNoirTower', 'Neon Noir Tower'),
     [`${CASE_ROOT}/Floors/`]: null,
 };
 
@@ -215,11 +221,21 @@ function buildingStub(presetName, title) {
 
 /** A second mod, holding a building and nothing else. */
 const buildingMod = {
+    // A manifest naming the preset and nothing else, which is the least a building mod
+    // can be: unlisted, the loader would not read the preset and this folder would not
+    // be offered for editing.
+    [`Plugins/${BUILDING_MOD}/murdermanifest.sodso.json`]: json({
+        enabled: true,
+        fileOrder: [`REF:${BUILDING_MOD}`],
+        loadBefore: '',
+        version: 1,
+    }),
+
     [`Plugins/${BUILDING_MOD}/${BUILDING_MOD}.sodso.json`]:
         buildingStub(BUILDING_MOD, 'Rooftop Bar'),
 
-    // Empty, and deliberately so: this mod has not saved a floor of its own yet, so the
-    // directory is the only thing marking it as a building mod.
+    // Empty, and deliberately so: this mod has not saved a floor of its own yet, and
+    // creating a building makes the directory before there is anything to put in it.
     [`Plugins/${BUILDING_MOD}/Floors/`]: null,
 };
 

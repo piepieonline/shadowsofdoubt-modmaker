@@ -6,11 +6,18 @@
  * hand on the mouse rather than through a dialog per edit.
  *
  *   Tool        click                                   ctrl+click
- *   Address     paint the selected address              pick the address here
- *   Room        paint the selected room                 pick the room here
- *   Floor type  paint the floor type and height         pick both
- *   Wall        set the selected preset, both sides     pick it (shift removes)
- *   Tile        step the tile through its cycle         select the tile only
+ *   Address     paint the selected address              select the square
+ *   Room        paint the selected room                 select the square
+ *   Floor type  paint the floor type and height         select the square
+ *   Wall        set the selected preset, both sides     select the square (shift removes)
+ *   Tile        step the tile through its cycle         select the square
+ *
+ * **A pick is of the square, not of the tool.** Every pick takes all five values at once
+ * -- address and room, floor type and height, the wall on the nearest edge, and what the
+ * tile carries -- whichever tool happens to be active. It used to take only the active
+ * tool's, which meant finding out what a square's floor type was required switching tool,
+ * and switching tool changed what the next click would paint. One click now answers every
+ * question about a square, and the panel shows the answer as *Selected square*.
  *
  * Painting continues while the button is held, as the reference's MouseDown/MouseDrag
  * does -- **except for tiles**. A tile tool acts on the initial press alone, because
@@ -26,9 +33,10 @@
  */
 import {
     AXIS_X, AXIS_Y, TileMode,
-    nodeAt, tileForNode, roomOfNode, getWall, setWall, clearWall,
+    nodeAt, tileForNode, getWall, setWall, clearWall,
     setNodeAddress, setNodeRoom, setNodeFloor, paintTile, isPaintable, floodRegion,
 } from './floorModel.js';
+import { DIVIDER_END, isDividerEnd, placeDividerEnd } from './dividerEnds.js';
 
 export const Tool = {
     ADDRESS: 'address',
@@ -59,6 +67,16 @@ export const PaintMode = {
 const PRESS_ONLY = new Set([Tool.TILE]);
 
 /**
+ * How much of each end of an edge is not the edge, as a fraction of a cell.
+ *
+ * A quarter off each end leaves the middle half of every edge live, and the quarter
+ * square at each corner of a cell belonging to no edge at all. One number to tune: raise
+ * it and a stroke is easier to keep straight but harder to aim, lower it and the strays
+ * described at nearestEdge start coming back.
+ */
+const EDGE_MARGIN = 0.25;
+
+/**
  * What the tool bar and the panels are choosing between.
  *
  * Held in one object so that picking with ctrl can write back into the same selection
@@ -86,6 +104,12 @@ export function createToolState(overrides = {}) {
 
         wallPreset: '0',
 
+        // The divider end just erased, if the last write was an erase of one. Putting a
+        // divider end back on that same wall flips the run it belongs to, which is the
+        // only control an author has over which way round a run reads -- see
+        // dividerEnds.js for why there is nothing better to offer.
+        erasedDividerEnd: null,
+
         tileMode: TileMode.STAIRWELL,
 
         // What the panels are showing the fields of.
@@ -107,85 +131,143 @@ export function createToolState(overrides = {}) {
 export function applyTool(model, state, target, { pick = false, erase = false } = {}) {
     if (!model || !target) return unchanged();
 
+    // Before the tool split, because a pick is of the square rather than of the tool --
+    // see the note at the top. Which tool is active decides what a *write* does and no
+    // longer decides what a read takes.
+    if (pick) return pickFrom(model, state, target);
+
     return state.tool === Tool.WALL
-        ? applyWallTool(model, state, target, { pick, erase })
-        : applyCellTool(model, state, target, { pick });
+        ? applyWallTool(model, state, target, { erase })
+        : applyCellTool(model, state, target);
 }
 
 const unchanged = (extra = {}) => ({ changed: false, picked: false, ...extra });
 
 /**
  * The wall tool works on a wall, but a click rarely lands on one: an edge with no wall
- * is a sliver a few pixels high. So a click on a *cell* is resolved to the edge of that
- * cell nearest where it landed, which is what makes drawing a wall along a room's side
- * possible at all.
+ * is a sliver a few pixels high. So a click on a *cell* is resolved to one of that cell's
+ * edges, which is what makes drawing a wall along a room's side possible at all. Not
+ * always to one: see nearestEdge for the corners of a cell, which name no edge and where
+ * this writes nothing.
  */
-function applyWallTool(model, state, target, { pick, erase }) {
+function applyWallTool(model, state, target, { erase }) {
     const edge = target.kind === 'wall' ? target : nearestEdge(target);
     if (!edge) return unchanged();
 
-    if (pick) {
-        const wall = getWall(model, edge.x, edge.y, edge.axis);
-        if (!wall) return unchanged();
-
-        state.wallPreset = wall.preset;
-        state.selectedWall = { x: edge.x, y: edge.y, axis: edge.axis };
-        return { changed: false, picked: true, wall: state.selectedWall };
-    }
-
     state.selectedWall = { x: edge.x, y: edge.y, axis: edge.axis };
 
-    const changed = erase
-        ? clearWall(model, edge.x, edge.y, edge.axis)
+    if (erase) {
+        // What was there decides what putting one back means. Erasing an end of a divider
+        // run and replacing it is how an author flips the run over -- see dividerEnds.js
+        // -- so the erase is what has to remember it.
+        const wall = getWall(model, edge.x, edge.y, edge.axis);
+        state.erasedDividerEnd = wall && isDividerEnd(wall.preset)
+            ? { x: edge.x, y: edge.y, axis: edge.axis, preset: wall.preset }
+            : null;
+
+        return {
+            changed: clearWall(model, edge.x, edge.y, edge.axis),
+            picked: false,
+            wall: state.selectedWall,
+        };
+    }
+
+    const changed = state.wallPreset === DIVIDER_END
+        ? placeDividerEnd(model, edge.x, edge.y, edge.axis, { insteadOf: replacing(state, edge) })
         : setWall(model, edge.x, edge.y, edge.axis, state.wallPreset);
+
+    // Spent whether it was used or not. A flip is one repair of one run, not a mode the
+    // next wall inherits.
+    state.erasedDividerEnd = null;
 
     return { changed, picked: false, wall: state.selectedWall };
 }
 
 /**
- * The edge of a cell a click was nearest to.
+ * The divider end just erased from this wall, if this write is putting one back there.
+ *
+ * Null for any other wall, which is what makes the flip a repair of one run rather than a
+ * mode the next wall inherits.
+ */
+function replacing(state, edge) {
+    const erased = state.erasedDividerEnd;
+    const same = !!erased
+        && erased.x === edge.x && erased.y === edge.y && erased.axis === edge.axis;
+    return same ? erased.preset : null;
+}
+
+/**
+ * The edge of a cell a click means, if it means one.
  *
  * `point` is where the ray met the floor, in the floor's own units where a cell is one
  * unit square -- the scene converts it, so this is arithmetic on two things measured the
- * same way. Whichever of the four edges is closest wins, expressed as the low node of
- * that edge so it names the same wall from either side.
+ * same way. The answer is the low node of the edge, so it names the same wall from either
+ * side of it.
+ *
+ * **An edge is only offered along the middle of its own length.** It used to be whichever
+ * of the four sides was closest, and that made drawing a line of walls by dragging
+ * impossible. Dragging east along a row of south edges holds the pointer a tenth of a cell
+ * up from each south side while sweeping the full width of the cell, so in the first and
+ * last tenth of every cell the west or east side was the nearer one -- and the stroke laid
+ * a stray wall across the line it was drawing, one at roughly every cell boundary. So an
+ * edge is a candidate only while the pointer lies between EDGE_MARGIN and 1 - EDGE_MARGIN
+ * *along that edge*: an x edge runs in y, so how far along it the pointer is is how far
+ * north in the cell it is, and a y edge is the same the other way round. The nearest
+ * candidate wins; a side the pointer is off the end of cannot win at all.
+ *
+ * **The corners of a cell are deliberately dead.** Where neither pair is a candidate --
+ * the quarter square at each corner, where two edges meet -- this returns null and a click
+ * paints nothing. That is the rule working rather than a hole in it: a corner is exactly
+ * where "nearest" cannot tell which of two perpendicular edges was meant, and guessing
+ * there is what put the stray walls down. Aiming at a corner is not something a stroke
+ * along an edge ever means to do.
+ *
+ * Null as well for an edge off the grid; the outermost cells have only three.
  *
  * Exported because the hover has to answer the same question the click does: with the
  * wall tool chosen, what is under the pointer is the edge this picks, and saying anything
- * else would label one wall and paint another.
+ * else would label one wall and paint another. That is also what makes the dead corners
+ * visible -- the label goes out as the pointer enters one -- rather than something an
+ * author finds out by clicking and getting no wall.
  */
 export function nearestEdge(target) {
     const { x, y, point } = target;
     if (!point) return { x, y, axis: AXIS_X };
 
-    // Distance from the click to each of the cell's four sides.
+    // How far into the cell the click landed, from its west and its south side.
     const fromWest = point.x - x;
     const fromSouth = point.z - y;
 
-    const distances = [
-        { distance: fromWest, x: x - 1, y, axis: AXIS_X },
-        { distance: 1 - fromWest, x, y, axis: AXIS_X },
-        { distance: fromSouth, x, y: y - 1, axis: AXIS_Y },
-        { distance: 1 - fromSouth, x, y, axis: AXIS_Y },
+    // `distance` is across the edge and decides which is nearest; `along` is down the
+    // edge's own length and decides whether it is in the running at all.
+    const edges = [
+        { distance: fromWest, along: fromSouth, x: x - 1, y, axis: AXIS_X },
+        { distance: 1 - fromWest, along: fromSouth, x, y, axis: AXIS_X },
+        { distance: fromSouth, along: fromWest, x, y: y - 1, axis: AXIS_Y },
+        { distance: 1 - fromSouth, along: fromWest, x, y, axis: AXIS_Y },
     ];
 
-    const nearest = distances.reduce((best, edge) => (edge.distance < best.distance ? edge : best));
+    const candidates = edges.filter(
+        (edge) => edge.along >= EDGE_MARGIN && edge.along <= 1 - EDGE_MARGIN);
+
+    // A corner of the cell, belonging to no edge.
+    if (!candidates.length) return null;
+
+    const nearest = candidates.reduce((best, edge) => (edge.distance < best.distance ? edge : best));
 
     // An edge off the grid is no edge; the outermost cells have only three.
     return nearest.x < 0 || nearest.y < 0 ? null : nearest;
 }
 
-function applyCellTool(model, state, target, { pick }) {
+function applyCellTool(model, state, target) {
     if (target.kind !== 'cell') return unchanged();
 
     const { x, y } = target;
 
-    if (state.tool === Tool.TILE) return applyTileTool(model, state, x, y, { pick });
+    if (state.tool === Tool.TILE) return applyTileTool(model, state, x, y);
 
     const node = nodeAt(model, x, y);
     if (!node) return unchanged();
-
-    if (pick) return pickFromNode(model, state, node);
 
     // The outer three nodes on each side are the margin between one lot and the next.
     // They are shown, and they are read and written like any other node, but nothing
@@ -235,53 +317,114 @@ function writeNode(model, state, node) {
     }
 }
 
-/** Ctrl+click: take the selection from what is under the pointer. */
-function pickFromNode(model, state, node) {
+/**
+ * Select a square, and take every value it has.
+ *
+ * A click in none, or ctrl+click in either of the other two. All five at once, whichever
+ * tool is active -- see the note at the top of this file for why that changed.
+ *
+ * The square is the unit of selection even when a wall was what the ray actually hit: a
+ * wall is stored on the node at its low side, so that node is what the other four values
+ * are read from. Clicking the wall between two rooms therefore selects the lower-indexed
+ * of them, which is at least the same square from whichever side it was clicked.
+ */
+function pickFrom(model, state, target) {
+    const edge = target.kind === 'wall' ? target : nearestEdge(target);
+    const node = nodeAt(model, target.x, target.y);
+
+    // Off the grid entirely. A wall target is always on it, so this is a cell hit on
+    // nothing, which the scene does not produce -- guarded because the tools take a
+    // target from whoever calls them.
+    if (!node) return unchanged();
+
     state.selectedNode = { x: node.x, y: node.y };
 
-    switch (state.tool) {
-        case Tool.ADDRESS:
-            // The room comes with it. A room slot means nothing outside the address it
-            // is in, so leaving the old one behind would leave the room list pointing at
-            // whichever room of the new address happened to sit in that position.
-            state.addressIndex = node.addressIndex;
-            state.roomIndex = node.roomIndex;
-            break;
+    // The address and its room together. A room slot means nothing outside the address
+    // it sits in, so taking one without the other would leave the room list pointing at
+    // whichever room of the new address happened to be in that position.
+    state.addressIndex = node.addressIndex;
+    state.roomIndex = node.roomIndex;
 
-        case Tool.ROOM: {
-            const room = roomOfNode(model, node);
-            if (!room) return unchanged();
-            state.addressIndex = node.addressIndex;
-            state.roomIndex = room.roomIndex;
-            break;
-        }
+    // Both, as the reference does: a floor type without its height paints at the wrong
+    // level, and every square painted after it comes out raised.
+    state.floorType = node.floorType;
+    state.extraHeight = node.height;
 
-        case Tool.FLOOR_TYPE:
-            // Both, as the reference does: picking a floor type without its height
-            // means the next thing painted is at the wrong level.
-            state.floorType = node.floorType;
-            state.extraHeight = node.height;
-            break;
+    pickWall(model, state, edge);
+    pickTile(model, state, node.x, node.y);
 
-        default:
-            return unchanged();
-    }
-
-    return { changed: false, picked: true };
+    return {
+        changed: false,
+        picked: true,
+        wall: state.selectedWall,
+        tile: state.selectedTile,
+    };
 }
 
 /**
- * The tile tool selects on ctrl and cycles otherwise.
+ * The wall on the edge the click was nearest, if there is one.
+ *
+ * An edge with nothing on it leaves `wallPreset` alone rather than clearing it. There is
+ * no preset meaning "no wall" -- absence is the wall not being in the node's list -- so
+ * there is nothing to take, and the alternative is a pick that silently changes what the
+ * wall tool would paint next into whatever it was before that.
+ *
+ * A divider end is taken as the *piece* rather than as the id it happens to carry here.
+ * Which of the two ends a wall holds says where in its own run it sits, so carrying that
+ * id to another wall would copy an answer to a question about somewhere else -- pick the
+ * left-hand end of one run, paint the right-hand end of another, and the run you painted
+ * has two lefts. Taken as the piece, the id is worked out again where it lands.
+ */
+function pickWall(model, state, edge) {
+    const wall = edge && getWall(model, edge.x, edge.y, edge.axis);
+
+    if (!wall) {
+        state.selectedWall = null;
+        return;
+    }
+
+    state.wallPreset = isDividerEnd(wall.preset) ? DIVIDER_END : wall.preset;
+    state.selectedWall = { x: edge.x, y: edge.y, axis: edge.axis };
+}
+
+/**
+ * The tile the square sits in, and which of the tool's three settings it answers to.
+ *
+ * `tileMode` is what the tile tool changes rather than a value read off a tile, so what is
+ * taken is what the tile *is*: a stairwell takes the stairwell setting, which is the one
+ * that turns it, so picking a stairwell and then turning it is two clicks rather than
+ * three.
+ *
+ * A mirrored stairwell takes the same setting as a plain one. It used to take Inverted --
+ * back when that was a third cycle, and so was also the setting that turned an already
+ * inverted stairwell -- but Inverted now only toggles the mirroring, and a pick that left
+ * the tool there would answer "which way does this face" with a click that mirrors it.
+ * Which of the two a stairwell is remains on the tile, and the status column says it.
+ *
+ * A tile carrying nothing leaves the setting alone. It is neither, so there is nothing
+ * to take.
+ */
+function pickTile(model, state, x, y) {
+    const tile = tileForNode(model, x, y);
+    if (!tile) { state.selectedTile = null; return; }
+
+    state.selectedTile = { x: tile.x, y: tile.y };
+
+    if (tile.isStairwell) state.tileMode = TileMode.STAIRWELL;
+    else if (tile.isEntrance) state.tileMode = TileMode.ENTRANCE;
+}
+
+/**
+ * The tile tool cycles what the clicked square's tile carries.
  *
  * A tile is 3 x 3 nodes, so the cell that was clicked names the tile rather than being
  * the thing edited.
  */
-function applyTileTool(model, state, x, y, { pick }) {
+function applyTileTool(model, state, x, y) {
     const tile = tileForNode(model, x, y);
     if (!tile) return unchanged();
 
     state.selectedTile = { x: tile.x, y: tile.y };
-    if (pick) return { changed: false, picked: true, tile: state.selectedTile };
 
     return { changed: paintTile(tile, state.tileMode), picked: false, tile: state.selectedTile };
 }
@@ -322,8 +465,29 @@ export function attachPainting(scene, getModel, state, { onChange, onHover } = {
     let painting = false;
     let lastTarget = null;
 
-    const targetKey = (target) => (
-        target.kind === 'wall' ? `w:${target.x},${target.y},${target.axis}` : `c:${target.x},${target.y}`);
+    /**
+     * What a drag must not do twice running.
+     *
+     * The wall tool resolves a cell click to an edge, so its key has to be that edge and
+     * not the cell that was hit: a stroke crosses several of one cell's edges on the way
+     * across it, and each of them is a different wall. Keyed by cell, a stroke would write
+     * whichever edge it met first in each cell and nothing else -- and with the corners
+     * dead (see nearestEdge) that first answer is usually no edge at all, which would
+     * leave a drag along a row of edges drawing nothing.
+     *
+     * A cell whose corner the pointer is in falls back to naming the cell, so the key
+     * still stands for something. It can never be mistaken for an edge, so a corner on the
+     * way through is not in the way of the wall on the far side of it.
+     */
+    const targetKey = (target) => {
+        if (target.kind === 'wall') return `w:${target.x},${target.y},${target.axis}`;
+
+        const edge = state.tool === Tool.WALL ? nearestEdge(target) : null;
+
+        return edge
+            ? `w:${edge.x},${edge.y},${edge.axis}`
+            : `c:${target.x},${target.y}`;
+    };
 
     function paintAt(event, isPress) {
         const model = getModel();
@@ -332,8 +496,6 @@ export function attachPainting(scene, getModel, state, { onChange, onHover } = {
         const target = scene.pickAt(event);
         if (!target) return;
 
-        // The wall tool resolves a cell click to an edge, so its repeat guard has to be
-        // on what was picked rather than on what was hit.
         const key = targetKey(target);
         if (!isPress && key === lastTarget) return;
         lastTarget = key;

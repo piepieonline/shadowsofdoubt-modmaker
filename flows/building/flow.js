@@ -41,15 +41,28 @@ export default {
         await onModSelected(selection);
     },
 
-    /** Remember and restore what is open across a switch to another editor. */
-    async captureSession() {
-        const { captureSession } = await import('./scripts/ui.js');
-        return captureSession();
+    /**
+     * The floor that is open, as URL parameters, and putting it back -- across a switch
+     * to another editor and across a reload.
+     *
+     *   building, blueprint, slot  which floor, and where it sits in its building
+     *   variations                 the layout each address is showing
+     *   tool                       what is being painted with
+     */
+    async sessionState() {
+        const { sessionState } = await import('./scripts/ui.js');
+        return sessionState();
     },
 
-    async restoreSession(state) {
+    async restoreSession(params) {
         const { restoreSession } = await import('./scripts/ui.js');
-        await restoreSession(state);
+        await restoreSession(params);
+    },
+
+    /** Leaving: write anything pending and give back the WebGL context. */
+    async suspend() {
+        const { suspend } = await import('./scripts/ui.js');
+        await suspend();
     },
 
     /**

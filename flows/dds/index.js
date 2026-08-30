@@ -1,6 +1,7 @@
 import { getFile, readFileContent, tryGetFile } from '../../core/fs.js';
 import { assertModSelected, shouldSave, toSaveSafeJSON, writeWholeFile, writePatchAgainstVanilla } from '../../core/persistence.js';
 import { createEditLoop } from '../../core/document.js';
+import { decorateArrayNodes } from '../../core/arrayControls.js';
 import { decorateValueNodes, NodeKind } from '../../core/valueNodes.js';
 import { createTextEditor, createSelectEditor, parseEditedValue, renderedValue, setValue } from '../../core/valueEditors.js';
 import { getJSONPointer } from '../../core/jsonPointer.js';
@@ -275,46 +276,25 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
             },
         });
 
-        // Removing element
-        tree.findAndHandle(item => {
-            return item.parent.type === 'array';
-        }, item => {
-            var ele = item.el.querySelector('.jsontree_label');
-            ele.addEventListener('contextmenu', async (e) => {
-                e.preventDefault();
+        // Adding, removing, copying and pasting array elements.
+        decorateArrayNodes(tree, {
+            applyPatch: updateTree,
+            getDocument: () => data,
+            // The English line resolved beside a block is display-only: it is stripped
+            // on save, and it is stripped here too, so what lands on the clipboard is
+            // what the file holds rather than what the screen shows.
+            serialize: (value) => toSaveSafeJSON(value, DUMMY_KEYS),
+            canAdd: (item) => hasElementTemplate(item.label),
+            addElement: async (item) => {
+                const newContent = await getTemplateForItem(item);
 
-                if (!window.selectedMod) {
-                    alert('Please select a mod to save in first');
-                    throw 'Please select a mod to save in first';
-                }
+                // Cancelled at one of the prompts a new element is described through.
+                if (newContent === null) return;
 
-                if (confirm('Remove Element?')) {
-                    await updateTree([{ op: 'remove', path: getJSONPointer(item) }]);
-                }
-            });
-        });
-
-        // Adding element
-        tree.findAndHandle(item => {
-            return item.type === 'array';
-        }, item => {
-            var ele = item.el.querySelector('.jsontree_label');
-            ele.addEventListener('contextmenu', async (e) => {
-                e.preventDefault();
-
-                if (!window.selectedMod) {
-                    alert('Please select a mod to save in first');
-                    throw 'Please select a mod to save in first';
-                }
-
-                if (confirm('Add Element?')) {
-                    let newContent = await getTemplateForItem(item);
-
-                    if (newContent === null) return;
-
-                    await updateTree([{ op: 'add', path: getJSONPointer(item) + '/-', value: newContent }]);
-                }
-            });
+                await updateTree([
+                    { op: 'add', path: getJSONPointer(item) + '/-', value: newContent },
+                ]);
+            },
         });
     }
 
@@ -429,42 +409,56 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
     }
 }
 
+/**
+ * What a new element of each array is.
+ *
+ * A switch before, which said the same thing but could only be asked; the + on an
+ * array has to know in advance whether there is an answer, so that it is not offered
+ * where there is none. See hasElementTemplate.
+ */
+const ELEMENT_TEMPLATES = {
+    messages: async () => {
+        let message = cloneTemplate('treeMessage');
+        message.msgID = prompt(`Existing GUID (Or cancel to create a new file)`) || await createNewFile('message');
+        message.instanceID = crypto.randomUUID();
+        return message;
+    },
+    links: async (item) => {
+        let treeMessageLinks = cloneTemplate('treeMessageLinks');
+        treeMessageLinks.to = prompt(`Existing instanceID`) || '';
+        // Read through renderedValue: by the time an element is added, the
+        // instanceID it links from is an input rather than text.
+        treeMessageLinks.from = renderedValue(item.parent.childNodes.find(node => node.label == 'instanceID'));
+        return treeMessageLinks;
+    },
+    traits: async () => prompt(`Trait name`) || null,
+    blocks: async () => {
+        let block = cloneTemplate('messageBlock');
+        block.blockID = prompt(`Existing GUID (Or cancel to create a new file)`) || await createNewFile('block');
+        block.instanceID = crypto.randomUUID();
+        return block;
+    },
+    replacements: async () => {
+        let replacement = cloneTemplate('blockReplacement');
+        let guid = prompt(`Existing GUID (Or cancel to create a new file)`);
+        if (guid) {
+            replacement.replaceWithID = guid;
+        } else {
+            replacement.replaceWithID = crypto.randomUUID();
+            await addOrModifyStrings(replacement.replaceWithID, prompt(`English Line`));
+        }
+        return replacement;
+    },
+    jobs: async () => prompt(`Job name`) || null,
+    triggers: async () => prompt(`Trigger index`) || null,
+};
+
+/** Whether an element can be made for the array named `label`. */
+export function hasElementTemplate(label) {
+    return label in ELEMENT_TEMPLATES;
+}
+
 export async function getTemplateForItem(item) {
-    switch (item.label) {
-        case 'messages':
-            let message = cloneTemplate('treeMessage');
-            message.msgID = prompt(`Existing GUID (Or cancel to create a new file)`) || await createNewFile('message');
-            message.instanceID = crypto.randomUUID();
-            return message;
-        case 'links':
-            let treeMessageLinks = cloneTemplate('treeMessageLinks');
-            treeMessageLinks.to = prompt(`Existing instanceID`) || '';
-            // Read through renderedValue: by the time an element is added, the
-            // instanceID it links from is an input rather than text.
-            treeMessageLinks.from = renderedValue(item.parent.childNodes.find(node => node.label == 'instanceID'));
-            return treeMessageLinks;
-        case 'traits':
-            return prompt(`Trait name`) || null;
-        case 'blocks':
-            let block = cloneTemplate('messageBlock');
-            block.blockID = prompt(`Existing GUID (Or cancel to create a new file)`) || await createNewFile('block');
-            block.instanceID = crypto.randomUUID();
-            return block;
-        case 'replacements':
-            let replacement = cloneTemplate('blockReplacement');
-            let guid = prompt(`Existing GUID (Or cancel to create a new file)`);
-            if (guid) {
-                replacement.replaceWithID = guid;
-            } else {
-                replacement.replaceWithID = crypto.randomUUID();
-                await addOrModifyStrings(replacement.replaceWithID, prompt(`English Line`));
-            }
-            return replacement;
-        case 'jobs':
-            return prompt(`Job name`) || null;
-        case 'triggers':
-            return prompt(`Trigger index`) || null;
-        default:
-            return null;
-    }
+    const template = ELEMENT_TEMPLATES[item.label];
+    return template ? await template(item) : null;
 }

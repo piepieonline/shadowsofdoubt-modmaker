@@ -9,7 +9,8 @@ architecture so new mod types can be added without forking the tool again.
 
 Mid-migration. See `.local/PLAN.md` for the phased plan.
 
-One app, one page. The flow to edit is chosen with `?flow=<id>`, or from the picker in the header.
+One app, one page. The flow to edit is chosen with `?flow=<id>`, or from the picker in the header. The URL
+keeps up with what you are working on from there — see [What the URL remembers](#what-the-url-remembers).
 
 | Flow | `?flow=` | Origin |
 |---|---|---|
@@ -37,6 +38,40 @@ WhiteCollarSideJobs/plugins/Cases/test     deeper again
 
 One mod often holds several; loaders and utilities hold none and are listed as such. New content folders are
 created beside whatever that mod already has, so they land where its loader expects them.
+
+## What the URL remembers
+
+The address bar holds what you are working on, so refreshing brings it back rather than dropping you into
+an empty workspace — and so a URL is a link to a piece of work rather than to the app in general.
+
+```
+?flow=dds&mod=DialogAdditions&content=plugins/TalkToPartner
+  &open=["DDS/Trees/1c2f….tree","DDS/Messages/8ba0….msg"]&strings=Strings/english.csv
+```
+
+`flow`, `mod` and `content` belong to the shell. Everything else belongs to whichever editor is active,
+which names its own parameters — `open` and `strings` above, `building`/`blueprint`/`slot`/`variations`/`tool`
+for floorplans. See `core/urlState.js`, and `sessionState` in each `flows/<id>/flow.js`.
+
+Three things are worth knowing:
+
+- **Only the active editor's documents are in the URL.** The others are remembered in memory, so they
+  survive switching editor but not a reload. Three sessions in the address bar to save the two you are not
+  looking at is not worth what it does to the length.
+- **Putting it back can have to wait.** Chrome usually will not carry a File System Access grant across a
+  reload, so the mod folder often has to be re-granted first. The parameters are held until then — a link
+  whose state is erased while its own permission prompt is on screen is a link that only works if answered
+  quickly.
+- **What is no longer there is dropped quietly.** A mod, floor or document named by the URL may have been
+  deleted or renamed since. Nothing is said about it, and the URL is rewritten from what actually came back.
+
+Base game content needs no mod selected, so `?flow=scriptableObject&open=["asset:MurderMO/ExCopSniper.json"]`
+is a link anyone can open with no folders connected at all. **Share Open Files** copies the current URL with
+`viewOnly=true`, which is that link plus "for reading".
+
+The DDS editor accepts a bare GUID in `open` as well as a path — `?flow=dds&open=["1c2f…"]` — which is what
+a link to a document can reasonably know. Which of the three kinds of document it is comes from the
+reference data.
 
 ## Running locally
 
@@ -84,7 +119,7 @@ What that means in practice:
 | Your folders | Never read and never written. Demo mode does not call `restoreFolders`, so a remembered handle is not even looked at, and nothing is written to idb-keyval. Leaving demo mode is a reload with the parameter dropped. |
 | Saving | Works, into the demo tree — an edit can be saved, reopened and seen again. That tree is wiped and reseeded on every load, so nothing accumulates. |
 | Folders modal | Reachable, but the buttons are disabled: connecting a real folder would break the promise above, quietly, with the badge still saying otherwise. |
-| Badge | A red **Demo data** chip in the header. Undiscoverable is not the same as invisible — made-up content must never be mistaken for the mod you are working on. |
+| Badge | A red **Demo data** chip in the header, and a `DEMO - ` prefix on the tab title for when the header is scrolled away or the tab is in the background. Undiscoverable is not the same as invisible — made-up content must never be mistaken for the mod you are working on. |
 
 The content is three mods in `core/demo/fixtures.js`: one holding a case, its DDS text *and* a
 building (which is what lets switching editors keep the selection), one holding only a building,

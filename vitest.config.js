@@ -20,7 +20,8 @@ export default defineConfig({
         // suite a file belongs to is readable from its name.
         include: ['{core,flows}/**/*.unit.spec.js'],
 
-        // Reference data is fetched from app-absolute paths at runtime. See the shim.
-        setupFiles: ['./tests/support/refs.js'],
+        // Reference data is fetched from app-absolute paths at runtime, and the JSON
+        // Patch library arrives as a global from a classic script. See both shims.
+        setupFiles: ['./tests/support/refs.js', './tests/support/jsonpatch.js'],
     },
 });

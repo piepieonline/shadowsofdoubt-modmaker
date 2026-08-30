@@ -48,16 +48,26 @@ export default {
         return newContent(name);
     },
 
-    /** Remember and restore what is open across a switch to another editor. */
-    async captureSession() {
-        const { captureSession } = await import('./scripts/ui.js');
-        return captureSession();
+    /**
+     * What is open, as URL parameters, and putting it back -- across a switch to
+     * another editor and across a reload.
+     *
+     *   open      the documents, each as `<where it came from>:<path>`
+     *   viewOnly  set by a shared link, which is for reading rather than editing
+     */
+    async sessionState() {
+        const { sessionState } = await import('./scripts/ui.js');
+        return sessionState();
     },
 
-    async restoreSession(state) {
+    async restoreSession(params) {
         const { restoreSession } = await import('./scripts/ui.js');
-        await restoreSession(state);
+        await restoreSession(params);
     },
+
+    // No `canRestore`: the base game assets shipped with this tool need no folder at
+    // all, which is what a link to one relies on. A document of the mod's own arrives
+    // with the mod named beside it, and waiting for that folder is the shell's rule.
 
     async onModSelected(selection) {
         const { onModSelected } = await import('./scripts/ui.js');
@@ -65,9 +75,10 @@ export default {
     },
 
     async start() {
-        const { startFlow, updateAssetModel } = await import('./scripts/ui.js');
-        // Needs the type map, so it runs after loadRefs rather than from inside it.
-        updateAssetModel(true, false);
-        startFlow();
+        const { updateAssetModel } = await import('./scripts/ui.js');
+        // Needs the type map, so it runs after loadRefs rather than from inside it. It
+        // fills the New File dialog's type list as well as the asset explorer's, which
+        // is why nothing else here has to.
+        updateAssetModel();
     },
 };

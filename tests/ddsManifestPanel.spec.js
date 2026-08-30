@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, connectFolders, selectContent, readFile, alerts, gotoFlow, fieldInput, openDdsDocument } from './support/harness.js';
+import {
+    installFsHarness, seedFs, connectFolders, selectContent, readFile, alerts, gotoFlow,
+    fieldInput, openDdsDocument, confirms,
+} from './support/harness.js';
 import {
     ddsManifestFixture, ddsManifestNoBlocksFixture, ddsManifestBrokenFixture,
     ddsFixtureWithContent, FLAT_MOD, TREE_GUID,
@@ -101,4 +104,48 @@ test('a manifest that cannot be parsed is shown as its text, and marked', async 
 
     // The text is what its author has to repair, so it is what they are shown.
     await expect(panel(page).locator('.manifest-broken')).toHaveText('{ "enabled": true, "files"');
+});
+
+test('deleting a mapped CSV takes its entry out of the manifest with it', async ({ page }) => {
+    await openFlatMod(page);
+
+    // BookcaseOffice keeps its CSVs flat and declares where the game reads them from, so
+    // this file exists only because an entry places it. An entry left naming a file that
+    // has gone is a loader going looking for something it cannot find.
+    await page.locator('.file-panel-category[data-category="strings"] '
+        + '.file-panel-entry[data-id="jobs.csv"] .file-panel-danger').click();
+
+    await expect.poll(async () => (await confirms(page)).length).toBeGreaterThan(0);
+
+    // The entry goes with the file, so it is not among the references the author is
+    // warned about -- the list is what will be left pointing at nothing. jobs.csv holds
+    // job titles rather than block text, so nothing in the mod loses a line either.
+    const asked = (await confirms(page)).at(-1);
+    expect(asked).toContain('Delete "jobs" from this mod?');
+    expect(asked).not.toContain('ddsmanifest.json');
+
+    await expect(panel(page).locator('.files-order button')).toHaveText(['dds.blocks.csv']);
+
+    const manifest = JSON.parse(await readFile(page, `${FLAT}/ddsmanifest.json`));
+    expect(manifest.files).toEqual({ 'dds.blocks.csv': 'Strings/English/DDS' });
+    // Everything the app has no view on survives the rewrite.
+    expect(manifest.enabled).toBe(true);
+});
+
+test('deleting an unmapped CSV leaves the manifest untouched', async ({ page }) => {
+    await openFlatMod(page, ddsManifestNoBlocksFixture);
+
+    // Only jobs.csv is declared here. A file sitting where the game already reads it from
+    // needs no entry, so there is nothing about it to rewrite -- and a delete that
+    // rewrote the author's manifest anyway would be reformatting it for no reason.
+    const before = await readFile(page, `${FLAT}/ddsmanifest.json`);
+
+    await page.locator('.file-panel-category[data-category="strings"] '
+        + '.file-panel-entry[data-id="jobs.csv"] .file-panel-danger').click();
+
+    await expect(panel(page).locator('.files-order button')).toHaveCount(0);
+
+    const after = JSON.parse(await readFile(page, `${FLAT}/ddsmanifest.json`));
+    expect(after.files).toEqual({});
+    expect(before).toContain('jobs.csv');
 });

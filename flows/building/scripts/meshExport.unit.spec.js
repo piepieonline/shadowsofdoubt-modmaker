@@ -606,13 +606,13 @@ describe('collectWindows', () => {
 
 describe('windowPixels', () => {
     it('rounds a half to even, as Mathf.RoundToInt does', () => {
-        // 512 / 4 = 128 rows; the bottom of floor 1 lands on 134.4 and the top on 199.68,
-        // neither a half. Floor 0's bottom is 15.36 and its top 71.68. What this pins is
-        // that the rounding is not Math.round: a half lands on the even number.
+        // 512 / 4 = 128 rows; floor 0's bottom lands on 19.584 and its top on 80.128, and
+        // floor 1's on 147.584 and 208.128, none of them a half. What this pins is that
+        // the rounding is not Math.round: a half lands on the even number.
         const rowHeight = 512 / 4;
 
-        expect(windowPixels(0, 0, 0, rowHeight)).toMatchObject({ y: 15, height: 57 });
-        expect(windowPixels(0, 0, 1, rowHeight)).toMatchObject({ y: 143, height: 57 });
+        expect(windowPixels(0, 0, 0, rowHeight)).toMatchObject({ y: 20, height: 60 });
+        expect(windowPixels(0, 0, 1, rowHeight)).toMatchObject({ y: 148, height: 60 });
     });
 
     it('centres a window in its column, leaving masonry either side', () => {

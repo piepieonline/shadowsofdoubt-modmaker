@@ -35,9 +35,33 @@
  * there is a control plus its label plus what it selects with, and anything narrower
  * squeezes the dropdowns to nothing. Matching the left to it costs the floor a little
  * width and buys a workspace that is not lopsided.
+ *
+ * ## Why they are positioned, which is not for anything of their own
+ *
+ * select2 leaves the `<select>` it took over in the document and hides it with
+ * `.select2-hidden-accessible`, which is `position: absolute !important` and no offsets --
+ * a screen reader still reaches it, and it is what select2 moves focus to when a dropdown
+ * opens. Absolute with nothing positioned above it means the page itself is its containing
+ * block: the element keeps the place the column's *unscrolled* flow gives it, is not
+ * clipped by the column, and does not move when the column scrolls.
+ *
+ * So a column scrolled halfway leaves every hidden `<select>` in it stranded down the page,
+ * hundreds of pixels below the control it belongs to and often past the bottom of the
+ * window. Two things follow, and the second is the one that shows: the page grows to
+ * contain them, and opening a dropdown scrolls the whole page down to the stranded element
+ * focus just went to -- taking the columns, the canvas and the dropdown with it. The
+ * checker at the foot of the status column is where it was found, because it is the last
+ * control in the taller column and so the most stranded, but every kept control here has
+ * it.
+ *
+ * Positioning the columns makes them the containing block instead, which puts the hidden
+ * element back with its control: scrolled with the column, clipped by it, and already in
+ * view when it takes focus. The dropdowns are unaffected -- they are parented out to
+ * .building-workspace, which stays static.
  */
 #building-left,
 #building-panels {
+    position: relative;
     flex: none;
     width: 22rem;
     overflow-y: auto;
@@ -185,6 +209,248 @@
     margin-right: 0.35rem;
     border-radius: 2px;
     border: 1px solid rgb(255 255 255 / 0.25);
+}
+
+/*
+ * What could spawn on the square under the pointer.
+ *
+ * Collapsed by default, and one group per address preset competing for the unit. A room
+ * of any size runs to a few dozen furniture presets across forty slot classes, which is
+ * why this is a disclosure rather than a list: the five type rows above it are read on
+ * every hover and this is read when a question is being asked of one square.
+ */
+.furniture-header {
+    margin: 0.9rem 0 0.3rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--pico-muted-border-color);
+}
+
+.furniture-group {
+    margin: 0;
+    font-size: 0.75rem;
+}
+
+/* Flex rather than grid: Pico's disclosure marker is a `summary::after`, and a
+   pseudo-element of a grid container is a grid item -- it would take a cell of its own
+   and push the count out of line. As a flex item it sits at the end, where it belongs. */
+.furniture-group summary {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    padding: 0.25rem 0.3rem;
+    cursor: pointer;
+}
+
+/*
+ * The heading sits on its rows, the way every other list in the app has its heading sit
+ * on its items -- see --list-heading-gap in core/chrome.css.
+ *
+ * Pico puts a whole `--pico-spacing` under an open summary, which here was 1rem of blank
+ * column between an address preset's name and the first thing that could spawn under it:
+ * more air than there is between the groups themselves, so the name read as belonging to
+ * the group above rather than to the rows below it.
+ */
+.furniture-group[open] > summary {
+    margin-bottom: var(--list-heading-gap);
+}
+
+.furniture-summary {
+    flex: 1;
+    min-width: 0;
+}
+
+.furniture-address {
+    display: block;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+
+    /* Pico gives a summary the theme's accent, which reads as a colour that means
+       something in this column -- the active tool's row is marked in it, and every
+       address on the floor is drawn in a colour of its own two rows above. An address
+       preset's name is data, so it is stated in the text colour.
+       Set on the span rather than on the summary because Pico is served from a CDN and
+       its rule outranks one written against the summary itself. */
+    color: var(--pico-color);
+}
+
+/* The rest of the chain, under the preset it belongs to rather than beside it: the
+   column is too narrow to put three names on one line and still read the first. */
+.furniture-config {
+    display: block;
+    color: var(--pico-muted-color);
+    font-size: 0.7rem;
+    overflow-wrap: anywhere;
+}
+
+.furniture-count {
+    color: var(--pico-muted-color);
+    font-variant-numeric: tabular-nums;
+}
+
+.furniture-row {
+    padding: 0.25rem 0.3rem 0.25rem 0.8rem;
+}
+
+.furniture-class {
+    display: block;
+    color: var(--pico-muted-color);
+    font-size: 0.7rem;
+}
+
+.furniture-presets {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+/* Comma-separated without commas in the markup, so a name is one element and can carry
+   its own title. */
+.furniture-preset + .furniture-preset::before {
+    content: ', ';
+    color: var(--pico-muted-color);
+}
+
+/* Its appearance depends on a decor style nothing in a blueprint records. */
+.furniture-preset.styled {
+    color: var(--pico-muted-color);
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+}
+
+.furniture-caveat {
+    margin-top: 0.6rem;
+}
+
+/* Where the answers came from, when some of them are the mod's. */
+.furniture-source {
+    margin-bottom: 0.5rem;
+}
+
+/* A file the game will never read. Not an error of this app's, so not styled as one --
+   but the one thing in this section that is worth acting on rather than reading. */
+.furniture-unlisted {
+    margin-bottom: 0.5rem;
+    padding: 0.3rem 0.4rem;
+    border-left: 2px solid var(--pico-del-color);
+    background: var(--pico-background-color);
+}
+
+/*
+ * Problems in the mod's own assets, which hold whatever square is selected.
+ *
+ * Spaced like a `.status-block` without being one -- see the note in `modProblemsBlock`
+ * on why it stays out of that class.
+ */
+.mod-problems {
+    margin-bottom: 1.25rem;
+}
+
+/*
+ * One problem.
+ *
+ * Marked in the same language as `.furniture-unlisted` -- a left rule against the panel
+ * background -- because it is the same kind of statement: something to act on rather than
+ * something to read. Two severities, and they are told apart by colour alone deliberately:
+ * the text of each already says whether the cluster fails or is merely thinned, so the
+ * colour is a second encoding of it rather than the only one.
+ */
+.mod-problem {
+    margin-bottom: 0.4rem;
+    padding: 0.3rem 0.4rem;
+    border-left: 2px solid var(--pico-muted-border-color);
+    background: var(--pico-background-color);
+}
+
+.mod-problem.blocks {
+    border-left-color: var(--pico-del-color);
+}
+
+.mod-problem.degrades {
+    border-left-color: var(--pico-mark-background-color);
+}
+
+/*
+ * "Why not this one" -- the list above read backwards, for when you have a preset in mind
+ * and it never appears. Set apart by a rule, because it is a question rather than a
+ * reading of the square.
+ */
+.furniture-check {
+    margin-top: 0.8rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--pico-muted-border-color);
+}
+
+.furniture-check .field {
+    margin-bottom: 0.4rem;
+}
+
+/*
+ * The `<select>` itself is hidden by select2; what is on screen is its container.
+ *
+ * Width is `!important` because select2 writes one inline, and it writes 100% -- which is
+ * right for a control that owns its row and wrong here, where it shares one with its
+ * label and pushed "Why not…" onto a second line. 9rem is what every other field in this
+ * flow gives its control.
+ */
+.furniture-check .select2-container {
+    flex: none;
+    width: 9rem !important;
+    font-size: 0.75rem;
+}
+
+/*
+ * The dropdown, which is parented out to .building-workspace and so cannot be reached
+ * from here by descent -- it inherits that element's type, not this column's. The class
+ * is passed through the control; see `dropdownClass` in searchSelect.js.
+ *
+ * It is not held to the control's 9rem: a dropdown is free to be wider than what opened
+ * it, and preset names are long enough to want it.
+ */
+.furniture-check-dropdown {
+    font-size: 0.75rem;
+
+    /* select2 writes the dropdown's width inline, matching the control, which here is the
+       9rem the label leaves it. Preset names run to `SupermarketEmptyShelfLarge`, and at
+       9rem almost every one of them wraps onto a second line. It opens over the canvas,
+       which has the room -- so it takes twice the column's own width and lets the longest
+       names sit on one line. Only here: the case flow's dropdowns size to their control. */
+    min-width: 30rem !important;
+}
+
+.verdict-line {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.3rem 0;
+}
+
+.verdict-address {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--pico-muted-color);
+}
+
+.verdict-answer {
+    font-weight: 600;
+}
+
+/* Not the theme's accent, which is what everything interactive in this column already
+   uses. These say what is so, and are the only two colours here that mean anything. */
+.verdict-answer.possible {
+    color: var(--pico-ins-color);
+}
+
+.verdict-answer.no {
+    color: var(--pico-del-color);
+}
+
+.verdict-reason {
+    font-size: 0.7rem;
+    color: var(--pico-muted-color);
+    margin: 0 0 0.3rem;
+    padding: 0 0.3rem 0 0.8rem;
+    overflow-wrap: anywhere;
 }
 
 /*
@@ -346,10 +612,10 @@
  */
 .address-row {
     display: grid;
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: auto auto 1fr auto;
     grid-template-areas:
-        "radio index name"
-        "colour vars vars";
+        "radio index name remove"
+        "colour vars vars vars";
     gap: 0.25rem 0.35rem;
     align-items: center;
     padding: 0.3rem 0.25rem;
@@ -357,9 +623,20 @@
 
     > input[type="radio"] { grid-area: radio; }
     > .address-index { grid-area: index; }
-    > select { grid-area: name; }
+    > .name-select { grid-area: name; }
+    > .address-remove { grid-area: remove; }
     > input[type="color"] { grid-area: colour; }
     > .variations { grid-area: vars; }
+}
+
+/* The same button as the ones under it, on the row's own line rather than the layouts'. */
+.address-remove {
+    flex: none;
+    width: 1.5rem;
+    padding: 0.15rem;
+    margin: 0;
+    font-size: 0.7rem;
+    line-height: 1.2;
 }
 
 .room-row {
@@ -391,10 +668,6 @@
         min-width: 0;
     }
 
-    .address-row > select {
-        width: 100%;
-    }
-
     /* Sized explicitly: Pico stretches a radio to whatever box it is given, which in a
        flex row is however much is left over. */
     .address-row input[type="radio"],
@@ -412,7 +685,7 @@
         padding: 0;
     }
 
-    .room-row select {
+    .room-row .name-select {
         flex: 1 1 auto;
     }
 
@@ -582,10 +855,48 @@
  * something that names nothing. It takes what the label leaves instead -- same size,
  * same row, more of it.
  */
-.field select.wall-preset {
+.field .name-select.wall-preset {
     flex: 1;
     width: auto;
     min-width: 0;
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* The name pickers                                                            */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * The box a kept select2 control lives in. See keptSelects.js on why there is one: select2
+ * hides the `<select>` and inserts its own markup beside it, so the pair have to be moved
+ * together when the row around them is rebuilt.
+ *
+ * A real box rather than `display: contents`, because it is what the row places -- the
+ * address row gives it a grid area, and the room row and the wall field give it the space
+ * their other children leave. `min-width: 0` so a long preset name is clipped by the
+ * control rather than pushing the row wider than the column.
+ *
+ * The type size is set here rather than on the `<select>`, which is not the element on
+ * screen any more; `.select2-container` inherits it. See searchSelect.css.
+ */
+.name-select {
+    display: block;
+    min-width: 0;
+    font-size: 0.75rem;
+}
+
+/*
+ * The dropdown, parented out to .building-workspace and so beyond the reach of everything
+ * above -- the same arrangement the furniture checker's uses, and the same reason.
+ *
+ * Wider than the control that opened it. These are `CamelCase` asset names running to
+ * "ApartmentBuildingGroundFloorLobby", and the column is 22rem: held to the control's own
+ * width almost every name wraps onto a second line. It opens over the canvas, which has
+ * the room.
+ */
+.name-select-dropdown {
+    font-size: 0.75rem;
+    min-width: 26rem !important;
 }
 
 .field .read-only {
@@ -630,4 +941,56 @@
  */
 #help-modal article {
     max-width: 720px;
+}
+
+/*
+ * Adding a storey: which building, what there is to copy from, and how much of it.
+ *
+ * The line above the options is the one thing in the dialog that changes with the
+ * building, so it is set apart from them rather than reading as the first of them.
+ */
+.add-storey-source {
+    margin-bottom: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--pico-muted-color);
+}
+
+/*
+ * Each option is a line to choose and a line saying what it means.
+ *
+ * A grid rather than Pico's inline label: it lays a radio and its text out on one line
+ * and treats a `small` as more of that line, so the explanation lands on top of the
+ * words it explains. Two columns -- the button, then everything said about it, stacked
+ * and aligned with each other rather than with the button.
+ */
+#add-storey-options {
+    margin-bottom: 0;
+
+    label {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0 0.5rem;
+        align-items: baseline;
+        margin-bottom: 0.7rem;
+    }
+
+    /* An answer that is not one here at all -- the roof, under a basement. `hidden`
+       alone would lose to the display above it, which is more specific than the
+       attribute's own rule. */
+    label[hidden] {
+        display: none;
+    }
+
+    small {
+        grid-column: 2;
+        margin: 0.1rem 0 0;
+        color: var(--pico-muted-color);
+    }
+
+    /* Nothing to copy from. Dimmed rather than hidden: what the button offers is worth
+       reading even when most of it cannot be had yet -- see askStoreyStart. */
+    label:has(input:disabled) {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 }

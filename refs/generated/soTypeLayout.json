@@ -5707,6 +5707,11 @@
     }
   },
   "AddressPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "debug": {
       "Item1": "Boolean",
       "Item2": false,
@@ -5999,6 +6004,11 @@
     }
   },
   "AIActionPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "defaultKey": {
       "Item1": "InteractionKey",
       "Item2": false,
@@ -6931,6 +6941,11 @@
     }
   },
   "AIGoalPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "startingGoal": {
       "Item1": "Boolean",
       "Item2": false,
@@ -7338,6 +7353,11 @@
     }
   },
   "AmbientZone": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "mainEvent": {
       "Item1": "AudioEvent",
       "Item2": false,
@@ -7430,6 +7450,11 @@
     }
   },
   "ArtPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "disable": {
       "Item1": "Boolean",
       "Item2": false,
@@ -7562,6 +7587,11 @@
     }
   },
   "AudioEvent": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "guid": {
       "Item1": "String",
       "Item2": false,
@@ -7937,6 +7967,11 @@
     }
   },
   "BookPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "bookName": {
       "Item1": "String",
       "Item2": false,
@@ -8004,6 +8039,11 @@
     }
   },
   "BroadcastPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "audioEvent": {
       "Item1": "AudioEvent",
       "Item2": false,
@@ -8061,6 +8101,11 @@
     }
   },
   "BroadcastSchedule": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "broadcasts": {
       "Item1": "BroadcastPreset",
       "Item2": true,
@@ -8068,6 +8113,11 @@
     }
   },
   "BuildingPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "disable": {
       "Item1": "Boolean",
       "Item2": false,
@@ -8385,6 +8435,11 @@
     }
   },
   "ChapterPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "chapterNumber": {
       "Item1": "Int32",
       "Item2": false,
@@ -8507,6 +8562,11 @@
     }
   },
   "CharacterTrait": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "isTrait": {
       "Item1": "Boolean",
       "Item2": false,
@@ -8809,6 +8869,11 @@
     }
   },
   "ClothesPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "covers": {
       "Item1": "CharacterAnchor",
       "Item2": true,
@@ -8996,6 +9061,11 @@
     }
   },
   "CloudSaveData": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "path": {
       "Item1": "String",
       "Item2": false,
@@ -9003,6 +9073,11 @@
     }
   },
   "ColourPalettePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "colours": {
       "Item1": "MaterialSettings",
       "Item2": true,
@@ -9015,6 +9090,11 @@
     }
   },
   "ColourSchemePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "primary1": {
       "Item1": "Color",
       "Item2": false,
@@ -9062,6 +9142,11 @@
     }
   },
   "CompanyOpenHoursPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "retailOpenHours": {
       "Item1": "Vector2",
       "Item2": false,
@@ -9109,6 +9194,11 @@
     }
   },
   "CompanyPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "companyCategories": {
       "Item1": "CompanyCategory",
       "Item2": true,
@@ -9316,6 +9406,11 @@
     }
   },
   "CompanyStructurePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "companyStructure": {
       "Item1": "BossConfig",
       "Item2": false,
@@ -9323,6 +9418,11 @@
     }
   },
   "CriminalPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "type": {
       "Item1": "CriminalType",
       "Item2": false,
@@ -9365,6 +9465,11 @@
     }
   },
   "CruncherAppPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "loadBackground": {
       "Item1": "Material",
       "Item2": false,
@@ -9497,6 +9602,11 @@
     }
   },
   "CutScenePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "elementList": {
       "Item1": "CutSceneElement",
       "Item2": true,
@@ -9559,6 +9669,11 @@
     }
   },
   "DDSScope": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "colour": {
       "Item1": "Color",
       "Item2": false,
@@ -9586,6 +9701,11 @@
     }
   },
   "DesignStylePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "includeInPersonalityMatching": {
       "Item1": "Boolean",
       "Item2": false,
@@ -9648,6 +9768,11 @@
     }
   },
   "DialogPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "msgID": {
       "Item1": "String",
       "Item2": false,
@@ -9800,6 +9925,11 @@
     }
   },
   "DistrictPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "generationPriority": {
       "Item1": "Vector2",
       "Item2": false,
@@ -9932,6 +10062,11 @@
     }
   },
   "DoorMovementPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "closedRelativePos": {
       "Item1": "Vector3",
       "Item2": false,
@@ -10034,6 +10169,11 @@
     }
   },
   "DoorPairPreset": {
+    "id": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "Used as a replacement for names for smaller save data sizes"
+    },
     "parentWallsLong": {
       "Item1": "GameObject",
       "Item2": true,
@@ -10166,6 +10306,11 @@
     }
   },
   "DoorPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "doorModel": {
       "Item1": "GameObject",
       "Item2": false,
@@ -10338,6 +10483,11 @@
     }
   },
   "EffectPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "firstValueIsPercentageIncrease": {
       "Item1": "Boolean",
       "Item2": false,
@@ -10350,6 +10500,11 @@
     }
   },
   "ElevatorPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "stairWellPrefabs": {
       "Item1": "GameObject",
       "Item2": true,
@@ -10377,6 +10532,11 @@
     }
   },
   "EvidencePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "subClass": {
       "Item1": "String",
       "Item2": false,
@@ -10579,6 +10739,11 @@
     }
   },
   "FactPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "iconSpriteLarge": {
       "Item1": "Sprite",
       "Item2": false,
@@ -10641,6 +10806,11 @@
     }
   },
   "FirstPersonItem": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "slotPriority": {
       "Item1": "Int32",
       "Item2": false,
@@ -10783,6 +10953,11 @@
     }
   },
   "FogPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "sunRiseHour": {
       "Item1": "Single",
       "Item2": false,
@@ -10960,6 +11135,11 @@
     }
   },
   "FurnitureClass": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "wallRules": {
       "Item1": "FurnitureWallRule",
       "Item2": true,
@@ -11242,6 +11422,11 @@
     }
   },
   "FurnitureCluster": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "disable": {
       "Item1": "Boolean",
       "Item2": false,
@@ -11524,6 +11709,11 @@
     }
   },
   "FurniturePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "classes": {
       "Item1": "FurnitureClass",
       "Item2": true,
@@ -11916,6 +12106,11 @@
     }
   },
   "GroupPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "groupType": {
       "Item1": "GroupType",
       "Item2": false,
@@ -11998,6 +12193,11 @@
     }
   },
   "HandwritingPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "fontAsset": {
       "Item1": "TMP_FontAsset",
       "Item2": false,
@@ -12015,6 +12215,11 @@
     }
   },
   "HelpContentPage": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "disabled": {
       "Item1": "Boolean",
       "Item2": false,
@@ -12032,6 +12237,11 @@
     }
   },
   "InteractableActionsPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "actions": {
       "Item1": "InteractionAction",
       "Item2": true,
@@ -12059,6 +12269,11 @@
     }
   },
   "InteractablePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "spawnable": {
       "Item1": "Boolean",
       "Item2": false,
@@ -13131,6 +13346,11 @@
     }
   },
   "JobPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "disabled": {
       "Item1": "Boolean",
       "Item2": false,
@@ -13278,6 +13498,11 @@
     }
   },
   "LayoutConfiguration": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "assignPurpose": {
       "Item1": "Boolean",
       "Item2": false,
@@ -13370,6 +13595,11 @@
     }
   },
   "LightingPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "coolColours": {
       "Item1": "WindowColour",
       "Item2": true,
@@ -13532,6 +13762,11 @@
     }
   },
   "MatchPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "canOnlyBeMatchedWith": {
       "Item1": "Boolean",
       "Item2": false,
@@ -13569,6 +13804,11 @@
     }
   },
   "MaterialGroupPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "material": {
       "Item1": "Material",
       "Item2": false,
@@ -13676,6 +13916,11 @@
     }
   },
   "MenuPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "itemsSold": {
       "Item1": "InteractablePreset",
       "Item2": true,
@@ -13708,6 +13953,11 @@
     }
   },
   "MotivePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "allowHomelessPurps": {
       "Item1": "Boolean",
       "Item2": false,
@@ -13800,6 +14050,11 @@
     }
   },
   "MurderMO": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "notes": {
       "Item1": "String",
       "Item2": false,
@@ -14027,6 +14282,11 @@
     }
   },
   "MurderPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "caseType": {
       "Item1": "CaseType",
       "Item2": false,
@@ -14224,6 +14484,11 @@
     }
   },
   "MurderWeaponPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "type": {
       "Item1": "WeaponType",
       "Item2": false,
@@ -14496,6 +14761,11 @@
     }
   },
   "MurderWeaponsPool": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "murderWeaponPool": {
       "Item1": "MurderWeaponPick",
       "Item2": true,
@@ -14503,6 +14773,11 @@
     }
   },
   "MusicCue": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "fmodGUID": {
       "Item1": "String",
       "Item2": false,
@@ -14550,6 +14825,11 @@
     }
   },
   "NeonSignCharacters": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "characterList": {
       "Item1": "NeonCharacter",
       "Item2": true,
@@ -14557,6 +14837,11 @@
     }
   },
   "NewspaperArticle": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "disabled": {
       "Item1": "Boolean",
       "Item2": false,
@@ -14584,6 +14869,11 @@
     }
   },
   "OccupationPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "work": {
       "Item1": "workType",
       "Item2": false,
@@ -14836,6 +15126,11 @@
     }
   },
   "ParticleEffect": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "damageBreakPoint": {
       "Item1": "Single",
       "Item2": false,
@@ -14943,6 +15238,11 @@
     }
   },
   "PhysicsProfile": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "mass": {
       "Item1": "Single",
       "Item2": false,
@@ -15010,6 +15310,11 @@
     }
   },
   "PlayerTransitionPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "transitionTime": {
       "Item1": "Single",
       "Item2": false,
@@ -15317,6 +15622,11 @@
     }
   },
   "ResidencePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "habitable": {
       "Item1": "Boolean",
       "Item2": false,
@@ -15339,6 +15649,11 @@
     }
   },
   "RetailItemPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "itemPreset": {
       "Item1": "InteractablePreset",
       "Item2": false,
@@ -15526,6 +15841,11 @@
     }
   },
   "RevengeObjective": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "disabled": {
       "Item1": "Boolean",
       "Item2": false,
@@ -15647,8 +15967,19 @@
       "Item3": "Refers to an answer method within this script that is used to check"
     }
   },
-  "RoomClassPreset": {},
+  "RoomClassPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    }
+  },
   "RoomConfiguration": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "roomType": {
       "Item1": "RoomTypePreset",
       "Item2": false,
@@ -16166,6 +16497,11 @@
     }
   },
   "RoomLightingPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "disable": {
       "Item1": "Boolean",
       "Item2": false,
@@ -16228,6 +16564,11 @@
     }
   },
   "RoomTypeFilter": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "roomClasses": {
       "Item1": "RoomClassPreset",
       "Item2": true,
@@ -16235,6 +16576,11 @@
     }
   },
   "RoomTypePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "forceConfiguration": {
       "Item1": "RoomConfiguration",
       "Item2": false,
@@ -16424,6 +16770,11 @@
     }
   },
   "SideMissionHandInPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "rewardModifier": {
       "Item1": "Int32",
       "Item2": false,
@@ -16446,6 +16797,11 @@
     }
   },
   "SideMissionIntroPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "rewardModifier": {
       "Item1": "Int32",
       "Item2": false,
@@ -16465,6 +16821,11 @@
     }
   },
   "SpatterPatternPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "spatterCount": {
       "Item1": "Int32",
       "Item2": false,
@@ -16507,6 +16868,11 @@
     }
   },
   "StairwellPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "spawnObject": {
       "Item1": "GameObject",
       "Item2": false,
@@ -16559,6 +16925,11 @@
     }
   },
   "StatusPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "color": {
       "Item1": "Color",
       "Item2": false,
@@ -16866,6 +17237,11 @@
     }
   },
   "StreetTilePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "sectionType": {
       "Item1": "StreetSection",
       "Item2": false,
@@ -16878,6 +17254,11 @@
     }
   },
   "SubObjectClassPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "limitCountPerObject": {
       "Item1": "Boolean",
       "Item2": false,
@@ -16910,6 +17291,11 @@
     }
   },
   "SyncDiskPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "disabled": {
       "Item1": "Boolean",
       "Item2": false,
@@ -17116,8 +17502,19 @@
       "Item3": ""
     }
   },
-  "WallFrontageClass": {},
+  "WallFrontageClass": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    }
+  },
   "WallFrontagePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "gameObject": {
       "Item1": "GameObject",
       "Item2": false,
@@ -17180,6 +17577,11 @@
     }
   },
   "WindowStylePreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "closable": {
       "Item1": "Boolean",
       "Item2": false,
@@ -17237,6 +17639,11 @@
     }
   },
   "WindowTabPreset": {
+    "presetName": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": "We need a internal reference to ID the file based on name (can't access name outside main threads)"
+    },
     "tabName": {
       "Item1": "String",
       "Item2": false,
@@ -19908,6 +20315,16 @@
     }
   },
   "DDSBlockSave": {
+    "name": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
+    "id": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
     "replacements": {
       "Item1": "DDSReplacement",
       "Item2": true,
@@ -19962,6 +20379,16 @@
     }
   },
   "DDSMessageSave": {
+    "name": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
+    "id": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
     "blocks": {
       "Item1": "DDSBlockCondition",
       "Item2": true,
@@ -20017,6 +20444,16 @@
   },
   "TreeType": {},
   "DDSTreeSave": {
+    "name": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
+    "id": {
+      "Item1": "String",
+      "Item2": false,
+      "Item3": ""
+    },
     "participantA": {
       "Item1": "DDSParticipant",
       "Item2": false,
@@ -27418,6 +27855,26 @@
     }
   },
   "BossConfig": {
+    "occupation": {
+      "Item1": "OccupationPreset",
+      "Item2": false,
+      "Item3": ""
+    },
+    "positionsMinimum": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "positionsMaximum": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "payGrade": {
+      "Item1": "Single",
+      "Item2": false,
+      "Item3": ""
+    },
     "subordinates": {
       "Item1": "Hierarchy1Config",
       "Item2": true,
@@ -27425,6 +27882,26 @@
     }
   },
   "Hierarchy1Config": {
+    "occupation": {
+      "Item1": "OccupationPreset",
+      "Item2": false,
+      "Item3": ""
+    },
+    "positionsMinimum": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "positionsMaximum": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "payGrade": {
+      "Item1": "Single",
+      "Item2": false,
+      "Item3": ""
+    },
     "subordinates": {
       "Item1": "Hierarchy2Config",
       "Item2": true,
@@ -27432,6 +27909,26 @@
     }
   },
   "Hierarchy2Config": {
+    "occupation": {
+      "Item1": "OccupationPreset",
+      "Item2": false,
+      "Item3": ""
+    },
+    "positionsMinimum": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "positionsMaximum": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "payGrade": {
+      "Item1": "Single",
+      "Item2": false,
+      "Item3": ""
+    },
     "subordinates": {
       "Item1": "Hierarchy3Config",
       "Item2": true,
@@ -27439,13 +27936,54 @@
     }
   },
   "Hierarchy3Config": {
+    "occupation": {
+      "Item1": "OccupationPreset",
+      "Item2": false,
+      "Item3": ""
+    },
+    "positionsMinimum": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "positionsMaximum": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "payGrade": {
+      "Item1": "Single",
+      "Item2": false,
+      "Item3": ""
+    },
     "subordinates": {
       "Item1": "OccupationSettings",
       "Item2": true,
       "Item3": ""
     }
   },
-  "Hierarchy4Config": {},
+  "Hierarchy4Config": {
+    "occupation": {
+      "Item1": "OccupationPreset",
+      "Item2": false,
+      "Item3": ""
+    },
+    "positionsMinimum": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "positionsMaximum": {
+      "Item1": "Int32",
+      "Item2": false,
+      "Item3": ""
+    },
+    "payGrade": {
+      "Item1": "Single",
+      "Item2": false,
+      "Item3": ""
+    }
+  },
   "CriminalType": {},
   "AppAccess": {
     "rule": {
@@ -30978,6 +31516,46 @@
     }
   },
   "SelectableSettings": {
+    "_transition": {
+      "Item1": "Transition",
+      "Item2": false,
+      "Item3": ""
+    },
+    "_colors": {
+      "Item1": "CustomColorBlock",
+      "Item2": false,
+      "Item3": ""
+    },
+    "_spriteState": {
+      "Item1": "CustomSpriteState",
+      "Item2": false,
+      "Item3": ""
+    },
+    "_animationTriggers": {
+      "Item1": "CustomAnimationTriggers",
+      "Item2": false,
+      "Item3": ""
+    },
+    "transition": {
+      "Item1": "Transition",
+      "Item2": false,
+      "Item3": ""
+    },
+    "selectableColors": {
+      "Item1": "CustomColorBlock",
+      "Item2": false,
+      "Item3": ""
+    },
+    "spriteState": {
+      "Item1": "CustomSpriteState",
+      "Item2": false,
+      "Item3": ""
+    },
+    "animationTriggers": {
+      "Item1": "CustomAnimationTriggers",
+      "Item2": false,
+      "Item3": ""
+    },
     "_imageSettings": {
       "Item1": "ImageSettings",
       "Item2": false,
@@ -30990,6 +31568,46 @@
     }
   },
   "SliderSettings": {
+    "_transition": {
+      "Item1": "Transition",
+      "Item2": false,
+      "Item3": ""
+    },
+    "_colors": {
+      "Item1": "CustomColorBlock",
+      "Item2": false,
+      "Item3": ""
+    },
+    "_spriteState": {
+      "Item1": "CustomSpriteState",
+      "Item2": false,
+      "Item3": ""
+    },
+    "_animationTriggers": {
+      "Item1": "CustomAnimationTriggers",
+      "Item2": false,
+      "Item3": ""
+    },
+    "transition": {
+      "Item1": "Transition",
+      "Item2": false,
+      "Item3": ""
+    },
+    "selectableColors": {
+      "Item1": "CustomColorBlock",
+      "Item2": false,
+      "Item3": ""
+    },
+    "spriteState": {
+      "Item1": "CustomSpriteState",
+      "Item2": false,
+      "Item3": ""
+    },
+    "animationTriggers": {
+      "Item1": "CustomAnimationTriggers",
+      "Item2": false,
+      "Item3": ""
+    },
     "_handleImageSettings": {
       "Item1": "ImageSettings",
       "Item2": false,
@@ -31022,6 +31640,46 @@
     }
   },
   "ScrollbarSettings": {
+    "_transition": {
+      "Item1": "Transition",
+      "Item2": false,
+      "Item3": ""
+    },
+    "_colors": {
+      "Item1": "CustomColorBlock",
+      "Item2": false,
+      "Item3": ""
+    },
+    "_spriteState": {
+      "Item1": "CustomSpriteState",
+      "Item2": false,
+      "Item3": ""
+    },
+    "_animationTriggers": {
+      "Item1": "CustomAnimationTriggers",
+      "Item2": false,
+      "Item3": ""
+    },
+    "transition": {
+      "Item1": "Transition",
+      "Item2": false,
+      "Item3": ""
+    },
+    "selectableColors": {
+      "Item1": "CustomColorBlock",
+      "Item2": false,
+      "Item3": ""
+    },
+    "spriteState": {
+      "Item1": "CustomSpriteState",
+      "Item2": false,
+      "Item3": ""
+    },
+    "animationTriggers": {
+      "Item1": "CustomAnimationTriggers",
+      "Item2": false,
+      "Item3": ""
+    },
     "_handleImageSettings": {
       "Item1": "ImageSettings",
       "Item2": false,

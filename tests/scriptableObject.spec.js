@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, queuePicks, connectFolders, selectContent, queuePrompts, prompts, listDir, alerts, collectPageErrors, topLevelLabels, readFile, writeFixture, gotoFlow } from './support/harness.js';
-import { soFixture, caseWithCustomReference } from './support/fixtures.js';
+import { installFsHarness, seedFs, queuePicks, connectFolders, selectContent, queuePrompts, prompts, confirms, listDir, alerts, collectPageErrors, topLevelLabels, readFile, writeFixture, gotoFlow } from './support/harness.js';
+import { soFixture, soFixtureWithAssets, soFolderContent, caseWithCustomReference } from './support/fixtures.js';
 
 const CASE_FILE = 'Mods/TestCase/testcase.sodso.json';
 
@@ -115,10 +115,162 @@ test('manifest fileOrder entries become links that open the referenced file', as
     // The strongest signal that the type system resolved: copyFrom is typed as
     // MurderMO, so its dropdown is populated with real MurderMO asset names. Named
     // rather than "the select in this tree" -- booleans get a dropdown here too.
+    //
+    // Its row is not shown on a file the mod owns, and the control is built either way,
+    // so this reads what the dropdown holds rather than whether it can be seen.
     await expect(page.locator(
         "#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"copyFrom\"')) select"
     ).first()).toContainText('ExCopSniper');
     expect(await alerts(page)).toEqual([]);
+});
+
+/**
+ * The dropdown's search box leaves room for the icon Pico paints on it.
+ *
+ * select2 writes that box as `<input type="search">`, and Pico gives every one of those a
+ * magnifier plus the `padding-inline-start` that keeps text clear of it. Two rules in this
+ * flow's stylesheet used to overrule that with a `padding` shorthand, and a shorthand sets
+ * all four sides: the inset went with it and every character typed ran under the icon.
+ *
+ * The second of those is the subtle one and the reason this is pinned rather than left to
+ * review. These dropdowns are parented into `#trees`, so their search box is a `#trees
+ * input` like any other, and `#trees input` out-specifies `[type=search]`. Anything added
+ * to that rule later lands on this box too.
+ */
+test('the reference dropdown\'s search box starts after the search icon', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, soFixtureWithAssets);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+    await page.locator('#manifest_panel .files-order ul button').first().click();
+    await expect(page.locator('#trees .file-window')).toHaveCount(1);
+
+    // compatibleWith rather than copyFrom, which is no longer shown on a file the mod
+    // owns: a search box nobody can open is a search box nobody types in. Its entries are
+    // a level down, and arrays of these are not auto-expanded.
+    const reference = page.locator(
+        "#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"compatibleWith\"'))"
+    ).first();
+    await reference.locator('.jsontree_expand-button').first().click();
+    await reference.locator('.select2-selection').first().click();
+
+    const box = await page.locator('#trees .select2-dropdown .select2-search__field').evaluate((field) => {
+        const style = getComputedStyle(field);
+        return { start: parseFloat(style.paddingInlineStart), icon: style.backgroundImage };
+    });
+
+    // Only meaningful if there is an icon to clear in the first place.
+    expect(box.icon).toContain('svg');
+
+    // Pico insets by the horizontal spacing plus 1.75rem; the icon is 1rem wide, 0.125rem
+    // in. Anything at or below the icon's right edge puts text underneath it.
+    expect(box.start).toBeGreaterThan(18);
+});
+
+/**
+ * A reference field offers what the mod has of that type, before the base game's.
+ *
+ * `copyFrom` is typed as the document's own type, so on a MurderMO it points at another
+ * MurderMO -- which makes it the one field that exercises every case at once. Until now
+ * the only way to name your own asset here was "Custom…" and typing it, against a list of
+ * every shipped MurderMO, none of which was the one you wanted.
+ *
+ * Read from the DOM rather than opened, since its row is hidden on a file the mod owns.
+ * The list is built the same for every reference field -- the visible `compatibleWith`
+ * below goes through it too -- and this is the only field whose type is the document's
+ * own, which is what makes the document's exclusion of itself reachable at all.
+ */
+test('a reference field offers the mod\'s own assets of the same type first', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, soFixtureWithAssets);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+
+    await page.locator('#manifest_panel .files-order ul button').first().click();
+    await expect(page.locator('#trees .file-window')).toHaveCount(1);
+
+    const copyFrom = page.locator(
+        "#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"copyFrom\"')) select"
+    ).first();
+
+    const shown = await copyFrom.evaluate((select) => ({
+        sections: [...select.querySelectorAll('optgroup')].map((group) => group.label),
+        modded: [...select.querySelectorAll('optgroup[label="Modded"] option')]
+            .map((option) => option.text),
+        vanilla: [...select.querySelectorAll('optgroup[label="Vanilla"] option')]
+            .map((option) => option.text),
+        // The entries that mean something other than an asset stay out of both.
+        ungrouped: [...select.children].filter((child) => child.tagName === 'OPTION')
+            .map((option) => option.text),
+    }));
+
+    expect(shown.sections).toEqual(['Modded', 'Vanilla']);
+
+    // Not the document being edited: a file pointing at itself through copyFrom is a
+    // cycle, and it is only in the list at all because the list comes from the folder
+    // the file is in.
+    expect(shown.modded).toEqual(['ExCopSniper', 'MyOtherMO']);
+    expect(shown.modded).not.toContain('testcase');
+
+    // Not in fileOrder, so the game never loads it and nothing offers it.
+    expect(shown.modded).not.toContain('ForgottenMO');
+    expect(shown.vanilla).not.toContain('ForgottenMO');
+
+    // The patched one is in both. The name is the base game's and the values behind it
+    // are the mod's, and showing it once under each is what says so.
+    expect(shown.vanilla).toContain('ExCopSniper');
+
+    expect(shown.ungrouped).toEqual(['Custom...', 'Nothing (null)']);
+
+    // A field of a different type, on the same document. `SameName` is a MurderPreset
+    // that calls itself `testcase` -- the same name as this document -- so it is offered
+    // here and kept out of copyFrom above. Exclusion is by name and type together,
+    // because a name on its own belongs to as many as six of the game's types.
+    //
+    // It is also offered as `testcase` rather than as `SameName`: a reference resolves
+    // against the asset's `presetName`, not against what its file is called.
+    const compatible = page.locator(
+        "#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"compatibleWith\"')) select"
+    ).first();
+
+    expect(await compatible.evaluate((select) => [
+        ...select.querySelectorAll('optgroup[label="Modded"] option'),
+    ].map((option) => option.text))).toEqual(['testcase']);
+});
+
+test('picking one of the mod\'s own assets writes it as a reference', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, soFixtureWithAssets);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+
+    await page.locator('#manifest_panel .files-order ul button').first().click();
+    await expect(page.locator('#trees .file-window')).toHaveCount(1);
+
+    // Through compatibleWith, since copyFrom is no longer shown on a file the mod owns
+    // and a dropdown that cannot be opened cannot be picked from. It holds MurderPresets,
+    // and the mod's own is `testcase` -- the one in SameName.sodso.json. Its entries are a
+    // level down, and arrays of these are not auto-expanded.
+    const row = page.locator(
+        "#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"compatibleWith\"'))"
+    ).first();
+
+    await row.locator('.jsontree_expand-button').first().click();
+    await row.locator('.select2-selection').first().click();
+    await page.locator('.select2-search__field').pressSequentially('testcase');
+    await page.locator('.select2-results__option--highlighted').click();
+
+    // The mod's own assets carry a name rather than a position in the base game's list,
+    // and this is what proves the two are told apart on the way to the file.
+    await expect.poll(async () => JSON.parse(
+        await readFile(page, CASE_FILE)).compatibleWith).toEqual(['REF:MurderPreset|testcase']);
+
+    // And it comes back as that option rather than as "Custom: testcase", which is what
+    // a name the base game's list does not have used to fall through to.
+    await expect(row.locator('.select2-selection').first()).toHaveText('testcase');
 });
 
 test('renders object keys in file order, not sorted', async ({ page }) => {
@@ -168,12 +320,104 @@ test('asset explorer lists ScriptableObject types', async ({ page }) => {
     await skipSpoilerWarning(page);
     await gotoFlow(page, '?flow=scriptableObject');
 
-    const optionCount = await page.locator('#asset-model-type-list option').count();
-    expect(optionCount).toBeGreaterThan(1);
+    // The typeahead is select2 over a real <select>, and the options are on the element.
+    // Two sections: what this tool ships assets for, then the types that need the author's
+    // own export -- which is what the second is named after.
+    const groups = page.locator('#asset-model-type-list optgroup');
+    await expect(groups).toHaveCount(2);
+    await expect(groups.first()).toHaveAttribute('label', 'Included');
+    await expect(groups.last()).toHaveAttribute('label', 'Exported');
 
-    // Online-browsable types are hoisted above a separator.
-    const firstOption = await page.locator('#asset-model-type-list option').first().textContent();
-    expect(await page.evaluate(() => window.onlineTypes)).toContain(firstOption);
+    const shipped = groups.first().locator('option');
+    expect(await shipped.count()).toBeGreaterThan(1);
+    expect(await page.evaluate(() => window.onlineTypes))
+        .toContain(await shipped.first().textContent());
+
+    // The New File dialog offers the same types. It used to hold a copy of this list's
+    // markup, taken at startup; both are filled from the type map now.
+    await expect(page.locator('#new-file-modal-file-type option'))
+        .toHaveCount(await page.locator('#asset-model-type-list optgroup option').count());
+});
+
+test('with no type chosen the asset list searches every type by name', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+
+    // Browsing needs no folder, and the folder dialog is over the menu until dismissed.
+    await page.locator('#folders-continue').click();
+    await page.getByRole('link', { name: 'Asset Explorer' }).click();
+    await page.locator('#asset-explorer-modal .select2-selection').nth(1).click();
+
+    // Nothing until enough has been typed. The list is over five thousand rows and
+    // select2 renders every match at once, so the empty search it opens on matches none.
+    await expect(page.locator('.select2-results__message')).toContainText('2 or more');
+    await expect(page.locator('.select2-results__option[role="option"]')).toHaveCount(0);
+
+    await page.locator('.select2-search__field').pressSequentially('Hitman');
+
+    // Under a heading naming the type it belongs to, which is the only thing saying which
+    // asset a row is: six hundred of these names are carried by more than one type.
+    await expect(page.locator('.select2-results__group:text-is("MurderMO")')).toBeVisible();
+
+    await page.locator('.select2-results__option:text-is("Hitman")').first().click();
+
+    // Opened as that type's, without the type ever having been named.
+    await expect(page.locator('#trees .file-window .doc-title h5')).toHaveText('MurderMO/Hitman');
+});
+
+test('an asset this tool does not ship says what would open it', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+
+    await page.locator('#folders-continue').click();
+    await page.getByRole('link', { name: 'Asset Explorer' }).click();
+
+    // Nine of the game's seventy-nine types ship with this tool and every one of them is
+    // named, so most of what the every-type list offers needs the author's own export.
+    // RoomClassPreset is one of the seventy.
+    await page.locator('#asset-explorer-modal .select2-selection').nth(1).click();
+    await page.locator('.select2-search__field').pressSequentially('AsianEatery');
+    await page.locator('.select2-results__group:text-is("RoomClassPreset")')
+        .locator('~ ul .select2-results__option').first().click();
+
+    // Said in the dialog, naming the folder that fixes it. It used to be attempted anyway:
+    // a fetch that 404ed, and an alert to dismiss for a row already known not to open.
+    await expect(page.locator('#asset-explorer-note'))
+        .toHaveText('Connect your exported ScriptableObjects folder under Folders');
+    await expect(page.locator('#trees .file-window')).toHaveCount(0);
+    expect(await alerts(page)).toEqual([]);
+
+    // And it goes away again when something does open.
+    await pickInAssetExplorer(page, 0, 'MurderMO');
+    await pickInAssetExplorer(page, 1, 'Hitman');
+
+    await expect(page.locator('#asset-explorer-note')).toBeHidden();
+    await expect(page.locator('#trees .file-window')).toHaveCount(1);
+});
+
+test('clearing the type goes back to searching every type', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+
+    await page.locator('#folders-continue').click();
+    await page.getByRole('link', { name: 'Asset Explorer' }).click();
+    await pickInAssetExplorer(page, 0, 'MurderMO');
+
+    // One type's assets are listed whole, with no minimum to type first.
+    await page.locator('#asset-explorer-modal .select2-selection').nth(1).click();
+    await expect(page.locator('.select2-results__option:text-is("Hitman")')).toBeVisible();
+    await page.locator('.select2-search__field').press('Escape');
+
+    // The `×` is the only way back to no type at all, and without it searching every
+    // type would be reachable only on the dialog's first open.
+    await page.locator('#asset-model-type-list ~ .select2-container .select2-selection__clear').click();
+
+    // And it stops there. select2 reopens the list it just emptied, which would land on
+    // top of the picker the clearing was done to reach.
+    await expect(page.locator('.select2-container--open')).toHaveCount(0);
+
+    await page.locator('#asset-explorer-modal .select2-selection').nth(1).click();
+    await expect(page.locator('.select2-results__message')).toContainText('2 or more');
 });
 
 test('assets can be browsed with no folders connected', async ({ page }) => {
@@ -185,8 +429,46 @@ test('assets can be browsed with no folders connected', async ({ page }) => {
     await page.getByRole('link', { name: 'Asset Explorer' }).click();
 
     await expect(page.locator('#asset-explorer-modal')).toBeVisible();
-    await expect(page.locator('#asset-model-type-list option').first()).toBeAttached();
+
+    await pickInAssetExplorer(page, 0, 'MurderMO');
+
+    // And the assets of that type are there to search, with nothing connected.
+    await page.locator('#asset-explorer-modal .select2-selection').nth(1).click();
+    await expect(page.locator('.select2-results__option:text-is("Hitman")')).toBeVisible();
+    await page.locator('.select2-search__field').press('Escape');
+
     expect(await page.evaluate(() => window.dirHandleModDir ?? null)).toBeNull();
+});
+
+test('connecting the export from the folders modal opens the rest of the types', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, { 'ExportedSOs/.keep': '' });
+
+    await page.locator('#folders-continue').click();
+    await page.getByRole('link', { name: 'Asset Explorer' }).click();
+
+    // Two halves with nothing connected: the nine types this tool ships assets for open,
+    // and the other seventy are there to read by name.
+    await page.locator('#asset-explorer-modal .select2-selection').first().click();
+    await expect(page.locator('.select2-results__group:text-is("Exported")')).toBeVisible();
+    await page.locator('.select2-search__field').press('Escape');
+
+    // Nothing in this dialog connects that folder any more -- only the close button is left.
+    await expect(page.locator('#asset-explorer-modal button')).toHaveCount(1);
+
+    await page.locator('#asset-explorer-modal').getByLabel('Close').click();
+
+    await page.locator('#folders-open').click();
+    await connectFolders(page, { exportedSOs: 'ExportedSOs' });
+
+    // The export holds every type, so the split it was divided by is gone and each of the
+    // seventy is now a type that opens. Without the dialog having been asked to catch up.
+    await page.getByRole('link', { name: 'Asset Explorer' }).click();
+    await page.locator('#asset-explorer-modal .select2-selection').first().click();
+    await page.locator('.select2-search__field').pressSequentially('RoomClassPreset');
+    await expect(page.locator('.select2-results__group')).toHaveCount(0);
+    await expect(page.locator('.select2-results__option:text-is("RoomClassPreset")')).toBeVisible();
 });
 
 /** Open the mod and the case file it references. */
@@ -252,6 +534,342 @@ test('cancelling the correction leaves the field as it was', async ({ page }) =>
     expect(JSON.parse(await readFile(page, CASE_FILE)).notes).toBe('fixture');
 });
 
+/**
+ * An asset states its identity three times over: `presetName` is what it is called,
+ * `name` repeats it, and its file is named after it too. `presetName` is the one that is
+ * edited; the other two follow it, and nothing else is allowed to move them apart.
+ */
+
+const MANIFEST_FILE = 'Mods/TestCase/murdermanifest.sodso.json';
+const RENAMED_FILE = 'Mods/TestCase/Renamed.MurderMO.sodso.json';
+
+/** The row a top-level field is rendered in, shown or not. */
+const fieldRow = (page, label) =>
+    page.locator(`#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('"${label}"'))`).first();
+
+test('a preset shows no name field, and it follows presetName', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openCaseFile(page);
+
+    // Still written to the file -- it is one of the places the game reads the asset's
+    // name from -- but it says nothing presetName does not, so there is nothing in it
+    // to show and nothing to decide.
+    await expect(fieldRow(page, 'name')).toBeAttached();
+    await expect(fieldRow(page, 'name')).not.toBeVisible();
+    await expect(fieldRow(page, 'presetName')).toBeVisible();
+
+    await fieldInput(page, 'presetName').fill('Renamed');
+    await fieldInput(page, 'presetName').blur();
+
+    await expect.poll(async () => JSON.parse(await readFile(page, RENAMED_FILE))?.name).toBe('Renamed');
+    expect(JSON.parse(await readFile(page, RENAMED_FILE)).presetName).toBe('Renamed');
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('renaming a preset renames its file and the manifest entry with it', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openCaseFile(page);
+
+    await fieldInput(page, 'presetName').fill('Renamed');
+    await fieldInput(page, 'presetName').blur();
+
+    await expect.poll(() => readFile(page, RENAMED_FILE)).not.toBeNull();
+
+    // The old file goes: two files claiming to be the same preset is a mod with a
+    // duplicate in it, and nothing saying which one the loader takes.
+    expect(await readFile(page, CASE_FILE)).toBeNull();
+
+    // A file the manifest still names by its old name is one the loader goes looking
+    // for and does not find, which is a case that is simply not in the game.
+    expect(JSON.parse(await readFile(page, MANIFEST_FILE)).fileOrder).toEqual(['REF:Renamed.MurderMO']);
+
+    // Everything naming the file comes with it, rather than being left pointing at a
+    // file that is gone: the window it is open in, and both panels.
+    await expect(page.locator('#trees .file-window')).toHaveAttribute('path', 'Renamed.MurderMO.sodso.json');
+    await expect(page.locator('#manifest_panel .files-order ul button')).toHaveText(['Renamed.MurderMO']);
+    await expect(page.locator('#so-file-list')).toContainText('Renamed');
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('a renamed preset can still be closed', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openCaseFile(page);
+
+    await fieldInput(page, 'presetName').fill('Renamed');
+    await fieldInput(page, 'presetName').blur();
+
+    await expect(page.locator('#trees .file-window')).toHaveAttribute('path', 'Renamed.MurderMO.sodso.json');
+
+    // The window is renamed along with the file, so Close cannot go looking for the
+    // one the document was opened as: that window answers to a different name now,
+    // and a document that will not close is one the author is stuck with.
+    await page.locator('#trees .file-window').getByRole('button', { name: 'Close' }).click();
+    await expect(page.locator('#trees .file-window')).toHaveCount(0);
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('a preset name no file could be called is refused', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openCaseFile(page);
+
+    // Not quietly corrected to "MyCase": the name is about to become a file name and an
+    // entry in the load order, and editing it behind the author's back would leave them
+    // reading one name while the mod uses another.
+    await fieldInput(page, 'presetName').fill('My Case!');
+    await fieldInput(page, 'presetName').blur();
+
+    await expect(fieldInput(page, 'presetName')).toHaveValue('testcase');
+    expect(await alerts(page)).toHaveLength(1);
+
+    expect(JSON.parse(await readFile(page, CASE_FILE)).presetName).toBe('testcase');
+    expect(JSON.parse(await readFile(page, CASE_FILE)).name).toBe('testcase');
+    expect(await listDir(page, 'Mods/TestCase')).toContain('testcase.sodso.json');
+});
+
+/**
+ * A rename lands on a name rather than on a file, and a name can be spelled two ways:
+ * `Taken.MurderMO.sodso.json` is what this app writes, `Taken.sodso.json` is what a mod
+ * written before the type joined the file name holds. Either one is another asset of that
+ * name, and neither is a file this may land on top of.
+ */
+for (const [spelling, file] of [
+    ['already', 'Mods/TestCase/Taken.MurderMO.sodso.json'],
+    ['under the older file name', 'Mods/TestCase/Taken.sodso.json'],
+]) {
+    test(`renaming onto a name the mod uses ${spelling} keeps both files`, async ({ page }) => {
+        await skipSpoilerWarning(page);
+        await gotoFlow(page, '?flow=scriptableObject');
+        await openCaseFile(page);
+        await writeFixture(page, file,
+            JSON.stringify({ fileType: 'MurderMO', name: 'Taken', presetName: 'Taken', notes: 'not mine' }));
+
+        await fieldInput(page, 'presetName').fill('Taken');
+        await fieldInput(page, 'presetName').blur();
+
+        await expect.poll(() => alerts(page)).toHaveLength(1);
+
+        // The other asset is untouched: overwriting one because a field was edited is not a
+        // rename, and the file it would have taken is somebody else's.
+        expect(JSON.parse(await readFile(page, file)).notes).toBe('not mine');
+
+        // The edit itself is not lost -- it is saved where the preset already lives -- and
+        // the manifest still names the file that is actually there.
+        const kept = JSON.parse(await readFile(page, CASE_FILE));
+        expect(kept.presetName).toBe('Taken');
+        expect(kept.name).toBe('Taken');
+        expect(JSON.parse(await readFile(page, MANIFEST_FILE)).fileOrder).toEqual(['REF:testcase']);
+    });
+}
+
+test('renaming onto a name another type uses is not a collision at all', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openCaseFile(page);
+
+    // An EvidencePreset called Taken, under the older file name -- so the only thing
+    // saying it is not this MurderMO's file is what is inside it. Refusing here would
+    // hand back the problem the type in the file name was added to solve.
+    await writeFixture(page, 'Mods/TestCase/Taken.sodso.json',
+        JSON.stringify({ fileType: 'EvidencePreset', name: 'Taken', presetName: 'Taken', notes: 'not mine' }));
+
+    await fieldInput(page, 'presetName').fill('Taken');
+    await fieldInput(page, 'presetName').blur();
+
+    await expect.poll(() => readFile(page, 'Mods/TestCase/Taken.MurderMO.sodso.json')).not.toBeNull();
+    expect(await readFile(page, CASE_FILE)).toBeNull();
+
+    // Both assets are in the mod, each in its own file, and the evidence is as it was.
+    expect(JSON.parse(await readFile(page, 'Mods/TestCase/Taken.sodso.json')).notes).toBe('not mine');
+    expect(JSON.parse(await readFile(page, MANIFEST_FILE)).fileOrder).toEqual(['REF:Taken.MurderMO']);
+    expect(await alerts(page)).toEqual([]);
+});
+
+/**
+ * Overrides of the base game's assets.
+ *
+ * A patch used to be a partial file -- the fields it named were written over the asset and
+ * nothing else was touched -- and it is now a list of changes to make to that asset, which
+ * the loader applies before deserialising. See flows/scriptableObject/scripts/patchFormat.js.
+ *
+ * That turns the editor inside out. The document on screen is the base game's asset, in
+ * full; the file holds the difference between what is on screen and what the game ships.
+ * None of that is the author's to think about, so what is pinned here is mostly that it
+ * stays invisible: they open an asset, change a field, and the file says one thing.
+ */
+
+/** Open the mod's override of a base game asset, whatever format it is stored in. */
+async function openOverride(page, asset) {
+    await page.locator(`#so-file-list .file-panel-entry[data-id="${asset}"] .file-panel-open`).click();
+    await expect(page.locator('#trees .file-window')).toHaveCount(1);
+}
+
+/** A folder holding overrides, opened. */
+async function openFolderWithOverrides(page) {
+    await seedFs(page, soFolderContent);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+}
+
+/**
+ * The case fixture with one more file in it, opened.
+ *
+ * Seeded rather than written afterwards, because the file panel is built when the content
+ * folder is chosen and a file that appears behind it is one nothing lists.
+ */
+async function openModHolding(page, path, contents) {
+    await seedFs(page, { ...soFixture, [path]: JSON.stringify(contents) });
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+}
+
+/** An override of a shipped MurderMO with nothing overridden yet, as this app writes one. */
+const EMPTY_OVERRIDE = { name: 'Hitman', fileType: 'MurderMO', patches: [] };
+const OVERRIDE_FILE = 'Mods/TestCase/Hitman.sodso_patch.json';
+
+test('an override is edited as the asset it overrides, not as the file on disk', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openFolderWithOverrides(page);
+
+    await openOverride(page, 'ExCopSniper');
+
+    // The whole of the base game's MurderMO, including fields the patch has never
+    // mentioned -- there is no editing a difference without the thing it differs from.
+    await expect(fieldRow(page, 'presetName')).toBeVisible();
+    await expect(fieldInput(page, 'presetName')).toHaveValue('ExCopSniper');
+    await expect(fieldRow(page, 'baseDifficulty')).toBeVisible();
+
+    // And what the file itself is made of is nowhere on screen. `patches` is machinery.
+    await expect(fieldRow(page, 'patches')).toHaveCount(0);
+    await expect(fieldRow(page, 'fileType')).toHaveCount(0);
+});
+
+test('an override of an asset this tool cannot read says so rather than opening empty', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openFolderWithOverrides(page);
+
+    // Bar is an AddressPreset, which is not one of the nine types this tool ships assets
+    // for, and no exported ScriptableObjects folder is connected. This is the capability
+    // the format costs: an override is a difference, and there is nothing here to differ
+    // from. The old format needed no reference data at all.
+    await page.locator('#so-file-list .file-panel-entry[data-id="Bar"] .file-panel-open').click();
+
+    // Polled, not read once: reading the asset is a fetch, so the refusal arrives a turn
+    // after the click and a window that is not there yet looks exactly like one that is
+    // never going to be.
+    await expect
+        .poll(() => alerts(page))
+        .toEqual([expect.stringContaining('exported ScriptableObjects folder')]);
+    await expect(page.locator('#trees .file-window')).toHaveCount(0);
+});
+
+test('an override nobody has touched saves as no changes at all', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    // The single assertion that catches every infidelity on the way in: if anything is
+    // lost or rewritten between the asset on disk and the document on screen, it comes
+    // back here as a change nobody made. Unmapped references were exactly that.
+    await openModHolding(page, OVERRIDE_FILE, EMPTY_OVERRIDE);
+    await openOverride(page, 'Hitman');
+
+    await page.locator('#trees .file-window').getByRole('button', { name: 'Save' }).click();
+
+    await expect.poll(async () => JSON.parse(await readFile(page, OVERRIDE_FILE))).toEqual(EMPTY_OVERRIDE);
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('editing a field in an override writes the one change it is', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openModHolding(page, OVERRIDE_FILE, EMPTY_OVERRIDE);
+    await openOverride(page, 'Hitman');
+
+    await fieldInput(page, 'notes').fill('Rewritten by the mod');
+    await fieldInput(page, 'notes').blur();
+
+    // One operation, against the field that changed. Everything else the asset holds is
+    // simply not mentioned, which is what makes a patch survive a game update.
+    await expect
+        .poll(async () => JSON.parse(await readFile(page, OVERRIDE_FILE)).patches)
+        .toEqual([{ op: 'replace', path: '/notes', value: 'Rewritten by the mod' }]);
+});
+
+test('an override in the older format is converted on save, and its author is told first', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openFolderWithOverrides(page);
+
+    // ExCopSniper.sodso_patch.json is `{ notes: 'x' }`: the old whole-field format, which
+    // the loader still reads and this editor no longer writes.
+    await openOverride(page, 'ExCopSniper');
+
+    // Opening it is where that is said. Saving is what does it, and with autosave on
+    // that is the next keystroke -- too late to be a warning.
+    expect((await confirms(page)).join('\n')).toContain('older format');
+
+    // The field the old file set is on screen as the asset's value, and editing another
+    // one leaves both in the converted file.
+    await expect(fieldInput(page, 'notes')).toHaveValue('x');
+    await fieldInput(page, 'baseDifficulty').fill('9');
+    await fieldInput(page, 'baseDifficulty').blur();
+
+    await expect
+        .poll(async () => JSON.parse(await readFile(page, 'Mods/TestCase/ExCopSniper.sodso_patch.json')))
+        .toEqual({
+            name: 'ExCopSniper',
+            fileType: 'MurderMO',
+            patches: expect.arrayContaining([
+                { op: 'replace', path: '/notes', value: 'x' },
+                { op: 'replace', path: '/baseDifficulty', value: 9 },
+            ]),
+        });
+});
+
+test('an override has no field selector, because it holds every field already', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openFolderWithOverrides(page);
+
+    await openOverride(page, 'ExCopSniper');
+    await expect(page.locator('#trees .file-window').getByRole('button', { name: 'Select Override Fields' }))
+        .toHaveCount(0);
+
+    // One of the mod's own files still has it: what it states is what it overrides of
+    // whatever it copies from, so which fields it carries is a real choice.
+    await page.locator('#so-file-list .file-panel-entry[data-id="IP_Note"] .file-panel-open').click();
+    await expect(page.locator('#trees .file-window[path="IP_Note.sodso.json"]')
+        .getByRole('button', { name: 'Select Override Fields' })).toHaveCount(1);
+});
+
+test('a type with no readable asset cannot be overridden from the new file dialog', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openMod(page);
+
+    await openNewFileDialog(page);
+    await page.getByRole('button', { name: 'Override', exact: true }).click();
+
+    // AddressPreset is a type the game has and this tool ships no assets for.
+    await page.selectOption('#new-file-modal-file-type', 'AddressPreset');
+    await page.selectOption('#new-file-modal-copy-from', await firstCopyFromOption(page));
+
+    // Said in the dialog rather than left to a disabled button with a tooltip: the
+    // author has chosen a real asset and nothing about the screen would explain the
+    // refusal.
+    await expect(page.locator('#new-file-modal-submit')).toBeDisabled();
+    await expect(page.locator('#new-file-modal-note')).toContainText('exported ScriptableObjects folder');
+
+    // A type it does ship is unaffected.
+    await page.selectOption('#new-file-modal-file-type', 'MurderMO');
+    await page.selectOption('#new-file-modal-copy-from', await firstCopyFromOption(page));
+    await expect(page.locator('#new-file-modal-submit')).toBeEnabled();
+});
+
 /** The ➥ that opens whatever a given field references. */
 const openTarget = (page, label) =>
     page.locator(`#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('"${label}"')) .open-target`).first();
@@ -286,17 +904,77 @@ test('a reference to the mod\'s own asset opens it', async ({ page }) => {
     expect(await alerts(page)).toEqual([]);
 });
 
+/**
+ * Two of the mod's own assets called `Bar`, differing only by type, and stored under the
+ * typed file names this app now writes -- `<name>.<type>.sodso.json`.
+ *
+ * Both halves matter. The reference carries a name and a type, and the file is named
+ * after both, so resolving it by name alone finds either the wrong one or none at all.
+ */
+const caseWithSameNamedAssets = {
+    'Mods/TestCase/murdermanifest.sodso.json': JSON.stringify({
+        enabled: true,
+        fileOrder: ['REF:testcase.MurderMO', 'REF:Bar.DesignStylePreset', 'REF:Bar.MurderPreset'],
+        loadBefore: '',
+        version: 1,
+    }, null, 2),
+    'Mods/TestCase/testcase.MurderMO.sodso.json': JSON.stringify({
+        fileType: 'MurderMO',
+        name: 'testcase',
+        presetName: 'testcase',
+        denStyleOverride: ['REF:DesignStylePreset|Bar'],
+    }, null, 2),
+    'Mods/TestCase/Bar.DesignStylePreset.sodso.json': JSON.stringify({
+        fileType: 'DesignStylePreset', name: 'Bar', presetName: 'Bar',
+    }, null, 2),
+    'Mods/TestCase/Bar.MurderPreset.sodso.json': JSON.stringify({
+        fileType: 'MurderPreset', name: 'Bar', presetName: 'Bar',
+    }, null, 2),
+};
+
+test('a reference opens the asset of that name *and* type, from its typed file', async ({ page }) => {
+    const errors = collectPageErrors(page);
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+
+    await seedFs(page, caseWithSameNamedAssets);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+    await page.locator('#manifest_panel .files-order ul button').first().click();
+    await expect(page.locator('#trees .file-window')).toHaveCount(1);
+
+    await page.locator("#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"denStyleOverride\"'))")
+        .first().locator('.jsontree_expand-button').first().click();
+
+    await openTarget(page, 'denStyleOverride').click();
+
+    // The DesignStylePreset, not the MurderPreset of the same name -- and found at all,
+    // which resolving the reference to `Bar.sodso.json` never would have been.
+    await expect(page.locator('#trees .file-window')).toHaveCount(2);
+    await expect(page.locator('#trees .file-window').nth(1).locator('.doc-title h5'))
+        .toHaveText('DesignStylePreset/Bar');
+
+    expect(errors).toEqual([]);
+    expect(await alerts(page)).toEqual([]);
+});
+
 test('a reference to a base game asset opens the copy shipped with the tool', async ({ page }) => {
     const errors = collectPageErrors(page);
     await skipSpoilerWarning(page);
     await gotoFlow(page, '?flow=scriptableObject');
     await openCaseWithReferences(page);
 
-    // copyFrom names a MurderMO, one of the types this tool carries assets for, so its
-    // ➥ reads them rather than the game folder. Those assets moved under the flow when
-    // it stopped being a site of its own, and the fetch went on asking for /data --
+    // compatibleWith names a MurderPreset, one of the types this tool carries assets for,
+    // so its ➥ reads them rather than the game folder. Those assets moved under the flow
+    // when it stopped being a site of its own, and the fetch went on asking for /data --
     // handing the 404 page to JSON.parse.
-    await openTarget(page, 'copyFrom').click();
+    //
+    // Read through this rather than through copyFrom, which says the same thing about the
+    // same code and is no longer shown on a file the mod owns.
+    await page.locator("#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"compatibleWith\"'))")
+        .first().locator('.jsontree_expand-button').first().click();
+
+    await openTarget(page, 'compatibleWith').click();
 
     await expect(page.locator('#trees .file-window')).toHaveCount(2);
     await expect(page.locator('#trees')).toContainText('Hitman');
@@ -331,6 +1009,9 @@ test('editor bar keeps Select Override Fields on its own row', async ({ page }) 
 
     // Its label is far longer than Save/Copy/Close and the editor bar caps button
     // width at 100px, so folding it into their group wraps it over several lines.
+    //
+    // Alone on the row here rather than always: Open Base joins it on a document with a
+    // base to open, and this fixture's copyFrom is null.
     const rows = page.locator('#trees .editor-bar .jsontree-editor-bar-button-group');
     await expect(rows).toHaveCount(2);
 
@@ -428,7 +1109,7 @@ test('creating a case puts it beside the mod\'s existing content', async ({ page
     // it whether or not the case ever gained dialogue; the DDS flow makes them when
     // it has something to write.
     expect(await listDir(page, 'Mods/ConventionMod/plugins/SecondCase'))
-        .toEqual(['SecondCase.sodso.json', 'murdermanifest.sodso.json']);
+        .toEqual(['SecondCase.MurderMO.sodso.json', 'murdermanifest.sodso.json']);
 });
 
 test('dismissing the new case dialog leaves no folder behind', async ({ page }) => {
@@ -589,11 +1270,12 @@ test('overriding a base game asset writes a patch named after it', async ({ page
         .not.toBeNull();
     expect(await readFile(page, `Mods/TestCase/${asset}.sodso.json`)).toBeNull();
 
-    // Every field a patch carries is a field it overrides, so a new one carries only
-    // what says which asset it is and what type that asset is -- it changes nothing
-    // until the author adds to it.
+    // A patch is the list of changes to make to the asset, so a new one carries what
+    // says which asset it is, what type that asset is, and no changes at all. The empty
+    // list is written rather than left out: it is what marks the file as this format
+    // rather than the whole-field one it replaces.
     const patch = JSON.parse(await readFile(page, `Mods/TestCase/${asset}.sodso_patch.json`));
-    expect(patch).toEqual({ name: asset, fileType: 'MurderMO' });
+    expect(patch).toEqual({ name: asset, fileType: 'MurderMO', patches: [] });
 
     // And the manifest lists it, as it does any other file this dialog creates.
     await expect
@@ -615,11 +1297,184 @@ test('copying from a base game asset writes a normal file that points at it', as
     await page.locator('#new-file-modal-submit').click();
 
     await expect
-        .poll(() => readFile(page, 'Mods/TestCase/CopiedCase.sodso.json'))
+        .poll(() => readFile(page, 'Mods/TestCase/CopiedCase.MurderMO.sodso.json'))
         .not.toBeNull();
     expect(await readFile(page, `Mods/TestCase/CopiedCase.sodso_patch.json`)).toBeNull();
 
-    const file = JSON.parse(await readFile(page, 'Mods/TestCase/CopiedCase.sodso.json'));
+    const file = JSON.parse(await readFile(page, 'Mods/TestCase/CopiedCase.MurderMO.sodso.json'));
     expect(file.name).toBe('CopiedCase');
     expect(file.copyFrom).toBe(`REF:MurderMO|${asset}`);
+
+    // The manifest names files, so the entry carries the type the file name carries.
+    // An entry that names the asset alone is an entry the loader looks for and does not
+    // find, which in game is a file that is simply not loaded.
+    await expect
+        .poll(async () => JSON.parse(await readFile(page, 'Mods/TestCase/murdermanifest.sodso.json')).fileOrder)
+        .toContain('REF:CopiedCase.MurderMO');
+});
+
+/**
+ * "Use as...": the button on a base game asset's window, which opens the new file dialog
+ * on that asset. The asset itself is read-only, so copying it is what there is to do with
+ * one, and the dialog otherwise offers it in a list of every asset of its type.
+ */
+
+/** Open one of the base game's assets the way a user does, from the asset explorer. */
+async function openBaseAsset(page, type, name) {
+    await page.getByRole('link', { name: 'Asset Explorer' }).click();
+
+    await pickInAssetExplorer(page, 0, type);
+    await pickInAssetExplorer(page, 1, name);
+
+    await page.locator('#asset-explorer-modal').getByLabel('Close').click();
+
+    await expect(page.locator('#trees .file-window')).toHaveCount(1);
+}
+
+/**
+ * Choose in one of the explorer's two typeaheads -- 0 is the type, 1 is the asset.
+ *
+ * Typed rather than set. Both are select2 over a real `<select>`, and writing the
+ * element's value would not go through the control the user is looking at; the search is
+ * what narrows the list, exactly as for the reference fields.
+ */
+async function pickInAssetExplorer(page, index, name) {
+    await page.locator('#asset-explorer-modal .select2-selection').nth(index).click();
+    await page.locator('.select2-search__field').pressSequentially(name);
+    await page.locator('.select2-results__option--highlighted').click();
+}
+
+test('a base game asset is titled by its type and offers Use as...', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openMod(page);
+
+    await openBaseAsset(page, 'MurderMO', 'Hitman');
+
+    const window_ = page.locator('#trees .file-window');
+    await expect(window_.locator('.doc-title h5')).toHaveText('MurderMO/Hitman');
+
+    // Nothing else can be done with it: it is the game's file, not the mod's, so there
+    // is no Save either.
+    await expect(window_.getByRole('button', { name: 'Use as...' })).toBeVisible();
+    await expect(window_.getByRole('button', { name: 'Save' })).toHaveCount(0);
+});
+
+test('a file the mod owns is edited rather than copied', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openCaseFile(page);
+
+    const window_ = page.locator('#trees .file-window');
+    await expect(window_.getByRole('button', { name: 'Save' })).toBeVisible();
+    await expect(window_.getByRole('button', { name: 'Use as...' })).toHaveCount(0);
+});
+
+test('Use as... opens the new file dialog on the asset being looked at', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openMod(page);
+
+    await openBaseAsset(page, 'MurderMO', 'Hitman');
+    await page.locator('#trees .file-window').getByRole('button', { name: 'Use as...' }).click();
+
+    await expectDialogOpen(page, '#new-file-modal', true);
+    await expect(page.locator('#new-file-modal-file-type')).toHaveValue('MurderMO');
+    await expect(page.locator('#new-file-modal-copy-from')).toHaveValue('Hitman');
+
+    // Copying, not overriding: an override of a base game asset is a different thing to
+    // want, and it is still a click away.
+    await expect(page.getByRole('button', { name: 'Copy From' })).toHaveAttribute('aria-pressed', 'true');
+
+    // The copy is a new asset and needs a name of its own, so the field is left empty
+    // rather than prefilled with a name that would clash.
+    await expect(page.locator('#new-file-modal-file-name')).toHaveValue('');
+
+    await page.locator('#new-file-modal-file-name').fill('HitmanVariant');
+    await page.locator('#new-file-modal-submit').click();
+
+    await expect
+        .poll(() => readFile(page, 'Mods/TestCase/HitmanVariant.MurderMO.sodso.json'))
+        .not.toBeNull();
+
+    const created = JSON.parse(await readFile(page, 'Mods/TestCase/HitmanVariant.MurderMO.sodso.json'));
+    expect(created.presetName).toBe('HitmanVariant');
+    expect(created.copyFrom).toBe('REF:MurderMO|Hitman');
+
+    // Created through the same path as Add new file, so it is listed in the load order
+    // like anything else that dialog makes -- an unlisted file is one the game never
+    // reads.
+    await expect
+        .poll(async () => JSON.parse(await readFile(page, 'Mods/TestCase/murdermanifest.sodso.json')).fileOrder)
+        .toContain('REF:HitmanVariant.MurderMO');
+
+    // And it is a new file in the folder, so the panel shows it.
+    await expect(page.locator('#so-file-list .file-panel-entry[data-id="HitmanVariant.MurderMO"]'))
+        .toHaveCount(1);
+
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('the next new file is a new file, not another copy of the last asset', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openMod(page);
+
+    await openBaseAsset(page, 'MurderMO', 'Hitman');
+    await page.locator('#trees .file-window').getByRole('button', { name: 'Use as...' }).click();
+    await page.locator('#new-file-modal').getByLabel('Close').click();
+
+    // Add new file means a blank dialog. The asset is remembered only for the one
+    // opening it was chosen for.
+    await openNewFileDialog(page);
+    await expect(page.locator('#new-file-modal-copy-from')).toHaveValue('None');
+});
+
+test('Use as... with no mod to write into says so rather than doing nothing', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+
+    // Browsing with no folders connected, which is what a shared link opens in.
+    await page.locator('#folders-continue').click();
+    await openBaseAsset(page, 'MurderMO', 'Hitman');
+
+    await page.locator('#trees .file-window').getByRole('button', { name: 'Use as...' }).click();
+
+    await expectDialogOpen(page, '#new-file-modal', false);
+    expect(await alerts(page)).toEqual(['Please select a mod to save in first']);
+});
+
+test('two assets of one name and different types are two files', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openMod(page);
+
+    for (const type of ['MurderMO', 'EvidencePreset']) {
+        await openNewFileDialog(page);
+        await page.selectOption('#new-file-modal-file-type', type);
+        await page.locator('#new-file-modal-file-name').fill('Matchbook');
+        await page.locator('#new-file-modal-submit').click();
+
+        await expect
+            .poll(() => readFile(page, `Mods/TestCase/Matchbook.${type}.sodso.json`))
+            .not.toBeNull();
+    }
+
+    // The whole point of the type being in the file name. Hundreds of the game's own
+    // names belong to more than one type, so a mod defining two of them used to have two
+    // files fighting over one name and whichever was written second won.
+    const evidence = JSON.parse(await readFile(page, 'Mods/TestCase/Matchbook.EvidencePreset.sodso.json'));
+    expect(evidence.fileType).toBe('EvidencePreset');
+    expect(evidence.presetName).toBe('Matchbook');
+
+    const murder = JSON.parse(await readFile(page, 'Mods/TestCase/Matchbook.MurderMO.sodso.json'));
+    expect(murder.fileType).toBe('MurderMO');
+    expect(murder.presetName).toBe('Matchbook');
+
+    // Both loaded, and each named as its own file.
+    await expect
+        .poll(async () => JSON.parse(await readFile(page, 'Mods/TestCase/murdermanifest.sodso.json')).fileOrder)
+        .toEqual(expect.arrayContaining(['REF:Matchbook.MurderMO', 'REF:Matchbook.EvidencePreset']));
+
+    expect(await alerts(page)).toEqual([]);
 });

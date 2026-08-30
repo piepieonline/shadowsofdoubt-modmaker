@@ -4,6 +4,11 @@
  * Registers every flow, connects the shared folders, and activates whichever flow the
  * URL asks for. Only the requested flow's markup, styles and reference data load.
  *
+ * The URL says more than which flow: the mod and content folder, and what that flow has
+ * open. See core/urlState.js. Putting it back is the last thing startup does, and can
+ * have to wait -- for the mod folder, whose grant Chrome usually will not carry across a
+ * reload.
+ *
  * Switching flows swaps them in place rather than reloading, so the folders you picked
  * stay connected. Reloading would drop the directory handles from memory and, because
  * Chrome usually will not carry a File System Access grant across a reload, mean
@@ -13,7 +18,7 @@
  * scope, so each flow publishes what it needs onto `window` when it loads.
  */
 import { registerFlow, activateFlow, listFlows, getFlow } from './core/flowRegistry.js';
-import { restoreFolders, useFolder } from './core/folders.js';
+import { folderHandle, restoreFolders, useFolder } from './core/folders.js';
 import { initFoldersModal, activateFoldersFor, onFoldersChanged } from './core/foldersModal.js';
 import { initTutorialsModal } from './core/tutorialsModal.js';
 import { initModSelection, refreshMods, reapplySelection, selectContentFolder } from './core/modSelection.js';
@@ -21,6 +26,7 @@ import { isDemoMode, seedDemoFolders } from './core/demo/demoMode.js';
 import { initNewContent } from './core/newContent.js';
 import { initAutosave } from './core/autosave.js';
 import { configureNavigation, switchFlow } from './core/navigation.js';
+import { beginRestore, initUrlState, readUrlState, whileRestoring } from './core/urlState.js';
 import ddsFlow from './flows/dds/flow.js';
 import soFlow from './flows/scriptableObject/flow.js';
 import buildingFlow from './flows/building/flow.js';
@@ -32,19 +38,8 @@ registerFlow(buildingFlow);
 const DEFAULT_FLOW = soFlow.id;
 const SPOILER_KEY = 'SOD_MurderCaseBuilder_SpoilerWarningDismissed';
 
-/**
- * The old DDS Viewer was a separate site and the modding wiki links to it. Its
- * deep-link parameters are read as-is so those links keep working.
- */
-function requestedFlowId() {
-    const params = new URLSearchParams(location.search);
-    const asked = params.get('flow');
-    if (asked && getFlow(asked)) return asked;
-
-    if (params.has('documentId') || params.get('caseEditorLink') === 'true') return ddsFlow.id;
-
-    return DEFAULT_FLOW;
-}
+/** The editor the URL asks for, or the default when it names one that is not here. */
+const requestedFlowId = (asked) => (asked && getFlow(asked) ? asked : DEFAULT_FLOW);
 
 function buildPicker(activeId) {
     const picker = document.getElementById('flow-picker');
@@ -96,7 +91,47 @@ onFoldersChanged(async () => {
     await window.activeFlow?.onFoldersConnected?.();
     // The plugins folder may have just changed, so the mod list has to follow.
     await refreshMods();
+    // And the folder that just arrived may be the one the URL was waiting for.
+    await tryRestore();
 });
+
+/**
+ * What the URL asked for, read once at startup.
+ *
+ * Kept rather than re-read: putting it back can have to wait for a folder, and by then
+ * the address bar may have been written over -- with, at worst, the empty workspace that
+ * waiting for the folder looks like.
+ */
+const saved = readUrlState();
+
+let pending = true;
+
+/**
+ * Put back what the URL named, once everything it needs is there.
+ *
+ * The mod folder is core's condition, because the mod list is read from it and nothing
+ * can be selected until it is connected. What the flow's own parameters need is the
+ * flow's to say -- the DDS flow reads base game files and cannot open anything without
+ * the game folder, while the ScriptableObject flow can show base game assets with no
+ * folder at all, which is the case a link to one relies on.
+ */
+async function tryRestore() {
+    if (!pending) return;
+
+    const flow = getFlow(flowId);
+
+    if (saved.mod && !folderHandle('modDir')) return;
+    if (flow.canRestore && !await flow.canRestore(saved.params)) return;
+
+    pending = false;
+
+    await whileRestoring(async () => {
+        // The selection first: applying it is what the flow reacts to by rebuilding its
+        // panels and closing documents, which would otherwise wipe what came back.
+        if (saved.mod) await selectContentFolder(saved.mod, saved.content ?? '');
+        await flow.restoreSession?.(saved.params);
+    });
+}
 
 /**
  * Connect the folders demo mode invents, in place of the ones on this machine.
@@ -108,6 +143,9 @@ onFoldersChanged(async () => {
 async function startDemo() {
     document.documentElement.dataset.demo = '';
     document.getElementById('demo-banner').hidden = false;
+    // The banner is only visible while the header is on screen; the tab title says the
+    // same thing everywhere else, including a tab left open next to a real one.
+    document.title = `DEMO - ${document.title}`;
 
     const { streamingAssets, modDir, selection } = await seedDemoFolders();
     useFolder('streamingAssets', streamingAssets);
@@ -119,8 +157,16 @@ async function startDemo() {
 const demo = isDemoMode();
 let demoSelection = null;
 
-const flowId = requestedFlowId();
+const flowId = requestedFlowId(saved.flow);
+
+// Before anything that could publish a selection or open a document: until what the URL
+// asked for has been put back, nothing else may describe the page. Held across a folder
+// prompt if it comes to that, and given up if the author switches editor or chooses a
+// mod in the meantime.
+beginRestore(() => { pending = false; });
+
 buildPicker(flowId);
+initUrlState();
 initFoldersModal();
 initTutorialsModal();
 initModSelection();
@@ -144,6 +190,13 @@ await activateFoldersFor(getFlow(flowId), { autoOpen: true });
 // Last, so the flow is active and has folders: choosing a content folder is what the
 // flow is told about, and it has to have somewhere to read it from first. Landing in an
 // empty editor would show the least interesting state the app has.
-if (demoSelection) {
+//
+// Not when the URL names one. A demo tab that has been worked in is worth coming back to
+// as it was, and the opening selection is only a stand-in for having none.
+if (demoSelection && !saved.mod) {
     await selectContentFolder(demoSelection.modName, demoSelection.contentPath);
 }
+
+// Whatever the folders left connected, this is the first chance to put the URL back.
+// A folder that has to be re-granted arrives later, through onFoldersChanged above.
+await tryRestore();

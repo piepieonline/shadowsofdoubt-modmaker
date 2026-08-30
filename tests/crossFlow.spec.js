@@ -123,6 +123,29 @@ test('the folders modal can be reopened to change a folder later', async ({ page
     await expect(row.getByRole('button')).toHaveText('Change');
 });
 
+test('changing an already-connected folder asks for a different one', async ({ page }) => {
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, { ...soFixture, ...pluginsFixture });
+    await connectFolders(page, { modDir: 'Mods' });
+
+    await page.getByRole('button', { name: 'Folders' }).click();
+
+    // Change has to reach the file dialog. A connected folder is one we already hold a
+    // granted permission for, and asking for that permission again is answered straight
+    // away -- so a shortcut past the picker hands back the folder already connected and
+    // the button looks like it does nothing.
+    await queuePicks(page, ['Plugins']);
+    await page.locator('[data-select-folder="modDir"]').click();
+
+    const row = page.locator('.folder-row[data-folder="modDir"]');
+    await expect(row).toHaveAttribute('data-state', 'connected');
+    await expect(row).toContainText('Plugins');
+
+    expect(await page.evaluate(() => window.dirHandleModDir?.name ?? null)).toBe('Plugins');
+    // And the new one is what a later visit reconnects to, not the one it replaced.
+    await expect.poll(() => modDirName(page)).toBe('Plugins');
+});
+
 test('switching flows never reopens the folder modal, even when one is missing', async ({ page }) => {
     // The case flow needs only the mod folder; the DDS flow also needs the game
     // folder. Switching to it therefore has an unmet requirement.
@@ -318,10 +341,10 @@ test('mods are listed with what each of their folders holds', async ({ page }) =
         'Choose a folder…', 'BinPasscodes — case', 'GroupFlyers — case + DDS + building',
     ]);
 
-    // A building mod, which is marked by a Floors folder and nothing else.
+    // A building mod, marked by a manifest naming a BuildingPreset and nothing else.
     await page.selectOption('#select-mod', 'TallTower');
     await expect(page.locator('#select-content option')).toHaveText([
-        'Choose a folder…', '(mod root) — building',
+        'Choose a folder…', '(mod root) — case + building',
     ]);
 
     // A loader with nothing editable says so rather than looking broken.

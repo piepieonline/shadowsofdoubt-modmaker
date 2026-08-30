@@ -35,18 +35,69 @@
  * The count in a heading is what it contains altogether, so a collapsed category still
  * says how much is under it however deeply that is nested.
  *
- * `action` is one more thing that can be done to an entry, as `{ label, title, onClick }`
- * -- deleting a floor. Kept to a single button because it sits in a 300px column beside
- * a name, and the flow decides which entries get one: a mod's own content can be
- * changed, the base game's cannot.
+ * `action` is one more thing that can be done to an entry, as
+ * `{ id, label, title, onClick, danger }` -- deleting a floor, deleting a file. `id` is
+ * optional and is written to the button as `data-action`, for a footer holding two. Kept to a
+ * single button because it sits in a 300px column beside a name, and the flow decides
+ * which entries get one: a mod's own content can be changed, the base game's cannot.
+ * `danger` draws it as the red square that destroys something rather than as one more
+ * outlined button.
  *
  * `footer` is the same shape, at the foot of a category or a section rather than beside
  * a name: it acts on the whole of what is listed above it rather than on any one line of
  * it -- adding a floor to a building, a layout to a floor. Below rather than in the
  * heading because a heading is what you click to open the section, and a button in it is
  * a button you have to aim around to do that.
+ *
+ * A footer may be a list of actions rather than one, for the few places where what can be
+ * done to the whole of a category is genuinely two things -- a building takes a floor on
+ * top or a basement underneath. They sit on one row, in the order given.
  */
 import { fastElement } from './dom.js';
+
+/** Case-insensitive substring, over a field that may not be there. */
+const contains = (text, needle) => String(text ?? '').toLowerCase().includes(needle);
+
+/** Whether a name -- an entry's, a heading's -- is one the author is looking for. */
+const named = (node, needle) => contains(node.label, needle) || contains(node.id, needle);
+
+/**
+ * A category or section narrowed to what matches, or null if nothing under it does.
+ *
+ * A heading that matches keeps everything filed under it: searching a case folder for
+ * "MurderMO" is asking what the mod has of that type, not for a file of that name.
+ *
+ * What survives is forced open. The point of searching a panel of a dozen collapsed
+ * categories is to see the matches, not to be told which categories to go and open.
+ */
+function narrow(node, needle) {
+    if (named(node, needle)) return { ...node, open: true };
+
+    const sections = (node.sections ?? []).map((s) => narrow(s, needle)).filter(Boolean);
+    const entries = (node.entries ?? []).filter((entry) => named(entry, needle));
+
+    if (!sections.length && !entries.length) return null;
+
+    return { ...node, sections, entries, open: true };
+}
+
+/**
+ * The categories a free-text query leaves, for a flow that offers a filter over its
+ * panel. Categories with nothing matching in them are dropped rather than shown empty.
+ *
+ * A blank query is not a filter, and hands back what it was given: a panel that has not
+ * been searched should be the panel, in the state the flow built it in.
+ *
+ * Filtering here rather than over the rendered DOM because the panel is rebuilt from
+ * this shape whenever the folder changes -- a filter applied to the elements would be
+ * dropped by the next save, rename, or new file.
+ */
+export function filterCategories(categories, query) {
+    const needle = String(query ?? '').trim().toLowerCase();
+    if (!categories || !needle) return categories;
+
+    return categories.map((category) => narrow(category, needle)).filter(Boolean);
+}
 
 /**
  * The small button beside a name, or at the foot of a section.
@@ -54,12 +105,26 @@ import { fastElement } from './dom.js';
  * Its click is stopped from travelling. These sit inside a `<details>` that opens and
  * shuts on a click, and beside a row that opens what it names, and this button means
  * neither of those -- it does the one thing it is labelled with.
+ *
+ * `danger` marks the one that destroys something. It is drawn red and square rather than
+ * as one more outlined button, because it sits against a row whose every other click is
+ * safe and reversible: a delete that looks like the rest of the panel is a delete that
+ * gets hit by someone aiming at the name beside it.
  */
 function renderAction(action) {
-    const button = fastElement('button', 'secondary outline file-panel-action');
+    // Pico's own classes for the ordinary one. The dangerous one takes none of them: they
+    // set --pico-color and --pico-border-color from a selector too specific to override
+    // from here, and a red button that comes out the same grey as the rest is not a
+    // warning. It is coloured from scratch below instead, as core/arrayControls.js is.
+    const button = fastElement(
+        'button', action.danger ? 'file-panel-action file-panel-danger' : 'secondary outline file-panel-action');
     button.type = 'button';
     button.textContent = action.label;
     button.title = action.title ?? action.label;
+
+    // What this button is, for anything that has to find one of two. The label is what
+    // it says rather than what it is, and a footer of two is reached by neither.
+    if (action.id) button.dataset.action = action.id;
 
     button.addEventListener('click', (event) => {
         event.preventDefault();
@@ -101,10 +166,10 @@ function renderEntry(entry, onOpen) {
     return item;
 }
 
-/** The button at the foot of a category or a section. See `footer` above. */
+/** The button, or buttons, at the foot of a category or a section. See `footer` above. */
 function renderFooter(footer) {
     const holder = fastElement('div', 'file-panel-footer');
-    holder.append(renderAction(footer));
+    for (const action of [footer].flat()) holder.append(renderAction(action));
     return holder;
 }
 

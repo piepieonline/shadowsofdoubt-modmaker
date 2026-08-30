@@ -13,7 +13,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { GUID_PATTERN } from '../guid.js';
-import { MANIFEST_FILE, DDS_CONTENT_DIR, FLOORS_DIR } from '../modFolders.js';
+import { MANIFEST_FILE, DDS_CONTENT_DIR, FLOORS_DIR, BUILDING_TYPE } from '../modFolders.js';
 import { parseStringsCsv, splitRow } from '../stringsCsv.js';
 import {
     demoFiles, DEMO_SELECTION, DEMO_PLUGINS, DEMO_STREAMING_ASSETS,
@@ -50,8 +50,8 @@ describe('demo fixture paths', () => {
 
     it('declares its directories empty rather than with a placeholder file', () => {
         // A `.keep` would show up in the editor as a file the mod does not have. The
-        // empty Floors directory is the point: it is what marks a building mod that has
-        // not saved a floor yet.
+        // empty Floors directory is the point: creating a building makes it before there
+        // is any floor to put in it.
         expect(directories).toContain(`${CONTENT_ROOT}/${FLOORS_DIR}/`);
         expect(files.some((path) => path.endsWith('/.keep'))).toBe(false);
     });
@@ -63,13 +63,25 @@ describe('the selected content folder', () => {
     });
 
     /**
-     * All three markers in one folder, which is what lets a flow switch keep the
-     * selection -- see core/navigation.js. Miss one and that editor opens empty.
+     * Every marker in one folder, which is what lets a flow switch keep the selection --
+     * see core/navigation.js. Miss one and that editor opens empty.
+     *
+     * The building marker is the manifest naming a preset that says BuildingPreset, so it
+     * takes reading both files rather than looking for a path. A `Floors/` directory is
+     * not the marker and would not make the flow reachable on its own.
      */
     it('carries the marker for every flow', () => {
         expect(files).toContain(`${CONTENT_ROOT}/${MANIFEST_FILE}`);
         expect(files.some((path) => path.startsWith(`${CONTENT_ROOT}/${DDS_CONTENT_DIR}/`))).toBe(true);
-        expect(directories).toContain(`${CONTENT_ROOT}/${FLOORS_DIR}/`);
+
+        const { fileOrder } = JSON.parse(demoFiles[`${CONTENT_ROOT}/${MANIFEST_FILE}`]);
+        const listed = fileOrder.map((entry) => entry.replace(/^REF:/, ''));
+        const buildings = listed.filter((name) => {
+            const preset = demoFiles[`${CONTENT_ROOT}/${name}.sodso.json`];
+            return preset && JSON.parse(preset).fileType === BUILDING_TYPE;
+        });
+
+        expect(buildings).not.toHaveLength(0);
     });
 
     it('is not the mod root, so the search has to walk to it', () => {

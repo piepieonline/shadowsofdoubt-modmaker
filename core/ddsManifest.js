@@ -180,6 +180,16 @@ export const withMapping = (manifest, mapping) =>
     ({ ...manifest, files: [...manifest.files, mapping] });
 
 /**
+ * The mappings for a real path taken out, for a CSV that has been deleted.
+ *
+ * Every entry claiming that path, because two can: order decides ties when they disagree
+ * about where the file is read from, and dropping only the winner would leave the loader
+ * still looking for a file that has gone.
+ */
+export const withoutMapping = (manifest, realPath) =>
+    ({ ...manifest, files: manifest.files.filter((entry) => entry.real !== realPath) });
+
+/**
  * Rewrite ddsmanifest.json, keeping every key this app does not know about.
  *
  * Refuses when there is nothing to rewrite: a mod without a manifest never gains one

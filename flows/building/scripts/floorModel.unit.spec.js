@@ -343,6 +343,106 @@ const blankFloor = ({ cover = true } = {}) => {
 
 
 /* -------------------------------------------------------------------------- */
+/* Colours                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * What a floor is coloured by, which is the only thing telling an author which of two
+ * overlays they are looking at.
+ *
+ * The address overlay and the room overlay draw the same 441 squares, and nothing else on
+ * screen changes when the tool does. So the guarantee worth testing is not that the
+ * colours are pretty: it is that a square cannot keep its colour across the switch, which
+ * is what reading the one palette from both ends is for.
+ */
+
+test('the palette is twelve colours, none of them repeated', () => {
+    const seen = new Set(model.PAINT_PALETTE.map((c) => `${c.r},${c.g},${c.b}`));
+
+    // Twelve because the base game's busiest address holds twelve rooms: fewer and a room
+    // list would show one colour twice, which is worse than useless in an overlay whose
+    // whole job is telling rooms apart.
+    expect(model.PAINT_PALETTE).toHaveLength(12);
+    expect(seen.size).toBe(12);
+});
+
+test('rooms read the palette backwards, so no room is the colour its address would be', () => {
+    const clashes = [];
+    for (let slot = 0; slot < model.PAINT_PALETTE.length; slot++) {
+        const address = model.addressColour(slot);
+        const room = model.roomColour(slot);
+
+        expect(room).toEqual(model.PAINT_PALETTE[model.PAINT_PALETTE.length - 1 - slot]);
+        if (address.r === room.r && address.g === room.g && address.b === room.b) {
+            clashes.push(slot);
+        }
+    }
+
+    // With an even number of colours the two ends never meet in the middle. An odd one
+    // would leave the centre slot the same colour in both overlays -- a square that does
+    // not change when the tool does, in the one place nothing else says it did.
+    expect(clashes).toEqual([]);
+});
+
+test('both ends of the palette carry on past the end of it', () => {
+    const size = model.PAINT_PALETTE.length;
+
+    // A floor may hold more addresses than there are colours -- the base game's busiest
+    // holds 13 -- so the list wraps rather than running out.
+    expect(model.addressColour(size)).toEqual(model.addressColour(0));
+    expect(model.roomColour(size + 1)).toEqual(model.roomColour(1));
+});
+
+test('a colour handed out is the address’s own, not the palette’s', () => {
+    const floor = model.parseFloor(blankFloor());
+    const index = model.addAddress(floor, 'Outside');
+
+    // The colour picker writes over an address's colour in place, so an address holding
+    // the palette entry itself would recolour the palette and every address sharing it.
+    floor.addresses[index].colour.r = 0.123;
+
+    expect(model.PAINT_PALETTE[index].r).not.toBe(0.123);
+    expect(model.addressColour(index).r).not.toBe(0.123);
+});
+
+test('a new address takes the colour of the slot it lands in', () => {
+    const floor = model.parseFloor(blankFloor());
+
+    const third = model.addAddress(floor, 'Outside');
+    const fourth = model.addAddress(floor, 'Lobby');
+
+    expect(floor.addresses[third].colour).toEqual(model.PAINT_PALETTE[2]);
+    expect(floor.addresses[fourth].colour).toEqual(model.PAINT_PALETTE[3]);
+});
+
+test('an address with no colour to be seen by is given its slot’s, and keeps it', () => {
+    const data = blankFloor();
+    data.a_d[0].e_c = { r: 0, g: 0, b: 0, a: 1 };
+    delete data.a_d[1].e_c;
+
+    const floor = model.parseFloor(data);
+    const written = model.serialiseFloor(floor);
+
+    // Black is a hole in a plan drawn as flat sheets of colour, and a missing colour is
+    // every colourless address sharing one. Both are repaired to the slot's own -- and
+    // the repair is written back, so the floor stops being one that cannot be read.
+    expect(floor.addresses[0].colour).toEqual(model.PAINT_PALETTE[0]);
+    expect(floor.addresses[1].colour).toEqual(model.PAINT_PALETTE[1]);
+    expect(written.a_d[0].e_c).toEqual(model.PAINT_PALETTE[0]);
+});
+
+test('an address that arrived with a colour keeps exactly that colour', () => {
+    const data = blankFloor();
+    const floor = model.parseFloor(data);
+
+    // The 602 addresses of the base game are all in this case, and none of their colours
+    // is the palette's. A floor's own colours are the author's, whoever that author was.
+    expect(floor.addresses[0].colour).toEqual(data.a_d[0].e_c);
+    expect(model.serialiseFloor(floor).a_d[1].e_c).toEqual(data.a_d[1].e_c);
+});
+
+
+/* -------------------------------------------------------------------------- */
 /* Walls                                                                       */
 /* -------------------------------------------------------------------------- */
 
@@ -518,10 +618,21 @@ test('a backfilled node is given its half of the wall facing it', () => {
 /* -------------------------------------------------------------------------- */
 
 test('a tile reads out as one phrase per thing it carries', () => {
+    // Three lines for a stairwell: that it is one and which way it faces, whether it is
+    // the mirrored preset, and whether that preset carries a lift. The empty ones are
+    // written as empty so the rows line up down a floor -- the callers that want one line
+    // drop them.
     expect(model.tileParts({ isStairwell: true, isInverted: false, stairwellRotation: 90 }))
-        .toEqual(['Stairs 90°']);
+        .toEqual(['Stairs 90°', '', 'Elevator']);
     expect(model.tileParts({ isStairwell: true, isInverted: true, stairwellRotation: 0 }))
-        .toEqual(['Elevator 0°']);
+        .toEqual(['Stairs 0°', 'Inverted', 'Elevator']);
+
+    // Stairs whichever preset stands there. `e_l` picks the mirrored asset and says
+    // nothing about what is in it.
+    expect(model.tileParts(
+        { isStairwell: true, isInverted: true, stairwellRotation: 0 },
+        { plain: true, inverted: false },
+    )).toEqual(['Stairs 0°', 'Inverted', '']);
 
     // A main entrance is one thing, not two: isMainEntrance implies isEntrance.
     expect(model.tileParts({ isEntrance: true, isMainEntrance: true })).toEqual(['Main entrance']);
@@ -532,7 +643,21 @@ test('a tile reads out as one phrase per thing it carries', () => {
     expect(model.tileParts({
         isStairwell: true, isInverted: false, stairwellRotation: 180,
         isEntrance: true, isMainEntrance: true,
-    })).toEqual(['Stairs 180°', 'Main entrance']);
+    })).toEqual(['Stairs 180°', '', 'Elevator', 'Main entrance']);
+});
+
+test('a stairwell carries a lift unless the building it is in says otherwise', () => {
+    const stairs = { isStairwell: true, isInverted: false, stairwellRotation: 0 };
+    const inverted = { isStairwell: true, isInverted: true, stairwellRotation: 0 };
+
+    // Nothing looked up reads as a lift, because every StairwellPreset the game ships has
+    // one. A floor read outside any building says so rather than going quiet about it.
+    expect(model.tileParts(stairs).at(-1)).toBe('Elevator');
+
+    // The two answers are separate: `e_l` chooses between two presets when the building
+    // names none of its own, and a mod may define one of that pair and not the other.
+    expect(model.tileParts(stairs, { plain: false, inverted: true }).at(-1)).toBe('');
+    expect(model.tileParts(inverted, { plain: false, inverted: true }).at(-1)).toBe('Elevator');
 });
 
 test('a tile carrying nothing reads out as nothing at all, not as the word', () => {
@@ -544,7 +669,7 @@ test('a tile carrying nothing reads out as nothing at all, not as the word', () 
         .toEqual([]);
 
     // A stairwell with no rotation stored is one facing 0, not one facing "undefined".
-    expect(model.tileParts({ isStairwell: true })).toEqual(['Stairs 0°']);
+    expect(model.tileParts({ isStairwell: true })).toEqual(['Stairs 0°', '', 'Elevator']);
 });
 
 
@@ -735,6 +860,121 @@ test('an empty room is removed without moving anything', () => {
     // A slot that is not there is not an error to report; there is nothing to remove.
     expect(result.missing).toBe(false);
     expect(result.rooms).toEqual(['Lobby']);
+});
+
+
+test('removing an address hands its squares to the Outside, and writes them there', () => {
+    const floor = model.parseFloor(blankFloor());
+
+    // The Lobby takes two squares off the Outside, one of them in a room of its own.
+    const kitchen = model.addRoom(floor, 1, 'Kitchen');
+    model.setNodeAddress(floor, model.nodeAt(floor, 10, 10), 1);
+    model.setNodeAddress(floor, model.nodeAt(floor, 11, 10), 1);
+    model.setNodeRoom(floor, model.nodeAt(floor, 11, 10), 1, kitchen.roomIndex);
+
+    const removed = model.removeAddress(floor, 1);
+    const written = model.serialiseFloor(floor).a_d;
+
+    const result = {
+        removed,
+        addresses: floor.addresses.map((address) => address.layoutConfiguration),
+        rooms: floor.rooms.map((room) => `${room.addressIndex}:${room.preset}`),
+        held: model.nodeAt(floor, 10, 10).addressIndex,
+        preset: model.roomOfNode(floor, model.nodeAt(floor, 10, 10)).preset,
+        written: written.map((address) => address.p_n),
+        // Every square of the grid, the two the Lobby had taken among them. A square
+        // that lost its address on the way out would be missing from the file.
+        squares: written[0].vs[0].r_d.reduce((total, room) => total + room.n_d.length, 0),
+    };
+
+    expect(result.removed).toBe(true);
+    expect(result.addresses).toEqual(['Outside']);
+    expect(result.rooms).toEqual(['0:Null']);
+    expect(result.held).toBe(0);
+    expect(result.preset).toBe('Null');
+    expect(result.written).toEqual(['Outside']);
+    expect(result.squares).toBe(441);
+});
+
+test('removing an address renumbers the slots above it, on the rooms and the squares alike', () => {
+    const floor = model.parseFloor(blankFloor());
+
+    const yard = model.addAddress(floor, 'Yard', { r: 0, g: 0.5, b: 0, a: 1 });
+    model.addRoom(floor, yard, 'Yard');
+    model.setNodeAddress(floor, model.nodeAt(floor, 10, 10), yard);
+    model.setNodeRoom(floor, model.nodeAt(floor, 10, 10), yard, 1);
+
+    // The Lobby sits below the Yard, so removing it moves the Yard down a slot.
+    model.removeAddress(floor, 1);
+
+    const node = model.nodeAt(floor, 10, 10);
+    const result = {
+        addresses: floor.addresses.map((address) => address.layoutConfiguration),
+        slots: floor.rooms.map((room) => [room.addressIndex, room.roomIndex, room.preset]),
+        node: [node.addressIndex, node.roomIndex],
+        // A square pointing at the slot the Yard used to be in would be written under
+        // whatever address is there now, which is the failure this renumbering avoids.
+        written: model.serialiseFloor(floor).a_d[1].vs[0].r_d
+            .map((room) => `${room.l}:${room.n_d.length}`),
+    };
+
+    expect(result.addresses).toEqual(['Outside', 'Yard']);
+    expect(result.slots).toEqual([[0, 0, 'Null'], [1, 0, 'Null'], [1, 1, 'Yard']]);
+    expect(result.node).toEqual([1, 1]);
+    expect(result.written).toEqual(['Null:0', 'Yard:1']);
+});
+
+test('the Outside address cannot be removed', () => {
+    const floor = model.parseFloor(blankFloor());
+
+    const result = {
+        outside: model.removeAddress(floor, 0),
+        missing: model.removeAddress(floor, 9),
+        addresses: floor.addresses.map((address) => address.layoutConfiguration),
+    };
+
+    // It is where every square of a removed address, and every square no address
+    // claimed, is put. A floor without one has nowhere to hand them.
+    expect(result.outside).toBe(false);
+    expect(result.missing).toBe(false);
+    expect(result.addresses).toEqual(['Outside', 'Lobby']);
+});
+
+test('removing an address drops the overlaps it was part of', () => {
+    const source = blankFloor();
+
+    // Both addresses claim (10, 10). The Lobby is read second, so it holds the square
+    // and the Outside is the one recorded as having lost it.
+    source.a_d[1].vs = [
+        { r_d: [{ id: 2, n_d: [{ f_c: { x: 10, y: 10 }, f_h: 0, f_t: 1, f_r: '', w_d: [] }], l: 'Lobby' }] },
+    ];
+
+    const floor = model.parseFloor(source);
+    const before = floor.issues.overlaps.length;
+    model.removeAddress(floor, 1);
+
+    // One address claiming a square is not an overlap, so the note goes with it. Left
+    // behind, it would name an address that no longer exists and count against a floor
+    // with nothing wrong with it.
+    expect(before).toBe(1);
+    expect(floor.issues.overlaps).toEqual([]);
+    expect(model.describeIssues(floor)).toEqual([]);
+});
+
+test('an address with no squares in it is removed without touching the Outside', () => {
+    const floor = model.parseFloor(blankFloor());
+    const rooms = model.roomsOfAddress(floor, 0).length;
+
+    const result = {
+        removed: model.removeAddress(floor, 1),
+        outsideRooms: model.roomsOfAddress(floor, 0).length,
+        addresses: floor.addresses.length,
+    };
+
+    expect(result.removed).toBe(true);
+    // No square changed hands, so the Outside needs no room to put one in.
+    expect(result.outsideRooms).toBe(rooms);
+    expect(result.addresses).toBe(1);
 });
 
 
@@ -1155,6 +1395,71 @@ test('a floor laid out like a base game one keeps its outline', async () => {
     expect(insideOf(above)).toEqual(insideOf(model.parseFloor(source)));
 });
 
+test('a floor laid out like another can bring its stairs and entrances', () => {
+    // What "walls, stairs and entrances" adds to the walls. A stairwell has to sit in
+    // the same tile on every storey it passes through, and an entrance in the same tile
+    // as the door below it, so placing them again by eye is the thing to avoid.
+    const data = model.floorLike('Tower_Floor1', model.serialiseFloor(drawn), { tiles: true });
+    const above = model.parseFloor(data);
+
+    expect(data.t_d).toHaveLength(49);
+    expect(JSON.stringify(model.serialiseFloor(above))).toBe(JSON.stringify(data));
+    expect(model.describeIssues(above)).toEqual([]);
+
+    expect(above.tiles.filter((tile) => tile.isStairwell).map((tile) => `${tile.x},${tile.y}`))
+        .toEqual(['3,3']);
+    expect(above.tiles.filter((tile) => tile.isEntrance).map((tile) => `${tile.x},${tile.y}`))
+        .toEqual(['2,1']);
+
+    // The tiles and nothing else: the storey below's rooms and its raised floor are
+    // still what makes that storey different from this one.
+    expect(above.rooms.map((room) => room.preset)).toEqual(['Null', 'Lobby']);
+    expect(above.nodes.filter((node) => node.height !== 0)).toEqual([]);
+    expect([...wallsOf(above)].sort()).toEqual([...wallsOf(drawn)].sort());
+});
+
+test('the outline of a floor is its shell, without the partitions inside it', () => {
+    const data = model.floorLike('Tower_Floor1', model.serialiseFloor(drawn), { outline: true });
+    const above = model.parseFloor(data);
+
+    // The partition runs between two squares that are both inside the building, so it
+    // is something drawn on that storey rather than part of the building's shape.
+    const dropped = new Set();
+    for (let x = 6; x <= 17; x++) dropped.add(`${x},10,${model.AXIS_Y}=0`);
+
+    expect([...wallsOf(above)].sort())
+        .toEqual([...wallsOf(drawn)].filter((wall) => !dropped.has(wall)).sort());
+
+    // What is kept is both halves of each wall, so the floor is still one the game
+    // could load rather than one walled on one side only.
+    expect(model.describeIssues(above)).toEqual([]);
+    expect(above.issues.wallMismatches).toHaveLength(0);
+    expect(JSON.stringify(model.serialiseFloor(above))).toBe(JSON.stringify(data));
+
+    // The building's own wall, where the lobby meets the yard, is the outline. So is the
+    // lot boundary: it is the edge of the plot rather than anything drawn on this storey.
+    for (let y = 3; y <= 17; y++) {
+        expect(model.getWall(above, 5, y, model.AXIS_X)).toBeTruthy();
+        expect(model.getWall(above, 2, y, model.AXIS_X)).toBeTruthy();
+    }
+
+    // And the storey still stands on the same footprint.
+    expect([...insideOf(above)].sort()).toEqual([...insideOf(drawn)].sort());
+});
+
+test('the outline of a base game floor is the walls between inside and out', async () => {
+    const source = await (await fetch('/refs/floors/blueprints/Tenement_MainFloor1.json')).json();
+    const full = model.parseFloor(model.floorLike('Copy', source));
+    const outline = model.parseFloor(model.floorLike('Copy', source, { outline: true }));
+
+    // A real floor has partitions to drop, and a shell to keep.
+    expect(model.describeIssues(outline)).toEqual([]);
+    expect(wallsOf(outline).size).toBeGreaterThan(0);
+    expect(wallsOf(outline).size).toBeLessThan(wallsOf(full).size);
+    expect([...wallsOf(outline)].every((wall) => wallsOf(full).has(wall))).toBe(true);
+    expect([...insideOf(outline)].sort()).toEqual([...insideOf(full)].sort());
+});
+
 test('a floor laid out like a lot with no building in it is a blank lot', () => {
     // The source's outline is what is copied, so a source with no interior gives a
     // floor with no interior -- not the whole lot filled in as a fallback.
@@ -1166,4 +1471,73 @@ test('a floor laid out like a lot with no building in it is a blank lot', () => 
     expect(insideOf(above).size).toBe(0);
     expect(above.nodes.filter(Boolean)).toHaveLength(21 * 21);
     expect(model.describeIssues(above)).toEqual([]);
+});
+
+
+/* -------------------------------------------------------------------------- */
+/* Another layout of the same floor                                            */
+/* -------------------------------------------------------------------------- */
+
+test('another layout of a floor is that floor, under the new name', () => {
+    const source = model.serialiseFloor(drawn);
+    const copy = model.floorCopy('Tower_Floor0_v1', source);
+
+    // The name is the whole of the difference: everything a layout of a storey shares
+    // with the storey is everything the file holds.
+    expect(copy.floorName).toBe('Tower_Floor0_v1');
+    expect(JSON.stringify({ ...copy, floorName: source.floorName }))
+        .toBe(JSON.stringify(source));
+
+    // And the source is untouched, rather than the two sharing the lists in it.
+    expect(source.floorName).toBe('Tower_Floor0');
+    copy.a_d[1].vs[0].r_d[0].l = 'Changed';
+    expect(model.parseFloor(source).rooms.map((room) => room.preset))
+        .not.toContain('Changed');
+});
+
+test('another layout of a floor keeps what a floor above would drop', () => {
+    const copy = model.parseFloor(model.floorCopy('Tower_Floor0_v1', model.serialiseFloor(drawn)));
+
+    // The interior, which is what tells two layouts of one storey apart from a storey
+    // and the one above it: the addresses, the rooms in them, and the heights.
+    expect(copy.addresses.map((address) => address.layoutConfiguration))
+        .toEqual(drawn.addresses.map((address) => address.layoutConfiguration));
+    expect(copy.rooms.map((room) => room.preset)).toEqual(drawn.rooms.map((room) => room.preset));
+    expect(copy.nodes.filter((node) => node.height !== 0))
+        .toHaveLength(drawn.nodes.filter((node) => node.height !== 0).length);
+
+    // The fittings too. Alternative layouts of one storey are built into the same
+    // building, so a stairwell that moved between them would be a stairwell that stops.
+    expect(copy.tiles.filter((tile) => tile.isStairwell || tile.isEntrance)).toHaveLength(2);
+
+    // And still a floor the game could load and the editor could open.
+    expect(model.describeIssues(copy)).toEqual([]);
+    expect(copy.nodes.filter(Boolean)).toHaveLength(21 * 21);
+    expect(copy.issues.wallMismatches).toHaveLength(0);
+    expect([...wallsOf(copy)].sort()).toEqual([...wallsOf(drawn)].sort());
+});
+
+test('another layout of a floor keeps the variations it is not showing', () => {
+    // 117 base game addresses hold more than one layout variation and the game picks
+    // between them. A copy that kept only the one on show would quietly narrow the
+    // building it was copied from.
+    const source = model.parseFloor(model.serialiseFloor(drawn));
+    model.addVariation(source, 1);
+    model.selectVariation(source, 1, 0);
+
+    const copy = model.parseFloor(model.floorCopy('Tower_Floor0_v1', model.serialiseFloor(source)));
+
+    expect(copy.addresses[1].variations).toHaveLength(2);
+    expect(copy.addresses[1].selectedVariation).toBe(0);
+});
+
+test('another layout of a base game floor is the file the game shipped', async () => {
+    const source = await (await fetch('/refs/floors/blueprints/Tenement_MainFloor1.json')).json();
+    const copy = model.floorCopy('Copy_Floor0_v1', source);
+
+    // Verbatim, rather than through the reader and the writer: a field this model carries
+    // without interpreting -- or one the game adds that it has never seen -- comes across
+    // either way, and a round trip is a second chance to lose one.
+    expect(JSON.stringify({ ...copy, floorName: source.floorName })).toBe(JSON.stringify(source));
+    expect(model.describeIssues(model.parseFloor(copy))).toEqual([]);
 });

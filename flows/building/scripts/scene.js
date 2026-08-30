@@ -38,8 +38,9 @@
  */
 import {
     NODE_GRID, NODES_PER_TILE, TILE_GRID, AXIS_X, AXIS_Y,
-    nodeAt, tileAt, getWall, isPaintable, isOutsideNode, tileParts,
+    nodeAt, tileAt, getWall, isPaintable, isOutsideNode, tileParts, roomColour,
 } from './floorModel.js';
+import { dividerPostAtLowEnd } from './dividerEnds.js';
 
 /** View units. A node is 1 wide, so the grid is 21 x 21 and the origin is a corner. */
 const CELL = 1;
@@ -177,19 +178,37 @@ const THRESHOLD = { u: 0, v: (1 - RAIL_DEPTH) / 2, span: OPENING_SPAN, rise: RAI
  *
  * Which side is which: `u` runs toward the far end of a wall in the floor's own
  * coordinates, which placePart is what makes true on both axes. Which end of a run the
- * game itself puts each preset at is a question this app cannot answer -- a wall records
- * a preset and nothing about its orientation, and a wall's left is the other side's
- * right -- so what the pair is for is telling the two ends of a run apart, and which of
- * them is drawn where is settled by which way round it reads in the view.
+ * game itself puts each preset at is a question this app cannot answer, and that is a
+ * measured result rather than a shrug -- see the note at the top of dividerEnds.js for
+ * what was tested against the game and how it failed. So the left is drawn at the low
+ * end of a run and the right at the high one, which is a convention of this view and not
+ * a claim about the game.
+ *
+ * It is still worth drawing, because it is the one thing the author can act on. The
+ * editor writes the pair that reads with its posts capping the run, so a run drawn with
+ * them bunched in the middle is one that has been deliberately turned round -- and the
+ * two states being told apart at a glance is what makes the erase-and-replace repair in
+ * dividerEnds.js usable at all.
  *
  * Keyed by id because that is a preset's identity; the names are in soDoorPairIds.json
  * and repeated here so this reads without it.
  */
 const PRESET_SHAPES = {
     4: [RAIL],                  // DividerCentre
-    5: [JAMB_LEFT, RAIL],       // DividerEndLeft
-    6: [JAMB_RIGHT, RAIL],      // DividerEndRight
     10: [THRESHOLD],            // NothingEntrance
+};
+
+/**
+ * A divider end, with its post on the side the game will put it.
+ *
+ * `u` runs toward the high end of a wall's run in the floor's own coordinates, so a post
+ * at the low end is the left jamb and one at the high end the right. Which of the two a
+ * preset gets is not a property of the preset -- it depends on which side of the wall the
+ * parent room is, which is dividerEnds.js's business.
+ */
+const DIVIDER_END_SHAPES = {
+    low: [JAMB_LEFT, RAIL],
+    high: [JAMB_RIGHT, RAIL],
 };
 
 /** How a floor is coloured. The reference has these as two toggles; here they compose. */
@@ -324,6 +343,36 @@ const TILE_LABEL_COLOUR = 0xffffff;
 const TILE_LABEL_OUTLINE_COLOUR = 0x14161a;
 const TILE_LABEL_OUTLINE_WIDTH = '14%';
 const TILE_LABEL_ORDER = 11;
+
+/**
+ * The mark on the selected square: an asterisk, written in the floor.
+ *
+ * Text rather than an outline, and for the same reason the tiles are: what a square
+ * carries is already said in words lying in the floor, so the square that was clicked is
+ * said the same way. An outline would have had to compete with the room outlines, which
+ * are white quads on exactly the seams a square's own outline would fall on.
+ *
+ * Sits on the square's own top surface rather than at the tile labels' height, so it is
+ * over the square it names at every camera angle -- a mark floating at wall height over a
+ * single cell is ambiguous the moment the view tilts. `depthTest: false` is what keeps it
+ * visible anyway: a selection you cannot see behind a wall is one you lose.
+ *
+ * Drawn after the tile labels, which are themselves after the room outlines.
+ */
+const SELECTION_MARK = '*';
+const SELECTION_MARK_SIZE = 0.9;
+const SELECTION_MARK_LIFT = 0.02;
+const SELECTION_MARK_ORDER = TILE_LABEL_ORDER + 1;
+
+/**
+ * Much thinner than a tile label's.
+ *
+ * An outline is a percentage of the font size, and a tile label wants a heavy one: it is
+ * small text read over squares in whatever colours a mod author chose. This is one large
+ * glyph made of thin strokes, and 14% of a font size this big is wider than the strokes
+ * are -- enough to close the gaps between the arms and leave a blob.
+ */
+const SELECTION_MARK_OUTLINE_WIDTH = '3%';
 
 /** Degrees, which is what a tile stores its rotation in, as radians. */
 const DEGREE = Math.PI / 180;
@@ -574,6 +623,16 @@ export async function createScene(container) {
     const roomEdges = buildRoomEdges(THREE);
     scene.add(roomEdges);
 
+    // The square that was clicked. Not the tile overlay's business and not the model's:
+    // which square is selected is the tools' state, so it arrives through setSelected.
+    const selectionMark = buildSelectionMark(THREE, Text);
+    scene.add(selectionMark);
+    let selected = null;
+
+    // How far the asterisk's ink sits from the middle of the box troika lays it out in.
+    // Zero until the glyph exists to measure -- see centreMarkInk.
+    let markInkOffset = 0;
+
     const forwardArrow = buildForwardArrow(THREE);
     scene.add(forwardArrow);
 
@@ -625,7 +684,9 @@ export async function createScene(container) {
         refresh();
 
         // refresh draws nothing when there is no model, and closing a floor while the
-        // tile tool is chosen has to take the squares off screen with it.
+        // tile tool is chosen has to take the squares off screen with it -- and the
+        // selection mark with them, which refresh cannot do from inside its own guard.
+        placeSelection();
         invalidate();
     }
 
@@ -655,6 +716,68 @@ export async function createScene(container) {
         tileLabels.visible = tileOverlay.visible;
     };
 
+    /**
+     * Mark a square as selected, or clear the mark with null.
+     *
+     * Told rather than worked out, for the same reason setTileOverlay is: which square is
+     * selected lives in the tool state, and the scene has no view of that.
+     */
+    function setSelected(at) {
+        selected = at ? { x: at.x, y: at.y } : null;
+        placeSelection();
+        invalidate();
+    }
+
+    /**
+     * Put the mark on the selected square's top surface.
+     *
+     * Re-run on every refresh as well as on every selection, because the height it sits
+     * at is the square's own: painting a floor type under the selection, or switching to
+     * the overlay that draws raised squares raised, moves the surface it lies on.
+     */
+    function placeSelection() {
+        const at = model && selected;
+        selectionMark.visible = !!at;
+        if (!at) return;
+
+        selectionMark.position.set(
+            mirrorX((at.x + 0.5) * CELL),
+            cellTop(at.x, at.y) + SELECTION_MARK_LIFT,
+            (at.y + 0.5) * CELL - markInkOffset);
+
+        // Laying out text is asynchronous, so the frame this was called for is drawn
+        // without the glyph and the callback asks for another once it exists. troika
+        // returns without calling back when nothing has changed, and the text never
+        // changes here -- so this lays out once, on the first selection of the page.
+        selectionMark.sync(() => {
+            centreMarkInk(at);
+            invalidate();
+        });
+    }
+
+    /**
+     * Put the asterisk's *ink* on the square's centre, rather than its line box.
+     *
+     * `anchorY: 'middle'` centres the block troika lays the glyph out in, which is a
+     * whole line tall. An asterisk's ink sits in the top of that box -- it is a
+     * superscript mark -- so a block centred on the square draws the asterisk itself
+     * about a third of a cell above it, straddling whatever is on the seam.
+     *
+     * `visibleBounds` is the ink, so the difference between its middle and the block's is
+     * exactly the correction. Measured rather than tuned, and measured once: the text
+     * never changes, so the offset is the same for every square it ever lands on.
+     *
+     * Text-local +y is world +z here -- the mark is laid flat by a quarter turn about x
+     * and then half a turn about z, and the two compose to send local up to world south.
+     */
+    function centreMarkInk(at) {
+        const bounds = selectionMark.textRenderInfo?.visibleBounds;
+        if (!bounds) return;
+
+        markInkOffset = (bounds[1] + bounds[3]) / 2;
+        selectionMark.position.z = (at.y + 0.5) * CELL - markInkOffset;
+    }
+
     /** Re-read the model into the instance buffers. */
     function refresh() {
         if (!model) return;
@@ -665,6 +788,7 @@ export async function createScene(container) {
         paintWalls(THREE, walls, wallParts, model);
         paintRoomEdges(THREE, roomEdges, model);
         paintTileLabels(tileLabels, model, invalidate);
+        placeSelection();
         invalidate();
     }
 
@@ -831,6 +955,9 @@ export async function createScene(container) {
         for (const label of tileLabels.children) label.dispose();
         tileLabels.userData.material.dispose();
 
+        selectionMark.dispose();
+        selectionMark.userData.material.dispose();
+
         // One material shared by both pieces, so it is disposed once rather than per
         // child -- disposing it twice is harmless, but saying so here is cheaper than
         // leaving the next reader to check.
@@ -844,14 +971,17 @@ export async function createScene(container) {
     resize();
 
     return {
-        setModel, setOverlay, setTileOverlay, refresh, resize, draw, invalidate,
+        setModel, setOverlay, setTileOverlay, setSelected, refresh, resize, draw, invalidate,
         cellAt, wallAt, pickAt, project, projectWall, resetView, dispose,
         get canvas() { return renderer.domElement; },
         get overlay() { return overlay; },
+        // Which square is marked, so a caller can check the view agrees with whatever
+        // told it. Read-only: setSelected is the only way in.
+        get selected() { return selected && { ...selected }; },
         // For tests and for anything that needs to reason about the view directly.
         _internals: {
             THREE, scene, camera, controls, cells, ghostCells, ceilingCaps, cellHits,
-            walls, wallParts, tileOverlay, tileLabels, roomEdges, renderer,
+            walls, wallParts, tileOverlay, tileLabels, roomEdges, selectionMark, renderer,
         },
     };
 }
@@ -1064,10 +1194,10 @@ export function instanceOfWall(x, y, axis) {
 /**
  * Which way the building faces, as an arrow lying off the front edge pointing away.
  *
- * A floor is a 21 x 21 grid with nothing in it that says which side is the front, so
- * every rotation the file stores -- a stairwell's, an elevator's -- is measured from a
- * direction the view was not showing. One arrow, always in the same place, is what makes
- * those numbers mean something.
+ * A floor is a 21 x 21 grid with nothing in it that says which side is the front, so the
+ * rotation the file stores against a stairwell is measured from a direction the view was
+ * not showing. One arrow, always in the same place, is what makes those numbers mean
+ * something.
  *
  * It sits off the front edge -- see FRONT_Z -- pointing away from the floor, so in the
  * default view it points at the viewer and never lands behind the model.
@@ -1192,6 +1322,52 @@ function buildTileOverlay(THREE) {
  * `label.material`, which returns the *derived* material -- and an array of two of them
  * once an outline is configured.
  */
+/**
+ * The asterisk on the selected square.
+ *
+ * One `Text`, with a material of its own rather than the tile labels' shared one: the
+ * two are shown under different conditions -- the labels only while the tile tool is
+ * chosen, this whenever a square is selected -- and sharing would tie the lifetime of a
+ * thing that is always on to a group that is usually off.
+ *
+ * Laid flat and turned to be read from the front, and never rotated after that: an
+ * asterisk has no direction to point in, which is the one thing a tile label's rotation
+ * is for. That is the half turn the labels no longer start from -- theirs is read from
+ * whichever side their stairs open onto, and this is read from where the camera is.
+ */
+function buildSelectionMark(THREE, Text) {
+    const material = new THREE.MeshBasicMaterial({
+        color: TILE_LABEL_COLOUR,
+        transparent: true,
+        depthWrite: false,
+
+        // In front of the walls rather than inside them. The mark is on the square's own
+        // surface, so anything standing on the seams around it would otherwise hide it
+        // at exactly the angles a floor is usually read from.
+        depthTest: false,
+        side: THREE.DoubleSide,
+    });
+
+    const mark = new Text();
+
+    mark.material = material;
+    mark.text = SELECTION_MARK;
+    mark.fontSize = SELECTION_MARK_SIZE;
+    mark.textAlign = 'center';
+    mark.anchorX = 'center';
+    mark.anchorY = 'middle';
+    mark.outlineWidth = SELECTION_MARK_OUTLINE_WIDTH;
+    mark.outlineColor = TILE_LABEL_OUTLINE_COLOUR;
+    mark.renderOrder = SELECTION_MARK_ORDER;
+    mark.rotation.set(-Math.PI / 2, 0, Math.PI, 'XYZ');
+
+    // Nothing is selected until something is clicked.
+    mark.visible = false;
+    mark.userData.material = material;
+
+    return mark;
+}
+
 function buildTileLabels(THREE, Text) {
     const group = new THREE.Group();
     const side = NODES_PER_TILE * CELL;
@@ -1425,10 +1601,12 @@ function cellColour(model, x, y, overlay) {
     }
 
     if (overlay === Overlay.ROOM) {
-        // Rooms have no colour of their own in the file, so one is derived from the
-        // room's identity. Stable across a session and across a reload, which is what
-        // matters: it is there to tell two rooms apart, not to mean anything.
-        return hashColour(`${node.addressIndex}:${node.roomIndex}`);
+        // Rooms have no colour of their own in the file, so it comes from the room's slot
+        // -- the same palette the addresses are drawn from, read from the other end. See
+        // roomColour: what that buys is that no square keeps its colour when the overlay
+        // changes, which is how the view says which of the two is being painted.
+        const colour = roomColour(node.roomIndex);
+        return [colour.r, colour.g, colour.b];
     }
 
     const address = model.addresses[node.addressIndex];
@@ -1436,29 +1614,6 @@ function cellColour(model, x, y, overlay) {
     if (!colour) return UNKNOWN_COLOUR;
 
     return [colour.r ?? 0, colour.g ?? 0, colour.b ?? 0];
-}
-
-/** A readable colour from a string, evenly spread around the hue circle. */
-function hashColour(key) {
-    let hash = 0;
-    for (const character of key) hash = (hash * 31 + character.charCodeAt(0)) | 0;
-
-    const hue = ((hash % 360) + 360) % 360;
-    return hslToRgb(hue / 360, 0.45, 0.6);
-}
-
-function hslToRgb(h, s, l) {
-    const chroma = (1 - Math.abs(2 * l - 1)) * s;
-    const second = chroma * (1 - Math.abs(((h * 6) % 2) - 1));
-    const match = l - chroma / 2;
-
-    const sextant = Math.floor(h * 6) % 6;
-    const table = [
-        [chroma, second, 0], [second, chroma, 0], [0, chroma, second],
-        [0, second, chroma], [second, 0, chroma], [chroma, 0, second],
-    ][sextant];
-
-    return table.map((component) => component + match);
 }
 
 /**
@@ -1539,7 +1694,7 @@ function paintWalls(THREE, hits, parts, model) {
         const [r, g, b] = wall.matched ? wallColour(wall.preset) : MISMATCH_COLOUR;
         colour.setRGB(r, g, b);
 
-        const shape = shapeOf(wall.preset);
+        const shape = shapeOf(model, x, y, axis, wall.preset);
 
         for (let part = 0; part < WALL_PARTS; part++) {
             if (part < shape.length) {
@@ -1667,7 +1822,7 @@ function paintRoomEdges(THREE, edges, model) {
  * A wall's colour, by what kind of thing it is rather than which preset it is.
  *
  * Four kinds is what the reference draws too, and it is as much as the data supports:
- * `wallPresetKinds.json` is a transcription, and three of its entries are unverified.
+ * `wallPresetKinds.json` is a transcription, and four of its entries are unverified.
  */
 function wallColour(preset) {
     switch (colourKindOf(preset)) {
@@ -1707,8 +1862,14 @@ const colourKindOf = (preset) => COLOUR_KINDS[preset] ?? kindOf(preset);
  * `wallPresetKinds.json`: what a divider *is* is a blank, and that is what the table
  * says and what the picker groups it under. This is only how it is shown.
  */
-const shapeOf = (preset) =>
-    PRESET_SHAPES[preset] ?? WALL_SHAPES[kindOf(preset)] ?? WALL_SHAPES.wall;
+const shapeOf = (model, x, y, axis, preset) => {
+    // A divider end is asked where its post actually lands rather than told. Two runs
+    // with identical presets can render opposite ways round, so the id alone cannot say.
+    const atLowEnd = dividerPostAtLowEnd(model, x, y, axis, preset);
+    if (atLowEnd !== null) return DIVIDER_END_SHAPES[atLowEnd ? 'low' : 'high'];
+
+    return PRESET_SHAPES[preset] ?? WALL_SHAPES[kindOf(preset)] ?? WALL_SHAPES.wall;
+};
 
 
 /* -------------------------------------------------------------------------- */
@@ -1724,28 +1885,43 @@ const shapeOf = (preset) =>
  * one looks like. The degrees are written out as well -- see tileParts -- so a label
  * turned a quarter is still read as "90°" rather than counted.
  *
- * The orientation, in three steps. A Text reads along its own +x, stands up its +y and
- * faces its +z, and the composed rotation lands those on:
+ * **A label is upright to whoever the stairs open onto.** Its top points away from the
+ * opening, so reading it the right way up means standing where you would stand to walk
+ * in: in the default view, where the camera is off the y = 0 edge, the label you can read
+ * is the one whose stairs you could climb. That is the direction said in the shape of the
+ * thing rather than in its degrees, which is what the turn is for -- and it is worth being
+ * plain that the top of the words is the *back* of the stairwell, because pointing it the
+ * other way is the obvious reading and is what this did until it was checked against the
+ * game.
  *
- *   +x -> scene -x     the reading direction, which is left to right in the default view
- *   +y -> scene +z     the top of the glyphs, pointing away from the camera
+ * Which way a rotation opens comes off the game's own floors rather than off the
+ * arithmetic. Of the 116 stairwells in refs/floors/blueprints, every one at 90 has its
+ * wall-free side on the floor's +x and every one at 270 on its -x, and the only tiles
+ * carrying a door on their own edge are at 180 with it on -y. So 0 opens on the floor's
+ * +y, each quarter turns that clockwise, and the words face the other way.
+ *
+ * The orientation, in three steps. A Text reads along its own +x, stands up its +y and
+ * faces its +z, and for a stairwell at 0 the composed rotation lands those on:
+ *
+ *   +x -> scene +x     the reading direction, which is right to left in the default view
+ *   +y -> scene -z     the top of the glyphs, pointing at the camera
  *   +z -> scene +y     face up, so it is the floor the label is written on
  *
- * Scene -x is the floor's *increasing* x, because positions here are mirrored -- see
- * mirrorX -- so an unturned label reads along the floor's x with its top toward the
- * floor's +y. Which is the direction a rotation of 0 faces: the game's world is
- * left-handed with y up, and a Unity rotation of 0 about y faces +z, which is this
- * floor's +y. So the top of the words points where the stairwell points, at every step.
+ * -- a label read from the far side, because a stairwell at 0 opens away from the front.
+ * Each quarter of the rotation turns the first two a quarter with it, and the third stays
+ * put: the turn goes on the z of the Euler, which the XYZ order applies first and which is
+ * therefore a spin in the label's own plane, the horizontal one once the other two are
+ * done.
  *
- * The turn itself is negated for the same reason the reading direction came out mirrored.
- * Reflecting one axis reverses the sense of every rotation about the vertical, so a
- * quarter turn in the floor's frame is a quarter turn the other way in the scene's. It is
- * applied on the z of the Euler, which the XYZ order applies first and which is therefore
- * a spin in the label's own plane -- the horizontal one, once the other two are done.
+ * It is negated there because positions in this scene are mirrored -- see mirrorX -- and
+ * reflecting one axis reverses the sense of every rotation about the vertical. The floor's
+ * +y is the scene's +z but the floor's +x is the scene's *-x*, so a quarter turn in the
+ * floor's frame is a quarter turn the other way in the scene's.
  *
- * A tile with an entrance and no stairwell is not turned at all. Its `stairwellRotation`
- * is whatever the file happens to have left there, and turning an entrance by a stairwell
- * it does not have would draw a direction out of a number that means nothing.
+ * A tile with an entrance and no stairwell is not turned at all, and so is read from the
+ * front like everything else on the screen. Its `stairwellRotation` is whatever the file
+ * happens to have left there, and turning an entrance by a stairwell it does not have
+ * would draw a direction out of a number that means nothing.
  */
 function paintTileLabels(labels, model, onSync) {
     const shown = new Array(TILE_GRID * TILE_GRID).fill(null);
@@ -1759,7 +1935,7 @@ function paintTileLabels(labels, model, onSync) {
 
         // The order is spelled out rather than left to three's default, because which
         // rotation is applied first is the whole of why the turn goes on the z.
-        label.rotation.set(-Math.PI / 2, 0, Math.PI - turn * DEGREE, 'XYZ');
+        label.rotation.set(-Math.PI / 2, 0, -turn * DEGREE, 'XYZ');
 
         // Assigning the same string is not a change: troika's setters compare before
         // marking a label for re-layout, and this runs on every stroke of every brush.
@@ -1778,8 +1954,8 @@ function paintTileLabels(labels, model, onSync) {
 }
 
 /**
- * What each tile carries: an entrance, a stairwell, an elevator, which way it faces, and
- * what to write on it.
+ * What each tile carries: an entrance, a stairwell, whether it is the mirrored one, which
+ * way it faces, and what to write on it.
  *
  * Only the tiles carrying something are listed. A floor has 49 and the base game's use a
  * handful, so this is the difference between a label on each of the interesting ones and
@@ -1789,6 +1965,11 @@ function paintTileLabels(labels, model, onSync) {
  * say, so the three cannot describe the same tile differently. Joined with newlines
  * rather than the column's separator: a label is written on a square 3 cells across, and
  * a tile carrying a stairwell and an entrance has room for both only a line at a time.
+ *
+ * Kept exactly as tileParts hands them over, empty phrases included. This is the caller
+ * those blanks are for: a stairwell says three things, not all of which are always true,
+ * and writing the empty ones as empty rows is what keeps "Elevator" on the same line of
+ * every tile that has one.
  */
 export function tileMarkers(model) {
     const markers = [];
@@ -1805,9 +1986,9 @@ export function tileMarkers(model) {
                 nodeX: x * NODES_PER_TILE + 1,
                 nodeY: y * NODES_PER_TILE + 1,
                 entrance: tile.isMainEntrance ? 'main' : (tile.isEntrance ? 'entrance' : null),
-                stairwell: tile.isStairwell ? (tile.isInverted ? 'elevator' : 'stairs') : null,
+                stairwell: tile.isStairwell ? (tile.isInverted ? 'inverted' : 'stairs') : null,
                 rotation: tile.stairwellRotation,
-                label: tileParts(tile).join('\n'),
+                label: tileParts(tile, model.stairwellElevators).join('\n'),
             });
         }
     }

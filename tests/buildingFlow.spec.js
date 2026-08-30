@@ -20,6 +20,13 @@ const json = (value) => JSON.stringify(value, null, 2);
 
 /** A mod with a building of its own, so both kinds are listed side by side. */
 const modWithBuilding = {
+    // What makes this folder a building folder: the manifest names the preset. Without
+    // it the loader would not read the preset and the shell would not offer the folder
+    // -- see core/modFolders.js.
+    'Plugins/MyTower/murdermanifest.sodso.json': json({
+        enabled: true, fileOrder: ['REF:MyTower'], loadBefore: '', version: 1,
+    }),
+
     'Plugins/MyTower/MyTower.sodso.json': json({
         name: 'MyTower',
         presetName: 'MyTower',
@@ -53,6 +60,21 @@ async function openBuildingFlow(page, files = modWithBuilding) {
     await connectFolders(page, { modDir: 'Plugins' });
     await selectContent(page, 'MyTower', '');
 }
+
+/** Click a square, which in None selects it and fills the column from it. */
+const selectSquare = (page, x, y) => page.evaluate(async ([cellX, cellY]) => {
+    const { projectCell } = await import('/flows/building/scripts/ui.js');
+    const canvas = document.querySelector('#building-canvas canvas');
+    const at = projectCell(cellX, cellY);
+
+    const send = (type, buttons) => canvas.dispatchEvent(new PointerEvent(type, {
+        pointerId: 1, button: 0, buttons, bubbles: true, clientX: at.left, clientY: at.top,
+    }));
+
+    send('pointermove', 0);
+    send('pointerdown', 1);
+    send('pointerup', 0);
+}, [x, y]);
 
 /** Open a floor by calling the flow directly, rather than hunting for its button. */
 const open = (page, building, blueprint, slot = null) => page.evaluate(async (request) => {
@@ -115,7 +137,7 @@ test('the tool bar says what a click does, and leaves the reference to Help', as
     // column is narrow, and the panel under this one is what says where the pointer is.
     // A floor opens in None, so this is what None says a click does.
     const tools = page.locator('#building-tools');
-    await expect(tools).toContainText('Left click to select and pick');
+    await expect(tools).toContainText('Left click to select a square');
     await expect(tools).not.toContainText('orbit');
     await expect(tools).not.toContainText('zoom');
 });
@@ -353,6 +375,481 @@ test('the pointer labels a cell, and a click picks what is under it', async ({ p
     await expect(page.locator('#building-labels .cell-label')).toContainText(room);
 });
 
+/*
+ * The mod's own furniture, in the answers.
+ *
+ * Without the overlay every answer here is the base game's, which for a mod is not merely
+ * incomplete but wrong: a mod's own cluster makes furniture placeable that the walk would
+ * call impossible. This is the shape of the bookcase office from HOW-IT-WORKS.md -- a
+ * class, a preset that fills it, and a cluster that puts the slot down -- and none of the
+ * three exists in the reference data.
+ */
+
+/** MyTower, plus the three assets an office bookcase needs, plus one the manifest omits. */
+const modWithFurniture = {
+    ...modWithBuilding,
+
+    'Plugins/MyTower/murdermanifest.sodso.json': json({
+        enabled: true,
+        fileOrder: [
+            'REF:MyTower', 'REF:My1x1OfficeBookcase', 'REF:MyOfficeBookcase',
+            'REF:MyBookcaseIsland',
+        ],
+        loadBefore: '',
+        version: 1,
+    }),
+
+    // A slot class shaped like a cubicle, so it can stand free in the middle of a floor
+    // rather than needing a wall the way every real bookcase class does.
+    'Plugins/MyTower/My1x1OfficeBookcase.sodso.json': json({
+        presetName: 'My1x1OfficeBookcase',
+        fileType: 'FurnitureClass',
+        copyFrom: 'REF:FurnitureClass|1x1OfficeCubicle',
+    }),
+
+    // The model, redirected at that class and given the room filters and design style it
+    // needs to reach an office. Cloning LargeBookcase brings neither.
+    'Plugins/MyTower/MyOfficeBookcase.sodso.json': json({
+        presetName: 'MyOfficeBookcase',
+        fileType: 'FurniturePreset',
+        copyFrom: 'REF:FurniturePreset|LargeBookcase',
+        classes: ['REF:FurnitureClass|My1x1OfficeBookcase'],
+        universalDesignStyle: true,
+        allowedRoomFilters: ['REF:RoomTypeFilter|OfficeSpace'],
+    }),
+
+    // And the arrangement that puts the slot down. Without this the preset has nowhere
+    // to go however well it suits the room.
+    'Plugins/MyTower/MyBookcaseIsland.sodso.json': json({
+        presetName: 'MyBookcaseIsland',
+        fileType: 'FurnitureCluster',
+        allowedRoomFilters: ['REF:RoomTypeFilter|OfficeSpace'],
+        minimumRoomSize: 6,
+        clusterElements: [
+            { furnitureClass: 'REF:FurnitureClass|My1x1OfficeBookcase', importantToCluster: true },
+        ],
+    }),
+
+    // In the folder and not in the manifest, so the game never reads it.
+    'Plugins/MyTower/MyForgottenSofa.sodso.json': json({
+        presetName: 'MyForgottenSofa',
+        fileType: 'FurniturePreset',
+        copyFrom: 'REF:FurniturePreset|LargeBookcase',
+    }),
+};
+
+test('the mod\'s own furniture is in the answers, and the manifest decides', async ({ page }) => {
+    await openBuildingFlow(page, modWithFurniture);
+
+    // An OfficeSpace square in the middle of the floor: no walls, so the base game offers
+    // it four presets and every wall piece is out.
+    await open(page, 'EdenTower', 'Eden_OfficeFloor01');
+    await selectSquare(page, 4, 12);
+
+    const selected = page.locator('#building-status .status-block').first();
+
+    // Three assets reached the chain. The fourth is in the folder and not in fileOrder,
+    // which is the failure that otherwise shows up as content missing from the city.
+    await expect(selected.locator('.furniture-source'))
+        .toHaveText("Including this mod's own assets: 3 added.");
+    await expect(selected.locator('.furniture-unlisted'))
+        .toHaveText('1 file in this mod is not named in murdermanifest.sodso.json, so the '
+            + 'game never loads it and nothing below counts it.');
+
+    // Asked through the control rather than by writing to the `<select>` behind it: one
+    // of the two names below is deliberately not an option, and inventing it is the
+    // control's job.
+    const ask = async (name) => {
+        await selected.locator('.select2-selection').click();
+
+        // Typed rather than filled. select2 searches on the keystrokes, so setting the
+        // field's value outright leaves the list unfiltered -- and Enter then takes
+        // whatever was already highlighted instead of what was asked for.
+        await page.locator('.select2-search__field').pressSequentially(name);
+        await page.locator('.select2-results__option--highlighted').click();
+    };
+
+    // The mod's own are offered first, under a heading of their own. Two of the three
+    // assets that reached the chain are furniture presets; the third is a slot class.
+    await selected.locator('.select2-selection').click();
+    await expect(page.locator('.furniture-check-dropdown .select2-results__group').first())
+        .toHaveText('Modded');
+    await expect(page.locator(
+        '.furniture-check-dropdown .select2-results__group:text-is("Modded") + * > *'))
+        .toHaveText(['MyOfficeBookcase']);
+    await page.locator('.select2-search__field').press('Escape');
+
+    // The verdict the whole overlay exists for. Against the base game alone this is
+    // "The base game has no furniture preset called MyOfficeBookcase."
+    await ask('MyOfficeBookcase');
+
+    const office = selected.locator('.verdict').first();
+    await expect(office.locator('.verdict-address')).toHaveText('HighriseOffice');
+    await expect(office.locator('.verdict-answer')).toHaveText('Possible');
+
+    // And it is in the list above, under the mod's own slot class -- the same walk, so
+    // the two cannot disagree.
+    await selected.locator('.furniture-group summary').first().click();
+    await expect(selected.locator('.furniture-class', { hasText: 'My1x1OfficeBookcase' }))
+        .toHaveCount(1);
+
+    // The unlisted one is answerable and is not in the chain, which is the honest
+    // reading: the game would not load it either. It is not on the list for the same
+    // reason, so this is also what proves a name nobody offered can still be asked about.
+    await ask('MyForgottenSofa');
+    await expect(selected.locator('.verdict-reason').first())
+        .toHaveText('The base game has no furniture preset called MyForgottenSofa.');
+});
+
+/**
+ * The page does not scroll, and opening a dropdown does not make it.
+ *
+ * The workspace sizes itself to the window and the columns scroll inside it, so there is
+ * never anything below the fold to reach -- a scrolled page here is the layout coming
+ * apart, and it did: select2 leaves the `<select>` it took over in the document as an
+ * absolutely positioned one-pixel box for screen readers, and moves focus to it on open.
+ * Unless the column it is in is positioned, that box keeps the place the column's
+ * unscrolled flow gave it, and the browser scrolls the page down to wherever it landed.
+ *
+ * Asserted on the document rather than on the dropdown, because what went wrong was the
+ * page and not the control: the columns and the canvas went up with it. See the note on
+ * `#building-left` in the flow's stylesheet.
+ *
+ * The status column is scrolled to its foot first, which is both where the checker is and
+ * what makes the stranding as bad as it gets -- an unscrolled column cannot show this.
+ */
+test('opening the checker does not scroll the page', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'EdenTower', 'Eden_OfficeFloor01');
+    await selectSquare(page, 4, 12);
+
+    const column = page.locator('#building-left');
+    await expect(page.locator('.furniture-check .select2-selection')).toBeVisible();
+    await column.evaluate((el) => { el.scrollTop = el.scrollHeight; });
+
+    // Nothing to scroll to before the dropdown is opened, either: the hidden `<select>`s
+    // of every control already in the columns are what would make the page taller.
+    const fits = () => page.evaluate(() => {
+        const page_ = document.documentElement;
+        return { overflow: page_.scrollHeight - page_.clientHeight, scrolled: window.scrollY };
+    });
+    expect(await fits()).toEqual({ overflow: 0, scrolled: 0 });
+
+    await page.locator('.furniture-check .select2-selection').click();
+    await expect(page.locator('.furniture-check-dropdown')).toBeVisible();
+    expect(await fits()).toEqual({ overflow: 0, scrolled: 0 });
+
+    // And the dropdown is under the control it was opened from, which is the thing the
+    // page scrolling used to take away: it went up with the page and the control did not.
+    const [control, dropdown] = await Promise.all([
+        page.locator('.furniture-check .select2-selection').boundingBox(),
+        page.locator('.furniture-check-dropdown').boundingBox(),
+    ]);
+    expect(Math.abs(dropdown.y - (control.y + control.height))).toBeLessThan(2);
+
+    // Typing re-renders the list and repositions the dropdown, which is the other moment
+    // the page moved.
+    await page.locator('.select2-search__field').pressSequentially('Large');
+    await expect(page.locator('.furniture-check-dropdown .select2-results__option').first())
+        .toBeVisible();
+    expect(await fits()).toEqual({ overflow: 0, scrolled: 0 });
+});
+
+/**
+ * A save does not take an open dropdown away.
+ *
+ * Every edit starts a 600ms autosave, and a save ends in `refreshPanel`, which redraws
+ * every panel in the right column -- and a redraw has to shut the controls in it before
+ * it detaches them, or the column loses its scrolling for good. So a list opened in the
+ * second after any edit was closed under the pointer, for a write that changed nothing
+ * the list shows. The redraw waits for the list instead; see pendingPanels in panels.js.
+ *
+ * `saveFloor(true)` rather than an edit and a wait: it is the same call the timer makes,
+ * without a second of the test spent proving that setTimeout works.
+ */
+test('a save under an open dropdown leaves it open', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'EdenTower', 'Eden_OfficeFloor01');
+
+    const control = page.locator('#building-rooms .select2-selection').first();
+    await expect(control).toBeVisible();
+    await control.click();
+    await expect(page.locator('#building-rooms .select2-container--open')).toHaveCount(1);
+
+    /*
+     * Whether the rows standing in the panel are the ones that were there before.
+     *
+     * A redraw builds new ones, so a mark put on the old ones says which happened: still
+     * there and the redraw was held, gone and it has run. Nothing the panel displays
+     * would answer this -- a save changes what is on disk, and the point of the fix is
+     * that it changes nothing the room list shows.
+     */
+    const mark = () => page.locator('#building-rooms .room-row').first()
+        .evaluate((row) => { row.dataset.beforeSave = 'yes'; });
+    const marked = () => page.locator('#building-rooms .room-row[data-before-save]').count();
+
+    await mark();
+
+    const save = () => page.evaluate(async () => {
+        const { saveFloor } = await import('/flows/building/scripts/ui.js');
+        await saveFloor(true);
+    });
+
+    await save();
+    await expect(page.locator('#building-rooms .select2-container--open')).toHaveCount(1);
+    expect(await marked()).toBe(1);
+
+    // Held, not dropped: shutting the list runs it, and the rows it left are new ones.
+    await page.locator('.select2-search__field').press('Escape');
+    await expect(page.locator('#building-rooms .select2-container--open')).toHaveCount(0);
+    await expect.poll(marked).toBe(0);
+
+    // And the column still scrolls, which is the thing closing before a redraw protects:
+    // a control detached while its dropdown was open leaves select2's scroll handlers
+    // bound to this column for the life of the page.
+    const column = page.locator('#building-panels');
+    await column.evaluate((el) => { el.scrollTop = 40; });
+    expect(await column.evaluate((el) => el.scrollTop)).toBe(40);
+
+    // The held redraw ran once and left the panel usable rather than half-built.
+    await expect(page.locator('#building-rooms .select2-selection')).toHaveCount(
+        await page.locator('#building-rooms .room-row').count());
+});
+
+/**
+ * A category heading sits on the items under it, and does so the same way in every list.
+ *
+ * Three kinds of list are on this screen at once -- the checker's dropdown, headed by
+ * `<optgroup>`; the furniture list, headed by a `<summary>`; and the Browse menu, headed
+ * by two levels of them -- and they had drifted a long way apart, mostly by each undoing
+ * as much of Pico's `details[open] > summary { margin-bottom: 1rem }` as somebody had
+ * noticed at the time. The furniture list still had all of it.
+ *
+ * Asserted as relationships rather than as pixel counts, because what is worth keeping is
+ * that they agree: the numbers are set in `em` against lists at three different sizes.
+ * See --list-heading-gap in core/chrome.css.
+ */
+test('a category heading sits on its items, the same way in every list', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'EdenTower', 'Eden_OfficeFloor01');
+    await selectSquare(page, 4, 12);
+
+    /** The space between a heading's box and the first item's, which should be none. */
+    const gapUnder = (heading, item) => page.evaluate(([headSel, itemSel]) => {
+        const head = document.querySelector(headSel);
+        const first = document.querySelector(itemSel);
+        return Math.round(
+            (first.getBoundingClientRect().top - head.getBoundingClientRect().bottom) * 10) / 10;
+    }, [heading, item]);
+
+    // The dropdown, which is the one the others are modelled on.
+    await page.locator('.furniture-check .select2-selection').click();
+    await expect(page.locator('.furniture-check-dropdown')).toBeVisible();
+    expect(await gapUnder(
+        '.furniture-check-dropdown .select2-results__group',
+        '.furniture-check-dropdown .select2-results__group + * > *')).toBe(0);
+    await page.locator('.select2-search__field').press('Escape');
+
+    // The furniture list, where Pico's whole 1rem used to stand between an address preset
+    // and the first thing that could spawn under it.
+    await page.locator('#building-status .furniture-group summary').first().click();
+    expect(await gapUnder(
+        '#building-status .furniture-group[open] > summary',
+        '#building-status .furniture-group[open] .furniture-row')).toBe(0);
+
+    // And the Browse menu's two levels, which have to agree with each other: a building's
+    // first floor stands off its name as far as a floor's first layout stands off the
+    // floor's, and no further.
+    await page.locator('.browse > summary').click();
+    await page.evaluate(() => {
+        for (const details of document.querySelectorAll('.browse-menu details')) details.open = true;
+    });
+
+    const levels = await page.evaluate(() => {
+        const under = (details) => {
+            const summary = details.querySelector(':scope > summary');
+            const next = summary.nextElementSibling;
+            const first = next.matches('ul') ? next.firstElementChild : next;
+            return Math.round(
+                (first.getBoundingClientRect().top - summary.getBoundingClientRect().bottom) * 10) / 10;
+        };
+        return {
+            category: under(document.querySelector('.browse-menu .file-panel-category')),
+            subcategory: under(document.querySelector('.browse-menu .file-panel-subcategory')),
+        };
+    });
+    expect(levels.category).toBe(levels.subcategory);
+});
+
+/**
+ * The problems block, which is about the mod rather than about a square.
+ *
+ * `MyBookcaseIsland` is gated only by `allowedRoomFilters: OfficeSpace`, and the preset
+ * filling its slot sets neither `allowedInAddressesOfType` nor `allowedInBuildings` -- so
+ * it is offered to every office in the city rather than to this mod's tower. Nothing at
+ * run time reports that.
+ *
+ * Checked before any square is selected on purpose. That is the whole reason it is not a
+ * note inside the furniture section, which returns early with nothing selected.
+ */
+test('a mod whose cluster reaches the whole city is told so before anything is clicked',
+    async ({ page }) => {
+        await openBuildingFlow(page, modWithFurniture);
+        await open(page, 'EdenTower', 'Eden_OfficeFloor01');
+
+        const problems = page.locator('#building-status .mod-problems');
+
+        await expect(problems.locator('header')).toHaveText('A problem in this mod');
+        await expect(problems.locator('.mod-problem')).toHaveCount(1);
+        await expect(problems.locator('.mod-problem')).toHaveClass(/degrades/);
+
+        const text = problems.locator('.mod-problem');
+        await expect(text).toContainText('MyBookcaseIsland is gated only by room filters');
+        await expect(text).toContainText('OfficeSpace');
+        await expect(text).toContainText('MyOfficeBookcase');
+
+        // Still there once a square is selected, and still above the selection.
+        await selectSquare(page, 4, 12);
+        await expect(problems.locator('.mod-problem')).toHaveCount(1);
+    });
+
+test('a mod with nothing wrong with it gets no problems block', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'EdenTower', 'Eden_OfficeFloor01');
+    await selectSquare(page, 4, 12);
+
+    await expect(page.locator('#building-status .mod-problems')).toHaveCount(0);
+});
+
+test('choosing a mod with no furniture of its own says nothing about one', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'EdenTower', 'Eden_OfficeFloor01');
+    await selectSquare(page, 4, 12);
+
+    const selected = page.locator('#building-status .status-block').first();
+
+    // The ordinary case, and no line for it.
+    await expect(selected.locator('.furniture-source')).toHaveCount(0);
+    await expect(selected.locator('.furniture-unlisted')).toHaveCount(0);
+});
+
+/**
+ * Clicking a square selects it, and the whole column follows.
+ *
+ * What each part says is covered where it lives -- the pick in tools.unit.spec.js, the
+ * chain in furnitureChain.unit.spec.js, the blocks in buildingPanels.spec.js. What only
+ * this can check is that a real click on the canvas joins them up: a floor opens in None,
+ * so the click reads rather than writes, and one click has to fill all five rows and put
+ * the furniture under them. The mark it puts on the floor is the scene's, and is checked
+ * in buildingScene.spec.js where the scene can be driven directly.
+ */
+test('a click in none selects the square, and the column follows it', async ({ page }) => {
+    await openBuildingFlow(page);
+
+    // A CorporateLobby, which two address presets compete for -- so the grouping is
+    // exercised rather than merely the heading.
+    await open(page, 'EdenTower', 'Eden_OfficeFloor01');
+
+    await page.evaluate(async () => {
+        const { projectCell } = await import('/flows/building/scripts/ui.js');
+        const canvas = document.querySelector('#building-canvas canvas');
+        const at = projectCell(10, 10);
+
+        const send = (type, buttons) => canvas.dispatchEvent(new PointerEvent(type, {
+            pointerId: 1, button: 0, buttons, bubbles: true,
+            clientX: at.left, clientY: at.top,
+        }));
+
+        send('pointermove', 0);
+        send('pointerdown', 1);
+        send('pointerup', 0);
+    });
+
+    // The top block is the square that was clicked, not a brush.
+    const selected = page.locator('#building-status .status-block').first();
+    await expect(selected.locator('header:not(.furniture-header) strong'))
+        .toHaveText('Selected square');
+    await expect(selected.locator('.status-note').first()).toHaveText('Node 10, 10');
+
+    // All five rows filled from that one click, whichever tool is active -- a floor
+    // opens with the address tool, which used to be the only value a pick took.
+    for (const type of ['address', 'room', 'floorType', 'tile']) {
+        await expect(selected.locator(`.status-row[data-type="${type}"] .status-value`))
+            .not.toHaveText('—');
+    }
+
+    // And the furniture, under the selection. The fetch it needs is not awaited by
+    // openFloor, so this appearing is it resolving and redrawing the column by itself.
+    await expect(selected.locator('.furniture-header')).toHaveText('Furniture');
+    await expect(selected.locator('.furniture-group')).toHaveCount(2);
+
+    // Collapsed, and opened by the summary rather than by anything else on the column.
+    // The rows are absent rather than merely hidden: a closed `<details>` keeps its
+    // contents, and this column is rebuilt on every pointer move.
+    const group = selected.locator('.furniture-group').first();
+    await expect(group.locator('.furniture-row')).toHaveCount(0);
+    await group.locator('summary').click();
+    expect(await group.locator('.furniture-row').count()).toBeGreaterThan(0);
+});
+
+/**
+ * A selection belongs to the floor it was made on.
+ *
+ * Node 10,10 exists on every blueprint and is a different room in a different address on
+ * each, so a selection carried across is a coordinate being passed off as a place. The
+ * view has to be told as well as the tool state -- `setModel` re-places the mark rather
+ * than clearing it, because a layout variation switch rebuilds the grid under a selection
+ * that should survive that.
+ */
+test('opening another floor clears the selection', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'EdenTower', 'Eden_OfficeFloor01');
+
+    await page.evaluate(async () => {
+        const { projectCell } = await import('/flows/building/scripts/ui.js');
+        const canvas = document.querySelector('#building-canvas canvas');
+        const at = projectCell(10, 10);
+
+        const send = (type, buttons) => canvas.dispatchEvent(new PointerEvent(type, {
+            pointerId: 1, button: 0, buttons, bubbles: true,
+            clientX: at.left, clientY: at.top,
+        }));
+
+        send('pointermove', 0);
+        send('pointerdown', 1);
+        send('pointerup', 0);
+    });
+
+    const marked = () => page.evaluate(async () => {
+        const { markedSquare } = await import('/flows/building/scripts/ui.js');
+        return markedSquare();
+    });
+
+    const selected = page.locator('#building-status .status-block').first();
+    await expect(selected.locator('.status-note').first()).toHaveText('Node 10, 10');
+    await expect(selected.locator('.furniture-group')).toHaveCount(2);
+    expect(await marked()).toEqual({ x: 10, y: 10 });
+
+    // Another floor of the same building, through the same view -- which is the case
+    // that broke: ensureView keeps the scene, and setModel re-places the mark rather
+    // than clearing it, so the mark stayed on the new floor at the old coordinates
+    // while the panel said nothing was selected.
+    await open(page, 'EdenTower', 'Eden_OfficeFloor02');
+
+    expect(await marked()).toBeNull();
+
+    await expect(selected.locator('header:not(.furniture-header) strong'))
+        .toHaveText('Selected square');
+    await expect(selected.locator('.status-note').first())
+        .toHaveText('Click a square to select it');
+
+    // The five rows go back to dashes, and the furniture goes with them: it hung off a
+    // square of the floor that was open.
+    await expect(selected.locator('.status-row[data-type="address"] .status-value'))
+        .toHaveText('—');
+    await expect(selected.locator('.furniture-group')).toHaveCount(0);
+});
+
 test('a label never swallows the click that put it there', async ({ page }) => {
     await openBuildingFlow(page);
     await open(page, 'Hotel', 'Hotel_GroundFloor');
@@ -416,7 +913,7 @@ test('editing a base game floor writes it into the mod and stubs its building', 
 
     // And the base game's Hotel has become a stub the mod owns, which copies everything
     // it does not say from the original -- prefab, mesh, window data.
-    const stub = JSON.parse(await readFile(page, 'Plugins/MyTower/Hotel.sodso.json'));
+    const stub = JSON.parse(await readFile(page, 'Plugins/MyTower/Hotel.BuildingPreset.sodso.json'));
     expect(stub.copyFrom).toBe('REF:BuildingPreset|Hotel');
     expect(stub.fileType).toBe('BuildingPreset');
     expect(stub.prefab).toBeUndefined();
@@ -526,15 +1023,34 @@ test('the arrows move a storey at a time', async ({ page }) => {
     await expect(floorName(page)).toHaveText('Hotel_FirstFloor');
 
     // Down from the ground floor is the basement, because basementLayouts[0] is the
-    // storey immediately below it.
+    // storey immediately below it. Basement 1, not 0: the floor in that place is Floor 0.
     await down(page).click();
     await down(page).click();
-    await expect(storey(page)).toHaveText('Basement 0');
+    await expect(storey(page)).toHaveText('Basement 1');
     await expect(floorName(page)).toHaveText('Hotel_Basement1');
 
     // Nothing below the deepest basement to go to.
     await expect(down(page)).toBeDisabled();
     await expect(up(page)).toBeEnabled();
+});
+
+test('a floor setting covering several floors says which floors they are', async ({ page }) => {
+    await openBuildingFlow(page);
+
+    // Hotel's floorsWithThisSetting reads [1, 1, 1, 1, 1, 4, 1, 2], so its sixth setting
+    // is four floors of the building and the two above it are the tenth and the top two.
+    await open(page, 'Hotel', 'Hotel_TopFloors', slotAt(5));
+    await expect(storey(page)).toHaveText('Floors 5–8');
+
+    // Stepping up is one setting, which here is four floors of the building. The setting
+    // list would have called this Floor 6.
+    await up(page).click();
+    await expect(storey(page)).toHaveText('Floor 9');
+    await expect(floorName(page)).toHaveText('Hotel_RooftopBar');
+
+    await up(page).click();
+    await expect(storey(page)).toHaveText('Floors 10–11');
+    await expect(up(page)).toBeDisabled();
 });
 
 test('opening another floor paints with that floor’s address and room', async ({ page }) => {
@@ -573,7 +1089,8 @@ test('the top floor has nowhere further up', async ({ page }) => {
     await openBuildingFlow(page);
     await open(page, 'Hotel', 'Hotel_Penthouse', slotAt(7));
 
-    await expect(storey(page)).toHaveText('Floor 7');
+    // The eighth setting, and the top two floors of a twelve storey building.
+    await expect(storey(page)).toHaveText('Floors 10–11');
     await expect(up(page)).toBeDisabled();
 });
 
@@ -591,7 +1108,7 @@ test('a storey with more than one layout can be switched between them', async ({
     await expect(floorName(page)).toHaveText('Hotel_TopFloors2');
 
     // Still the same storey: switching layouts is not moving through the building.
-    await expect(storey(page)).toHaveText('Floor 5');
+    await expect(storey(page)).toHaveText('Floors 5–8');
 });
 
 test('a storey with one layout says so rather than offering nothing', async ({ page }) => {
@@ -630,18 +1147,57 @@ async function expandBuilding(page, building) {
     await page.click(`[data-category="${building}"] > summary`);
 }
 
+/** The dialog asking what a new storey starts as, and the answers it offers. */
+const startDialog = (page) => page.locator('#add-storey-modal');
+const startOption = (page, value) =>
+    startDialog(page).locator(`input[name="storey-start"][value="${value}"]`);
+
 /**
- * Press Add floor, which is at the foot of the building's section and so needs it open.
+ * Answer that dialog.
  *
- * Adding closes the menu and relists the buildings, and a building is listed collapsed,
- * so each of these starts from the menu being shut.
+ * Passing nothing takes what it came up with, which is what an author who agrees with it
+ * does -- and the only thing that can be done on a building with nothing to copy from,
+ * where every other answer is disabled.
  */
-async function addFloor(page, building) {
-    await expandBuilding(page, building);
-    await page.click(`[data-category="${building}"] > .file-panel-footer .file-panel-action`);
+async function chooseStoreyStart(page, start = null) {
+    await expect(startDialog(page)).toHaveAttribute('open', '');
+    if (start) await startOption(page, start).check();
+    await page.click('#add-storey-submit');
 }
 
-/** And Add layout, at the foot of one storey's section inside it. */
+/**
+ * Press Add floor or Add basement, which are at the foot of the building's section and
+ * so need the menu and the section open.
+ *
+ * Opened only where they are shut, rather than clicked at: adding closes the menu and
+ * relists the buildings collapsed, but dismissing the dialog leaves both as they were --
+ * and a click on an open section closes it, taking the button out of reach.
+ */
+async function openStoreyDialog(page, building, action) {
+    const menu = page.locator('#building-browse');
+    if (!await menu.evaluate((details) => details.open)) await page.click('#building-browse summary');
+
+    const category = page.locator(`[data-category="${building}"]`);
+    if (!await category.evaluate((details) => details.open)) {
+        await category.locator('> summary').click();
+    }
+
+    await page.click(`[data-category="${building}"] > .file-panel-footer [data-action="${action}"]`);
+}
+
+/** Add a floor to the top of a building, saying what it starts as. */
+async function addFloor(page, building, start = null) {
+    await openStoreyDialog(page, building, 'add-floor');
+    await chooseStoreyStart(page, start);
+}
+
+/** And a basement under the bottom of it. */
+async function addBasement(page, building, start = null) {
+    await openStoreyDialog(page, building, 'add-basement');
+    await chooseStoreyStart(page, start);
+}
+
+/** And Add layout, at the foot of one storey's section inside it. It asks nothing. */
 async function addLayout(page, building, storey) {
     await expandBuilding(page, building);
     await page.click(
@@ -683,7 +1239,20 @@ test('the first floor of a building is a lobby that can be painted straight away
         }),
     });
 
-    await addFloor(page, 'BareTower');
+    // There is nothing to copy from, so the dialog offers the one answer it can. Said
+    // and dimmed rather than hidden: what the button offers is worth reading even where
+    // most of it cannot be had yet.
+    await expandBuilding(page, 'BareTower');
+    await page.click('[data-category="BareTower"] > .file-panel-footer [data-action="add-floor"]');
+
+    await expect(page.locator('#add-storey-source')).toHaveText(/no storeys yet/);
+    for (const start of ['whole', 'fittings', 'outline']) {
+        await expect(startOption(page, start)).toBeDisabled();
+    }
+    await expect(startOption(page, 'empty')).toBeChecked();
+    await expect(startOption(page, 'empty')).toBeEnabled();
+
+    await page.click('#add-storey-submit');
     await expect(page.locator('#building-open-name')).toHaveText(/BareTower_Floor1/);
 
     // No gaps, no overlaps, no half-built walls -- the three things the editor reports
@@ -774,16 +1343,182 @@ test('a floor added above another is laid out like it', async ({ page }) => {
     expect(wallAt(10, 10)).toEqual([{ w_o: { x: -0.5, y: 0 }, p_n: '0' }]);
     expect(wallAt(9, 10)).toEqual([{ w_o: { x: 0.5, y: 0 }, p_n: '0' }]);
 
-    // The walls and nothing else. What is inside them is a storey's own: the floor below
-    // is offices with a raised floor, a stairwell and the building's main entrance.
+    // The walls, and the tiles holding the storey below's stairwell and main entrance:
+    // a stairwell has to sit in the same tile on every storey it passes through. What is
+    // inside the walls is a storey's own, so the offices and their raised floor do not
+    // come with it.
     expect(floor.a_d.map((address) => address.p_n)).toEqual(['Outside', 'Lobby']);
     expect(floor.a_d[1].vs[0].r_d.map((room) => room.l)).toEqual(['Lobby']);
     expect(floor.a_d[1].vs[0].r_d[0].n_d.every((node) => node.f_h === 0)).toBe(true);
-    expect(floor.t_d.filter((tile) => tile.s_t || tile.i_e || tile.m_e)).toEqual([]);
+    expect(floor.t_d.filter((tile) => tile.s_t || tile.i_e || tile.m_e))
+        .toEqual([{ f_c: { x: 3, y: 3 }, i_e: true, m_e: true, s_t: true, s_r: 0, e_l: false, e_r: 0 }]);
 
     // The lot size and the heights describe the building, not the storey.
     expect(floor.size).toEqual({ x: 1, y: 1 });
     expect(floor.defaultCeilingHeight).toBe(51);
+});
+
+test('a building the mod owns can be given a basement', async ({ page }) => {
+    await openBuildingFlow(page, {
+        ...modWithBuilding,
+        'Plugins/MyTower/Floors/MyTower_Ground.json': smallGroundFloor(),
+    });
+
+    await addBasement(page, 'MyTower');
+
+    // Named for where it is. The two lists are separate in the preset, and a basement
+    // called Floor is a file whose name says where it is and is wrong about it.
+    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Basement1/);
+    await expect.poll(() => listDir(page, 'Plugins/MyTower/Floors'))
+        .toEqual(['MyTower_Basement1.json', 'MyTower_Ground.json']);
+
+    // basementLayouts, not floorLayouts: the game counts one up from the ground floor
+    // and the other down from it, so which list a storey is in is where it is.
+    const preset = JSON.parse(await readFile(page, 'Plugins/MyTower/MyTower.sodso.json'));
+    expect(preset.basementLayouts).toHaveLength(1);
+    expect(preset.basementLayouts[0].blueprints).toEqual(['FLOOR:Floors/MyTower_Basement1']);
+    expect(preset.floorLayouts).toHaveLength(1);
+
+    // And laid out like the storey it hangs under, which is the ground floor.
+    const floor = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Basement1.json'));
+    expect(squaresOf(floor, 1)).toEqual([
+        '10,10', '10,11', '10,12', '11,10', '11,11', '11,12', '12,10', '12,11', '12,12',
+    ]);
+});
+
+test('the dialog says which storey a new one is copying from', async ({ page }) => {
+    await openBuildingFlow(page, {
+        ...modWithBuilding,
+        'Plugins/MyTower/Floors/MyTower_Ground.json': smallGroundFloor(),
+    });
+
+    // Which storey, rather than "the floor below": on a building whose menu is out of
+    // date that would be wrong, and it is not something an author can check.
+    await openStoreyDialog(page, 'MyTower', 'add-floor');
+
+    await expect(startDialog(page)).toHaveAttribute('open', '');
+    await expect(page.locator('#add-storey-title')).toHaveText('Add floor to MyTower');
+    await expect(page.locator('#add-storey-source')).toHaveText(/Floor 0.*sit on/);
+    await expect(startOption(page, 'fittings')).toBeChecked();
+
+    // Dismissing writes nothing. The building is asked about before anything is
+    // created, so backing out leaves the mod as it was.
+    await page.click('#add-storey-modal .close-button');
+    await expect(startDialog(page)).not.toHaveAttribute('open', '');
+    await expect.poll(() => listDir(page, 'Plugins/MyTower/Floors'))
+        .toEqual(['MyTower_Ground.json']);
+
+    // A basement is the same question the other way up: it hangs under the deepest
+    // storey there is, which here is that same floor.
+    await openStoreyDialog(page, 'MyTower', 'add-basement');
+
+    await expect(page.locator('#add-storey-title')).toHaveText('Add basement to MyTower');
+    await expect(page.locator('#add-storey-source')).toHaveText(/Floor 0.*sit under/);
+    await expect(page.locator('#add-storey-submit')).toHaveText('Add basement');
+});
+
+test('a new storey can start as the whole of the one it sits against', async ({ page }) => {
+    await openBuildingFlow(page, {
+        ...modWithBuilding,
+        'Plugins/MyTower/Floors/MyTower_Ground.json': smallGroundFloor(),
+    });
+
+    await addFloor(page, 'MyTower', 'whole');
+    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor1/);
+
+    const floor = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Floor1.json'));
+    const source = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Ground.json'));
+
+    // Everything, as another layout of one storey gets: the rooms with their names, the
+    // raised floor, the stairwell. Its name is the whole of the difference.
+    expect({ ...floor, floorName: source.floorName }).toEqual(source);
+});
+
+test('a new storey can start as the outline of the one it sits against', async ({ page }) => {
+    await openBuildingFlow(page, {
+        ...modWithBuilding,
+        'Plugins/MyTower/Floors/MyTower_Ground.json': smallGroundFloor(),
+    });
+
+    await addFloor(page, 'MyTower', 'outline');
+    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor1/);
+    await expect(page.locator('#building-open-issues')).toHaveClass(/hidden/);
+
+    const floor = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Floor1.json'));
+
+    // The same footprint and the wall around it, both halves.
+    expect(squaresOf(floor, 1)).toEqual([
+        '10,10', '10,11', '10,12', '11,10', '11,11', '11,12', '12,10', '12,11', '12,12',
+    ]);
+    const wallAt = (x, y) => floor.a_d.flatMap((address) => address.vs[0].r_d)
+        .flatMap((room) => room.n_d)
+        .find((node) => node.f_c.x === x && node.f_c.y === y).w_d;
+    expect(wallAt(10, 10)).toEqual([{ w_o: { x: -0.5, y: 0 }, p_n: '0' }]);
+    expect(wallAt(9, 10)).toEqual([{ w_o: { x: 0.5, y: 0 }, p_n: '0' }]);
+
+    // And nothing drawn inside it -- which is what separates this from the answer above
+    // it in the dialog: the storey below's stairwell and entrance stay behind too.
+    expect(floor.a_d[1].vs[0].r_d.map((room) => room.l)).toEqual(['Lobby']);
+    expect(floor.t_d.filter((tile) => tile.s_t || tile.i_e || tile.m_e)).toEqual([]);
+});
+
+test('a new floor can be the roof over the one below it', async ({ page }) => {
+    await openBuildingFlow(page, {
+        ...modWithBuilding,
+        'Plugins/MyTower/Floors/MyTower_Ground.json': smallGroundFloor(),
+    });
+
+    await addFloor(page, 'MyTower', 'roof');
+    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor1/);
+    await expect(page.locator('#building-open-issues')).toHaveClass(/hidden/);
+
+    const floor = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Floor1.json'));
+
+    // Rooftop where the storey below is indoors, open air everywhere else. What the
+    // derivation is exactly is roofGenerator.unit.spec.js; what this pins is that the
+    // answer in the dialog reaches it.
+    expect(floor.a_d.map((address) => address.p_n)).toEqual(['Outside', 'VentedRooftop']);
+    expect(squaresOf(floor, 1)).toEqual([
+        '10,10', '10,11', '10,12', '11,10', '11,11', '11,12', '12,10', '12,11', '12,12',
+    ]);
+
+    const roofNodes = floor.a_d[1].vs[0].r_d.flatMap((room) => room.n_d);
+    expect(floor.a_d[1].vs[0].r_d.map((room) => room.l)).toEqual(['Rooftop']);
+    expect(roofNodes.every((node) => node.f_t === 2)).toBe(true);
+    expect(roofNodes.every((node) => node.w_d.every((wall) => wall.p_n === '11'))).toBe(true);
+});
+
+test('a basement is not offered a roof', async ({ page }) => {
+    await openBuildingFlow(page, {
+        ...modWithBuilding,
+        'Plugins/MyTower/Floors/MyTower_Ground.json': smallGroundFloor(),
+    });
+
+    // A roof goes on the top of a building. Under the bottom of one it is not an answer
+    // that cannot be had yet, it is not an answer -- so it is gone rather than dimmed.
+    await openStoreyDialog(page, 'MyTower', 'add-basement');
+    await expect(startOption(page, 'roof')).toBeHidden();
+    await expect(startOption(page, 'whole')).toBeVisible();
+
+    await page.click('#add-storey-modal .close-button');
+    await openStoreyDialog(page, 'MyTower', 'add-floor');
+    await expect(startOption(page, 'roof')).toBeVisible();
+});
+
+test('a new storey can start empty, on a building that has floors already', async ({ page }) => {
+    await openBuildingFlow(page, {
+        ...modWithBuilding,
+        'Plugins/MyTower/Floors/MyTower_Ground.json': smallGroundFloor(),
+    });
+
+    await addFloor(page, 'MyTower', 'empty');
+    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor1/);
+    await expect(page.locator('#building-open-issues')).toHaveClass(/hidden/);
+
+    // The whole lot, not the nine squares below it: nothing of the storey underneath,
+    // which is the answer for a storey that is not the same shape as what it sits on.
+    const floor = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Floor1.json'));
+    expect(floor.a_d[1].vs[0].r_d[0].n_d).toHaveLength(15 * 15);
 });
 
 test('a floor added straight after a stroke is laid out like what was just drawn', async ({ page }) => {
@@ -823,8 +1558,12 @@ test('a floor added straight after a stroke is laid out like what was just drawn
         send('pointerup', 0);
 
         document.querySelector(
-            '[data-category="MyTower"] > .file-panel-footer .file-panel-action').click();
+            '[data-category="MyTower"] > .file-panel-footer [data-action="add-floor"]').click();
     });
+
+    // The dialog is answered from here, which is after the race has already been won or
+    // lost: what it asks about was read when it opened.
+    await chooseStoreyStart(page);
 
     await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor1/);
 
@@ -834,24 +1573,39 @@ test('a floor added straight after a stroke is laid out like what was just drawn
     ]);
 });
 
-test('another layout of a floor is laid out like the floor it is a layout of', async ({ page }) => {
+test('another layout of a floor is a copy of the floor it is a layout of', async ({ page }) => {
     await openBuildingFlow(page, {
         ...modWithBuilding,
         'Plugins/MyTower/Floors/MyTower_Ground.json': smallGroundFloor(),
     });
 
     // The alternatives the game picks between for one storey are alternative layouts of
-    // the same storey, so a new one starts from that storey rather than from the one
-    // below it.
+    // the same storey, so a new one starts as that storey copied whole -- to be altered,
+    // rather than laid out again from its walls.
     await addLayout(page, 'MyTower', 'f0');
     await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Floor0_v1/);
 
     const floor = JSON.parse(
         await readFile(page, 'Plugins/MyTower/Floors/MyTower_Floor0_v1.json'));
+    const source = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Ground.json'));
 
     expect(squaresOf(floor, 1)).toEqual([
         '10,10', '10,11', '10,12', '11,10', '11,11', '11,12', '12,10', '12,11', '12,12',
     ]);
+
+    // The interior as well as the footprint: the addresses with their layouts and
+    // colours, the rooms in them, the raised floor, and the storey's stairwell and main
+    // entrance. Where a floor added above drops each of these, a second layout of one
+    // storey is the same storey and keeps them.
+    expect(floor.a_d.map((address) => address.p_n)).toEqual(['Outside', 'Lobby']);
+    expect(floor.a_d[1].e_c).toEqual({ r: 0, g: 1, b: 0, a: 1 });
+    expect(floor.a_d[1].vs[0].r_d.map((room) => room.l)).toEqual(['Office']);
+    expect(floor.a_d[1].vs[0].r_d[0].n_d.every((node) => node.f_h === 2)).toBe(true);
+    expect(floor.t_d).toEqual(source.t_d);
+
+    // Its name and nothing else. Two files naming one floor is one of them shadowing the
+    // other, so that is the one field a copy may not share.
+    expect({ ...floor, floorName: source.floorName }).toEqual(source);
 });
 
 test('a second floor does not take the first one\'s name', async ({ page }) => {
@@ -1012,7 +1766,7 @@ test('a new building can copy from a base game one', async ({ page }) => {
 
     await submitAddBuilding(page, 'GrandHotel');
 
-    const preset = JSON.parse(await readFile(page, 'Plugins/MyTower/GrandHotel.sodso.json'));
+    const preset = JSON.parse(await readFile(page, 'Plugins/MyTower/GrandHotel.BuildingPreset.sodso.json'));
     expect(preset.presetName).toBe('GrandHotel');
     expect(preset.name).toBe('Grand Hotel');
     expect(preset.copyFrom).toBe('REF:BuildingPreset|Hotel');
@@ -1036,12 +1790,36 @@ test('a new building is named in the mod\'s manifest', async ({ page }) => {
     await submitAddBuilding(page, 'GrandHotel');
 
     // Without this the preset sits in the folder and the loader never reads it, which
-    // in game is a building that is simply not in the city. The mod had no manifest, so
-    // one is written for it -- see core/murderManifest.js.
+    // in game is a building that is simply not in the city. Appended rather than
+    // replacing: the order is the author's -- see core/murderManifest.js.
     await expect.poll(async () => {
         const raw = await readFile(page, 'Plugins/MyTower/murdermanifest.sodso.json');
         return raw ? JSON.parse(raw).fileOrder : null;
-    }).toEqual(['REF:GrandHotel']);
+    }).toEqual(['REF:MyTower', 'REF:GrandHotel.BuildingPreset']);
+});
+
+test('a folder with no manifest gets one when a building is added to it', async ({ page }) => {
+    // The other way into the flow: a folder that is content because of its DDS text, not
+    // because of a manifest. It is the one case left where adding a building writes the
+    // mod's first manifest -- a folder that already holds a building necessarily has one,
+    // because that is what makes it a building folder. See core/modFolders.js.
+    // Set up by hand rather than through openBuildingFlow, which selects MyTower.
+    await installFsHarness(page);
+    await page.addInitScript(() =>
+        localStorage.setItem('SOD_MurderCaseBuilder_SpoilerWarningDismissed', 'true'));
+    await gotoFlow(page, '?flow=building');
+    await seedFs(page, { 'Plugins/DdsOnly/DDSContent/DDS/Blocks/.keep': '' });
+    await connectFolders(page, { modDir: 'Plugins' });
+    await selectContent(page, 'DdsOnly', '');
+
+    await openAddBuilding(page);
+    await page.fill('#new-building-title', 'Grand Hotel');
+    await submitAddBuilding(page, 'GrandHotel');
+
+    await expect.poll(async () => {
+        const raw = await readFile(page, 'Plugins/DdsOnly/murdermanifest.sodso.json');
+        return raw ? JSON.parse(raw).fileOrder : null;
+    }).toEqual(['REF:GrandHotel.BuildingPreset']);
 });
 
 test('a new building\'s title is written where the game reads it from', async ({ page }) => {
@@ -1066,7 +1844,7 @@ test('a building of its own copies from nothing', async ({ page }) => {
     await page.fill('#new-building-title', 'Thing');
     await submitAddBuilding(page, 'Thing');
 
-    const preset = JSON.parse(await readFile(page, 'Plugins/MyTower/Thing.sodso.json'));
+    const preset = JSON.parse(await readFile(page, 'Plugins/MyTower/Thing.BuildingPreset.sodso.json'));
     expect(preset.copyFrom).toBe(null);
 });
 
@@ -1083,7 +1861,7 @@ test('the preset name can differ from the title', async ({ page }) => {
 
     await submitAddBuilding(page, 'MyMod_GrandHotel');
 
-    const preset = JSON.parse(await readFile(page, 'Plugins/MyTower/MyMod_GrandHotel.sodso.json'));
+    const preset = JSON.parse(await readFile(page, 'Plugins/MyTower/MyMod_GrandHotel.BuildingPreset.sodso.json'));
     expect(preset.presetName).toBe('MyMod_GrandHotel');
     expect(preset.name).toBe('Grander Hotel');
 
@@ -1140,6 +1918,9 @@ test('New content lays out a folder that reads back as a building mod', async ({
         localStorage.setItem('SOD_MurderCaseBuilder_SpoilerWarningDismissed', 'true'));
     await gotoFlow(page, '?flow=building');
     await seedFs(page, {
+        'Plugins/MyTower/Tower/murdermanifest.sodso.json': json({
+            enabled: true, fileOrder: ['REF:MyTower'], loadBefore: '', version: 1,
+        }),
         'Plugins/MyTower/Tower/MyTower.sodso.json': json({
             name: 'MyTower', presetName: 'MyTower', type: 'BuildingPreset',
             fileType: 'BuildingPreset', copyFrom: null, floorLayouts: [],
@@ -1155,9 +1936,9 @@ test('New content lays out a folder that reads back as a building mod', async ({
     await expect(page.locator('#select-content')).toHaveValue('SecondTower');
 
     const files = await listDir(page, 'Plugins/MyTower/SecondTower');
-    expect(files.sort()).toEqual(['Floors', 'SecondTower.sodso.json', 'murdermanifest.sodso.json']);
+    expect(files.sort()).toEqual(['Floors', 'SecondTower.BuildingPreset.sodso.json', 'murdermanifest.sodso.json']);
 
-    const preset = JSON.parse(await readFile(page, 'Plugins/MyTower/SecondTower/SecondTower.sodso.json'));
+    const preset = JSON.parse(await readFile(page, 'Plugins/MyTower/SecondTower/SecondTower.BuildingPreset.sodso.json'));
     expect(preset.fileType).toBe('BuildingPreset');
     expect(preset.name).toBe('SecondTower');
 
@@ -1165,10 +1946,10 @@ test('New content lays out a folder that reads back as a building mod', async ({
     // not laid out without one.
     const manifest = JSON.parse(
         await readFile(page, 'Plugins/MyTower/SecondTower/murdermanifest.sodso.json'));
-    expect(manifest.fileOrder).toEqual(['REF:SecondTower']);
+    expect(manifest.fileOrder).toEqual(['REF:SecondTower.BuildingPreset']);
 
-    // The Floors directory is what marks the folder as holding buildings, so it exists
-    // from the start rather than appearing with the first floor.
+    // The Floors directory exists from the start rather than appearing with the first
+    // floor, so there is somewhere to save one into.
     const described = await page.evaluate(async () => {
         const { findContentFolders, describeContentFolder } = await import('/core/modFolders.js');
         const plugins = await window.__opfsDir('Plugins', false);
@@ -1177,8 +1958,9 @@ test('New content lays out a folder that reads back as a building mod', async ({
     });
 
     // "case" is what a manifest reads as, and a building mod written here has one --
-    // see core/murderManifest.js. What matters to this flow is the "building" half,
-    // which is the Floors directory.
+    // see core/murderManifest.js. The "building" half is that same manifest naming a
+    // preset that says BuildingPreset, so laying out one without the other would leave
+    // a folder this flow could not reopen.
     expect(described).toContain('SecondTower — case + building');
 });
 
@@ -1274,6 +2056,9 @@ test('leaving the flow gives back the WebGL context', async ({ page }) => {
 test('changing content folder closes what was open', async ({ page }) => {
     await openBuildingFlow(page, {
         ...modWithBuilding,
+        'Plugins/OtherMod/murdermanifest.sodso.json': json({
+            enabled: true, fileOrder: ['REF:Other'], loadBefore: '', version: 1,
+        }),
         'Plugins/OtherMod/Other.sodso.json': json({
             name: 'Other', fileType: 'BuildingPreset', type: 'BuildingPreset', copyFrom: null,
         }),

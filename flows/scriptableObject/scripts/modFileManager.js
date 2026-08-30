@@ -1,6 +1,7 @@
 import { createFileIfMissing, deepClone } from '../../../core/files.js';
 import { makeCSVSafe, makeNameFieldSafe } from '../../../core/strings.js';
-import { PATCH_SUFFIX } from './contentList.js';
+import { refFor } from '../../../core/murderManifest.js';
+import { PATCH_SUFFIX, PRESET_SUFFIX, stemFor } from '../../../core/soFileName.js';
 
 /**
  * Lay out a new case inside a content folder: the preset it revolves around, and the
@@ -25,7 +26,11 @@ export async function scaffoldCase(folder, name, type) {
 
     await createFileIfNotExisting('murdermanifest', 'MurderManifest', folder, (content) => {
         if (hasPreset) {
-            content.fileOrder.splice(0, 0, `REF:${name.toLowerCase()}`);
+            // Named exactly as the file is named. This used to lowercase what it wrote,
+            // which `isListed` tolerates and the loader does too -- but an entry that
+            // does not match the file it names is one an author has to read twice, and
+            // there is now more of it to disagree about.
+            content.fileOrder.splice(0, 0, refFor(stemFor(name, type)));
         }
         return content;
     });
@@ -74,21 +79,37 @@ export function cloneTemplate(template) {
 }
 
 /**
- * An override: a partial file the loader applies over the base game asset of the same
- * name. A new one overrides nothing, so it holds only what identifies it -- the asset,
- * which the file name repeats, and the type, which a patch has no other way to state.
+ * An override: a list of changes the loader makes to the base game asset of the same name.
+ * A new one changes nothing, so it holds what identifies it -- the asset, which the file
+ * name repeats, and the type, which a patch has no other way to state -- and an empty list.
+ *
+ * The list is what marks the file as this format rather than the one it replaces, so it is
+ * written even when it is empty. See scripts/patchFormat.js.
  */
 export async function createOverrideIfNotExisting(name, type, handle) {
-    return createFileIfMissing(handle, [`${name}${PATCH_SUFFIX}`], () => ({ name, fileType: type }));
+    return createFileIfMissing(handle, [`${name}${PATCH_SUFFIX}`], () => ({ name, fileType: type, patches: [] }));
 }
 
+/**
+ * Create one of the mod's own assets, and answer with the file it is stored as.
+ *
+ * The stem is the caller's next problem rather than an afterthought: the manifest has to
+ * name the file, and the file is not named after the asset alone -- see
+ * core/soFileName.js.
+ *
+ * The manifest is the one file here that is not a typed asset, so it is the one file
+ * whose name carries no type. That is the same fact as its having no `fileType`, which
+ * is why one test governs both.
+ */
 export async function createFileIfNotExisting(filename, type, handle, newFileContentCallback) {
-    const segments = Array.isArray(filename) ? filename : [`${filename}.sodso.json`];
+    const isAsset = type !== 'MurderManifest';
+    const stem = isAsset ? stemFor(filename, type) : filename;
 
-    return createFileIfMissing(handle, segments, () => {
+    await createFileIfMissing(handle, [`${stem}${PRESET_SUFFIX}`], () => {
         const template = cloneTemplate(type);
-        // The manifest describes the mod rather than being a typed asset itself.
-        if (type !== 'MurderManifest') template.fileType = type;
+        if (isAsset) template.fileType = type;
         return newFileContentCallback(template);
     });
+
+    return stem;
 }

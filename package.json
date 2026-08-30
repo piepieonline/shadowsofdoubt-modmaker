@@ -5,7 +5,7 @@
   "description": "Tooling for the Shadows of Doubt Mod Maker. The app itself is zero-build static files; npm is only needed to run tests and the local dev server.",
   "type": "module",
   "scripts": {
-    "serve": "http-server -a 127.0.0.1 -c-1",
+    "serve": "http-server -c-1",
     "cert": "test -f cert.pem -a -f key.pem || openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365 -subj '/CN=localhost' 2>/dev/null && echo 'Self-signed cert ready (cert.pem, key.pem).'",
     "preserve:lan": "npm run cert",
     "serve:lan": "http-server -c-1 -S",

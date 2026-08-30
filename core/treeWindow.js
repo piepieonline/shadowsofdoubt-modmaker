@@ -23,6 +23,32 @@ export const WindowPolicy = {
 };
 
 /**
+ * Told when a window opens or closes.
+ *
+ * Every window in both document flows is created and removed through this module, so
+ * this is the one place that knows what is open without knowing what any of it means.
+ * core/urlState.js listens, and that is why keeping the URL up to date needs no
+ * plumbing in either flow.
+ */
+const listeners = new Set();
+
+export function onWindowsChanged(fn) {
+    listeners.add(fn);
+    return () => listeners.delete(fn);
+}
+
+const notify = () => { for (const fn of listeners) fn(); };
+
+/**
+ * Say the set of windows changed without going through this module to do it.
+ *
+ * For a window that is neither opened nor closed but becomes a different document:
+ * renaming a preset renames its file, and the window keeps its place while what it is
+ * showing is now at another path.
+ */
+export const windowsChanged = notify;
+
+/**
  * Create an empty window and its tree container.
  *
  * @param id         unique element id; if one already exists, returns null so the
@@ -44,18 +70,23 @@ export function createWindowShell({ id, parent, attributes = {} }) {
     windowEl.appendChild(treeEl);
     parent.appendChild(windowEl);
 
+    notify();
     return { windowEl, treeEl };
 }
 
 /** Remove a window. Tolerates null so callers need not guard. */
 export function closeWindow(element) {
-    element?.remove();
+    if (!element) return;
+    element.remove();
+    notify();
 }
 
 /**
  * Append a row of buttons built from a flow-supplied action list.
  *
- * @param actions [{ label, onClick, when }] -- entries with `when === false` are skipped
+ * @param actions [{ label, onClick, when, title }] -- entries with `when === false` are
+ *                skipped. `title` is for a button whose label is too short to say what it
+ *                does; the label alone has to be, for the rest.
  */
 export function renderActions(container, actions, buttonClass) {
     for (const action of actions) {
@@ -64,6 +95,7 @@ export function renderActions(container, actions, buttonClass) {
         const className = action.className ?? buttonClass;
         if (className) button.className = className;
         button.innerText = action.label;
+        if (action.title) button.title = action.title;
         button.addEventListener('click', action.onClick);
         container.appendChild(button);
     }
