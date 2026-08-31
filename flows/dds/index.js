@@ -36,11 +36,11 @@ const ROOT_TYPES = {
 };
 
 
-export async function initAndLoad(path) {
+export async function initAndLoad(path, openTheseIds = null) {
     window.stringMapping = {};
     window.moddedStringMapping = {};
     await loadI18n();
-    await loadFile(path, 0);
+    await loadFile(path, 0, null, openTheseIds);
 }
 
 export async function loadI18n() {
@@ -96,6 +96,27 @@ export async function loadI18n() {
     }
 }
 
+/**
+ * Which document to open at the level below this one: the one asked for, if this
+ * document really holds it, and otherwise the first -- which is what opening a document
+ * has always cascaded into.
+ *
+ * A route is asked for by whatever knows where it is going, the reverse search above
+ * all. It is read out of the generated index, which describes the base game: a mod patch
+ * can have taken the link out from under it since, and opening a message this tree no
+ * longer holds would be a drill-down describing nothing.
+ *
+ * @param elements the array the level below is chosen from, `messages` or `blocks`
+ * @param key      the field of an element holding the GUID, `msgID` or `blockID`
+ */
+function childToOpen(elements, key, requested) {
+    const ids = (elements ?? [])
+        .map((element) => element[key])
+        .filter((id) => GUID_PATTERN.test(id));
+
+    return ids.includes(requested) ? requested : ids[0];
+}
+
 export async function loadFile(path, thisTreeCount, parentData = null, openTheseIds = null) {
     var data = null;
     var fileType;
@@ -141,19 +162,17 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
 
     if(path.endsWith(".tree")) {
         fileType = 'tree';
-        let validMessageId = data.messages.find(msg => GUID_PATTERN.test(msg.msgID))?.msgID;
+        // The rest of the route belongs to the levels below this one.
+        const messageId = childToOpen(data.messages, 'msgID', openTheseIds?.[0]);
 
-        if(openTheseIds) {
-                
-        }
-
-        if(validMessageId)
-            await loadFile(`DDS/Messages/${validMessageId}.msg`, 1, data)
+        if(messageId)
+            await loadFile(`DDS/Messages/${messageId}.msg`, 1, data, openTheseIds?.slice(1))
     } else if(path.endsWith(".msg")) {
         fileType = 'message';
-        let validBlockId = data.blocks.find(block => GUID_PATTERN.test(block.blockID))?.blockID;
-        if(validBlockId)
-            await loadFile(`DDS/Blocks/${validBlockId}.block`, 2, data)
+        const blockId = childToOpen(data.blocks, 'blockID', openTheseIds?.[0]);
+
+        if(blockId)
+            await loadFile(`DDS/Blocks/${blockId}.block`, 2, data)
     } else if(path.endsWith('.block')) {
         fileType = 'block';
     }

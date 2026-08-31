@@ -316,6 +316,19 @@ export function overlayChain(base, assets) {
         clusters: { ...base.clusters },
         furniture: { ...base.furniture },
         classes: { ...base.classes },
+
+        // Carried across untouched, and the one block here a mod can never add to:
+        // `DoorPairPreset` is deliberately absent from `READERS`, because a blueprint
+        // stores a wall as an index into the game's own list and a mod's own has no
+        // index this editor could know.
+        //
+        // Copied all the same rather than left out. Leaving it out is what this used to
+        // do, and every wall preset then resolved to `{}` the moment any mod was
+        // selected -- so `section` was undefined, every `wallOrUpperVent` rule failed,
+        // and a mailbox or an ATM against a plain wall was reported as wanting one. The
+        // wall *count* was unaffected, which is what made it read as the count being
+        // wrong rather than the table being gone.
+        walls: { ...base.walls },
     };
 
     if (!assets?.length) return { ...merged, applied: [] };

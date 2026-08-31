@@ -1,16 +1,37 @@
 import { scaffoldCase } from './modFileManager.js';
-import { renderFilePanel, filterCategories } from '../../../core/filePanel.js';
+import {
+    renderFilePanel, filterCategories, withoutEntries, countEntries,
+} from '../../../core/filePanel.js';
 import { searchSelect } from '../../../core/components/searchSelect/searchSelect.js';
 import { tryGetFile } from '../../../core/fs.js';
 import { decodeList, encodeList, syncNow } from '../../../core/urlState.js';
 import { listContent } from './contentList.js';
 import { deleteAsset } from './deleteAsset.js';
+import { forgetScannedTypes } from './assetScan.js';
 import { initAndLoad, loadFile, loadFileFromFolder, loadFileFromOnlineRepo, openBaseGameAsset, reloadManifestPanel, showNewCasePopup, closeNewCasePopup, Source } from '../index.js';
 
 //Manifest Panel
 export function toggleManifestPanel() {
 	document.querySelector('#manifest_panel .jsontree-container').classList.toggle("hidden");
 	document.querySelector('#manifest_panel .files-order').classList.toggle("hidden");
+}
+
+/**
+ * What Help/Summary in the bar's Tools menu opens.
+ *
+ * Under the id the other two flows use for theirs, which is safe because only one flow
+ * is mounted at a time -- and named as they name theirs, so the menu is the same markup
+ * in all three bars rather than three ways of saying one thing. See the note above
+ * showHelp in flows/building/scripts/ui.js.
+ */
+const HELP_MODAL = '#help-modal';
+
+export function showHelp() {
+	document.querySelector(HELP_MODAL)?.setAttribute('open', '');
+}
+
+export function closeHelp() {
+	document.querySelector(HELP_MODAL)?.removeAttribute('open');
 }
 
 /**
@@ -51,6 +72,11 @@ export async function onFoldersConnected() {
 	// when that has actually changed: this is called for every folder, and rebuilding
 	// the lists closes whichever of them is open.
 	if (Boolean(window.dirHandleExportedSOPath) !== builtWithExport) updateAssetModel();
+
+	// And what a field summary has already read, for the same reason: an export connected
+	// mid-session is a different set of assets to answer from, and the ones read before it
+	// arrived were whatever this tool happens to ship.
+	forgetScannedTypes();
 }
 
 /** A content folder was chosen in the shell: show its manifest and its files. */
@@ -62,13 +88,17 @@ export async function onModSelected(selection) {
 	}
 
 	// A search left over from the last mod would narrow this one to a list of nothing,
-	// and read as a folder with nothing in it.
+	// and read as a folder with nothing in it. The filter beside it, for the same reason
+	// and more so: it takes files out without anything having been typed to explain why.
 	setFileSearch('');
+	setFileFilters([]);
 
 	await refreshPanel();
 }
 
 const FILE_SEARCH = '#so-file-search';
+const FILE_FILTER = '#so-file-filter';
+const FILE_HIDDEN = '#so-file-hidden';
 
 /** What the panel is currently narrowed by, kept across the rebuilds below. */
 let fileSearch = '';
@@ -167,21 +197,95 @@ function setFileSearch(value) {
 	if (box) box.value = value;
 }
 
-function renderPanel() {
-	const shown = filterCategories(listing, fileSearch);
+/**
+ * Which kinds of file the panel has been asked not to show, as `roomPermissions.js` names
+ * them. Empty is everything, which is why the menu holds no row saying so: not filtering
+ * is what an untouched menu already means.
+ */
+let fileFilters = new Set();
 
-	// A search that matches nothing says so, rather than leaving a panel that has just
-	// gone blank to be read as a folder that has emptied.
-	const searchedOut = Boolean(listing?.length) && shown.length === 0;
+/**
+ * A box in the filter menu was ticked or unticked.
+ *
+ * The folder is not read again. What is filtered was worked out when each file was
+ * parsed, so this is the same cheap path as typing in the search box.
+ */
+export function toggleFileFilter(kind, exclude) {
+	if (exclude) fileFilters.add(kind);
+	else fileFilters.delete(kind);
+
+	renderPanel();
+}
+
+/** Put the filter back to `kinds`, both the state and what the boxes show. */
+function setFileFilters(kinds) {
+	fileFilters = new Set(kinds);
+
+	for (const box of document.querySelectorAll(`${FILE_FILTER} input[type="checkbox"]`)) {
+		box.checked = fileFilters.has(box.value);
+	}
+}
+
+/** What a filtered panel holds altogether, however deeply it is grouped. */
+const total = (categories) =>
+	(categories ?? []).reduce((count, category) => count + countEntries(category), 0);
+
+function renderPanel() {
+	// Filtered first and searched second, so that what is typed searches what is on offer.
+	// The unfiltered search is kept because the difference between the two is the number
+	// of files the filter is holding back from this very list -- which is the honest
+	// figure to report, rather than the count for the whole folder.
+	const searched = filterCategories(listing, fileSearch);
+	const shown = filterCategories(
+		withoutEntries(listing, fileFilters.size ? (entry) => fileFilters.has(entry.permission) : null),
+		fileSearch
+	);
+
+	const hidden = total(searched) - total(shown);
+	showHiddenCount(hidden);
+
+	// An empty panel says why it is empty, rather than being left to read as a folder that
+	// has emptied. Two reasons now, and the filter is the one an author cannot see for
+	// themselves: nothing was typed to explain it.
+	const nothingLeft = Boolean(listing?.length) && shown.length === 0;
+	const searchTerm = fileSearch.trim();
 
 	renderFilePanel(
 		'#so-file-list',
-		searchedOut ? null : shown,
+		nothingLeft ? null : shown,
 		(entry) => loadFile(entry.id, false, entry.openAs, entry.suffix),
-		searchedOut
-			? `Nothing here is called "${fileSearch.trim()}".`
+		nothingLeft ? emptyBecause(hidden, searchTerm)
 			: 'Choose a mod and content folder to see what it contains.'
 	);
+}
+
+/** Why a panel of a folder that holds files is showing none of them. */
+function emptyBecause(hidden, searchTerm) {
+	if (hidden > 0) {
+		return searchTerm
+			? `Everything called "${searchTerm}" here is hidden by the filter.`
+			: 'Everything here is hidden by the filter.';
+	}
+
+	return `Nothing here is called "${searchTerm}".`;
+}
+
+/**
+ * How much of the list the filter is keeping out of sight.
+ *
+ * Said out loud rather than left to the state of a button. A file browser that quietly
+ * omits files is one an author reads as a folder that does not hold them -- the same
+ * reason an empty panel gives its reason above.
+ */
+function showHiddenCount(hidden) {
+	const line = document.querySelector(FILE_HIDDEN);
+	if (line) {
+		line.hidden = hidden === 0;
+		line.textContent = `${hidden} ${hidden === 1 ? 'file' : 'files'} hidden by the filter`;
+	}
+
+	// And the button carries it too, for the moment the line is scrolled off the top.
+	document.querySelector(FILE_FILTER)?.classList.toggle('filtering', fileFilters.size > 0);
 }
 
 export async function enableAssetOnlyMode(skipAssetModel) {
@@ -191,8 +295,9 @@ export async function enableAssetOnlyMode(skipAssetModel) {
 }
 
 export async function toggleEditMode(editingMode) {
+	// Hiding the panel is the whole of it: the workspace is a flex row, so what is left
+	// takes the width. It used to need a second class to swap the grid's columns over.
 	document.getElementById('manifest_panel').classList.toggle('hidden', !editingMode)
-	document.getElementById('files-section-container').classList.toggle('file-section-edit-mode', editingMode)
 	document.getElementById('editing-mode-control-group').classList.toggle('hidden', !editingMode)
 	document.getElementById('viewing-mode-control-group').classList.toggle('hidden', editingMode)
 }
@@ -215,9 +320,31 @@ export async function newContent(name) {
 	return (folder) => scaffoldCase(folder, name, chosen.type);
 }
 
+/** The switch that says whether default values are on the screen. */
+const HIDE_DEFAULTS = '#hide-default-values';
+
+/** The switch was flipped: take every open document to where it now stands. */
 export function toggleDefaultValues() {
+	applyDefaultValueVisibility();
+}
+
+/**
+ * Put every default-valued node into the state the switch is in.
+ *
+ * Set rather than flipped, one answer for all of them. A tree built while the switch was
+ * already on marks its default values without hiding them, so its nodes stand opposite
+ * to every other document's -- and flipping each node in turn then swapped the two halves
+ * over, taking the newest file's defaults off the screen and putting the rest back on it,
+ * whichever way the switch had just been moved.
+ *
+ * Called wherever those nodes are marked, so a document opened or rebuilt under a switch
+ * that is already on arrives in the mode the author asked for.
+ */
+export function applyDefaultValueVisibility() {
+	const hidden = Boolean(document.querySelector(HIDE_DEFAULTS)?.checked);
+
 	document.querySelectorAll('.default-value-node').forEach(ele => {
-		ele.classList.toggle('hidden-default-value-node');
+		ele.classList.toggle('hidden-default-value-node', hidden);
 	});
 }
 
@@ -287,6 +414,10 @@ export function updateAssetModel() {
 		// nothing else here rebuilds the list once a type has been picked.
 		allowClear: true,
 
+		// One list, so one key. It is rebuilt whenever the export folder is connected,
+		// and the term searched before that is still the one being looked for.
+		memoryKey: 'asset-explorer:type',
+
 		onChange: showAssetsOfType,
 	});
 
@@ -353,6 +484,12 @@ function showAssetsOfType(type) {
 			: canOpen
 				? 'Search assets'
 				: 'Search assets -- opening one needs the game files',
+
+		// Per type, because that is what makes it a different list. A term remembered
+		// across the whole control would open a freshly chosen type's assets already
+		// filtered by a name searched for among every type's, which is a list of nothing
+		// under a box explaining neither half of why.
+		memoryKey: `asset-explorer:assets:${type || '*'}`,
 
 		onChange: (value) => {
 			if (!value) return;

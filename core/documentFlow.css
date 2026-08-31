@@ -1,0 +1,274 @@
+/*
+ * The frame the two document editors are laid out in.
+ *
+ * The DDS flow and the case flow put the same thing on screen -- a toolbar, a file panel
+ * on the left, and a row of document windows that scrolls sideways -- and used to say it
+ * in two unrelated ways: a flex row in one against a grid in the other, `#trees` doing
+ * its own scrolling here and wrapped in a scroller there. None of that difference was a
+ * decision, and what it cost was that neither flow's rules could describe the other. The
+ * two sidebars sat 40px apart until a cross-flow test pinned them, every rule about a
+ * tree was written out twice, and a dropdown parented into the tree area was positioned
+ * correctly in neither.
+ *
+ * So both templates in index.html now carry the same skeleton:
+ *
+ *     <main class="editor flow-container">
+ *       <nav class="flow-bar compact-controls"> … </nav>
+ *       <article data-theme="light">
+ *         <div class="workspace">
+ *           <aside class="file-panel"> … </aside>
+ *           <div class="tree-scroll"><div class="tree-row" id="trees"></div></div>
+ *         </div>
+ *       </article>
+ *     </main>
+ *
+ * and this file lays it out. The window inside the row is core/treeWindow.js's and was
+ * already shared; the editor bar inside that, the file panel's rows and the manifest
+ * section beneath them are in core/chrome.css.
+ *
+ * What a flow keeps for itself is what it actually does differently -- the DDS
+ * drill-down's resizable windows and its content-width fields, the case flow's
+ * full-width ones. A flow's stylesheet is loaded after this one (see applyStyles in
+ * core/flowRegistry.js), so a rule of the same weight there wins without needing an id
+ * or an `!important` to say so.
+ */
+
+
+/* -------------------------------------------------------------------------- */
+/* The card the workspace sits on                                              */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * `.editor` itself -- the flow filling what the shell nav leaves -- is in
+ * core/chrome.css, because the building flow is laid out that way too.
+ *
+ * Pico gives an <article> its padding, radius, card colour and shadow; what is added is
+ * that it fills what the bar leaves, and hands that height on to the workspace inside it.
+ */
+.editor > article {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
+    /*
+     * Down to the foot of the flow, so the strip under it is the build line's and no more.
+     *
+     * Pico ends an <article> with a block of spacing, for a page that goes on below it.
+     * Nothing goes on below this one -- the build line is the shell's and sits outside
+     * the flow entirely -- so that margin was a band of empty page between the workspace
+     * and it, five times the space the line has underneath. The workspace has a use for
+     * the height and the gap had none.
+     *
+     * What is left either side of the line is the footer's own padding, which is equal
+     * top and bottom; see #build-version in core/chrome.css.
+     */
+    margin-bottom: 0;
+
+    /*
+     * The colour the `data-theme="light"` on this element asks for, actually taken.
+     *
+     * A nested `data-theme` redefines Pico's variables for the subtree and stops there.
+     * `color` itself is declared once, on `body`, so under a dark system theme every
+     * plain run of text in here went on inheriting the dark theme's near-white -- only
+     * the things that name the variable again for themselves, which is buttons and
+     * headings, picked the light value up. What that left was a white card with the file
+     * names legible on it and the words over them, "Mod content" and "Manifest", in pale
+     * grey.
+     *
+     * Restating it here is what makes the rest of the subtree inherit from the theme it
+     * is in. Under the light scheme the two values are the same and this does nothing,
+     * which is why it was invisible for as long as it was.
+     *
+     * The card colour behind it needs no such help: Pico sets that on `article`, so it is
+     * read in this element's own context already.
+     */
+    color: var(--pico-color);
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Panel and documents, side by side                                           */
+/* -------------------------------------------------------------------------- */
+
+.workspace {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 1rem;
+}
+
+/*
+ * The sidebar. Its width is --file-panel-width in core/chrome.css, named there because
+ * the two flows used to size it apart. It cannot size itself to its contents: those are
+ * file names and paths, which are as long as they are.
+ */
+.file-panel {
+    flex: none;
+    width: var(--file-panel-width);
+    overflow-y: auto;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+    padding: 0.75rem;
+}
+
+/* The title over the file list. Not the case flow's search box, which stands where that
+   title would be and carries its own spacing -- see .file-panel-search. */
+.file-panel > header:not(.file-panel-search) {
+    margin-bottom: 0.5rem;
+}
+
+/*
+ * Creating content is the first thing the panel offers in both flows, and the same size:
+ * tight, rather than Pico's full-height form button, which would tower over the 0.75rem
+ * file names underneath it.
+ */
+.file-panel > button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    padding: 3px;
+}
+
+/*
+ * What scrolls, and what is scrolled.
+ *
+ * Three windows at their minimum width exceed most screens, so the row moves sideways
+ * rather than the page. The split into two elements is not decoration: the row inside is
+ * positioned, and that is what a dropdown opened from a control in a window is placed
+ * against.
+ *
+ * select2 works a dropdown's `left` out as the control's document position less its
+ * offset parent's, and never adds that parent's own scroll back on. Left to find its own
+ * offset parent it finds the scroller, and the scroll then comes off twice -- once
+ * because the control has moved with it, and once more in the subtraction. With several
+ * documents open and the row scrolled a screen to the right, every dropdown opened a
+ * screen to the left of the control it belonged to. A positioned row is a containing
+ * block that scrolls along with the controls instead, which leaves nothing to get wrong,
+ * and the dropdown then moves with the row for free. See
+ * core/components/searchSelect/searchSelect.js.
+ */
+.tree-scroll {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.tree-row {
+    position: relative;
+    display: flex;
+    gap: 1rem;
+    /* The height of the space rather than of the tallest document in it: a window sizes
+       itself against this, and a row grown by its contents left the windows measuring
+       themselves against something already too tall for the panel. */
+    height: 100%;
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* A document window                                                           */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Scoped to the row on purpose. The case flow builds its manifest panel through the same
+ * window machinery and leaves the result in the sidebar, so an unscoped rule would put a
+ * bordered 500px box in a 300px column.
+ *
+ * The tint is layered over the card colour rather than laid on whatever is behind it:
+ * libs/jsonTree hardcodes dark text, so a window is a light surface however the page is
+ * themed, and a translucent red over a dark background is not one.
+ */
+.tree-row > .file-window {
+    display: flex;
+    flex-direction: column;
+    min-width: min(550px, max(500px, calc(100vw / 3)));
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: linear-gradient(#c52f2110, #c52f2110), var(--pico-card-background-color);
+    color: var(--pico-color);
+}
+
+/*
+ * The document fills the window and scrolls inside it, so the row keeps its shape however
+ * long a document is.
+ */
+.tree-row > .file-window > .jsontree-container {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 0 0.5rem;
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* The tree inside it                                                          */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Set on the container rather than on the row: both flows render every tree into one of
+ * these, wherever the window holding it ended up.
+ *
+ * Fixed colours rather than Pico's. libs/jsonTree hardcodes dark text colours, which is
+ * why anything rendering a tree forces the light palette -- see the top of
+ * core/chrome.css.
+ */
+.jsontree-container {
+    font-family: monospace;
+    font-size: 14px;
+    color: black;
+}
+
+.jsontree-container li {
+    list-style-type: none;
+}
+
+/* A label with something to say says so, and the tooltip is the whole of it. */
+.jsontree-container .jsontree_label[title]:not([title=""]) {
+    text-decoration-style: dotted;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+}
+
+/* The values are controls now, and a control in a tree is set in the tree's type. */
+.jsontree-container .jsontree_label,
+.jsontree-container input,
+.jsontree-container select {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/*
+ * How wide a field is differs between the flows and is theirs to say -- see each
+ * stylesheet. Everything else about one is the same in both.
+ *
+ * The dropdown's own search box is styled with the control it belongs to, in
+ * core/components/searchSelect/searchSelect.css: a padding shorthand here would take
+ * Pico's search-icon inset with it and put every character typed underneath the icon.
+ */
+.jsontree-container input:not(.select2-search__field),
+.jsontree-container select {
+    padding: 2px 10px;
+    height: 100%;
+    margin-bottom: 5px;
+}
+
+.jsontree-container input:read-only {
+    opacity: var(--pico-form-element-disabled-opacity);
+}
+
+/* libs/jsonTree indents the whole tree by 30px, which is a margin the window's own
+   padding already provides. */
+.jsontree-container .jsontree_tree {
+    margin-left: 0;
+    padding: 0 0 0.5rem;
+}
+
+/* A dotted rule down the left of a node's children, in place of libs/jsonTree's 35px of
+   plain indent: at four or five levels deep the indent alone stopped saying which
+   closing brace belonged to what. */
+.jsontree-container .jsontree_child-nodes {
+    margin-left: 0;
+    padding-left: 20px;
+    border-left: 1px dotted #c52f2180;
+}

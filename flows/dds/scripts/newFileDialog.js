@@ -88,6 +88,11 @@ function buildStringsPicker() {
 
         placeholder: "Search the game's strings files, or type a path",
 
+        // Survives the rebuild above, which is what happens on every opening of the
+        // dialog. The file picked is deliberately not kept -- see the note on it -- but
+        // the folder being searched for usually is the same one.
+        memoryKey: 'dds:new-file:strings',
+
         onChange: (value) => { stringsPath = value ?? ''; },
     });
 }

@@ -302,7 +302,13 @@ function scriptedEdit(document) {
 
 const isObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
-test('every shipped asset survives being edited, diffed and put back together', async () => {
+/**
+ * Given room rather than left on vitest's five second default, which this is close enough
+ * to to fail on a busy machine: it reads all 1,500 shipped assets off disk and diffs every
+ * one of them, which is 600ms on an idle run and several times that with the rest of the
+ * suite going at once. That is a false failure about the machine rather than the code.
+ */
+test('every shipped asset survives being edited, diffed and put back together', { timeout: 30_000 }, async () => {
     const assets = await shippedAssets();
     expect(assets.length).toBeGreaterThan(1400);
 

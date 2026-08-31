@@ -165,10 +165,10 @@ export function addTreeElement(path, parent, readOnly, fileType, source, editorC
                 when: !readOnly && Boolean(editorCallbacks.showSelectFieldsDialog),
                 className: 'jsontree-editor-bar-field-select-button',
             },
-            // Only when there is something to open. What a document is derived from is
-            // worked out where the document is read -- see loadFileContent -- and a file
-            // the mod wrote from nothing is derived from nothing, so the button is left
-            // off rather than sitting there opening nothing.
+            // Built for every document that can be edited, and hidden by the flow while
+            // there is nothing for it to open -- a file the mod wrote from nothing is
+            // derived from nothing, and `copyFrom` is re-pointed long after this bar was
+            // built. See syncOpenBase in loadFileContent.
             //
             // Absent on a read-only asset for the reason its copyFrom row is still shown:
             // there the row is the route through, and a second one beside it would be the
@@ -177,7 +177,8 @@ export function addTreeElement(path, parent, readOnly, fileType, source, editorC
                 label: 'Open Base',
                 title: 'Open the asset this one is copied from, or the one it overrides',
                 onClick: () => editorCallbacks.openBase(),
-                when: !readOnly && Boolean(editorCallbacks.openBase),
+                when: !readOnly,
+                className: 'jsontree-editor-bar-open-base-button',
             },
         ],
     });
@@ -227,8 +228,12 @@ async function openDdsDocument(guid) {
  * A base game asset the mod patches appears under both headings. The name is the shipped
  * one and the values behind it are the mod's, and neither of those is the whole truth on
  * its own; showing it once under each is the reading that does not have to choose.
+ *
+ * @param memoryKey what this field is, so the dropdown can put back the term last searched
+ *                  in it. Names the field rather than this control, which is thrown away
+ *                  and rebuilt on every edit to the document -- see searchSelect.
  */
-export function createSOSelectElement(domNode, options, selectedSO, readOnly, onUpdateCallback, modded = []) {
+export function createSOSelectElement(domNode, options, selectedSO, readOnly, onUpdateCallback, modded = [], memoryKey = null) {
     var selectedOptionMatch = selectedSO.match(/(?:REF:)?([\w-]+)\|([\w-]+).*/);
     var selectedOption = OPTION_CUSTOM_VALUE;
 
@@ -266,6 +271,7 @@ export function createSOSelectElement(domNode, options, selectedSO, readOnly, on
     // core/components/searchSelect/searchSelect.js for why the second one matters.
     searchSelect(selectElement[0], {
         parent: document.querySelector('#trees'),
+        memoryKey,
         onChange: function(value) {
             let newCustomValue;
             if(value == OPTION_CUSTOM_NEW_VALUE)

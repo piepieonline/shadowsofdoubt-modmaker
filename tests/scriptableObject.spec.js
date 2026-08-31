@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, queuePicks, connectFolders, selectContent, queuePrompts, prompts, confirms, listDir, alerts, collectPageErrors, topLevelLabels, readFile, writeFixture, gotoFlow } from './support/harness.js';
+import { installFsHarness, seedFs, queuePicks, connectFolders, selectContent, queuePrompts, prompts, confirms, queueConfirms, listDir, alerts, collectPageErrors, topLevelLabels, readFile, writeFixture, gotoFlow } from './support/harness.js';
 import { soFixture, soFixtureWithAssets, soFolderContent, caseWithCustomReference } from './support/fixtures.js';
 
 const CASE_FILE = 'Mods/TestCase/testcase.sodso.json';
@@ -82,9 +82,11 @@ test('opens a mod folder and renders the manifest', async ({ page }) => {
     await gotoFlow(page, '?flow=scriptableObject');
     await openMod(page);
 
-    // Editing mode replaces the read-only controls.
+    // Editing mode replaces the read-only controls. The panel being there is the whole
+    // of what the layout does about it -- the workspace is a flex row, so hiding it is
+    // all viewing mode has to do. See toggleEditMode.
     await expect(page.locator('#manifest_panel')).not.toHaveClass(/hidden/);
-    await expect(page.locator('#files-section-container')).toHaveClass(/file-section-edit-mode/);
+    await expect(page.locator('#manifest_panel')).toBeVisible();
 
     // The manifest renders into its own panel rather than the main tree area.
     await expect(page.locator('#manifest_content_tree .file-window')).toHaveCount(1);
@@ -115,13 +117,99 @@ test('manifest fileOrder entries become links that open the referenced file', as
     // The strongest signal that the type system resolved: copyFrom is typed as
     // MurderMO, so its dropdown is populated with real MurderMO asset names. Named
     // rather than "the select in this tree" -- booleans get a dropdown here too.
-    //
-    // Its row is not shown on a file the mod owns, and the control is built either way,
-    // so this reads what the dropdown holds rather than whether it can be seen.
     await expect(page.locator(
         "#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"copyFrom\"')) select"
     ).first()).toContainText('ExCopSniper');
     expect(await alerts(page)).toEqual([]);
+});
+
+/**
+ * A load order entry names a file with the part saying which kind of file it is left off,
+ * and there are two kinds: `<stem>.sodso.json` for an asset the mod defines and
+ * `<stem>.sodso_patch.json` for an override of a base game one. Every entry used to be
+ * opened as the first, so an override in a load order -- which is what the New File
+ * dialog's Override mode writes, and what it lists -- opened as a file that is not there.
+ */
+test('a manifest entry naming an override opens the override', async ({ page }) => {
+    const errors = collectPageErrors(page);
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, soFixtureWithAssets);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+
+    // `REF:ExCopSniper` in fileOrder; ExCopSniper.sodso_patch.json in the folder.
+    await page.locator('#manifest_panel .files-order ul button')
+        .filter({ hasText: 'ExCopSniper' }).click();
+
+    const window_ = page.locator('#trees .file-window');
+    await expect(window_).toHaveCount(1);
+    await expect(window_).toHaveAttribute('path', 'ExCopSniper.sodso_patch.json');
+
+    // Titled by the type the folder listing worked out for it, which is the other half of
+    // what the entry does not say: a patch is a diff and need not state its own type.
+    await expect(window_.locator('.doc-title h5')).toHaveText('MurderMO/ExCopSniper');
+
+    expect(await alerts(page)).toEqual([]);
+    expect(errors).toEqual([]);
+});
+
+/** A hand-written load order, and the one the case scaffolder used to write. */
+const caseWithLowercasedOrder = {
+    'Mods/TestCase/murdermanifest.sodso.json': JSON.stringify({
+        enabled: true,
+        fileOrder: ['REF:excopsniper'],
+        loadBefore: '',
+        version: 1,
+    }, null, 2),
+    'Mods/TestCase/ExCopSniper.sodso_patch.json': JSON.stringify({
+        name: 'ExCopSniper', fileType: 'MurderMO',
+    }, null, 2),
+};
+
+test('a manifest entry finds its file whatever case it is written in', async ({ page }) => {
+    const errors = collectPageErrors(page);
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, caseWithLowercasedOrder);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+
+    // Mods in the wild lowercase what they list, and the loader reads such an entry as
+    // naming the file -- so `isListed` compares that way, and so does opening one.
+    await page.locator('#manifest_panel .files-order ul button').click();
+
+    await expect(page.locator('#trees .file-window'))
+        .toHaveAttribute('path', 'ExCopSniper.sodso_patch.json');
+
+    expect(await alerts(page)).toEqual([]);
+    expect(errors).toEqual([]);
+});
+
+test('a manifest entry naming nothing in the folder says so', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, {
+        ...soFixture,
+        'Mods/TestCase/murdermanifest.sodso.json': JSON.stringify({
+            enabled: true,
+            fileOrder: ['REF:testcase', 'REF:Missing'],
+            loadBefore: '',
+            version: 1,
+        }, null, 2),
+    });
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+
+    await page.locator('#manifest_panel .files-order ul button')
+        .filter({ hasText: 'Missing' }).click();
+
+    // The load order names a file the mod does not have, which is worth saying rather
+    // than opening nothing in silence.
+    expect(await alerts(page)).toEqual([
+        "Missing.sodso.json doesn't exist or is a vanilla asset - create it in the manifest first",
+    ]);
+    await expect(page.locator('#trees .file-window')).toHaveCount(0);
 });
 
 /**
@@ -146,9 +234,8 @@ test('the reference dropdown\'s search box starts after the search icon', async 
     await page.locator('#manifest_panel .files-order ul button').first().click();
     await expect(page.locator('#trees .file-window')).toHaveCount(1);
 
-    // compatibleWith rather than copyFrom, which is no longer shown on a file the mod
-    // owns: a search box nobody can open is a search box nobody types in. Its entries are
-    // a level down, and arrays of these are not auto-expanded.
+    // Through compatibleWith, which is an array: its entries are a level down and are not
+    // auto-expanded, so this covers the dropdown in the place it is hardest to reach.
     const reference = page.locator(
         "#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"compatibleWith\"'))"
     ).first();
@@ -169,6 +256,58 @@ test('the reference dropdown\'s search box starts after the search icon', async 
 });
 
 /**
+ * And so does every other search box this flow puts on screen.
+ *
+ * The rule above is one this app keeps breaking: Pico paints a magnifier onto
+ * `[type=search]` and keeps typed text clear of it with `padding-inline-start`, and any
+ * rule that sizes an input with a `padding` shorthand takes that inset with it. It has
+ * happened to select2's box, to the room creator's and to the field summary's -- three
+ * stylesheets, one mistake -- so this walks the boxes rather than pinning one of them.
+ *
+ * The fix each time is to size through Pico's own spacing variables, which leave the
+ * start alone.
+ */
+const iconClearance = (page, selector) => page.locator(selector).evaluate((field) => {
+    const style = getComputedStyle(field);
+
+    return {
+        hasIcon: style.backgroundImage.includes('svg'),
+        // Where the text begins, and where the icon ends. Pico places the icon from the
+        // left edge, so its far side is the offset plus its width.
+        start: parseFloat(style.paddingInlineStart),
+        iconEnds: parseFloat(style.backgroundPosition) + parseFloat(style.backgroundSize),
+    };
+});
+
+test('every search box starts after the icon painted on it', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, soFixtureWithAssets);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+
+    // The field summary's, which is drawn only once a field has been picked.
+    await page.locator('#so-file-list .file-panel-entry[data-id="testcase"] .file-panel-open').click();
+    await page.click('#tools-menu > summary');
+    await page.locator('#tools-menu .browse-menu-item', { hasText: 'Summarise' }).click();
+    await page.locator('#trees .jsontree_label[data-summary-path="presetName"]').click();
+    await expect(page.locator('#field-summary-cancel')).toBeHidden();
+
+    // Then the room creator's, and the file panel's, which is always there.
+    await page.locator('#field-summary-modal .close-button').click();
+    await page.getByRole('link', { name: 'Room Creator' }).click();
+    await page.locator('#room-creator-modal summary', { hasText: 'What goes in it' }).click();
+
+    for (const selector of ['#so-file-search', '#field-summary-search', '#room-creator-search']) {
+        const box = await iconClearance(page, selector);
+
+        // Only meaningful where there is an icon to clear in the first place.
+        expect(box.hasIcon, selector).toBe(true);
+        expect(box.start, selector).toBeGreaterThan(box.iconEnds);
+    }
+});
+
+/**
  * A reference field offers what the mod has of that type, before the base game's.
  *
  * `copyFrom` is typed as the document's own type, so on a MurderMO it points at another
@@ -176,8 +315,8 @@ test('the reference dropdown\'s search box starts after the search icon', async 
  * the only way to name your own asset here was "Custom…" and typing it, against a list of
  * every shipped MurderMO, none of which was the one you wanted.
  *
- * Read from the DOM rather than opened, since its row is hidden on a file the mod owns.
- * The list is built the same for every reference field -- the visible `compatibleWith`
+ * Read from the DOM rather than opened, since what the list holds is the whole of what is
+ * being asked. The list is built the same for every reference field -- `compatibleWith`
  * below goes through it too -- and this is the only field whose type is the document's
  * own, which is what makes the document's exclusion of itself reachable at all.
  */
@@ -250,10 +389,10 @@ test('picking one of the mod\'s own assets writes it as a reference', async ({ p
     await page.locator('#manifest_panel .files-order ul button').first().click();
     await expect(page.locator('#trees .file-window')).toHaveCount(1);
 
-    // Through compatibleWith, since copyFrom is no longer shown on a file the mod owns
-    // and a dropdown that cannot be opened cannot be picked from. It holds MurderPresets,
-    // and the mod's own is `testcase` -- the one in SameName.sodso.json. Its entries are a
-    // level down, and arrays of these are not auto-expanded.
+    // Through compatibleWith, which holds MurderPresets, and whose mod-owned one is
+    // `testcase` -- the one in SameName.sodso.json. Its entries are a level down, and
+    // arrays of these are not auto-expanded, so this is the harder of the two paths to
+    // the same control; copyFrom is picked from in its own test below.
     const row = page.locator(
         "#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"compatibleWith\"'))"
     ).first();
@@ -271,6 +410,115 @@ test('picking one of the mod\'s own assets writes it as a reference', async ({ p
     // And it comes back as that option rather than as "Custom: testcase", which is what
     // a name the base game's list does not have used to fall through to.
     await expect(row.locator('.select2-selection').first()).toHaveText('testcase');
+});
+
+/**
+ * The baseline a file copies from, on the file itself.
+ *
+ * The New File dialog asks for it once, and for a while that was the only place it could be
+ * answered: the row was hidden on the grounds that the question had been settled. It has
+ * not been. Which asset the fields a file does not state for itself come from is a thing an
+ * author changes their mind about, and a mod's own assets are mostly written after the file
+ * that would want to copy from them.
+ */
+
+/** The mod's case, opened, with three more MurderMOs in the folder to point at. */
+async function openCaseAmongAssets(page, extraFiles = {}) {
+    await seedFs(page, { ...soFixtureWithAssets, ...extraFiles });
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+    await page.locator('#manifest_panel .files-order ul button').first().click();
+    await expect(page.locator('#trees .file-window')).toHaveCount(1);
+}
+
+/** The document's own copyFrom row, which is at the top level rather than in an array. */
+const copyFromRow = (page) => page.locator(
+    "#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"copyFrom\"'))"
+).first();
+
+test('the baseline a file copies from is re-pointed on the document', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openCaseAmongAssets(page);
+
+    const row = copyFromRow(page);
+    await expect(row).toBeVisible();
+
+    // Nothing to open yet, so nothing offers to: this fixture copies from nothing.
+    const openBase = page.locator('#trees .jsontree-editor-bar-open-base-button');
+    await expect(openBase).toBeHidden();
+
+    await row.locator('.select2-selection').first().click();
+    await page.locator('.select2-search__field').pressSequentially('MyOtherMO');
+    await page.locator('.select2-results__option--highlighted').click();
+
+    await expect
+        .poll(async () => JSON.parse(await readFile(page, CASE_FILE)).copyFrom)
+        .toBe('REF:MurderMO|MyOtherMO');
+
+    // The editor bar is built once, when the file is opened, and used to go on describing
+    // the document as it was then -- so a file that copied from nothing had no way to
+    // reach the baseline it had just been given.
+    await expect(openBase).toBeVisible();
+    await openBase.click();
+
+    // MyOtherMO.sodso.json, not MyOtherMO.MurderMO.sodso.json: a mod need not name its
+    // files the way this app does, and the button used to look for the name it writes and
+    // fall through to the base game's assets when the folder did not hold it.
+    await expect(page.locator('#trees .file-window')).toHaveCount(2);
+    await expect(page.locator('#trees .file-window').nth(1)).toHaveAttribute('path', 'MyOtherMO.sodso.json');
+
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('a file cannot be pointed at a baseline that copies from it', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+
+    // MyOtherMO already copies from the document about to point at it, so the pair would
+    // be a ring: two files each waiting on the other for the fields neither states.
+    await openCaseAmongAssets(page, {
+        'Mods/TestCase/MyOtherMO.sodso.json': JSON.stringify({
+            fileType: 'MurderMO', name: 'MyOtherMO', presetName: 'MyOtherMO',
+            copyFrom: 'REF:MurderMO|testcase',
+        }),
+    });
+
+    const row = copyFromRow(page);
+    await row.locator('.select2-selection').first().click();
+    await page.locator('.select2-search__field').pressSequentially('MyOtherMO');
+    await page.locator('.select2-results__option--highlighted').click();
+
+    await expect
+        .poll(async () => (await alerts(page)).length)
+        .toBeGreaterThan(0);
+
+    // Named the whole way round rather than just refused: which file closes the ring is
+    // the only thing the author needs in order to fix it.
+    expect((await alerts(page))[0]).toContain('testcase -> MyOtherMO -> testcase');
+
+    // Refused rather than half-applied, and the control goes back to saying so.
+    expect(JSON.parse(await readFile(page, CASE_FILE)).copyFrom).toBeNull();
+    await expect(row.locator('.select2-selection').first()).toHaveText('Nothing (null)');
+});
+
+test('an override does not offer the base game asset\'s own baseline', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, soFixtureWithAssets);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+
+    await openOverride(page, 'ExCopSniper');
+
+    // The document here is the base game's asset with the override applied, so copyFrom is
+    // the shipped asset's rather than the mod's. What an override applies to is settled by
+    // its file name -- see core/soFileName.js -- so a row here would be offering a decision
+    // the loader does not read.
+    await expect(copyFromRow(page)).toBeHidden();
+
+    // Open Base still answers on a patch, where it opens what is being overridden.
+    await expect(page.locator('#trees .jsontree-editor-bar-open-base-button')).toBeVisible();
 });
 
 test('renders object keys in file order, not sorted', async ({ page }) => {
@@ -482,6 +730,117 @@ async function openCaseFile(page) {
 const fieldInput = (page, label) =>
     page.locator(`#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('"${label}"')) input`).first();
 
+/** The box typed into to search, which lives in the open dropdown rather than the control. */
+const dropdownSearch = (page, within = '#trees') =>
+    page.locator(`${within} .select2-search__field`);
+
+test('opening a reference dropdown puts the cursor in its search box', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openCaseFile(page);
+
+    await fieldRow(page, 'copyFrom').locator('.select2-selection').click();
+
+    // Typed without clicking into the box first, which is the whole of what is being
+    // asserted: opening the list is what should have put the cursor there. select2 tries
+    // to do this itself and cannot -- the jQuery this app pins breaks its way of asking --
+    // so every character went nowhere and searching took a second click into a box that
+    // already looked ready. See searchSelect.
+    await page.keyboard.type('Hit');
+
+    await expect(dropdownSearch(page)).toHaveValue('Hit');
+    await expect(page.locator('#trees .select2-results__option:text-is("Hitman")')).toBeVisible();
+});
+
+test('reopening a reference dropdown keeps the term it was searched with', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openCaseFile(page);
+
+    const control = fieldRow(page, 'copyFrom').locator('.select2-selection');
+    const search = dropdownSearch(page);
+
+    await control.click();
+    await page.keyboard.type('Hit');
+    await search.press('Escape');
+
+    await control.click();
+    await expect(search).toHaveValue('Hit');
+
+    // Filtered, not merely written back: the list has to be the one the term describes,
+    // or the box says one thing and the rows below it another.
+    await expect(page.locator('#trees .select2-results__option:text-is("Hitman")')).toBeVisible();
+
+    // And selected, so starting again costs one keystroke rather than three backspaces.
+    expect(await search.evaluate((box) => [box.selectionStart, box.selectionEnd])).toEqual([0, 3]);
+
+    await page.keyboard.type('Cop');
+    await expect(search).toHaveValue('Cop');
+});
+
+test('a reference dropdown keeps its term across the rebuild an edit causes', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openCaseFile(page);
+
+    const control = () => fieldRow(page, 'copyFrom').locator('.select2-selection');
+    const search = dropdownSearch(page);
+
+    await control().click();
+    await page.keyboard.type('Hit');
+    await search.press('Escape');
+
+    // Editing anything reloads the whole document -- see core/document.js -- so every
+    // control in it is thrown away and built again, this one included. A term held on
+    // the control would survive closing the list and be lost by an edit to an unrelated
+    // field, which is the same gesture giving two answers.
+    await fieldInput(page, 'notes').fill('edited by test');
+    await fieldInput(page, 'notes').blur();
+    await expect.poll(async () => JSON.parse(await readFile(page, CASE_FILE)).notes)
+        .toBe('edited by test');
+
+    await control().click();
+    await expect(search).toHaveValue('Hit');
+});
+
+test('each list in the asset explorer remembers its own term', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+
+    await page.locator('#folders-continue').click();
+    await page.getByRole('link', { name: 'Asset Explorer' }).click();
+
+    const picker = (index) => page.locator('#asset-explorer-modal .select2-selection').nth(index);
+    const search = dropdownSearch(page, '#asset-explorer-modal');
+
+    await picker(0).click();
+    await page.keyboard.type('Murder');
+    await search.press('Escape');
+
+    // The assets below are a different question from the types above, so the term asked
+    // of one is not put to the other.
+    await picker(1).click();
+    await expect(search).toHaveValue('');
+
+    await page.keyboard.type('Hitman');
+    await search.press('Escape');
+
+    await picker(0).click();
+    await expect(search).toHaveValue('Murder');
+    await search.press('Escape');
+
+    await picker(1).click();
+    await expect(search).toHaveValue('Hitman');
+    await search.press('Escape');
+
+    // Choosing a type rebuilds the list below it, and a type's assets are not the list
+    // that was searched: 'Hitman' was asked of every type at once. Carried over, it would
+    // open a freshly chosen type already filtered to nothing.
+    await pickInAssetExplorer(page, 0, 'MurderMO');
+    await picker(1).click();
+    await expect(search).toHaveValue('');
+});
+
 test('editing a value writes the whole file back', async ({ page }) => {
     await skipSpoilerWarning(page);
     await gotoFlow(page, '?flow=scriptableObject');
@@ -628,6 +987,88 @@ test('a preset name no file could be called is refused', async ({ page }) => {
     expect(JSON.parse(await readFile(page, CASE_FILE)).presetName).toBe('testcase');
     expect(JSON.parse(await readFile(page, CASE_FILE)).name).toBe('testcase');
     expect(await listDir(page, 'Mods/TestCase')).toContain('testcase.sodso.json');
+});
+
+/**
+ * Renaming an asset something else in the mod points at.
+ *
+ * A `REF:` resolves against `presetName`, and a rename follows that name through the file
+ * and through the load order and through nothing else. The other documents are left naming
+ * an asset that has gone, which is the same break deleting the file would cause -- and the
+ * panel has warned about that one all along.
+ */
+
+const STYLE_FILE = 'Mods/TestCase/HouseStyle.sodso.json';
+const RENAMED_STYLE_FILE = 'Mods/TestCase/TowerStyle.DesignStylePreset.sodso.json';
+
+/** Open HouseStyle, which the case points at through `denStyleOverride`. */
+async function openReferencedAsset(page) {
+    await seedFs(page, caseWithCustomReference);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+
+    await page.locator('#so-file-list .file-panel-entry[data-id="HouseStyle"] .file-panel-open').click();
+    await expect(page.locator('#trees .file-window')).toHaveCount(1);
+}
+
+test('renaming an asset another file points at says what will be left behind', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openReferencedAsset(page);
+
+    await fieldInput(page, 'presetName').fill('TowerStyle');
+    await fieldInput(page, 'presetName').blur();
+
+    await expect.poll(async () => (await confirms(page)).length).toBeGreaterThan(0);
+    const asked = (await confirms(page)).at(-1);
+
+    expect(asked).toContain('Rename "HouseStyle" to "TowerStyle"?');
+    expect(asked).toContain('Referenced by 1 file:');
+    expect(asked).toContain('testcase');
+
+    // And says which half of the job it is about to do, because it does do half of it.
+    expect(asked).toContain("This mod's load order will follow the new name");
+
+    // The harness answers yes, so the rename goes ahead: the file moves, and the reference
+    // is left exactly as its author wrote it for them to deal with.
+    await expect.poll(() => readFile(page, RENAMED_STYLE_FILE)).not.toBeNull();
+    expect(JSON.parse(await readFile(page, 'Mods/TestCase/testcase.sodso.json')).denStyleOverride)
+        .toEqual(['REF:DesignStylePreset|HouseStyle']);
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('saying no leaves the name, the file and the reference alone', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openReferencedAsset(page);
+
+    await queueConfirms(page, [false]);
+
+    await fieldInput(page, 'presetName').fill('TowerStyle');
+    await fieldInput(page, 'presetName').blur();
+
+    // The field goes back to what it said. A rename that was declined should not leave the
+    // author reading a name their mod does not use.
+    await expect(fieldInput(page, 'presetName')).toHaveValue('HouseStyle');
+
+    expect(JSON.parse(await readFile(page, STYLE_FILE)).presetName).toBe('HouseStyle');
+    expect(await listDir(page, 'Mods/TestCase')).not.toContain('TowerStyle.DesignStylePreset.sodso.json');
+    expect(JSON.parse(await readFile(page, 'Mods/TestCase/testcase.sodso.json')).denStyleOverride)
+        .toEqual(['REF:DesignStylePreset|HouseStyle']);
+});
+
+test('an asset nothing points at is renamed without a question', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openCaseFile(page);
+
+    // Unlike a deletion, which asks either way. Renaming is ordinary editing and it undoes
+    // itself, so a box with an empty list in it is a click that carries no information.
+    await fieldInput(page, 'presetName').fill('Renamed');
+    await fieldInput(page, 'presetName').blur();
+
+    await expect.poll(() => readFile(page, RENAMED_FILE)).not.toBeNull();
+    expect(await confirms(page)).toEqual([]);
 });
 
 /**
@@ -970,7 +1411,7 @@ test('a reference to a base game asset opens the copy shipped with the tool', as
     // handing the 404 page to JSON.parse.
     //
     // Read through this rather than through copyFrom, which says the same thing about the
-    // same code and is no longer shown on a file the mod owns.
+    // same code from a field that is not nested in an array.
     await page.locator("#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"compatibleWith\"'))")
         .first().locator('.jsontree_expand-button').first().click();
 
@@ -1010,16 +1451,17 @@ test('editor bar keeps Select Override Fields on its own row', async ({ page }) 
     // Its label is far longer than Save/Copy/Close and the editor bar caps button
     // width at 100px, so folding it into their group wraps it over several lines.
     //
-    // Alone on the row here rather than always: Open Base joins it on a document with a
-    // base to open, and this fixture's copyFrom is null.
+    // Alone on the row here rather than always: Open Base is built beside it on every
+    // document that can be edited and hidden while there is nothing for it to open, which
+    // is this fixture -- its copyFrom is null.
     const rows = page.locator('#trees .editor-bar .jsontree-editor-bar-button-group');
     await expect(rows).toHaveCount(2);
 
     await expect(rows.nth(0)).toHaveText('SaveCopyClose');
-    await expect(rows.nth(1)).toHaveText('Select Override Fields');
+    await expect(rows.nth(1).locator('button:visible')).toHaveText(['Select Override Fields']);
 
     // One line, not four.
-    const box = await rows.nth(1).locator('button').boundingBox();
+    const box = await rows.nth(1).locator('button:visible').boundingBox();
     expect(box.height).toBeLessThan(60);
 });
 
@@ -1442,6 +1884,73 @@ test('Use as... with no mod to write into says so rather than doing nothing', as
 
     await expectDialogOpen(page, '#new-file-modal', false);
     expect(await alerts(page)).toEqual(['Please select a mod to save in first']);
+});
+
+/**
+ * Two of the mod's own MurderMOs, each holding fields still at the MurderMO template's
+ * values. Those are what get marked as defaults, and a case with none of them gives the
+ * switch below nothing to act on.
+ */
+const caseWithUntouchedFields = {
+    'Mods/TestCase/murdermanifest.sodso.json': JSON.stringify({
+        enabled: true, fileOrder: ['REF:testcase', 'REF:MyOtherMO'], loadBefore: '', version: 1,
+    }, null, 2),
+    'Mods/TestCase/testcase.sodso.json': JSON.stringify({
+        fileType: 'MurderMO', name: 'testcase', presetName: 'testcase',
+        baseDifficulty: 0, updateThis: false, notes: 'decided',
+    }, null, 2),
+    'Mods/TestCase/MyOtherMO.sodso.json': JSON.stringify({
+        fileType: 'MurderMO', name: 'MyOtherMO', presetName: 'MyOtherMO',
+        baseDifficulty: 0, updateThis: false, maximumPotentialScore: 0,
+    }, null, 2),
+};
+
+/**
+ * Hide Default Values is one switch over everything open, so every document has to be in
+ * the state it stands in -- including one opened while it was already on.
+ *
+ * The switch used to flip each marked node in turn. A file opened under it marked its
+ * defaults without hiding them, so the next flip took that file's defaults off the screen
+ * and put every other file's back on it: the two halves swapped over instead of all of
+ * them following the switch.
+ */
+test('hiding default values follows the switch, in files opened after it was flipped', async ({ page }) => {
+    const errors = collectPageErrors(page);
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+
+    await seedFs(page, caseWithUntouchedFields);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+
+    const defaults = page.locator('#trees .default-value-node');
+    const hidden = page.locator('#trees .default-value-node.hidden-default-value-node');
+
+    await page.locator('#so-file-list .file-panel-entry[data-id="testcase"] .file-panel-open').click();
+    await expect(page.locator('#trees .file-window')).toHaveCount(1);
+
+    const first = await defaults.count();
+    expect(first).toBeGreaterThan(0);
+    await expect(hidden).toHaveCount(0);
+
+    await page.locator('#hide-default-values').click();
+    await expect(hidden).toHaveCount(first);
+
+    // Marked while the switch is already on, so it has to arrive hidden like the rest.
+    await page.locator('#so-file-list .file-panel-entry[data-id="MyOtherMO"] .file-panel-open').click();
+    await expect(page.locator('#trees .file-window')).toHaveCount(2);
+
+    const both = await defaults.count();
+    expect(both).toBeGreaterThan(first);
+    await expect(hidden).toHaveCount(both);
+
+    // And the switch off shows every one of them, rather than swapping the two files over.
+    await page.locator('#hide-default-values').click();
+    await expect(hidden).toHaveCount(0);
+    await expect(defaults).toHaveCount(both);
+
+    expect(errors).toEqual([]);
+    expect(await alerts(page)).toEqual([]);
 });
 
 test('two assets of one name and different types are two files', async ({ page }) => {

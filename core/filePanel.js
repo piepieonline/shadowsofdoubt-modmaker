@@ -100,6 +100,51 @@ export function filterCategories(categories, query) {
 }
 
 /**
+ * A category or section with the entries `unwanted` names taken out of it, or null if
+ * that empties it. A category that was already empty stays: nothing was taken from it.
+ */
+function without(node, unwanted, tally) {
+    const held = (node.sections?.length ?? 0) + (node.entries?.length ?? 0);
+
+    const sections = (node.sections ?? []).map((s) => without(s, unwanted, tally)).filter(Boolean);
+    const entries = (node.entries ?? []).filter((entry) => {
+        if (!unwanted(entry)) return true;
+
+        tally.dropped++;
+        return false;
+    });
+
+    if (held && !sections.length && !entries.length) return null;
+
+    return { ...node, sections, entries };
+}
+
+/**
+ * The categories left once the entries a flow does not want to show are taken out.
+ *
+ * The other half of narrowing a panel, beside `filterCategories`: that one answers what
+ * the author is looking *for*, and this one what they have asked not to be shown at all.
+ * Applied first, so a search runs over what is on offer rather than turning up files the
+ * filter is keeping out.
+ *
+ * Nothing is forced open, which is the difference from a search. A filter says what the
+ * panel is made of rather than where in it to look, so the categories are left in the
+ * state the author had them in.
+ *
+ * @param unwanted a predicate over an entry, or null for no filter at all
+ */
+export function withoutEntries(categories, unwanted) {
+    if (!categories || !unwanted) return categories;
+
+    const tally = { dropped: 0 };
+    const kept = categories.map((category) => without(category, unwanted, tally)).filter(Boolean);
+
+    // A panel nothing was taken out of is the panel the flow built, in the state it built
+    // it in -- as `filterCategories` hands back an unsearched one.
+    return tally.dropped ? kept : categories;
+}
+
+/**
  * The small button beside a name, or at the foot of a section.
  *
  * Its click is stopped from travelling. These sit inside a `<details>` that opens and
@@ -188,8 +233,14 @@ function renderEntries(entries, onOpen) {
     return list;
 }
 
-/** What a category or section holds, counting through whatever nesting it has. */
-function countEntries(node) {
+/**
+ * What a category or section holds, counting through whatever nesting it has.
+ *
+ * Exported for the flows that say how much of a panel a filter is keeping out of sight:
+ * that number is the difference between two of these, and a second count written beside
+ * this one would be a second answer to what a category holds.
+ */
+export function countEntries(node) {
     return (node.entries?.length ?? 0)
         + (node.sections ?? []).reduce((total, section) => total + countEntries(section), 0);
 }

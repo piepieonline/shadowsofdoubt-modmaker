@@ -146,7 +146,7 @@ export async function refreshPanel() {
         (entry) => { closeBrowse(); openFloor(entry.openAs); },
         'Buildings failed to load');
 
-    bindBrowseDismissal();
+    bindBrowseResizing();
     bindBrowseSizing();
 
     // The mod's own furniture assets, which the chain has to be asked against rather
@@ -209,26 +209,25 @@ const BROWSE = '#building-browse';
 const closeBrowse = () => document.querySelector(BROWSE)?.removeAttribute('open');
 
 /**
- * Close the Browse menu on a click outside it, which a `<details>` does not do.
+ * Re-measure an open menu when the window changes size.
+ *
+ * The menu hangs off the bar, so nothing about the page moves when it opens and its
+ * height is only ever a cap. It is re-measured on a resize because the thing it is
+ * measured against is the workspace, which is sized to the window.
  *
  * One listener for the life of the page rather than one per refresh: it is added once,
- * and it looks the menu up each time, so it costs nothing on the many clicks that happen
- * while another flow's markup is on screen and there is no menu to find.
+ * and it looks the menu up each time, so it costs nothing on the many resizes that
+ * happen while another flow's markup is on screen and there is no menu to find.
+ *
+ * Closing it on a click elsewhere is not here: every flow's bar has a menu on it now,
+ * and one listener does all of them -- see core/barMenu.js.
  */
-let browseDismissalBound = false;
+let browseResizeBound = false;
 
-function bindBrowseDismissal() {
-    if (browseDismissalBound) return;
-    browseDismissalBound = true;
+function bindBrowseResizing() {
+    if (browseResizeBound) return;
+    browseResizeBound = true;
 
-    document.addEventListener('click', (event) => {
-        const menu = document.querySelector(BROWSE);
-        if (menu?.hasAttribute('open') && !menu.contains(event.target)) closeBrowse();
-    });
-
-    // The menu hangs off the bar, so nothing about the page moves when it opens and its
-    // height is only ever a cap. Re-measured on a resize because the thing it is measured
-    // against is the workspace, which is sized to the window.
     window.addEventListener('resize', () => {
         if (document.querySelector(BROWSE)?.hasAttribute('open')) sizeBrowseMenu();
     });

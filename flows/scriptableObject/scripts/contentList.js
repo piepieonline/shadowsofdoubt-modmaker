@@ -23,6 +23,7 @@
 import { readFileContent } from '../../../core/fs.js';
 import { readManifest, isListed } from '../../../core/murderManifest.js';
 import { assetNameOf, PATCH_SUFFIX, PRESET_SUFFIX } from '../../../core/soFileName.js';
+import { permissionOnly } from './roomPermissions.js';
 
 export const NEW_SUFFIX = PRESET_SUFFIX;
 export { PATCH_SUFFIX };
@@ -64,6 +65,11 @@ function buildAssetTypeIndex() {
  * The file name is what the panel opens; this is what a reference to it has to say.
  * A patch states the base game asset it overrides in `name`, which is the right answer
  * there for the same reason.
+ *
+ * `permission` is set on the patches that say nothing but "this room may use me", which
+ * the panel offers to leave out -- see `roomPermissions.js`. Read from the same parse, so
+ * it costs no second pass over the folder. Only a patch is asked: an asset of the mod's
+ * own states its whole self and is not a permission, however its author uses it.
  */
 async function identify(entry, name, isPatch, assetTypes) {
     let parsed = null;
@@ -83,7 +89,11 @@ async function identify(entry, name, isPatch, assetTypes) {
 
     // Falling back to the file name means falling back to the *asset's* half of it. A
     // patch's name carries no type to take off, so the one expression serves both.
-    return { type, assetName: parsed?.presetName ?? parsed?.name ?? assetNameOf(name, type) };
+    return {
+        type,
+        assetName: parsed?.presetName ?? parsed?.name ?? assetNameOf(name, type),
+        permission: isPatch ? permissionOnly(parsed, type) : null,
+    };
 }
 
 /**
@@ -114,7 +124,7 @@ export async function listContent(contentFolder) {
         const name = entry.name.slice(0, -(isPatch ? PATCH_SUFFIX : NEW_SUFFIX).length);
         if (name === MANIFEST) continue;
 
-        const { type, assetName } = await identify(entry, name, isPatch, assetTypes);
+        const { type, assetName, permission } = await identify(entry, name, isPatch, assetTypes);
 
         // A file the app cannot name or type is degenerate: there is no template to
         // edit it against and no group it belongs in. Kept in sight, since something
@@ -141,6 +151,9 @@ export async function listContent(contentFolder) {
             listed: isListed(manifest, name),
             // What a `REF:` to it says, which is not always what the file is called.
             assetName,
+            // Null unless the file does nothing but admit something to a room, in which
+            // case which kind of admission it is. What the panel's filter acts on.
+            permission,
         });
     }
 
@@ -235,4 +248,34 @@ export function modFileOfAsset(type, assetName) {
     if (!byTypeIndex || !type || !assetName) return null;
 
     return (byTypeIndex.get(type) ?? []).find((entry) => entry.assetName === assetName) ?? null;
+}
+
+/**
+ * The file a load order entry names, for opening what the manifest lists.
+ *
+ * `fileOrder` names files rather than assets -- see core/murderManifest.js -- so the entry
+ * is the file's name already, bar the part that says which kind of file it is. That part
+ * is the whole problem: an asset is `<stem>.sodso.json` and an override is
+ * `<stem>.sodso_patch.json`, and taking every entry for the first is why an override in a
+ * load order opened as a file that is not there. The type is missing from an entry too,
+ * and a patch does not always carry one inside it, so the listing answers both at once.
+ *
+ * An asset is preferred to an override of the same stem. Both can sit in a folder -- a
+ * preset named before file names carried a type, beside an override of the asset it
+ * shares a name with -- and the asset is the one an entry has always opened.
+ *
+ * Matched exactly first and then without case, as `isListed` compares: mods in the wild
+ * lowercase what they list, and such an entry still names the file.
+ */
+export function modFileOfStem(stem) {
+    if (!byTypeIndex || !stem) return null;
+
+    const files = [...byTypeIndex.values()].flat();
+    const wanted = String(stem).toLowerCase();
+
+    const best = (matches) => files.find((entry) => matches(entry) && entry.suffix === NEW_SUFFIX)
+        ?? files.find(matches)
+        ?? null;
+
+    return best((entry) => entry.id === stem) ?? best((entry) => entry.id.toLowerCase() === wanted);
 }

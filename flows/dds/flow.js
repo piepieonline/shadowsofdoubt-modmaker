@@ -22,7 +22,7 @@ export default {
     requiredFolders: ['streamingAssets', 'modDir'],
 
     template: '#flow-template-dds',
-    styles: ['./flows/dds/jsontree_overrides.css', './flows/dds/style.css'],
+    styles: ['./flows/dds/style.css'],
 
     /** Loaded on activation, not at page load. See the note in the other flow. */
     async loadRefs() {

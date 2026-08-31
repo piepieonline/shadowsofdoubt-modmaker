@@ -279,7 +279,23 @@ export function mergeOldFormat(base, file) {
     const overrides = { ...file };
     for (const key of ENVELOPE_KEYS) delete overrides[key];
 
-    return mergeInto(deepClone(base), overrides);
+    return overwriteWith(base, overrides);
+}
+
+/**
+ * A document with another laid over it: objects merged key by key, arrays replaced whole.
+ *
+ * `FromJsonOverwrite`'s rule, and so the rule for both of the ways a mod states fields
+ * over something else -- an override in the old format, and a `copyFrom` file over the
+ * asset it copies. Neither the base nor the fields are modified.
+ *
+ * Exported for the second of those: the field summary resolves what a mod's file amounts
+ * to before counting its values (see flows/scriptableObject/scripts/assetScan.js), and a
+ * merge that means the same thing written twice is how two readers of one rule come to
+ * disagree about a list.
+ */
+export function overwriteWith(base, fields) {
+    return mergeInto(deepClone(base), fields);
 }
 
 function mergeInto(target, source) {

@@ -241,6 +241,40 @@ export const ddsQuotedStringsFixture = {
     ].join('\n'),
 };
 
+/** A block said by the tree's *second* message, and nowhere else. */
+export const BLOCK2_GUID = '77777777-7777-4777-8777-777777777777';
+export const BLOCK2_TEXT = 'A line only the second message says';
+
+/**
+ * Content laid out so that the way to a line is not the way the cascade goes.
+ *
+ * Opening a tree cascades into its first message and that message's first block. Here the
+ * searched line is in a block under the *second* message, so a drill-down that lands on
+ * it is one that followed the reverse index rather than the cascade -- which is the whole
+ * of what the reverse search has to get right.
+ */
+export const ddsReverseSearchFixture = {
+    ...streamingAssets,
+    ...ddsModDir,
+
+    'StreamingAssets/Strings/English/DDS/dds.blocks.csv': [
+        ddsBlocksCsv,
+        `${BLOCK2_GUID},,${BLOCK2_TEXT},,,,09:00 01/01/2024`,
+    ].join('\n'),
+
+    [`StreamingAssets/DDS/Messages/${MSG2_GUID}.msg`]: json({
+        id: MSG2_GUID,
+        name: 'SecondMessage',
+        blocks: [{ blockID: BLOCK2_GUID, instanceID: 'instance-4', alwaysDisplay: true }],
+    }),
+
+    [`StreamingAssets/DDS/Blocks/${BLOCK2_GUID}.block`]: json({
+        id: BLOCK2_GUID,
+        name: 'SecondBlock',
+        replacements: [],
+    }),
+};
+
 export const ddsFixture = { ...streamingAssets, ...ddsModDir };
 export const ddsFixtureWithContent = { ...ddsFixture, ...ddsModContent };
 export const soFixture = { ...soModDir };
@@ -469,6 +503,65 @@ export const soFolderContent = {
 
 
 /**
+ * The same case, plus the litter that building one room leaves in a content folder.
+ *
+ * A room admits its furniture by patching every cluster and preset in its closure, its
+ * surfaces by patching each material filter, and its lighting by patching each light --
+ * see flows/scriptableObject/scripts/roomPlan.js. None of those files is about the room,
+ * and a mod with a few rooms in it has more of them than of everything else put together,
+ * which is what the panel's filter exists to put out of the way.
+ *
+ * Two that must survive it, because neither is only a permission: a patch that admits the
+ * room *and* changes something, and a cluster the mod defines rather than patches.
+ */
+export const caseWithRoomPermissions = {
+    ...soFolderContent,
+
+    'Mods/TestCase/DeskChair.sodso_patch.json': json({
+        name: 'DeskChair',
+        fileType: 'FurniturePreset',
+        patches: [{ op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|MyRoomRTF' }],
+    }),
+    'Mods/TestCase/DeskCluster.sodso_patch.json': json({
+        name: 'DeskCluster',
+        fileType: 'FurnitureCluster',
+        patches: [{ op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|MyRoomRTF' }],
+    }),
+
+    'Mods/TestCase/ConcreteWalls.sodso_patch.json': json({
+        name: 'ConcreteWalls',
+        fileType: 'RoomTypeFilter',
+        patches: [{ op: 'add', path: '/roomClasses/-', value: 'REF:RoomClassPreset|MyRoomRCP' }],
+    }),
+    'Mods/TestCase/StripLight.sodso_patch.json': json({
+        name: 'StripLight',
+        fileType: 'RoomLightingPreset',
+        patches: [{ op: 'add', path: '/roomCompatibility/-', value: 'REF:RoomConfiguration|MyRoomRC' }],
+    }),
+
+    // Admits the room and moves the preset's spawn chance. The second is an edit its
+    // author made and would go looking for, so the file is not the filter's to hide.
+    'Mods/TestCase/BookShelf.sodso_patch.json': json({
+        name: 'BookShelf',
+        fileType: 'FurniturePreset',
+        patches: [
+            { op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|MyRoomRTF' },
+            { op: 'replace', path: '/spawnChance', value: 2 },
+        ],
+    }),
+
+    // The mod's own cluster, which states its whole self. A clone is what the room writer
+    // produces when a shipped cluster's gates conflict -- it is content, not a permission.
+    'Mods/TestCase/MyRoom_Desks.FurnitureCluster.sodso.json': json({
+        fileType: 'FurnitureCluster',
+        name: 'MyRoom_Desks',
+        presetName: 'MyRoom_Desks',
+        copyFrom: 'REF:FurnitureCluster|DeskCluster',
+        allowedRoomFilters: ['REF:RoomTypeFilter|MyRoomRTF'],
+    }),
+};
+
+/**
  * A case whose preset references a DDS tree by GUID, plus that tree's content in the
  * same folder -- the arrangement that makes following the reference meaningful.
  */
@@ -497,8 +590,8 @@ export const caseWithDdsReference = {
  * base game has seven of and that is not among the online types -- and names one the
  * game has never heard of, which is the arrangement that reads from the mod folder.
  *
- * Neither is copyFrom, which was the base game half of this until it stopped being shown
- * on a file the mod owns: a reference that cannot be reached cannot be followed.
+ * Neither is copyFrom, which the flow reaches through the Open Base button as well as
+ * through the row, and which has tests of its own for both.
  *
  * No field the game does not have: an unknown one walks the type layout into nothing
  * and throws out of the tree's setup, which would drown out anything asserted here.

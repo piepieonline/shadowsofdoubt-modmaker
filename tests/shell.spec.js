@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, gotoFlow, seedFs, connectFolders } from './support/harness.js';
+import { installFsHarness, gotoFlow, seedFs, connectFolders, contrastGap } from './support/harness.js';
 import { ddsFixture, TREE_GUID } from './support/fixtures.js';
 
 /**
@@ -166,8 +166,8 @@ test('both flows sit in the same gutter, at full width', async ({ page }) => {
 
 /**
  * The per-flow bar, which both flows now build the same way: links into that flow's
- * own modals on the left, whatever it loads documents with in the centre, Help on the
- * right, and no title -- the shell nav above already names the app and the editor.
+ * own modals on the left, whatever it loads documents with in the centre, the Tools menu
+ * on the right, and no title -- the shell nav above already names the app and the editor.
  *
  * The case flow's bar was a two-line hgroup with the links stacked under a heading,
  * and the DDS flow's was a heading plus two button groups, so this is what stops
@@ -188,21 +188,23 @@ const barLayout = (page) => page.evaluate(() => {
         rows: [...bar.querySelectorAll('li')].filter(li => li.offsetParent !== null).map(li => box(li).middle),
         headings: bar.querySelectorAll('h1, h2, hgroup, strong').length,
         leftLinks: [...bar.querySelectorAll('ul:first-child a')].map(a => a.textContent.trim()),
-        rightLinks: [...bar.querySelectorAll('ul:last-child a')].map(a => a.textContent.trim()),
+        // A menu rather than a link, so what is read here is the control that opens it.
+        rightMenus: [...bar.querySelectorAll('ul:last-child details.browse > summary')]
+            .map(summary => summary.textContent.trim()),
     };
 });
 
 for (const [flow, links] of [
     ['dds', ['Browse...', 'Reverse Search']],
-    ['scriptableObject', ['Asset Explorer']],
+    ['scriptableObject', ['Asset Explorer', 'Room Creator']],
 ]) {
-    test(`the ${flow} header is one line: links left, controls centred, help right`, async ({ page }) => {
+    test(`the ${flow} header is one line: links left, controls centred, tools right`, async ({ page }) => {
         await gotoFlow(page, `?flow=${flow}`);
         const bar = await barLayout(page);
 
         expect(bar.headings).toBe(0);
         expect(bar.leftLinks).toEqual(links);
-        expect(bar.rightLinks).toEqual(['Help']);
+        expect(bar.rightMenus).toEqual(['Tools']);
 
         // One line: everything on the bar shares its vertical centre. Anything that
         // wrapped would sit above or below it.
@@ -218,6 +220,164 @@ for (const [flow, links] of [
         expect(Math.abs(bar.right.right - bar.bar.right)).toBeLessThanOrEqual(1);
     });
 }
+
+/**
+ * Tools, as one menu the whole app carries.
+ *
+ * Help was a link straight into each flow's help modal, said three different ways in the
+ * markup. It is now Help/Summary inside the same control as the building flow's Browse
+ * menu, in the same slot in every bar -- so there is somewhere for the next thing worth
+ * reaching for to go.
+ *
+ * The closing is the shell's, not a flow's: a `<details>` stays open when the click goes
+ * elsewhere, and one listener does that for every menu on the page. See core/barMenu.js.
+ */
+/**
+ * Out of the way of the bar. A flow that needs a folder it has not been given opens this
+ * over the page, and nothing here is about the folders -- the menu is reachable with none
+ * of them connected, which is the point of it being the shell's.
+ */
+async function dismissFolders(page) {
+    const modal = page.locator('#folders-modal');
+    if (await modal.evaluate((dialog) => dialog.hasAttribute('open'))) {
+        await page.locator('#folders-continue').click();
+    }
+    await expect(modal).not.toHaveAttribute('open', '');
+}
+
+test('Tools is one menu in every flow, and shuts when the click goes elsewhere', async ({ page }) => {
+    for (const flow of ['dds', 'scriptableObject', 'building']) {
+        await gotoFlow(page, `?flow=${flow}`);
+        await dismissFolders(page);
+
+        const menu = page.locator('#flow-root .flow-bar #tools-menu');
+        const summary = menu.locator('> summary');
+        const help = page.locator('#help-modal');
+
+        await expect(summary).toHaveText('Tools');
+        await expect(help).not.toHaveAttribute('open', '');
+
+        // Opened and then left alone, which is the case a `<details>` gets wrong.
+        await summary.click();
+        await expect(menu).toHaveAttribute('open', '');
+        await page.locator('#build-version').click();
+        await expect(menu).not.toHaveAttribute('open', '');
+
+        // And what it is for: the one item, which opens this flow's own help and takes
+        // the menu with it.
+        await summary.click();
+        await menu.locator('.browse-menu-item', { hasText: 'Help/Summary' }).click();
+        await expect(help).toHaveAttribute('open', '');
+        await expect(menu).not.toHaveAttribute('open', '');
+
+        await help.locator('.close-button').click();
+        await expect(help).not.toHaveAttribute('open', '');
+    }
+});
+
+/**
+ * What is in the menu reads against the menu.
+ *
+ * Pico sets --pico-color to --pico-primary-inverse inside every button, because a button
+ * is normally filled and its text sits on that fill. An item styled from it is therefore
+ * white on the white a menu is drawn on -- which is what this caught, and why the item
+ * inherits its colour from the page instead.
+ */
+test('the Tools menu item is readable against the menu', async ({ page }) => {
+    await gotoFlow(page, '?flow=dds');
+    await dismissFolders(page);
+    await page.click('#tools-menu > summary');
+
+    expect(await contrastGap(page, '#tools-menu .browse-menu-item', '#tools-menu .browse-menu'))
+        .toBeGreaterThan(100);
+});
+
+/**
+ * The menu opens back over the page rather than off the edge of it.
+ *
+ * It hangs off the right-hand end of the bar, which is a few pixels from the right of
+ * the window: dropped straight down from its left edge -- which is what a menu on the
+ * left of the bar does -- it would be almost entirely off screen.
+ */
+test('the Tools menu opens inside the window', async ({ page }) => {
+    await gotoFlow(page, '?flow=dds');
+    await dismissFolders(page);
+    await page.click('#tools-menu > summary');
+
+    const box = await page.locator('#tools-menu .browse-menu').boundingBox();
+    const width = await page.evaluate(() => window.innerWidth);
+
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(width);
+});
+
+/**
+ * The build number, at the foot of the page rather than of a flow.
+ *
+ * It was a footer inside each document flow's card, which said it twice and left the
+ * building flow with nowhere to say it. Being the shell's, it is one line in one place
+ * and the same line whichever editor is open.
+ */
+test('the build number is the last line of the page, in every flow', async ({ page }) => {
+    let seen = null;
+
+    for (const flow of ['dds', 'scriptableObject', 'building']) {
+        await gotoFlow(page, `?flow=${flow}`);
+
+        const measured = await page.evaluate(() => {
+            const footer = document.querySelector('#build-version');
+            const box = footer.getBoundingClientRect();
+            const flowBox = document.getElementById('flow-root').getBoundingClientRect();
+
+            // The line itself rather than the box around it: what the spacing below is
+            // being compared against is the words, which is what anyone looking at the
+            // page sees.
+            const range = document.createRange();
+            range.selectNodeContents(footer);
+            const line = range.getBoundingClientRect();
+
+            return {
+                text: footer.textContent.trim(),
+                // Under the flow, and the last thing laid out before the bottom of the
+                // window -- not pushed off it by a workspace that took the whole height.
+                belowTheFlow: box.top >= flowBox.bottom - 1,
+                onScreen: box.bottom <= window.innerHeight + 1,
+                // Smaller than the page it sits under, whatever size that is: Pico
+                // scales its type with the viewport, so this is a ratio rather than a
+                // number of pixels.
+                relativeSize: parseFloat(getComputedStyle(footer).fontSize)
+                    / parseFloat(getComputedStyle(document.body).fontSize),
+                // One line. A flow's own footer was a centred block inside the card.
+                lines: range.getClientRects().length,
+
+                // The strip the line sits in, above and below it. The flow used to stop
+                // short of the page by a whole block of Pico's spacing, and then a second
+                // one inside it, so the line sat 45px under the workspace and 6px off the
+                // bottom -- a band of empty page the workspace had a use for.
+                above: line.top - flowBox.bottom,
+                below: window.innerHeight - line.bottom,
+            };
+        });
+
+        expect(measured.belowTheFlow, flow).toBe(true);
+        expect(measured.onScreen, flow).toBe(true);
+        expect(measured.relativeSize, flow).toBeLessThan(0.75);
+        expect(measured.lines, flow).toBe(1);
+
+        // Centred in that strip. Within a couple of pixels rather than exactly: the
+        // padding either side of it is equal, and what is left over is where the glyphs
+        // fall inside their own line box.
+        expect(Math.abs(measured.above - measured.below), flow).toBeLessThanOrEqual(2);
+
+        // The same answer in each, which is the point of it being the shell's.
+        seen ??= measured;
+        expect(measured, flow).toEqual(seen);
+    }
+
+    // Substituted by Jekyll on GitHub Pages; served here it is the template as written,
+    // which is what says the element is still wired to the build at all.
+    expect(seen.text).toBe('{{ site.github.build_revision }}');
+});
 
 test('the tree area fits below the chrome rather than overflowing it', async ({ page }) => {
     await gotoFlow(page, '?flow=dds');

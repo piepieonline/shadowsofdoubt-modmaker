@@ -56,6 +56,10 @@
     <link href="./libs/jsonTree/jsonTree.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.red.min.css" />
     <link href="./core/chrome.css" rel="stylesheet" />
+    <!-- The frame the two document editors share. Loaded here rather than per flow: both
+         of them want it, and a flow's own stylesheet is appended after this, which is
+         what lets it override a rule without needing to outweigh one. -->
+    <link href="./core/documentFlow.css" rel="stylesheet" />
     <!-- After Pico, which is where the search field's icon inset comes from, and after
          select2's own stylesheet above. Both are what this corrects. -->
     <link href="./core/components/searchSelect/searchSelect.css" rel="stylesheet" />
@@ -127,6 +131,12 @@
          second. -->
     <main id="flow-root" aria-busy="true"></main>
 
+    <!-- What build this is, for anyone reporting something. The shell's rather than a
+         flow's: it is the same answer whichever editor is open, and as a flow's own it
+         was said twice by the two document editors and not at all by the building flow.
+         Substituted by Jekyll on GitHub Pages; served locally it says so literally. -->
+    <footer id="build-version">{{ site.github.build_revision }}</footer>
+
     <!-- Spoiler warning, dev requested, do not remove. Applies to the whole tool, so
          it lives in the shell rather than in one flow. -->
     <dialog id="spoiler-warning-modal">
@@ -181,7 +191,9 @@
     </dialog>
 
     <template id="flow-template-dds">
-            <div class="editor flow-container">
+            <!-- The skeleton both document editors are built from: see
+                 core/documentFlow.css, which lays it out for each of them. -->
+            <main class="editor flow-container">
                 <!-- Same three slots as the case flow's bar: see .flow-bar. -->
                 <nav class="flow-bar compact-controls">
                     <ul>
@@ -193,46 +205,65 @@
                          GUID to load one lived here; Browse... does that, and knows
                          which documents exist. -->
                     <ul></ul>
+                    <!-- Tools, as the same menu all three flows carry. See the note on
+                         the building flow's copy of it. -->
                     <ul>
-                        <li><a href="#" onclick="event.preventDefault();showHelp()">Help</a></li>
+                        <li>
+                            <details class="browse browse-end" id="tools-menu">
+                                <summary role="button" class="secondary">Tools</summary>
+                                <div class="browse-menu">
+                                    <button class="browse-menu-item" data-menu-item
+                                        onclick="showHelp()">Help/Summary</button>
+                                </div>
+                            </details>
+                        </li>
                     </ul>
                 </nav>
                 <!-- Panel and trees share the forced light palette: jsonTree hardcodes
                      dark text colours, so the whole workspace is light regardless of
                      the system theme. -->
-                <div class="dds-workspace" data-theme="light">
-                    <aside id="dds-file-panel">
-                        <!-- What kind of thing, and what to call it, are asked in the
-                             dialog below. -->
-                        <button id="new-file-button" data-needs-content disabled
-                            onclick="showNewDdsFile()">Add new...</button>
+                <article data-theme="light">
+                    <div class="workspace">
+                        <aside class="file-panel" id="dds-file-panel">
+                            <!-- What kind of thing, and what to call it, are asked in the
+                                 dialog below. -->
+                            <button id="new-file-button" data-needs-content disabled
+                                onclick="showNewDdsFile()">Add new...</button>
 
-                        <header>
-                            <strong>Mod content</strong>
-                        </header>
-                        <div id="dds-file-list"></div>
-
-                        <!-- Only for a mod that has a ddsmanifest; hidden otherwise, so
-                             the app is never the reason a mod gains one. Last, because
-                             what the loader is told matters less than what is there. -->
-                        <section id="dds-manifest-panel" class="manifest-section hidden">
-                            <hr />
                             <header>
-                                <strong>Manifest</strong>
-                                <label>
-                                    <input type="checkbox" role="switch" onclick="toggleDdsManifestPanel()" />
-                                    Show full manifest
-                                </label>
+                                <strong>Mod content</strong>
                             </header>
-                            <div class="files-order">
-                                <ul></ul>
-                            </div>
-                            <div class="manifest-source hidden"></div>
-                        </section>
-                    </aside>
-                    <div id="trees"></div>
-                </div>
-            </div>
+                            <div id="dds-file-list"></div>
+
+                            <!-- Only for a mod that has a ddsmanifest; hidden otherwise,
+                                 so the app is never the reason a mod gains one. Last,
+                                 because what the loader is told matters less than what is
+                                 there. -->
+                            <section id="dds-manifest-panel" class="manifest-section hidden">
+                                <hr />
+                                <header>
+                                    <strong>Manifest</strong>
+                                    <label>
+                                        <input type="checkbox" role="switch" onclick="toggleDdsManifestPanel()" />
+                                        Show full manifest
+                                    </label>
+                                </header>
+                                <div class="files-order">
+                                    <ul></ul>
+                                </div>
+                                <div class="manifest-source hidden"></div>
+                            </section>
+                        </aside>
+
+                        <!-- The row of open documents, and the box that scrolls it. See
+                             .tree-scroll in core/documentFlow.css for why they are two
+                             elements rather than one. -->
+                        <div class="tree-scroll">
+                            <div class="tree-row" id="trees"></div>
+                        </div>
+                    </div>
+                </article>
+            </main>
 
             <!-- New content, for every kind of thing this flow writes.
                  A tree, a message and a block are one document each and are created
@@ -357,14 +388,21 @@
                     </div>
                     <div class="rsearch-results-container">
                         <ul id="rsearch-text-list"></ul>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <td>Top level occurrences:</td>
-                                </tr>
-                            </thead>
-                            <tbody id="rsearch-result-view"></tbody>
-                        </table>
+                        <!-- One row per place the selected line is said: the whole
+                             drill-down, because the tree alone does not say which of
+                             its messages holds the block. -->
+                        <div class="rsearch-occurrences">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Tree</th>
+                                        <th scope="col">Message</th>
+                                        <th scope="col">Block</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rsearch-result-view"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </article>
             </dialog>
@@ -398,13 +436,27 @@
                             <small id="building-open-issues" class="hidden"></small>
                         </li>
                     </ul>
-                    <!-- Help, in the slot the other two flows put it in. Also what keeps
+                    <!-- Tools, in the slot the other two flows put it in. Also what keeps
                          the open floor's name centred: .flow-bar is a three column grid,
                          so an empty third column would pull it off centre. "Colour by"
                          lived here; the tool on the left decides that now. See
-                         syncOverlay. -->
+                         syncOverlay.
+
+                         The same menu as Browse on the left of this bar, and the same in
+                         all three flows. Help/Summary is the only thing in it so far, and
+                         a menu is where the next thing worth reaching for goes. Marked
+                         browse-end because it hangs off the right-hand end of the bar and
+                         would otherwise open past the edge of the page. -->
                     <ul>
-                        <li><a href="#" onclick="event.preventDefault();showHelp()">Help</a></li>
+                        <li>
+                            <details class="browse browse-end" id="tools-menu">
+                                <summary role="button" class="secondary">Tools</summary>
+                                <div class="browse-menu">
+                                    <button class="browse-menu-item" data-menu-item
+                                        onclick="showHelp()">Help/Summary</button>
+                                </div>
+                            </details>
+                        </li>
                     </ul>
                 </nav>
 
@@ -747,18 +799,22 @@
     </template>
 
     <template id="flow-template-scriptableObject">
-            <main class="flow-container" id="main-container">
+            <!-- The skeleton both document editors are built from: see
+                 core/documentFlow.css, which lays it out for each of them. -->
+            <main class="editor flow-container" id="main-container">
                 <!-- Same three slots as the DDS flow's bar: see .flow-bar. The two
                      mode groups share the centre one, since only ever one of them is
                      shown -- toggleEditMode hides the other. -->
                 <nav class="flow-bar compact-controls">
                     <ul>
                         <li><a href="#" onclick="event.preventDefault();document.querySelector('#asset-explorer-modal').toggleAttribute('open')">Asset Explorer</a></li>
+                        <li><a href="#" onclick="event.preventDefault();openRoomCreator()">Room Creator</a></li>
                     </ul>
                     <ul>
                         <li id="editing-mode-control-group">
                             <label>
-                                <input type="checkbox" role="switch" onclick="toggleDefaultValues()"/>
+                                <input type="checkbox" role="switch" id="hide-default-values"
+                                    onclick="toggleDefaultValues()"/>
                                 Hide default values
                             </label>
                         </li>
@@ -766,16 +822,40 @@
                             <button class="secondary" onclick="shareOpen()">Share Open Files</button>
                         </li>
                     </ul>
+                    <!-- Tools, as the same menu all three flows carry. See the note on
+                         the building flow's copy of it. -->
                     <ul>
-                        <li><a href="#" onclick="event.preventDefault();document.querySelector('#help-modal').toggleAttribute('open')">Help</a></li>
+                        <li>
+                            <details class="browse browse-end" id="tools-menu">
+                                <summary role="button" class="secondary">Tools</summary>
+                                <div class="browse-menu">
+                                    <button class="browse-menu-item" data-menu-item
+                                        onclick="showHelp()">Help/Summary</button>
+                                    <!-- Only this flow's: it is the one editor whose
+                                         documents are assets of a type there are others
+                                         of. -->
+                                    <button class="browse-menu-item" data-menu-item
+                                        onclick="startFieldSummary()">Summarise a field...</button>
+                                </div>
+                            </details>
+                        </li>
                     </ul>
                 </nav>
 
+                <!-- Which field, asked by clicking one. Under the bar rather than in it:
+                     it is a state the editor is in, and the bar is a row of things to do.
+                     Hidden until the mode is on -- see scripts/fieldSummary.js. -->
+                <div id="field-summary-strip" class="picking-strip" hidden>
+                    <strong>Pick a field</strong>
+                    <span id="field-summary-strip-text"></span>
+                    <button class="secondary" onclick="cancelFieldSummary()">Cancel</button>
+                </div>
+
                 <article data-theme="light">
-                    <section id="files-section-container">
-                        <article id="manifest_panel">
-                            <button id="manifest_add_item_button" data-needs-content disabled
-                                style="width: 100%; margin-bottom: 0.5rem">Add new file</button>
+                    <div class="workspace" id="files-section-container">
+                        <aside class="file-panel" id="manifest_panel">
+                            <button id="manifest_add_item_button" data-needs-content
+                                disabled>Add new file</button>
 
                             <!-- Everything in the folder, not just what the manifest
                                  references. Same panel the DDS flow uses.
@@ -788,7 +868,42 @@
                                 <input id="so-file-search" type="search" autocomplete="off"
                                     placeholder="Search files" aria-label="Search files"
                                     oninput="filterFilePanel(this.value)" />
+
+                                <!-- What the list is made of, beside the box that finds
+                                     something in it. Building one room writes a patch
+                                     for every cluster, preset, material filter and light
+                                     it admits, and thirty rooms of that buries the files
+                                     an author wrote. See scripts/roomPermissions.js for
+                                     what counts as one.
+
+                                     No "Everything" row: an untouched menu already means
+                                     it, and a checkbox that unticks the others is a radio
+                                     button wearing the wrong clothes. The boxes stay on
+                                     screen as they are ticked, so this holds no
+                                     data-menu-item -- see core/barMenu.js. -->
+                                <details class="browse browse-end file-panel-filter" id="so-file-filter">
+                                    <summary role="button" class="secondary outline"
+                                        title="Choose what the list leaves out">Filter</summary>
+                                    <div class="browse-menu">
+                                        <label>
+                                            <input type="checkbox" value="furniture"
+                                                onchange="toggleFileFilter(this.value, this.checked)" />
+                                            Exclude room permissions
+                                        </label>
+                                        <label>
+                                            <input type="checkbox" value="surfaces"
+                                                onchange="toggleFileFilter(this.value, this.checked)" />
+                                            Exclude surface and lighting permissions
+                                        </label>
+                                    </div>
+                                </details>
                             </header>
+
+                            <!-- How much the filter is holding back. A browser that
+                                 quietly omits files reads as a folder that does not hold
+                                 them. -->
+                            <p id="so-file-hidden" class="file-panel-hidden" hidden></p>
+
                             <div id="so-file-list"></div>
 
                             <!-- The manifest last: what the loader is told, below what
@@ -808,25 +923,15 @@
                                     <!-- And here be panels for manifest and file list -->
                                 </div>
                             </section>
-                        </article>
-                        <div class="trees_wrapper">
-                            <div id="trees"></div>
-                        </div>
-                        <!-- Back when done -->
-                        <!--<article id="main_file_tree"></article>-->
-                        <!--<article id="preview_files"></article>-->
-                    </section>
-                    <!--<section>
-                        <center><h3>Choose a Murder or create a new one.</h3></center>
-                    </section>-->
+                        </aside>
 
-                    <footer>
-                        <center><small>
-                            <div class="page-version-info">
-                                {{ site.github.build_revision }}
-                            </div>
-                        </small></center>
-                    </footer>
+                        <!-- The row of open documents, and the box that scrolls it. See
+                             .tree-scroll in core/documentFlow.css for why they are two
+                             elements rather than one. -->
+                        <div class="tree-scroll">
+                            <div class="tree-row" id="trees"></div>
+                        </div>
+                    </div>
                 </article>
             </main>
 
@@ -836,7 +941,8 @@
                 <dialog id="help-modal">
                 <article>
                     <header>
-                        <button aria-label="Close" rel="prev" onclick="document.querySelector('#help-modal').toggleAttribute('open')"></button>
+                        <button aria-label="Close" rel="prev" class="close-button"
+                            onclick="closeHelp()"></button>
                         <h5>
                             <strong>Help</strong>
                         </h5>
@@ -852,6 +958,49 @@
                         <h6>How to use:</h6>
                         <p>Instructions for use can be found on the <a href="https://github.com/piepieonline/ShadowsOfDoubt-CaseEditor/wiki">wiki</a>.</p>
                     </small>
+                </article>
+            </dialog>
+
+            <!-- Field summary: one field's values across every asset of its type.
+                 Opened by picking a field rather than from a list, so the dialog has no
+                 controls of its own beyond searching what came back and abandoning a read
+                 that is taking too long. See scripts/fieldSummary.js. -->
+            <dialog id="field-summary-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" class="close-button"
+                            onclick="closeFieldSummary()"></button>
+                        <h5><strong>Field summary</strong></h5>
+                        <!-- The field, written the way its type describes it: a `[]` says
+                             the path runs through a list, and so that one asset may hold
+                             several of the values below. -->
+                        <code id="field-summary-field"></code>
+                    </header>
+
+                    <div class="field-summary-controls">
+                        <span id="field-summary-status" role="status"></span>
+                        <button id="field-summary-cancel" class="secondary" hidden
+                            onclick="closeFieldSummary()">Stop reading</button>
+                    </div>
+
+                    <input id="field-summary-search" type="search" autocomplete="off"
+                        placeholder="Search values and assets" aria-label="Search values and assets"
+                        oninput="filterFieldSummary(this.value)" />
+
+                    <div id="field-summary-notes" class="field-summary-notes"></div>
+
+                    <div class="field-summary-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Value</th>
+                                    <th scope="col">Count</th>
+                                    <th scope="col">Assets</th>
+                                </tr>
+                            </thead>
+                            <tbody id="field-summary-rows"></tbody>
+                        </table>
+                    </div>
                 </article>
             </dialog>
 
@@ -878,6 +1027,131 @@
                 </article>
             </dialog>
     
+            <!-- Room creator. A room is four assets and a patch per thing admitted, so
+                 this presents the room rather than the assets: a name, a room to copy,
+                 and where the room is meant to sit. What it admits is redrawn under
+                 those on every keystroke, because a room class that reaches nothing
+                 builds cleanly and furnishes nothing -- there is no error to wait for.
+
+                 Reads the reference data only, so it opens without a mod folder. -->
+            <dialog id="room-creator-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" onclick="closeRoomCreator()"></button>
+                        <h5><strong>Room Creator</strong></h5>
+                    </header>
+
+                    <!-- Rooms already in this mod, found by following references rather
+                         than by reading names -- so one assembled by hand is found the
+                         same way one written here is. Opening a room loads what its files
+                         say and reports what could not be read. -->
+                    <label for="room-creator-open">Open a room</label>
+                    <select id="room-creator-open" aria-label="Open a room from this mod"
+                        onchange="openExistingRoom()" disabled></select>
+                    <div id="room-creator-opened" role="region" aria-live="polite"
+                        aria-label="What was read back"></div>
+
+                    <form oninput="roomCreatorChanged()" onsubmit="event.preventDefault()">
+                        <label for="room-creator-name">Room name</label>
+                        <input id="room-creator-name" placeholder="PicnicArea" autocomplete="off" />
+                        <small>Names the RoomTypePreset, which is what the floorplan editor's room
+                            picker lists. The room's other three assets take it with a suffix.</small>
+
+                        <label for="room-creator-donor">Copy from</label>
+                        <select id="room-creator-donor" aria-label="Room configuration to copy"></select>
+                        <small>Lighting, security, cleanliness and decor come from here.</small>
+
+                        <!-- Collapsed by default. Every field in here is optional, and a
+                             room can be designed without answering any of them -- so it
+                             should not be the tallest thing in the dialog. -->
+                        <details>
+                            <summary>Where the room sits</summary>
+                            <small>Every one of these is optional. What you leave blank is left open
+                                rather than guessed, and the list below says so.</small>
+
+                            <div class="grid">
+                                <label>Floor
+                                    <input id="room-creator-floor" type="number" step="1" placeholder="any" />
+                                </label>
+                                <label>District wealth
+                                    <input id="room-creator-wealth" type="number" step="0.1" min="0" max="1" placeholder="any" />
+                                </label>
+                                <label>Grubbiness
+                                    <input id="room-creator-grub" type="number" step="0.1" min="0" max="1" placeholder="any" />
+                                </label>
+                            </div>
+
+                            <div class="grid">
+                                <label>Open plan
+                                    <select id="room-creator-openPlan">
+                                        <option value="">Not decided</option>
+                                        <option value="yes">Yes</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                </label>
+                                <label>Address has inhabitants
+                                    <select id="room-creator-inhabitants">
+                                        <option value="">Not decided</option>
+                                        <option value="yes">Yes</option>
+                                        <option value="no">No</option>
+                                    </select>
+                                </label>
+                                <label>Residences in the building
+                                    <input id="room-creator-residences" type="number" step="1" min="0" placeholder="any" />
+                                </label>
+                            </div>
+
+                            <label for="room-creator-district">District</label>
+                            <select id="room-creator-district" aria-label="District"></select>
+                        </details>
+                    </form>
+
+                    <hr />
+                    <div id="room-creator-verdict" role="region" aria-live="polite"
+                        aria-label="What this room admits"></div>
+
+                    <!-- What furnishes the room. Only what the context above admits is
+                         listed: a row that could be ticked but never placed would be a
+                         promise this pane cannot keep. -->
+                    <details>
+                        <summary>What goes in it</summary>
+
+                        <input id="room-creator-search" type="search" autocomplete="off"
+                            placeholder="Search furniture clusters" aria-label="Search furniture clusters"
+                            oninput="roomCreatorChanged()" />
+                        <ul id="room-creator-clusters" class="room-creator-picker"></ul>
+
+                        <!-- A brand new room class is in no material filter, so it has no
+                             wallpaper, flooring or ceiling until one names it. -->
+                        <div class="grid">
+                            <label>Walls
+                                <select id="room-creator-surface-walls" aria-label="Wall materials" onchange="roomCreatorChanged()"></select>
+                            </label>
+                            <label>Floor
+                                <select id="room-creator-surface-floor" aria-label="Floor materials" onchange="roomCreatorChanged()"></select>
+                            </label>
+                            <label>Ceiling
+                                <select id="room-creator-surface-ceiling" aria-label="Ceiling materials" onchange="roomCreatorChanged()"></select>
+                            </label>
+                        </div>
+
+                        <label>Ceiling lights</label>
+                        <small>No lighting preset names a new room, so it gets no ceiling light
+                            until one is patched to accept it. The ones lighting the room you
+                            copied are ticked to start with; untick any you do not want.</small>
+                        <ul id="room-creator-lights" class="room-creator-picker"></ul>
+                    </details>
+
+                    <details>
+                        <summary>What will be written</summary>
+                        <div id="room-creator-plan" role="region" aria-live="polite"
+                            aria-label="Files this room comes to"></div>
+                        <button id="room-creator-write" onclick="writeRoom()" style="width: 100%"
+                            disabled>Write</button>
+                    </details>
+                </article>
+            </dialog>
+
             <!-- Select overrides modal -->
             <dialog id="select-fields-modal">
                 <article>

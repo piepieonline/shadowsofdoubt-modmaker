@@ -32,10 +32,12 @@ building back when the floor changes.
 
 ## Help
 
-**Help** in the flow bar, in the slot the other two flows put theirs in and under the id
-they share — only one flow is mounted, so the name belongs to whichever that is. It holds
-the containment chain above written for someone who has not read this file, and the
-controls.
+**Tools** in the flow bar, in the slot the other two flows put theirs in — the same menu
+as Browse on the left of this bar, and the same menu in all three flows, with
+**Help/Summary** as the one thing in it so far. What that opens is a dialog under the id
+all three flows share for theirs; only one flow is mounted, so the name belongs to
+whichever that is. It holds the containment chain above written for someone who has not
+read this file, and the controls.
 
 The controls are there rather than under the tool bar. They are a reference to read once
 rather than something to consult while painting, and the left column is narrow enough that

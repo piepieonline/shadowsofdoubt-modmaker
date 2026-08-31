@@ -2,7 +2,8 @@ import { readFileContent, tryGetFile } from '../../core/fs.js';
 import { deepClone, renameFile } from '../../core/files.js';
 import { assertModSelected, shouldSave, toSaveSafeJSON, writeWholeFile } from '../../core/persistence.js';
 import { MANIFEST_FILE, refFor, renameListing } from '../../core/murderManifest.js';
-import { assetNameOf, assetOfPath, fileNameFor, stemFor } from '../../core/soFileName.js';
+import { assetNameOf, assetOfPath, fileNameFor } from '../../core/soFileName.js';
+import { confirmRename } from '../../core/deletion.js';
 import { createEditLoop } from '../../core/document.js';
 import { decorateArrayNodes } from '../../core/arrayControls.js';
 import { decorateValueNodes, NodeKind } from '../../core/valueNodes.js';
@@ -13,8 +14,9 @@ import { isNameFieldSafe } from '../../core/strings.js';
 import { fastElement } from '../../core/dom.js';
 import { addTreeElement, deleteTree, renameTreeWindow, createInputElement, createSOSelectElement, createEnumSelectElement, MOD_PREFIX } from './scripts/jsonTreeAdditions.js';
 import { cloneTemplate, createFileIfNotExisting, createOverrideIfNotExisting } from './scripts/modFileManager.js';
-import { setNewFileMode, setNewFileSource } from './scripts/ui.js';
-import { NEW_SUFFIX, PATCH_SUFFIX, moddedNamesOfType } from './scripts/contentList.js';
+import { referencesToAsset } from './scripts/deleteAsset.js';
+import { applyDefaultValueVisibility, setNewFileMode, setNewFileSource } from './scripts/ui.js';
+import { NEW_SUFFIX, PATCH_SUFFIX, moddedNamesOfType, modFileOfAsset, modFileOfStem } from './scripts/contentList.js';
 import { applyPatches, diffToPatches, ENVELOPE_KEYS, isPatchFormat, mergeOldFormat, patchFile } from '../../core/patchFormat.js';
 import { resolveReferences } from '../../core/soReferences.js';
 import { ASSET_DATA, readBaseAsset } from '../../core/baseAssets.js';
@@ -46,8 +48,9 @@ const NAME_FIELD = 'name';
 const PRESET_NAME_FIELD = 'presetName';
 
 /**
- * The asset this one takes the fields it does not state for itself from, which the New
- * File dialog asks for once and nothing re-points afterwards.
+ * The asset this one takes the fields it does not state for itself from. The New File
+ * dialog asks for it when the file is made, and the row on the document is where it is
+ * re-pointed afterwards.
  */
 const COPY_FROM_FIELD = 'copyFrom';
 
@@ -148,6 +151,30 @@ export async function loadFileFromOnlineRepo(path, type, { quiet = false } = {})
 }
 
 /**
+ * Open the file a load order entry names.
+ *
+ * An entry is a file name with the part saying which kind of file it is left off -- see
+ * modFileOfStem, which puts it back from what is actually in the folder. Everything else
+ * here opens a file the app has just walked or just written and so already knows both
+ * halves; an entry is the one place a name arrives on its own.
+ *
+ * An entry naming nothing in the folder is opened as it stands, which is a file that is
+ * not there and says so. That is the honest answer: the load order names a file the mod
+ * does not have, and it is the manifest that is wrong rather than the click.
+ */
+async function openListedFile(stem) {
+    const file = modFileOfStem(stem);
+
+    if (!file) {
+        await loadFile(stem, false);
+        return;
+    }
+
+    // The file's own name rather than the entry's, which need not match its case.
+    await loadFile(file.id, false, file.openAs, file.suffix);
+}
+
+/**
  * Open one of the base game's assets, from wherever this copy of the tool can reach it.
  *
  * The author's own export first, when they have connected one: it is the game they are
@@ -166,42 +193,36 @@ export async function openBaseGameAsset(type, name) {
     await loadFileFromOnlineRepo(path, type);
 }
 
+/** The asset a `REF:Type|Name` names, or null when the value names none. */
+function refTarget(value) {
+    const target = String(value ?? '').match(/^REF:([\w-]+)\|(.+)$/);
+    if (!target) return null;
+
+    return { type: target[1], name: target[2].trim() };
+}
+
 /**
- * How to open the asset a document is derived from, or null when it is derived from
- * nothing and there is no base to offer.
- *
- * The two kinds of derived file say what they came from in different places. An asset
- * states it in `copyFrom`, which the New File dialog writes and which names an asset of
- * the document's own type. A patch states it nowhere at all: what it overrides is the
- * base game asset of the same name and type, and the file name is the whole of how a
- * patch says so -- see core/soFileName.js -- so a `copyFrom` left in one by hand is not
- * what the loader would go by and is not read here either.
+ * Open the asset a document is derived from.
  *
  * A `copyFrom` may name the mod's own asset or a base game one, and the mod's is tried
  * first: an author copying within their own mod means the file they can edit, and the
  * shipped asset of that name is not the one the game will end up loading.
+ *
+ * Which of the mod's files that is comes from the folder listing rather than from building
+ * a name, as it does for a load order entry -- see modFileOfAsset. This used to look for
+ * `<name>.<type>.sodso.json`, which is what this app writes and not what every mod holds:
+ * a `REF:` resolves against `presetName`, so a file named anything else was missed and the
+ * base game's asset of that name opened in its place.
  */
-function baseOpenerFor(path, data, fileType) {
-    if (path.endsWith(PATCH_SUFFIX)) {
-        const name = assetOfPath(path, fileType);
-        return name ? () => openBaseGameAsset(fileType, name) : null;
+async function openDerivedFrom({ type, name }) {
+    const file = modFileOfAsset(type, name);
+
+    if (file) {
+        await loadFile(file.id, false, file.openAs ?? type, file.suffix);
+        return;
     }
 
-    const target = String(data?.[COPY_FROM_FIELD] ?? '').match(/^REF:([\w-]+)\|(.+)$/);
-    if (!target) return null;
-
-    const type = target[1];
-    const name = target[2].trim();
-
-    return async () => {
-        const folder = window.selectedMod?.baseFolder;
-        if (folder && await tryGetFile(folder, [fileNameFor(name, type)])) {
-            await loadFile(stemFor(name, type), false, type);
-            return;
-        }
-
-        await openBaseGameAsset(type, name);
-    };
+    await openBaseGameAsset(type, name);
 }
 
 /**
@@ -318,16 +339,40 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
     // comes first.
     let DOMtarget = isManifestFile ? document.getElementById('manifest_content_tree') : document.getElementById('trees');
 
-    // Worked out here rather than in the editor bar, which knows the path but not what is
-    // written inside the document. Null is the answer for a file the mod wrote from
-    // nothing, and the bar leaves the button off rather than offering one that opens
-    // nothing.
-    const openBase = baseOpenerFor(path, data, fileType);
+    /**
+     * The asset this document is derived from, or null when it is derived from nothing and
+     * there is no base to offer.
+     *
+     * The two kinds of derived file say what they came from in different places. An asset
+     * states it in `copyFrom`, which names an asset of the document's own type. A patch
+     * states it nowhere at all: what it overrides is the base game asset of the same name
+     * and type, and the file name is the whole of how a patch says so -- see
+     * core/soFileName.js -- so a `copyFrom` left in one by hand is not what the loader
+     * would go by and is not read here either.
+     *
+     * Read on each use rather than settled when the file was opened: `copyFrom` is the
+     * author's to re-point, and a button that opens the baseline the file used to have is
+     * worse than no button at all.
+     */
+    const baseAsset = () => {
+        if (isPatch) {
+            const name = assetOfPath(path, fileType);
+            return name ? { type: fileType, name } : null;
+        }
+
+        return refTarget(data?.[COPY_FROM_FIELD]);
+    };
 
     let treeEle = addTreeElement(path, DOMtarget, readOnly, fileType, source, {
         copySource,
         save,
-        openBase,
+        // The button is built for every document that can be edited and hidden while there
+        // is nothing for it to open -- see syncOpenBase. Which of those it is changes as
+        // the author re-points copyFrom, and the editor bar is built once.
+        openBase: () => {
+            const base = baseAsset();
+            return base && openDerivedFrom(base);
+        },
         // Which fields a file states is what an override used to be made of, and is still
         // what one of the mod's own files is made of -- the ones it does not state, it
         // takes from its copyFrom. A patch states nothing: it holds the whole asset and
@@ -361,6 +406,59 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
         name: data?.[PRESET_NAME_FIELD] ?? data?.[NAME_FIELD] ?? null,
     });
 
+    /**
+     * The chain of assets from `value` back round to this document, or null when pointing
+     * `copyFrom` there makes no such chain.
+     *
+     * A copy takes the fields it does not state for itself from its baseline, so a ring of
+     * them has nothing to take: the game follows it round and never reaches an asset that
+     * answers. The dropdown already leaves this document out of its own list, but
+     * `Custom...` names whatever is typed into it, and a ring can be two files long.
+     *
+     * Only the mod's own files are walked. A base game asset was shipped before this mod
+     * existed, so its `copyFrom` names another base game asset and a chain that leaves the
+     * folder does not come back. What that misses is an override re-pointing a base game
+     * asset at one of the mod's, which is not something this editor offers: a patch's
+     * `copyFrom` is not shown.
+     */
+    async function copyFromRing(value) {
+        const folder = window.selectedMod?.baseFolder;
+        const me = self();
+        if (!folder || !me.name) return null;
+
+        const chain = [];
+        const seen = new Set();
+        let target = refTarget(value);
+
+        while (target) {
+            chain.push(target.name);
+
+            if (target.type === me.type && target.name === me.name) return chain;
+
+            // A ring the folder already holds, which this change is not the making of.
+            const step = `${target.type}|${target.name}`;
+            if (seen.has(step)) return null;
+            seen.add(step);
+
+            // From the folder listing rather than by building a file name: an asset is not
+            // always stored under its own name. See modFileOfAsset.
+            const file = modFileOfAsset(target.type, target.name);
+            if (!file) return null;
+
+            const handle = await tryGetFile(folder, [`${file.id}${file.suffix}`]);
+            if (!handle) return null;
+
+            try {
+                target = refTarget(JSON.parse(await readFileContent(handle))?.[COPY_FROM_FIELD]);
+            } catch {
+                // A file that will not parse states no baseline.
+                return null;
+            }
+        }
+
+        return null;
+    }
+
     // Corrected on opening, not just on edit: `name` is about to stop being shown, and a
     // file that arrived with the two already disagreeing would otherwise keep a wrong
     // name that nothing in the editor admits to. Only in memory -- the file is not
@@ -387,11 +485,12 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
         setData: (next) => { data = createDummyKeys(next); },
         onRebuild: () => runTreeSetup(),
         save: () => save(),
-        afterRebuild: () => markDefaultValues(),
+        afterRebuild: () => { markDefaultValues(); syncOpenBase(); },
     });
 
     runTreeSetup();
     markDefaultValues();
+    syncOpenBase();
 
     if(isManifestFile) {
         document.querySelector('#manifest_add_item_button').onclick = () => { tree.addNewArrayElement(['Manifest', 'fileOrder'], '/fileOrder') };
@@ -442,10 +541,25 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
             const labelEle = item.el.querySelector('.jsontree_label');
             if (!labelEle) return;
 
-            labelEle.title = describeField([fileType, ...fieldPath(item)], {
+            const path = fieldPath(item);
+
+            labelEle.title = describeField([fileType, ...path], {
                 typeLayout: window.typeLayout,
                 descriptions: window.fieldDescriptions,
             });
+
+            // What this label stands for, for the field summary to pick up -- the type
+            // whose assets would be read, and the field within it. Written here rather
+            // than looked up on the click because this is where a document knows its own
+            // type, and because the pass runs on every render: a mark left on the label
+            // survives the tree being rebuilt under it.
+            //
+            // The manifest is not one of the game's types and has no assets to compare
+            // against, so its labels are left unmarked and are not pickable.
+            if (!isManifestFile && path.length) {
+                labelEle.dataset.summaryType = fileType;
+                labelEle.dataset.summaryPath = path.join('.');
+            }
         });
 
         // `name` is not shown at all rather than shown read-only: it says nothing
@@ -459,14 +573,15 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
             );
         }
 
-        // The document's own `copyFrom` is settled when the file is made -- the New File
-        // dialog asks what to copy, and nothing after that re-points it -- so the row is
-        // in the way rather than useful. It is still written to the file, which is where
-        // the game reads it.
+        // An override's `copyFrom` is the base game asset's rather than the mod's. What a
+        // patch overrides is settled by its file name -- see core/soFileName.js -- so a
+        // row here would offer a decision the loader does not read, and re-pointing it
+        // would write a change to the base game's own baseline into the override.
         //
-        // A read-only document keeps its row: there it is the one route through to the
-        // asset being copied, and there is nothing to edit for it to be in the way of.
-        if (!readOnly) {
+        // The mod's own files keep their row, where it is what the asset copies from and
+        // is the author's to change. So does a read-only one, where it is the route
+        // through to the asset being copied.
+        if (mode === Mode.PATCH) {
             tree.findAndHandle(
                 item => item.parent?.isRoot && item.label === COPY_FROM_FIELD,
                 item => { item.el.classList.add('hidden'); }
@@ -495,8 +610,8 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
                 ele.classList.add('link-element')
     
                 ele.addEventListener('click', () => {
-                    loadFile(refPath, false);
-                }); 
+                    openListedFile(refPath);
+                });
             }
 
             if (isManifestFile && !item.isComplex) {
@@ -509,7 +624,7 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
                 // it has to be readable somewhere. The DDS flow's entries do the same.
                 file_link.title = file_link.innerText;
                 file_link.addEventListener('click', () => {
-                    loadFile(refPath, false);
+                    openListedFile(refPath);
                 });
                 li.appendChild(file_link);
                 ul.appendChild(li);
@@ -572,13 +687,49 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
                             } else {
                                 value = `REF:${node.type}|${customValue}`;
                             }
+
+                            // The document's own baseline is the one reference that can be
+                            // pointed back at the document. A `copyFrom` further down
+                            // belongs to some other object and is not this file's chain.
+                            if (item.parent?.isRoot && item.label === COPY_FROM_FIELD) {
+                                const ring = await copyFromRing(value);
+
+                                if (ring) {
+                                    alert(`${self().name} can't copy from ${ring[0]}, which comes `
+                                        + `back round to it: ${[self().name, ...ring].join(' -> ')}.\n\n`
+                                        + 'A file takes the fields it does not state for itself from '
+                                        + 'the one it copies from, so a ring of them has nothing to '
+                                        + 'take.');
+
+                                    // Nothing has changed, but the dropdown is showing the
+                                    // choice that was refused. Rebuilding puts back what
+                                    // the document actually says, and keeps the author's
+                                    // place while it does -- see core/document.js.
+                                    await updateTree([]);
+                                    return;
+                                }
+                            }
+
                             await updateTree([{
                                 op: 'replace',
                                 path: getJSONPointer(item),
                                 value,
                             }]);
                         },
-                        moddedNamesOfType(node.type, self())
+                        moddedNamesOfType(node.type, self()),
+
+                        // The field, named the way everything else here names one: the
+                        // document it is in and the pointer to it. What it is for is a
+                        // dropdown that remembers what was typed into it, and this is
+                        // the identity that outlives the control -- editing anything
+                        // rebuilds the whole tree, so the control does not.
+                        //
+                        // A pointer into an array is a position, so removing an element
+                        // hands its term to the one that moves up into its place. A
+                        // stale search string in a box that opens with it selected is
+                        // the whole of that, and keying by anything else would mean no
+                        // memory at all in the lists that are longest.
+                        `so:${path}#${getJSONPointer(item)}`
                     );
                 },
                 [NodeKind.TEXT]: (valueEl, item, node) => {
@@ -687,6 +838,26 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
     const stemOf = (filePath) => filePath.slice(0, -NEW_SUFFIX.length);
 
     /**
+     * What else in the mod points at this asset by the name it currently has, labelled as
+     * the file panel labels a file.
+     *
+     * The document's own file is excluded, and `referencesToAsset` recognises it by putting
+     * `id` and `suffix` back together -- see the note on the target shape there. For a
+     * document in the mod's own folder those two are the whole of `path`, so the split is
+     * made by whichever suffix the path actually carries rather than by assuming a preset.
+     */
+    async function referencesToThis(folder, assetName) {
+        const suffix = [PATCH_SUFFIX, NEW_SUFFIX].find((end) => path.endsWith(end)) ?? '';
+
+        return referencesToAsset(folder, {
+            id: suffix ? path.slice(0, -suffix.length) : path,
+            suffix,
+            assetName,
+            type: fileType,
+        });
+    }
+
+    /**
      * Rename the asset. `presetName` is what it is called; `name` repeats it and so does
      * the file, so editing it moves all three.
      *
@@ -694,6 +865,11 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
      * here, and only here. The rename is already writing the file somewhere new and
      * already following it through the manifest, so there is nothing extra to go wrong;
      * opening or saving one leaves it exactly where its author left it.
+     *
+     * What it does not follow is the mod's other documents. A `REF:` in one of them resolves
+     * against `presetName`, so a rename leaves it naming an asset that has gone -- the same
+     * break deleting the file would cause, which the panel warns about and this did not. So
+     * it asks, when there is something to ask about; see core/deletion.js.
      */
     async function renamePreset(item, value) {
         const wanted = String(value ?? '');
@@ -708,6 +884,15 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
         }
 
         if (wanted === data[PRESET_NAME_FIELD]) return;
+
+        // Asked here rather than at save time, where the file actually moves. This is the
+        // moment the author is thinking about the name, and returning false puts the old one
+        // back in the field; with autosave off, a question at Save would be asking about an
+        // edit made some time earlier and would have nothing left to put back.
+        const was = data[PRESET_NAME_FIELD];
+        const folder = window.selectedMod?.baseFolder;
+
+        if (folder && !confirmRename(was, wanted, await referencesToThis(folder, was))) return false;
 
         // Acted on by save(), so that with autosave off the file does not move before the
         // edit moving it has been committed.
@@ -887,6 +1072,18 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
     }
 
     /**
+     * Show Open Base only while there is something for it to open.
+     *
+     * The editor bar is built once and `copyFrom` can be re-pointed at any time, including
+     * to nothing at all, so this is toggled on every rebuild rather than decided when the
+     * document was opened. A patch's base does not move, and it costs nothing to ask.
+     */
+    function syncOpenBase() {
+        treeEle.querySelector('.jsontree-editor-bar-open-base-button')
+            ?.classList.toggle('hidden', !baseAsset());
+    }
+
+    /**
      * Grey out the fields the author has not decided anything about, which Hide Default
      * Values then takes off the screen.
      *
@@ -895,6 +1092,10 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
      * value. A patch states only what it changes, so the question is which fields are
      * still the base game's -- and a patch of any size is mostly those, which is what
      * makes the toggle worth having there.
+     *
+     * What is marked here is then taken to wherever Hide Default Values stands. A document
+     * can be opened -- or rebuilt by an edit -- long after that switch was flipped, and
+     * marking alone would leave it showing what every other open document is hiding.
      */
     function markDefaultValues()
     {
@@ -910,6 +1111,8 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
                 item.el.classList.add('default-value-node');
             }
         });
+
+        applyDefaultValueVisibility();
     }
 }
 

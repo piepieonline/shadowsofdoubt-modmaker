@@ -111,8 +111,12 @@ test('Help opens, says how a building is put together, and closes again', async 
     const help = page.locator('#help-modal');
     await expect(help).not.toHaveAttribute('open', '');
 
-    await page.locator('.flow-bar a', { hasText: 'Help' }).click();
+    // Help is reached through Tools, the menu on the right of the bar that every flow
+    // carries. Picking from it shuts it, so the modal is not read through an open menu.
+    await page.click('#tools-menu > summary');
+    await page.locator('#tools-menu .browse-menu-item', { hasText: 'Help/Summary' }).click();
     await expect(help).toHaveAttribute('open', '');
+    await expect(page.locator('#tools-menu')).not.toHaveAttribute('open', '');
 
     // The chain a floor is reached through, which is the thing the summary is for: a
     // floor is never opened on its own, so knowing what contains it is how any of the
@@ -660,7 +664,7 @@ test('a category heading sits on its items, the same way in every list', async (
     // And the Browse menu's two levels, which have to agree with each other: a building's
     // first floor stands off its name as far as a floor's first layout stands off the
     // floor's, and no further.
-    await page.locator('.browse > summary').click();
+    await page.locator('#building-browse > summary').click();
     await page.evaluate(() => {
         for (const details of document.querySelectorAll('.browse-menu details')) details.open = true;
     });

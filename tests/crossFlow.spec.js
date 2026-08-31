@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, queuePicks, connectFolders, selectContent, gotoFlow } from './support/harness.js';
 import {
-    ddsFixture, soFixture, pluginsFixture, ddsManifestFixture, soFolderContent, FLAT_MOD,
+    installFsHarness, seedFs, queuePicks, connectFolders, selectContent, gotoFlow,
+    openDdsDocument,
+} from './support/harness.js';
+import {
+    ddsFixture, ddsFixtureWithContent, soFixture, pluginsFixture, ddsManifestFixture,
+    soFolderContent, FLAT_MOD, TREE_GUID,
 } from './support/fixtures.js';
 
 /**
@@ -305,8 +309,9 @@ test('both flows show the manifest the same way', async ({ page }) => {
 
     const dds = await manifestSection(page);
 
-    // The sidebar itself, which the two flows lay out by different means -- a flex
-    // item here, a grid track there -- and so had drifted 40px apart.
+    // The sidebar itself, which the two flows used to lay out by different means -- a
+    // flex item here, a grid track there -- and so had drifted 40px apart. Both are the
+    // same .file-panel now; see the test below for the rest of that frame.
     expect(await sidebarWidth(page)).toBe(soWidth);
     expect(soWidth).toBe(300);
 
@@ -321,6 +326,152 @@ test('both flows show the manifest the same way', async ({ page }) => {
     expect(dds.entry.textOverflow).toBe('ellipsis');
     expect(dds.entry.whiteSpace).toBe('nowrap');
     expect(dds.entry.textAlign).toBe('left');
+});
+
+/**
+ * The frame a document editor is laid out in: the panel, the box that scrolls the row of
+ * open documents, and the row inside it.
+ *
+ * Read as computed style rather than as a screenshot, because what is being asked is
+ * whether one stylesheet is laying both flows out -- see core/documentFlow.css. The two
+ * used to build this from unrelated markup, a grid in one flow and a flex row in the
+ * other, and every rule about it was written twice and drifted.
+ */
+const workspaceFrame = (page) => page.evaluate(() => {
+    const root = document.getElementById('flow-root');
+    const panel = root.querySelector('.file-panel');
+    const scroll = root.querySelector('.tree-scroll');
+    const row = root.querySelector('.tree-row');
+    const window_ = row.querySelector('.file-window');
+
+    const style = (el, ...props) =>
+        Object.fromEntries(props.map((p) => [p, getComputedStyle(el)[p]]));
+
+    return {
+        panelWidth: panel.getBoundingClientRect().width,
+        // Where the row starts, so a difference in the gutter or in the article's padding
+        // shows up rather than cancelling out against a difference in the panel.
+        panelLeft: panel.getBoundingClientRect().left,
+        gapToScroller: scroll.getBoundingClientRect().left - panel.getBoundingClientRect().right,
+
+        scroller: style(scroll, 'overflowX', 'overflowY'),
+
+        /*
+         * The row is positioned and the scrolling belongs to the box around it. That is
+         * what puts a dropdown opened from a control in a window on the control at any
+         * scroll offset -- see .tree-scroll in core/documentFlow.css -- and both flows
+         * parent their dropdowns into this element, so both depend on it.
+         */
+        rowIsInsideScroller: row.parentElement === scroll,
+        rowPosition: getComputedStyle(row).position,
+        rowScrolls: getComputedStyle(row).overflowX,
+
+        // A window is as tall as the row and no narrower than this, whichever flow it is
+        // a document of.
+        windowMinWidth: getComputedStyle(window_).minWidth,
+        windowFillsRow: Math.abs(window_.getBoundingClientRect().height
+            - row.getBoundingClientRect().height) < 1,
+    };
+});
+
+test('both flows lay their workspace out the same way', async ({ page }) => {
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, { ...ddsFixtureWithContent, ...soFolderContent });
+    await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+
+    await page.locator('.file-panel-category[data-category="MurderMO"]')
+        .getByRole('button', { name: 'testcase' }).click();
+    await page.locator('#flow-root .tree-row .file-window').first().waitFor();
+
+    const so = await workspaceFrame(page);
+
+    await page.selectOption('#flow-picker', 'dds');
+    await page.locator('html[data-flow-ready="dds"]').waitFor();
+    await selectContent(page, 'TestMod', 'Content');
+    await openDdsDocument(page, TREE_GUID);
+    await page.locator('#flow-root .tree-row .file-window').first().waitFor();
+
+    const dds = await workspaceFrame(page);
+
+    expect(dds).toEqual(so);
+
+    // Stated as well as compared: two flows agreeing on the wrong thing is still wrong,
+    // and the row not being the scrolling element is the whole point of the split.
+    expect(so.rowIsInsideScroller).toBe(true);
+    expect(so.rowPosition).toBe('relative');
+    expect(so.rowScrolls).toBe('visible');
+    expect(so.scroller.overflowX).toBe('auto');
+    expect(so.windowFillsRow).toBe(true);
+    expect(so.panelWidth).toBe(300);
+});
+
+/**
+ * The workspace is a light surface whatever the system theme is, and the words on it are
+ * dark. Read as luminance rather than as an exact colour: what matters is that the text
+ * can be read against what is behind it.
+ */
+const panelContrast = (page) => page.evaluate(() => {
+    const luminance = (colour) => {
+        const [r, g, b] = colour.match(/\d+(\.\d+)?/g).map(Number);
+        return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    };
+
+    const panel = document.querySelector('#flow-root .file-panel');
+    const heading = panel.querySelector('.manifest-section header strong');
+
+    return {
+        prefersDark: matchMedia('(prefers-color-scheme: dark)').matches,
+        background: luminance(getComputedStyle(panel).backgroundColor),
+        heading: luminance(getComputedStyle(heading).color),
+        headingText: heading.textContent,
+    };
+});
+
+test.describe('under a dark system theme', () => {
+    test.use({ colorScheme: 'dark' });
+
+    /*
+     * The card the workspace sits on carries `data-theme="light"`, because libs/jsonTree
+     * hardcodes dark text colours and the trees have to be a light surface for them.
+     *
+     * A nested `data-theme` only redefines Pico's variables, though: `color` itself is
+     * declared once, on `body`, so plain text inside went on inheriting the dark theme's
+     * near-white and only buttons and headings -- which name the variable again for
+     * themselves -- picked the light value up. That left the words over the file list,
+     * "Mod content" and "Manifest", in pale grey on white. See `.editor > article` in
+     * core/documentFlow.css.
+     */
+    test('the workspace keeps its own palette, words included', async ({ page }) => {
+        await gotoFlow(page, '?flow=scriptableObject');
+        await seedFs(page, { ...ddsManifestFixture, ...soFolderContent });
+        await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
+        await selectContent(page, 'TestCase', '');
+        await page.locator('#manifest_panel .files-order button').first().waitFor();
+
+        const so = await panelContrast(page);
+
+        await page.selectOption('#flow-picker', 'dds');
+        await page.locator('html[data-flow-ready="dds"]').waitFor();
+        await selectContent(page, FLAT_MOD.mod, FLAT_MOD.content);
+        await page.locator('#dds-manifest-panel .files-order button').first().waitFor();
+
+        const dds = await panelContrast(page);
+
+        // The premise: without this the two colours below are the same either way.
+        expect(so.prefersDark).toBe(true);
+        expect(dds.prefersDark).toBe(true);
+
+        for (const flow of [so, dds]) {
+            expect(flow.headingText).toBe('Manifest');
+            expect(flow.background).toBeGreaterThan(0.8);
+            expect(flow.heading).toBeLessThan(0.4);
+        }
+
+        // And the same in both, since one stylesheet is what says so.
+        expect(dds.heading).toBeCloseTo(so.heading, 3);
+        expect(dds.background).toBeCloseTo(so.background, 3);
+    });
 });
 
 test('mods are listed with what each of their folders holds', async ({ page }) => {

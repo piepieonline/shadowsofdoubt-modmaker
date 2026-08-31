@@ -88,6 +88,15 @@ body {
     min-height: 0;
     display: flex;
     flex-direction: column;
+
+    /*
+     * Pico pads `body > main` top and bottom, for a page that ends where its content
+     * does. The top of that is wanted -- it is what stands the flow's own bar off the
+     * shell nav above it. The bottom is not: the page ends in the build line now, which
+     * brings its own spacing, so what that padding added was a second gap on top of the
+     * first and a band of empty page under every flow.
+     */
+    padding-block: var(--pico-block-spacing-vertical) 0;
 }
 
 /*
@@ -108,9 +117,32 @@ body {
 }
 
 /*
+ * A flow, filling what the shell nav leaves it.
+ *
+ * Every flow is laid out this way -- the bar at the top and the flow's own thing under
+ * it, sized against this box rather than against the viewport, so nothing has to guess
+ * the chrome's height. The page itself does not scroll; anything too long for the space
+ * scrolls inside its own panel.
+ *
+ * All three flows wrote this out for themselves until it was collected here. What the two
+ * document editors do inside it is core/documentFlow.css.
+ */
+.editor {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Horizontal spacing comes from the .flow-container gutter below, not from the bar. */
+.editor > .flow-bar {
+    margin-bottom: 0;
+}
+
+/*
  * The per-flow toolbar, one line directly under the shell nav. Both flows lay it out
  * the same way: text links into this flow's modals on the left, whatever it loads
- * documents with in the centre, Help on the right.
+ * documents with in the centre, the Tools menu on the right.
  *
  * Neither carries a title any more. The shell names the app and the picker beside it
  * names the editor, so "SoD DDS Editor" and "SoD Case Editor" were saying it a second
@@ -165,6 +197,108 @@ body {
         gap: 0.5rem;
         margin-bottom: 0;
     }
+}
+
+/*
+ * A menu hanging off the bar: the building list on the left of one, Tools on the right
+ * of all three.
+ *
+ * A `<details>` rather than Pico's `.dropdown`, which styles a summary as a select and
+ * expects a `<ul>` beneath it; these hold buttons and lists of collapsible categories.
+ * The summary is marked up as a button so it reads as the control it is.
+ *
+ * The bar does not establish a containing block of its own, so a menu is positioned
+ * against the `<details>` around it. Shutting one on a click elsewhere is core/barMenu.js
+ * -- a `<details>` does not do it.
+ */
+.browse {
+    position: relative;
+    margin-bottom: 0;
+
+    > summary {
+        margin: 0;
+
+        &::marker,
+        &::-webkit-details-marker {
+            content: none;
+            display: none;
+        }
+    }
+}
+
+.browse-menu {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    /* As wide as what is in it, unless the menu says otherwise. A list of file names
+       has to be told what width to be; a menu of one word should not have to be. */
+    width: var(--browse-menu-width, max-content);
+    min-width: 10rem;
+    /* A cap and only a cap. The building flow measures its own against the columns it
+       hangs over once it is open -- see sizeBrowseMenu in flows/building/scripts/ui.js
+       -- and this is what a menu opened before there is anything to measure falls back
+       to. */
+    max-height: min(28rem, 60vh);
+    overflow-y: auto;
+    padding: 0.75rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+    box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.35);
+
+    /*
+     * A menu hangs off the flow's `<nav>`, where Pico lays out every descendant `ul` as
+     * a flex row and pads every `li` as a nav item. Left to it, a list inside a menu runs
+     * side by side across it. What is in here is a list that happens to be reachable from
+     * the bar, not navigation, so it is put back the way a list is drawn everywhere else.
+     */
+    ul {
+        display: block;
+    }
+
+    li {
+        display: list-item;
+        padding: 0;
+    }
+}
+
+/* Opened from the right-hand end of the bar, so it hangs back over the page rather than
+   off the edge of it. */
+.browse-end .browse-menu {
+    left: auto;
+    right: 0;
+}
+
+/*
+ * One thing to pick. A row across the menu rather than a button standing in it: what is
+ * being offered is the choice, and the box around it would be the loudest thing in a
+ * menu this size.
+ *
+ * Two classes deep to outweigh `.compact-controls button`, which is the bar's and sizes
+ * a control for the toolbar rather than for a list.
+ *
+ * The colour is inherited rather than named: Pico sets --pico-color to
+ * --pico-primary-inverse on every button, so a rule here taking --pico-color would be
+ * asking for the text colour of a filled button -- which is white, on the white this
+ * menu is drawn on. What is wanted is the text colour of the page around it.
+ */
+.browse-menu .browse-menu-item {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    text-align: left;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.browse-menu .browse-menu-item:is(:hover, :focus-visible) {
+    background: var(--pico-secondary-background);
+    color: var(--pico-secondary-inverse);
 }
 
 /*
@@ -512,15 +646,95 @@ body.driver-active .driver-popover-next-btn {
  * subject of the panel rather than as a way through it.
  */
 .file-panel-search {
-    margin: 0;
+    /* The gap under the box used to be the input's own bottom margin. It is the row's
+       now, so that the button beside the box does not have to carry a copy of it. */
+    margin: 0 0 0.5rem;
     padding: 0;
+    display: flex;
+    align-items: start;
+    gap: 0.35rem;
 
     input {
-        margin: 0 0 0.5rem;
+        /* Beside the button rather than under it, and what takes the width left over.
+           `min-width` because a flex item's default floor is its intrinsic width, which
+           for an input is wider than this column. */
+        flex: 1;
+        min-width: 0;
+        margin: 0;
         padding: 0.3rem 0.5rem;
         height: auto;
         font-size: 0.8rem;
     }
+}
+
+/*
+ * The button that says what the list leaves out, at the end of the search row.
+ *
+ * Beside the box rather than inside it. An overlaid control would sit on top of the clear
+ * cross a `type="search"` draws for itself as soon as anything is typed, which is the one
+ * place in the row an author is most likely to be aiming at.
+ *
+ * Its menu is sized to the column. The panel around it scrolls, and a scroller clips what
+ * hangs outside it in both directions -- `overflow-y: auto` makes `overflow-x` auto too --
+ * so a menu wider than the panel would not open past the edge; it would put a horizontal
+ * scrollbar on the file list.
+ */
+.file-panel-filter {
+    flex: none;
+
+    > summary {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    /* Filtering is a state the panel is in, and one an author leaves on and forgets. The
+       button says so on its own, for when the count below has been scrolled away from. */
+    &.filtering > summary {
+        --pico-color: var(--pico-primary);
+        --pico-border-color: var(--pico-primary);
+        font-weight: bold;
+    }
+
+    /* The column, less the padding .file-panel carries in core/documentFlow.css and its
+       border. Not `max-content`, which the default menu is: these rows are sentences
+       rather than words, and each would set the menu a line's width. */
+    .browse-menu {
+        --browse-menu-width: calc(var(--file-panel-width) - 1.5rem - 2px);
+        min-width: 0;
+        white-space: normal;
+    }
+
+    /* A row of the menu: the box and what it excludes, on one line each. Pico lays a
+       label out as a block above its input, which here would be two lines per choice. */
+    label {
+        display: flex;
+        align-items: start;
+        gap: 0.4rem;
+        margin: 0;
+        padding: 0.25rem 0;
+        font-size: 0.8rem;
+        line-height: 1.3;
+        cursor: pointer;
+    }
+
+    label input {
+        margin: 0;
+        flex: none;
+    }
+}
+
+/*
+ * How much the filter is keeping out of sight, under the row that set it.
+ *
+ * Quiet, and not quiet enough to miss: it is the answer to "where is the file I wrote",
+ * and the panel is otherwise indistinguishable from a folder that does not hold it.
+ */
+.file-panel-hidden {
+    margin: -0.25rem 0 0.5rem;
+    font-size: 0.7rem;
+    font-style: italic;
+    color: var(--pico-muted-color);
 }
 
 /* Heads a run of categories -- see `group` in core/filePanel.js. Quieter than the
@@ -821,4 +1035,27 @@ body.driver-active .driver-popover-next-btn {
         color: inherit;
         padding: 0;
     }
+}
+
+/*
+ * The build this is, under everything.
+ *
+ * The last line of the page rather than of a flow: it answers the same question whichever
+ * editor is open. It used to be a footer inside each document flow's card, which said it
+ * twice and left the building flow unable to say it at all.
+ *
+ * Quiet and small. Nobody comes to the page to read it -- it is here for the one moment
+ * something has gone wrong and needs reporting -- so it takes a line and no attention.
+ * Pico gives `body > footer` a block of padding for a page that ends in one; this ends
+ * under a workspace that has already used the height.
+ *
+ * flex: none for the same reason #demo-banner has it: body is a column flex container,
+ * and without it this shares the space with #flow-root.
+ */
+#build-version {
+    flex: none;
+    padding: 0.2rem 1rem;
+    text-align: center;
+    font-size: 0.65rem;
+    color: var(--pico-muted-color);
 }

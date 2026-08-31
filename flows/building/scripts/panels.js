@@ -1470,6 +1470,11 @@ function buildFurnitureChecker(sections, parent) {
         // type rather than this column's smaller one. This is what reaches it.
         dropdownClass: 'furniture-check-dropdown',
 
+        // One question asked repeatedly, of one preset at a time, and the control is
+        // rebuilt whenever the mod changes or the flow is switched back to. The preset
+        // being asked about is usually a family of names rather than a single one.
+        memoryKey: 'building:furniture-check',
+
         onChange: (value) => {
             checkedPreset = value ?? '';
             renderVerdict(verdict, checkerTarget.model, checkerTarget.at);

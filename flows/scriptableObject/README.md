@@ -9,6 +9,43 @@ http-server -c-1 -S
 To add a new data type for online reference:
 Modify the documentation generator's onlineTypes, which is written to `refs/assets/index.json`.
 
+## The file list
+
+Everything in the content folder, grouped by type — not only what the manifest names.
+Search it by typing part of a name or of a type.
+
+**Filter**, beside the search box, is what to reach for once the folder has rooms in it.
+Building one room patches every furniture cluster and preset it admits, every material
+filter it takes a surface from, and every light it uses, and none of those files is about
+the room:
+
+| | What it leaves out |
+|---|---|
+| Exclude room permissions | `FurnitureCluster` and `FurniturePreset` overrides that do nothing but change `allowedRoomFilters` |
+| Exclude surface and lighting permissions | `RoomTypeFilter` overrides that only add a room class, `RoomLightingPreset` overrides that only add a configuration |
+
+An override that changes anything else is never hidden, and neither is an asset the mod
+defines — a cloned cluster of your own stays on the list. The line under the box says how
+many files are being held back, and choosing another mod clears the filter.
+
+## Field summary
+
+**Tools ▸ Summarise a field…**, then click a field in an open document: a table of every
+value that field takes across every asset of its type, and which assets take each one.
+The game's own assets and this mod's are counted together, and where the mod overrides a
+shipped asset the mod's version is the one counted — that is the one the game loads.
+
+A path running through a list is answered per element, so `MurderMO.MOleads[].chance` reads
+one value per lead rather than one per asset. The `[]` in the dialog's heading is what says
+so. A field the path ends at is one value, whole.
+
+While the mode is on, a click picks rather than opens a node up: ctrl-click, or ⌘-click,
+still opens one — and opens everything below it, which is how a field several levels down
+is reached.
+
+The same reach as everything else here: nine types can be read as shipped, every type with
+your exported ScriptableObjects folder connected. Whatever it could not read, it says.
+
 ## Overrides
 
 A `*.sodso_patch.json` changes one of the base game's assets. It is written as the list of

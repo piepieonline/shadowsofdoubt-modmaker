@@ -8,7 +8,7 @@
  *
  * ## Why a wrapper rather than a call to select2
  *
- * Three reasons, all of them things a second caller would otherwise have to rediscover.
+ * Four reasons, all of them things a second caller would otherwise have to rediscover.
  *
  * **The dropdown has to be re-parented.** select2 appends its dropdown next to the control
  * by default, which puts it inside whatever is scrolling -- the building flow's status
@@ -24,6 +24,14 @@
  * container that was not rebuilt: every attempt to scroll is then snapped back, for as
  * long as the page lives. Closing first is done here so neither caller can forget it.
  *
+ * **The search box has to be focused, and it remembers.** select2 cannot focus its own
+ * search box under the jQuery this app pins -- see the `select2:open` handler -- so
+ * clicking a list open and typing put the characters nowhere, and searching took a second
+ * click into a box that already looked ready. Every caller had that fault and none of them
+ * could see it was theirs. `memoryKey` is the other half of the same complaint: a list
+ * reopened came back empty, so narrowing five thousand assets down to the one wanted was
+ * work to be done again from the first character every time.
+ *
  * **jQuery stays in one file.** Everything else in `core/` is a module against the DOM.
  * index.html:16 says dropping select2 is the aim, and when that happens this is the file
  * that changes.
@@ -37,6 +45,17 @@
  * panel's unscrolled flow gave it, ignores the panel's scrolling and its clipping, and
  * ends up far from the control -- so opening the dropdown scrolls the whole page to a
  * one-pixel element nobody can see. `flows/building/style.css` has the long version.
+ *
+ * A parent that scrolls along with the control -- the case flow's `#trees`, which is the
+ * row of open documents inside the panel that scrolls it -- has a second thing to get
+ * right: **it must be positioned itself.** select2 places the dropdown at the control's
+ * document position less its offset parent's, and never adds that parent's own scroll
+ * back on. A static parent hands the job to the scrolling element above it, and the
+ * scroll then comes off twice: once because the control has moved with it, and once more
+ * in the subtraction. With several documents open and the row scrolled a screen to the
+ * right, that put every dropdown a screen to the left of the control it belonged to. A
+ * `position` on the parent makes it the box the dropdown is placed against, and the two
+ * then move together for free.
  *
  * ## Sections
  *
@@ -53,6 +72,22 @@ const CUSTOM_PREFIX = 'custom:';
  * them all off in one go without touching handlers a caller bound itself.
  */
 const NAMESPACE = 'searchSelect';
+
+/**
+ * What was last typed into each control that asked to be remembered, by `memoryKey`.
+ *
+ * Module-level rather than held on the control, because the controls it is for do not
+ * live long enough to hold anything. A reference field's is rebuilt whenever the document
+ * is -- which core/document.js does on every edit, by design, since a patch can change
+ * the shape of the tree -- so memory kept in the closure would survive closing the
+ * dropdown and reopening it, and be lost the moment any other field was touched.
+ * Remembering sometimes is worse than never: it is the same gesture giving two answers.
+ *
+ * Nothing takes entries out. Each is a search term against a key, so the ceiling is the
+ * number of fields the author has actually searched in this page's life, and the page is
+ * reloaded to change mod.
+ */
+const lastSearch = new Map();
 
 /**
  * Turn a `<select>` into a searchable one.
@@ -120,6 +155,20 @@ const NAMESPACE = 'searchSelect';
  *                     what to show in place of results until `minSearchLength` is reached.
  *                     select2's own wording counts down the characters remaining; a caller
  *                     that set a minimum usually has something better to say about why.
+ * @param memoryKey    what to file this control's last search term under, so reopening it
+ *                     puts that term back rather than an empty box -- see `lastSearch`.
+ *                     The term is restored selected, so a keystroke replaces it and
+ *                     starting again costs nothing.
+ *
+ *                     It must name the *field*, not the control: the control is rebuilt
+ *                     far more often than the field it edits. A reference field's key is
+ *                     its document and its JSON Pointer, which is what stays the same
+ *                     across the rebuild. Two controls sharing a key share a term, so a
+ *                     list that changes under one key -- the asset explorer's assets,
+ *                     which are a different list per type -- keys by what changes it.
+ *
+ *                     Left out, nothing is remembered. A control with no stable identity
+ *                     is better off with an empty box than with some other field's term.
  * @param onChange     (value) => void. Fires after the dropdown is closed, so a handler
  *                     is free to rebuild the DOM this control is in.
  * @param onClose      () => void. Fires whenever the dropdown closes, however it closed:
@@ -148,6 +197,7 @@ export function searchSelect(select, {
     alignRight = false,
     minSearchLength = 0,
     tooShortMessage = null,
+    memoryKey = null,
     onChange = () => {},
     onClose = () => {},
 } = {}) {
@@ -215,6 +265,76 @@ export function searchSelect(select, {
     });
 
     if (alignRight) $select.on(`select2:open.${NAMESPACE}`, () => alignDropdownRight($select));
+
+    /*
+     * Put the cursor in the search box, and the last term back in it.
+     *
+     * **The focus is a fix, not a nicety.** select2 focuses the box itself, twice -- once
+     * as the dropdown opens and again on a timeout -- and both calls are
+     * `$search.trigger('focus')`, which jQuery 3.6.0 broke: it routes a triggered focus
+     * through a native listener that only fires for an element already focusable at that
+     * moment, and silently does nothing otherwise. index.html pins that jQuery, so every
+     * control here opened with focus left on the closed control's own box. Clicking a
+     * dropdown open and typing put the characters nowhere at all, and the way to search
+     * was to click a second time, into a box that looked like it was already waiting.
+     * `element.focus()` is the DOM's own method and goes nowhere near jQuery's trigger.
+     *
+     * On a timeout, so this lands after both of select2's attempts rather than being
+     * undone by the second. Its adapters bind before the relay that fires this event --
+     * see the constructor -- so its timeout is queued first and ours runs last.
+     */
+    $select.on(`select2:open.${NAMESPACE}`, () => {
+        setTimeout(() => {
+            const field = searchField($select);
+            if (!field) return;
+
+            // Only into a box select2 has just emptied, which is every open: it clears on
+            // close. Guarded because this runs a turn late, and anything already in the
+            // box by then was put there since the open and is not this to overwrite.
+            const remembered = memoryKey ? lastSearch.get(memoryKey) : null;
+            const restored = Boolean(remembered) && !field.value;
+
+            if (restored) {
+                field.value = remembered;
+
+                // What select2 listens for. Restoring the text alone leaves the list
+                // showing everything under a box that says otherwise -- and for a control
+                // with a `minSearchLength`, showing nothing at all under a term long
+                // enough to have answered.
+                field.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            field.focus();
+
+            // Selected rather than left with the caret at the end: the term is a starting
+            // point, and the author who wants a different one types over it in one
+            // keystroke instead of holding backspace down.
+            //
+            // Only ever what was restored. Selecting whatever the box holds would mean a
+            // term typed in the moment between the open and this timeout -- which is what
+            // the guard above is about -- being wiped by the next character typed after
+            // it, and the faster the typing the likelier that is.
+            if (restored) field.select();
+        });
+    });
+
+    /*
+     * `closing` rather than `close`: select2 empties the search box in its own `close`
+     * handler, and reading it there is a race with that. `closing` is fired from the same
+     * call one step earlier -- it is the preventable half of the pair, which is why it
+     * exists -- and the box still holds what was typed.
+     *
+     * An emptied box forgets. Clearing it is how the author says the term is done with,
+     * and putting it back on the next open would be answering a question they closed.
+     */
+    if (memoryKey) {
+        $select.on(`select2:closing.${NAMESPACE}`, () => {
+            const term = searchField($select)?.value ?? '';
+
+            if (term) lastSearch.set(memoryKey, term);
+            else lastSearch.delete(memoryKey);
+        });
+    }
 
     /*
      * Whether the list is showing, tracked rather than asked for.
@@ -331,6 +451,20 @@ export function searchSelect(select, {
             $select.off(`.${NAMESPACE}`);
         },
     };
+}
+
+/**
+ * The box typed into to search, or null when the dropdown is not built.
+ *
+ * On a single select it lives in the dropdown rather than in the control, so it exists
+ * only while the list is open -- which is why everything that reaches for it does so from
+ * an open or closing handler. Found through the instance select2 hangs off the element,
+ * as `alignDropdownRight` does: the dropdown is parented away from the control, so there
+ * is no walk up from the `<select>` that arrives at it.
+ */
+function searchField($select) {
+    const dropdown = $select.data('select2')?.$dropdown?.[0];
+    return dropdown?.querySelector('.select2-search__field') ?? null;
 }
 
 /**

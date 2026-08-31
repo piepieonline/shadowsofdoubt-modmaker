@@ -23,5 +23,8 @@
     },
     "DDSTreeSave": {
         "startingMessage": "The `instanceID` of the message this tree opens on. That is the instanceID, not the msgID: the same message can appear in a tree more than once."
+    },
+    "CompanyPreset": {
+        "priority": "The priority of filling this self-employed company, does not work on normal companies (Use OccupationPreset.jobFillPriority)"
     }
 }

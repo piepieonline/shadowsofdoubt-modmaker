@@ -24,6 +24,7 @@ import { initTutorialsModal } from './core/tutorialsModal.js';
 import { initModSelection, refreshMods, reapplySelection, selectContentFolder } from './core/modSelection.js';
 import { isDemoMode, seedDemoFolders } from './core/demo/demoMode.js';
 import { initNewContent } from './core/newContent.js';
+import { initBarMenus } from './core/barMenu.js';
 import { initAutosave } from './core/autosave.js';
 import { configureNavigation, switchFlow } from './core/navigation.js';
 import { beginRestore, initUrlState, readUrlState, whileRestoring } from './core/urlState.js';
@@ -172,6 +173,9 @@ initTutorialsModal();
 initModSelection();
 initNewContent();
 initAutosave();
+// Before any flow is mounted, and never again: the menus belong to whichever flow is on
+// screen, and this is bound to the document rather than to any of them.
+initBarMenus();
 
 if (demo) {
     demoSelection = await startDemo();

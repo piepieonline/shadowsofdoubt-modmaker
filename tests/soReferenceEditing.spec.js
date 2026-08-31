@@ -22,14 +22,27 @@ const caseWithRefArray = {
             ['fileType', 'MurderMO'], ['name', 'testcase'], ['compatibleWith', []],
             ...Array.from({ length: 40 }, (_, i) => [`field${i}`, `value ${i}`]),
         ]), null, 2),
+
+    // A second one to fill, for the test that needs a control in a window other than the
+    // first -- the row of documents is what it scrolls, so the one it asks about has to
+    // be the one still on screen at the end of it.
+    'Mods/TestCase/AnotherMurder.sodso.json': JSON.stringify(
+        { fileType: 'MurderMO', name: 'AnotherMurder', compatibleWith: [] }, null, 2),
 };
 
 const WINDOW = '.file-window[path="testcase.sodso.json"]';
 const SCROLLER = `${WINDOW} .jsontree-container`;
 
 /** The label of a top-level key, which is what the tree hangs its controls off. */
-const keyLabel = (page, key) => page.locator(
-    `${WINDOW} li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('"${key}"'))`);
+const keyLabel = (page, key, window = WINDOW) => page.locator(
+    `${window} li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('"${key}"'))`);
+
+/** Add an element to an empty array field, and open it, leaving its control on screen. */
+async function addRefElement(page, key, window = WINDOW) {
+    await keyLabel(page, key, window).locator('> .jsontree_label-wrapper > .jsontree_label')
+        .first().click({ button: 'right' });
+    await keyLabel(page, key, window).locator('.jsontree_expand-button').first().click();
+}
 
 /** Scroll the open document and report where it ended up. */
 async function scrollBy(page, amount) {
@@ -92,9 +105,7 @@ test('the document still scrolls after picking a reference', async ({ page }) =>
 });
 
 test('picking a reference writes it to the file', async ({ page }) => {
-    await keyLabel(page, 'compatibleWith').locator('> .jsontree_label-wrapper > .jsontree_label')
-        .first().click({ button: 'right' });
-    await keyLabel(page, 'compatibleWith').locator('.jsontree_expand-button').first().click();
+    await addRefElement(page, 'compatibleWith');
 
     await page.locator(`${WINDOW} .select2-selection`).first().click();
     const chosen = await page.locator('.select2-results__option').nth(3).textContent();
@@ -105,6 +116,58 @@ test('picking a reference writes it to the file', async ({ page }) => {
         const handle = await window.selectedMod.baseFolder.getFileHandle('testcase.sodso.json');
         return JSON.parse(await (await handle.getFile()).text()).compatibleWith;
     })).toEqual([`REF:MurderPreset|${chosen.trim()}`]);
+
+    expect(await alerts(page)).toEqual([]);
+});
+
+/**
+ * The dropdown opens where its control is, however far along the row of documents that
+ * control has been scrolled.
+ *
+ * select2 places the dropdown by taking the control's document position and subtracting
+ * the offset parent's, and never adds that parent's own scroll back on -- so when the
+ * offset parent is the element doing the scrolling, the scroll comes off twice: once
+ * because the control has moved, and once again in the subtraction. The row of documents
+ * carries a `position` of its own to keep that from happening, and the scrolling is a box
+ * around it; see `.tree-scroll` in core/documentFlow.css.
+ *
+ * Only reachable with enough documents open to fill the row, which is why this test
+ * opens four.
+ */
+test('a dropdown opens against its control with the documents scrolled', async ({ page }) => {
+    const others = ['IP_Note', 'EP_Flyer', 'AnotherMurder'];
+    for (const name of others) {
+        await page.locator('#so-file-list').getByRole('button', { name, exact: true })
+            .first().click();
+        await page.locator(`.file-window[path*="${name}"]`).waitFor();
+    }
+
+    // The last one opened, so it is the one on screen once the row is at its end.
+    const last = '.file-window[path="AnotherMurder.sodso.json"]';
+    await addRefElement(page, 'compatibleWith', last);
+
+    const scrolled = await page.evaluate(() => {
+        const scroller = document.querySelector('.tree-scroll');
+        scroller.scrollLeft = scroller.scrollWidth;
+        return scroller.scrollLeft;
+    });
+
+    // The premise: four documents overflow the panel. Without that there is no scroll to
+    // be counted twice, and the assertion below would hold whatever select2 did.
+    expect(scrolled).toBeGreaterThan(0);
+
+    const control = page.locator(`${last} .select2-selection`).first();
+    await control.click();
+
+    const controlBox = await control.boundingBox();
+    const dropdownBox = await page.locator('.select2-dropdown').boundingBox();
+
+    // Still where it was put: clicking scrolls the control into view first, and a control
+    // brought back to the left would make the numbers below agree for the wrong reason.
+    expect(await page.evaluate(() => document.querySelector('.tree-scroll').scrollLeft))
+        .toBe(scrolled);
+
+    expect(dropdownBox.x).toBeCloseTo(controlBox.x, 0);
 
     expect(await alerts(page)).toEqual([]);
 });

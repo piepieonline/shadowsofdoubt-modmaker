@@ -324,3 +324,30 @@ export function collectPageErrors(page) {
     });
     return errors;
 }
+
+/**
+ * Whether an element's text can be read against what it is drawn on.
+ *
+ * Perceived brightness rather than the two colours being unequal: white on off-white
+ * would pass that and be no more legible than white on white.
+ *
+ * This exists because the same mistake has been made twice. Pico sets `--pico-color` to
+ * `--pico-primary-inverse` inside every `button`, for text sitting on a filled one -- so a
+ * rule styling a button as a plain row and taking its colour from `--pico-color` gets
+ * white, on whatever pale surface the row is actually on. Both places that draw a button
+ * that way are covered by a check through here.
+ *
+ * @returns the gap, 0 to 255. Under about 100 is not worth calling readable.
+ */
+export function contrastGap(page, textSelector, backdropSelector) {
+    return page.evaluate(([text, backdrop]) => {
+        const value = (colour) => {
+            const [r, g, b] = colour.match(/[\d.]+/g).map(Number);
+            return 0.299 * r + 0.587 * g + 0.114 * b;
+        };
+
+        return Math.abs(
+            value(getComputedStyle(document.querySelector(text)).color)
+            - value(getComputedStyle(document.querySelector(backdrop)).backgroundColor));
+    }, [textSelector, backdropSelector]);
+}

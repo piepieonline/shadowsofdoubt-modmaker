@@ -1,49 +1,10 @@
-/*1 MAIN*/
-html {
-
-}
 /*
- * The flow fills the shell, as the DDS flow does: the page itself does not scroll, and
- * anything too long for the space scrolls inside its own panel.
+ * What is particular to the case flow.
  *
- * It used to be sized by its contents instead -- a 60vh floor on the file section and a
- * 65vh cap on each tree -- which added up to more than the window and left the whole
- * document scrolling, chrome and all.
+ * The frame -- the flow filling the shell, the file panel, the row of documents and the
+ * windows in it -- is core/documentFlow.css, shared with the DDS flow. What is left here
+ * is this flow's own: the fields inside a tree, and the modals.
  */
-#main-container {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-#main-container > article {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-main>article>section:first-of-type {
-    display: grid;
-    /*Back when i do preview*/
-    /*grid-template-columns:300px 2fr 1fr;*/
-    grid-template-columns: 1fr;
-    grid-gap: 10px;
-    flex: 1;
-    /* Grid items refuse to shrink below their content by default, which would push
-       the section past the bottom of the window again. */
-    min-height: 0;
-
-    &.file-section-edit-mode {
-        grid-template-columns: var(--file-panel-width) 1fr;
-    }
-}
-
-/* Long enough to outrun the window on its own, so it scrolls rather than stretching. */
-#manifest_panel {
-    overflow-y: auto;
-}
 
 ul {
     padding-left: 0;
@@ -52,57 +13,32 @@ ul li {
     list-style-type: none;
 }
 
-/*1.1 Manifest Panel*/
-/* The panel's own button, not the lists inside it: those are sized with the DDS
-   flow's by .file-panel-entry and .manifest-section in core/chrome.css, and an id
-   here would out-specify both. */
-#manifest_panel > button {
-    padding: 3px;
-}
-
 /*2 JSON TREES*/
-.jsontree-container {
-    font-family:monospace;
-    font-size: 14px;
-    color: black;
-
-}
 .jsontree-container ul {
     margin-bottom: -5px;
     margin-top: 5px;
 }
-.jsontree-container .jsontree_tree {
-    padding: 0;
-}
-.jsontree-container .jsontree_child-nodes {
-    padding-left: 20px;
-    margin-left: 0;
-    border-left: 1px dotted #c52f2180;
-}
+
+/* A value that names another document. Dashed rather than solid, so it is not read as
+   the plain link the DDS flow's are -- following one of these opens a file rather than
+   going somewhere in this one. Written once for every tree, wherever its window is: the
+   manifest panel in the sidebar is one of these too. */
 .jsontree-container .link-element {
     cursor: pointer;
     text-decoration-style: dashed;
     text-decoration-line: underline;
     color: #c52f21;
 }
-.jsontree-container .jsontree_label[title]:not([title=""]) {
-    text-decoration-style: dotted;
-    text-decoration-line: underline;
-    text-decoration-thickness: 1px;
-}
-.jsontree-container .jsontree_label, .jsontree-container input, .jsontree-container select {
-    font-family: inherit;
-    font-size: inherit;
-}
-/* The dropdown's own search box is styled with the control, in
-   core/components/searchSelect/searchSelect.css: the padding shorthand that used to be
-   here took Pico's search-icon inset with it. */
-.jsontree-container input, .jsontree-container select {
-    padding: 2px 10px;
-    height: 100%;
+
+/* Filling its row, rather than sizing to what it holds as the DDS flow's do: a field
+   here is one of a column of them, and a column of boxes each as wide as its own value
+   is harder to read down than a column of one width. The rest of what sizes one of these
+   is shared; see core/documentFlow.css. */
+.jsontree-container input:not(.select2-search__field),
+.jsontree-container select {
     width: 90%;
-    margin-bottom: 5px;
 }
+
 /*3 SCROLLS*/
 ::-webkit-scrollbar {
     width: 10px;
@@ -168,10 +104,394 @@ ul li {
     color: var(--pico-muted-color);
 }
 
+/*
+ * The room creator packs a dozen controls, three lists and a file plan into one dialog,
+ * and Pico's form sizing is built for a page rather than for that. Everything here pulls
+ * the controls in so the verdict -- which is the reason the pane exists -- is on screen at
+ * the same time as the things that change it.
+ */
+#room-creator-modal article {
+    max-width: 46rem;
+}
+
+/*
+ * 0.5rem rather than tighter: Pico draws a focus ring outside the border box, and at
+ * 0.35rem it sat on top of the caption underneath.
+ *
+ * The padding is set through Pico's own variables rather than as a `padding` shorthand,
+ * which is what it used to be. A shorthand sets all four sides, and one of the sides here
+ * is not this rule's to set: Pico paints a magnifier onto `[type=search]` and keeps the
+ * text clear of it with `padding-inline-start`, so the shorthand took the inset away and
+ * every character typed into the search box below ran under the icon. Setting the
+ * variables gives the same numbers on an ordinary field and leaves the search field's
+ * start where Pico put it. See `.select2-search__field` in
+ * core/components/searchSelect/searchSelect.css, which is the same trap in the same app.
+ */
+#room-creator-modal input,
+#room-creator-modal select {
+    margin-bottom: 0.5rem;
+    height: auto;
+    font-size: 0.85rem;
+    --pico-form-element-spacing-vertical: 0.3rem;
+    --pico-form-element-spacing-horizontal: 0.5rem;
+}
+
+#room-creator-modal input[type="checkbox"] {
+    margin-bottom: 0;
+}
+
+#room-creator-modal label {
+    margin-bottom: 0.1rem;
+    font-size: 0.85rem;
+}
+
+/* The captions under each control carry most of the explanation, so they stay readable
+   while the controls shrink -- but they should not add a blank line each. */
+#room-creator-modal > article > small,
+#room-creator-modal form > small,
+#room-creator-modal details > small {
+    display: block;
+    margin-bottom: 0.6rem;
+    color: var(--pico-muted-color);
+}
+
+#room-creator-modal .grid {
+    gap: 0.5rem;
+}
+
+#room-creator-modal details {
+    margin-bottom: 0.6rem;
+}
+
+/*
+ * The verdict. It is read while the controls above it are being changed, so it scrolls on
+ * its own rather than pushing them off the top of the dialog.
+ */
+#room-creator-verdict {
+    overflow-y: auto;
+    max-height: 30vh;
+}
+
+/*
+ * A note under the verdict. Muted by default, because most of them say what has been left
+ * open rather than what is wrong -- an undecided floor is not a mistake.
+ */
+.room-creator-note {
+    display: block;
+    margin-bottom: var(--pico-spacing);
+    color: var(--pico-muted-color);
+}
+
+/*
+ * The two that are warnings say a room will build cleanly and do nothing: no ceiling
+ * light, or a cluster abandoned every time it is attempted. Neither raises an error in
+ * game, which is the whole reason they are coloured here.
+ */
+.room-creator-note-warning {
+    color: var(--pico-del-color);
+}
+
+/*
+ * The refusals are neutral on purpose. A gate saying no is the pane working -- most of a
+ * room's catalogue is refused for good reasons -- and colouring it the same as the two
+ * notes above would lose the only thing those are there to say, which is that the room
+ * will build cleanly and do nothing.
+ */
+#room-creator-modal summary {
+    color: var(--pico-color);
+}
+
+/*
+ * The cluster and lighting pickers. Scrolled rather than paged: what is being looked for
+ * is found by the search box above, and a list that grows the dialog past the viewport
+ * takes the verdict off screen with it.
+ */
+.room-creator-picker {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: var(--pico-spacing);
+    overflow-y: auto;
+    max-height: 14rem;
+}
+
+/* The row itself wraps: the checkbox and its "why not" button share the first line, and
+   the reason and the cluster's contents take a line of their own beneath. */
+.room-creator-picker > li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.room-creator-picker label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.room-creator-reason,
+.room-creator-contents {
+    flex-basis: 100%;
+}
+
+/*
+ * A cluster the room cannot take. Greyed rather than hidden, so the author can see it is
+ * there and ask why -- the reason is the thing that tells them how to change the room.
+ */
+.room-creator-refused {
+    color: var(--pico-muted-color);
+}
+
+/*
+ * The "why not" button. Small and quiet: there is one on every refused row, and at a
+ * stated floor that can be most of the list.
+ */
+.room-creator-why {
+    margin: 0 0 0 0.4rem;
+    padding: 0 0.4rem;
+    width: auto;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    --pico-form-element-spacing-vertical: 0;
+    --pico-form-element-spacing-horizontal: 0.4rem;
+}
+
+/* Sits under its row rather than beside it: the reasons are sentences, not labels. */
+.room-creator-reason {
+    margin: 0.2rem 0 0.4rem 1.4rem;
+}
+
+/*
+ * The one preset holding a slot the cluster cannot do without. Untick it and the cluster
+ * goes, so it is the only row here worth colouring.
+ */
+.room-creator-sole {
+    color: var(--pico-color);
+}
+
+/*
+ * The furniture inside an admitted cluster. Indented and quieter than the cluster itself,
+ * because it is a refinement of a choice already made rather than a choice of its own --
+ * the useful default is all of it.
+ */
+.room-creator-contents {
+    list-style: none;
+    padding-left: 1.25rem;
+    margin: 0 0 0.35rem;
+    font-size: 0.8rem;
+    color: var(--pico-muted-color);
+}
+
 #select-fields-modal-field-list {
     display: block;
     overflow-y: auto;
     max-height: calc(100vh - (var(--pico-spacing) * 2) - 300px);
+}
+
+/*
+ * Picking a field to summarise.
+ *
+ * The strip stands between the bar and the workspace and says what the editor is waiting
+ * for. Loud, in the way the demo banner is: the documents behave differently while it is
+ * up -- a click picks rather than expands -- and a mode nobody can see they are in is a
+ * mode that gets left on.
+ */
+.picking-strip {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--pico-primary);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-background-color);
+    font-size: 0.8rem;
+
+    span {
+        flex: 1;
+    }
+
+    button {
+        flex: none;
+        width: auto;
+        margin: 0;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.75rem;
+    }
+}
+
+/*
+ * Every field that can be picked, while one is being picked.
+ *
+ * The whole label rather than a cursor alone: these sit in a dense tree of monospace text
+ * where the thing to aim at is a word among words, and what is about to be clicked has to
+ * be obvious before the click. Labels with no mark are left plain -- they are not fields
+ * of a game type and picking one would answer nothing.
+ */
+[data-picking-field] .jsontree_label[data-summary-path] {
+    cursor: pointer;
+    border-radius: 3px;
+    outline: 1px dashed var(--pico-primary);
+    outline-offset: 1px;
+}
+
+[data-picking-field] .jsontree_label[data-summary-path]:hover {
+    outline-style: solid;
+    background: var(--pico-primary);
+    color: var(--pico-primary-inverse);
+}
+
+/*
+ * The summary itself.
+ *
+ * Wider than Pico's dialog, and as tall as the window allows: this is a table of every
+ * value a type takes, and the third column is a list of asset names. The table scrolls
+ * inside the dialog rather than the dialog growing past the screen.
+ */
+#field-summary-modal article {
+    max-width: min(1100px, 92vw);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+
+    header code {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.85rem;
+    }
+}
+
+.field-summary-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--pico-muted-color);
+
+    span {
+        flex: 1;
+    }
+
+    button {
+        flex: none;
+        width: auto;
+        margin: 0;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Sized through Pico's variables rather than with a `padding` shorthand, so the inset
+   that keeps typed text clear of the magnifier Pico paints on a search box survives. See
+   the note above #room-creator-modal input. */
+#field-summary-search {
+    margin-bottom: 0.5rem;
+    height: auto;
+    font-size: 0.85rem;
+    --pico-form-element-spacing-vertical: 0.35rem;
+    --pico-form-element-spacing-horizontal: 0.6rem;
+}
+
+/* What the table could not see, above it rather than under: a count read without it is a
+   count read wrongly, and nobody scrolls a long table to find the caveat. */
+.field-summary-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+
+    small {
+        color: var(--pico-del-color);
+    }
+
+    &:empty {
+        display: none;
+    }
+}
+
+.field-summary-table {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+
+    table {
+        margin: 0;
+        font-size: 0.8rem;
+    }
+
+    /* The heading stays put while a few hundred rows go past under it. */
+    th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: var(--pico-card-background-color);
+    }
+
+    td {
+        vertical-align: top;
+    }
+}
+
+/* The value is the column being read down, so it is the one set in the tree's face. */
+.field-summary-value {
+    font-family: monospace;
+    max-width: 26rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* What is not a value at all -- an absent field, a list with nothing in it. Quieter than
+   the values above it, since it describes the data rather than being part of it. */
+.field-summary-absent,
+.field-summary-null,
+.field-summary-empty {
+    color: var(--pico-muted-color);
+    font-style: italic;
+}
+
+.field-summary-count {
+    width: 4rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* One name per chip, wrapping across the cell. A name is a button because it opens the
+   document; it is not sized like one, because a row may hold dozens. */
+.field-summary-assets div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.field-summary-asset,
+.field-summary-more {
+    width: auto;
+    margin: 0;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.7rem;
+    line-height: 1.4;
+    border: 1px solid var(--pico-muted-border-color);
+    background: transparent;
+    /* Inherited rather than named: Pico sets --pico-color to --pico-primary-inverse inside
+       every button, for text sitting on a filled one -- which here is white on the white
+       the dialog is drawn on. What is wanted is the dialog's own text colour. */
+    color: inherit;
+    cursor: pointer;
+}
+
+/* The mod's own, told apart from the game's at a glance: which half of the answer is
+   yours is the first thing anyone reads a row for. */
+.field-summary-asset[data-source="mod"] {
+    border-color: var(--pico-primary);
+    color: var(--pico-primary);
+}
+
+.field-summary-asset:is(:hover, :focus-visible),
+.field-summary-more:is(:hover, :focus-visible) {
+    background: var(--pico-primary);
+    border-color: var(--pico-primary);
+    color: var(--pico-primary-inverse);
 }
 
 /*X UTIL CLASSES*/
@@ -181,101 +501,6 @@ ul li {
 
 .hidden-default-value-node {
     display: none;
-}
-
-.trees_wrapper {
-    overflow-x: auto;
-    overflow-y: hidden;
-    width: 100%;
-    position: relative;
-    min-height: 0;
-}
-
-
-/*I don't sort this sry*/
-#trees {
-    font-family:monospace;
-    font-size: 14px;
-    color: black;
-    display: grid;
-    grid-auto-columns: minmax(500px, auto);
-    grid-auto-flow: column;
-    grid-gap: 10px;
-    height: 100%;
-    /* One row, the height of the space rather than of the tallest document in it. An
-       implicit row is sized by its content, so a long document made the row taller
-       than the panel and .trees_wrapper clipped the overflow with nowhere to scroll
-       it -- and max-height on the window below measured itself against that same
-       overgrown row, so it never bit. */
-    grid-template-rows: minmax(0, 1fr);
-}
-
-/*
- * A document fills the height it is given and scrolls inside it, which keeps its
- * editor bar in view while the tree moves -- the DDS flow's arrangement.
- */
-#trees > .file-window {
-    display: flex;
-    flex-direction: column;
-    max-height: 100%;
-}
-
-#trees .jsontree-container {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-}
-
-#trees .link-element {
-    cursor: pointer;
-    text-decoration-style: dashed;
-    text-decoration-line: underline;
-}
-
-#trees .jsontree_label[title]:not([title=""]) {
-    text-decoration-style: dotted;
-    text-decoration-line: underline;
-    text-decoration-thickness: 1px;
-}
-
-#trees li {
-    list-style-type: none;
-}
-
-#trees .jsontree_label, #trees input, #trees select {
-    font-family: inherit;
-    font-size: inherit;
-}
-
-/*
- * The tree's own fields.
- *
- * The search box inside a dropdown is excluded, and the exclusion is load-bearing rather
- * than tidiness: these dropdowns are parented into `#trees`, so their search box is a
- * `#trees input` too, and this rule out-specifies the `[type=search]` inset Pico uses to
- * keep text clear of the magnifier it paints. That is what put every character typed
- * underneath the icon. Sizing the box is the control's job either way -- see
- * core/components/searchSelect/searchSelect.css.
- */
-#trees input:not(.select2-search__field), #trees select {
-    padding: 2px 10px;
-    height: 100%;
-    width: 90%;
-    margin-bottom: 5px;
-}
-
-#trees input:read-only {
-    opacity: var(--pico-form-element-disabled-opacity);
-}
-
-#trees > * {
-    padding: 10px 0 10px 10px;
-    background: #c52f2110;
-    border-radius: 5px;
-}
-
-#trees > .select2-container {
-    padding: 0;
 }
 
 /*
@@ -302,19 +527,8 @@ ul li {
     color: inherit;
 }
 
+/* As wide as the plain fields beside it -- see the width above, which select2 replaces
+   the element carrying it. !important because select2 writes a pixel width inline. */
 #trees .select2 {
     width: 90% !important;
-}
-
-/*JSON tree's styles*/
-.jsontree_tree {
-    margin-left: 0;
-    /* Scrolling belongs to the container above, which knows how much room there is;
-       a viewport fraction here was a guess that overran the window. */
-    overflow-y: visible;
-    max-height: none;
-}
-
-#trees .jsontree_child-nodes {
-    margin-left: 0;
 }

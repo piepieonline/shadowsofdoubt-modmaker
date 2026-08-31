@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { installFsHarness, seedFs, queuePicks, connectFolders, selectContent, queuePrompts, prompts, readFile, listDir, alerts, collectPageErrors, topLevelLabels, gotoFlow, fieldInput, editField, openDdsDocument, addDdsContent } from './support/harness.js';
-import { ddsFixture, ddsBareFixture, TREE_GUID, MSG_GUID, BLOCK_GUID, BLOCK_TEXT, NEWS_TREE_GUID, NEWS_MSG_GUID } from './support/fixtures.js';
+import {
+    ddsFixture, ddsBareFixture, ddsReverseSearchFixture,
+    TREE_GUID, MSG_GUID, MSG2_GUID, BLOCK_GUID, BLOCK_TEXT, BLOCK2_GUID, BLOCK2_TEXT,
+    NEWS_TREE_GUID, NEWS_MSG_GUID,
+} from './support/fixtures.js';
 
 /**
  * Baseline smoke tests for the DDS flow, recorded against the app as it behaves
@@ -482,9 +486,19 @@ test('help, browse and reverse search open and close', async ({ page }) => {
     await gotoFlow(page, '?flow=dds');
     await openTree(page);
 
-    // Header actions are text links in both flows, not buttons.
+    // Help is now reached through Tools, the menu on the right of the bar that every
+    // flow carries, and Help/Summary is the one thing in it.
+    await expect(page.locator('#help-modal')).toBeHidden();
+    await page.click('#tools-menu > summary');
+    await page.locator('#tools-menu .browse-menu-item', { hasText: 'Help/Summary' }).click();
+    await expect(page.locator('#help-modal')).toBeVisible();
+    // Picking from a menu shuts it, so the modal is not read through an open one.
+    await expect(page.locator('#tools-menu')).not.toHaveAttribute('open', '');
+    await page.locator('#help-modal .close-button').click();
+    await expect(page.locator('#help-modal')).toBeHidden();
+
+    // The rest of the header's actions are text links in both flows, not buttons.
     for (const [link, modal] of [
-        ['Help', '#help-modal'],
         ['Browse...', '#fav-modal'],
         ['Reverse Search', '#rsearch-modal'],
     ]) {
@@ -511,6 +525,161 @@ test('browse lists trees and filters by typeahead', async ({ page }) => {
 
     await page.fill('#browse-typeahead', '');
     await expect(items.filter({ visible: true })).toHaveCount(total);
+});
+
+test('the browse controls are one row, and the list is wide enough for a GUID and a name', async ({ page }) => {
+    await gotoFlow(page, '?flow=dds');
+    await openTree(page);
+    await page.getByRole('link', { name: 'Browse...', exact: true }).click();
+
+    // Pico lays a select out as a block filling its line, which drops it under its own
+    // "Type:" label and the typeahead down a row again.
+    const [label, select, typeahead, controls, article] = await Promise.all([
+        page.locator('#fav-modal .controls label').boundingBox(),
+        page.locator('#browse-type-select').boundingBox(),
+        page.locator('#browse-typeahead').boundingBox(),
+        page.locator('#fav-modal .controls').boundingBox(),
+        page.locator('#fav-modal article').boundingBox(),
+    ]);
+
+    const centre = box => box.y + box.height / 2;
+    expect(Math.abs(centre(select) - centre(label))).toBeLessThan(2);
+    expect(Math.abs(centre(typeahead) - centre(label))).toBeLessThan(2);
+    // A row one control tall is a row nothing wrapped out of.
+    expect(controls.height).toBeLessThan(select.height * 1.5);
+
+    // Pico sizes an input's height against 1rem rather than against the type in it, so
+    // shrinking the row's text alone leaves the typeahead standing taller than the
+    // select. They are read as one row of controls, so they are one height.
+    expect(Math.abs(typeahead.height - select.height)).toBeLessThan(2);
+
+    // Wider than the 700px Pico gives a dialog at this viewport: a row of the list is a
+    // 36-character GUID and then the name it stands for.
+    expect(article.width).toBeGreaterThan(700);
+});
+
+/**
+ * Reverse search: from a line of text back to the documents that say it.
+ *
+ * The index behind it is generated from the base game, so it knows nothing of the
+ * fixture's GUIDs. Seeding it is what lets the fixture stand in for real content --
+ * these tests are about what is done with the index, not where it comes from.
+ */
+async function seedReverseIndex(page, { reverse, trees = [], messages = [], blocks = [], names = {} }) {
+    await page.evaluate(({ reverse, trees, messages, blocks, names }) => {
+        Object.assign(window.ddsMap.reverseIdMap, reverse);
+        Object.assign(window.ddsMap.idNameMap, names);
+        window.ddsMap.trees.push(...trees);
+        window.ddsMap.messages.push(...messages);
+        window.ddsMap.blocks.push(...blocks);
+    }, { reverse, trees, messages, blocks, names });
+}
+
+/** Open the modal and pick the line whose text this is. */
+async function reverseSearch(page, text) {
+    await page.getByRole('link', { name: 'Reverse Search', exact: true }).click();
+    await page.fill('#rsearch-typeahead', text);
+    await page.locator('#rsearch-text-list li', { hasText: text }).click();
+}
+
+test('reverse search opens the message that says the line, not the first one', async ({ page }) => {
+    await gotoFlow(page, '?flow=dds');
+    await seedFs(page, ddsReverseSearchFixture);
+    await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
+
+    await seedReverseIndex(page, {
+        reverse: { [BLOCK2_GUID]: [MSG2_GUID], [MSG2_GUID]: [TREE_GUID] },
+        trees: [TREE_GUID],
+        messages: [MSG2_GUID],
+        blocks: [BLOCK2_GUID],
+        names: { [TREE_GUID]: 'TestTree', [MSG2_GUID]: 'SecondMessage', [BLOCK2_GUID]: 'SecondBlock' },
+    });
+
+    await reverseSearch(page, BLOCK2_TEXT);
+
+    // One row: the whole way down to the block, named as the reference data names it.
+    const row = page.locator('#rsearch-result-view tr');
+    await expect(row).toHaveCount(1);
+    await expect(row).toHaveText(['TestTreeSecondMessageSecondBlock']);
+
+    await row.click();
+
+    // The tree opens its first message and that message's first block on its own. This
+    // is the second message and the block under it, so the route was followed.
+    await expect(page.locator('#file-window-0')).toContainText('Tree: TestTree');
+    await expect(page.locator('#file-window-1')).toContainText('Message: SecondMessage');
+    await expect(page.locator('#file-window-2')).toContainText('Block: SecondBlock');
+});
+
+test('reverse search rows are one per place the line is said', async ({ page }) => {
+    await gotoFlow(page, '?flow=dds');
+    await seedFs(page, ddsReverseSearchFixture);
+    await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
+
+    // The same block under both of the tree's messages: two rows, which a list of the
+    // trees that reach it could not tell apart.
+    await seedReverseIndex(page, {
+        reverse: {
+            [BLOCK_GUID]: [MSG_GUID, MSG2_GUID],
+            [MSG_GUID]: [TREE_GUID],
+            [MSG2_GUID]: [TREE_GUID],
+        },
+        trees: [TREE_GUID],
+        messages: [MSG_GUID, MSG2_GUID],
+        blocks: [BLOCK_GUID],
+        names: {
+            [TREE_GUID]: 'TestTree',
+            [MSG_GUID]: 'TestMessage',
+            [MSG2_GUID]: 'SecondMessage',
+            [BLOCK_GUID]: 'TestBlock',
+        },
+    });
+
+    await reverseSearch(page, BLOCK_TEXT);
+
+    await expect(page.locator('#rsearch-result-view tr')).toHaveText([
+        'TestTreeTestMessageTestBlock',
+        'TestTreeSecondMessageTestBlock',
+    ]);
+});
+
+test('a line no base game document says is said to be nowhere', async ({ page }) => {
+    await gotoFlow(page, '?flow=dds');
+    await seedFs(page, ddsReverseSearchFixture);
+    await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
+
+    // Nothing seeded: the index has never heard of this line's GUID, which is also
+    // true of every line a mod writes.
+    await reverseSearch(page, BLOCK2_TEXT);
+
+    await expect(page.locator('#rsearch-result-view')).toContainText('No base game tree');
+});
+
+/**
+ * The index describes the base game, and a mod patch can take a link out from under it.
+ * What is left is a route that stops making sense partway down, and the drill-down falls
+ * back to the cascade rather than opening a message the tree does not hold.
+ */
+test('a route the documents no longer support falls back to the cascade', async ({ page }) => {
+    await gotoFlow(page, '?flow=dds');
+    await seedFs(page, ddsReverseSearchFixture);
+    await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
+
+    // A route through the first message, which does not hold this block at all.
+    await seedReverseIndex(page, {
+        reverse: { [BLOCK2_GUID]: [MSG_GUID], [MSG_GUID]: [TREE_GUID] },
+        trees: [TREE_GUID],
+        messages: [MSG_GUID],
+        blocks: [BLOCK2_GUID],
+        names: { [TREE_GUID]: 'TestTree', [MSG_GUID]: 'TestMessage', [BLOCK2_GUID]: 'SecondBlock' },
+    });
+
+    await reverseSearch(page, BLOCK2_TEXT);
+    await page.locator('#rsearch-result-view tr').click();
+
+    await expect(page.locator('#file-window-1')).toContainText('Message: TestMessage');
+    // The block that message really holds, rather than the one the index promised.
+    await expect(page.locator('#file-window-2')).toContainText('Block: TestBlock');
 });
 
 test('a window can be closed, and closing one closes the levels below it', async ({ page }) => {

@@ -8,6 +8,7 @@ import { deleteDocument, deleteStringsFile } from './deleteDocument.js';
 import { refreshManifestPanel } from './manifestPanel.js';
 import { closeStringsWindow, openStringsFile, openStringsPath } from './stringsEditor.js';
 import { decodeList, encodeList } from '../../../core/urlState.js';
+import { chain, LEVELS, occurrences } from './reverseSearch.js';
 import { initAndLoad, loadI18n, loadFile } from '../index.js';
 
 /**
@@ -196,8 +197,12 @@ function vanillaType(id) {
  *
  * The reference data is asked first and the caller second, as it always was: a base
  * game GUID is only ever the type the game gives it, whatever the caller thinks.
+ *
+ * @param openTheseIds the levels to open below this one, outermost first. Omitted by
+ *        everything that has no route in mind, which cascades into the first message
+ *        and the first block as before.
  */
-export async function loadDocument(id, type = null) {
+export async function loadDocument(id, type = null, openTheseIds = null) {
     // Folders are connected by the shell before any flow runs, so this only loads.
     if (!GUID_PATTERN.test(id)) {
         alert('Invalid GUID format, please check and try loading again');
@@ -208,7 +213,7 @@ export async function loadDocument(id, type = null) {
     lastType = fileType;
 
     const { prefix, postfix } = DOCUMENT_PATHS[fileType];
-    await initAndLoad(prefix + id + postfix);
+    await initAndLoad(prefix + id + postfix, openTheseIds);
 }
 
 /**
@@ -371,69 +376,80 @@ export function updateRSearch() {
     });
 }
 
-export function updateRSearchResultsTable(blockId) {
-    // .rsearch-result-view
+/**
+ * Show every place a searched line is said: one row per drill-down that reaches it.
+ *
+ * A row is the whole chain rather than the tree at the top of it. The same block under
+ * two messages of one tree is two rows, which are two different things to open -- and
+ * were indistinguishable while this listed only the top level.
+ */
+export function updateRSearchResultsTable(id) {
+    const found = occurrences(window.ddsMap.reverseIdMap, vanillaType, id);
 
-    var cells = '';
+    document.querySelector('#rsearch-result-view').replaceChildren(
+        ...(found.length ? found.map(occurrenceRow) : [noOccurrencesRow()])
+    );
+}
 
+/** One place the line is said, as the tree, message and block that reach it. */
+function occurrenceRow(levels) {
+    const row = document.createElement('tr');
+    row.classList.add('rsearch-occurrence');
+    row.append(...LEVELS.map((level) => documentCell(levels[level])));
+    row.addEventListener('click', () => openOccurrence(levels));
 
-    var blockCell = `<td><ul><li>${blockId}</li></ul></td>`;
-    var messageId = window.ddsMap.reverseIdMap[blockId].join('</li><li>');
-    var messageCell = `<td><ul><li>${messageId}</li></ul></td>`;
-    var treeId = window.ddsMap.reverseIdMap[messageId].join('</li><li>');
-    var treeList = `<td><ul><li>${treeId}</li></ul></td>`;
+    return row;
+}
 
-    var openList = {};
+/**
+ * One level of a row: what the document is called, with the GUID behind it.
+ *
+ * The name is what a row is read by; the GUID is what it is, and is on the cell rather
+ * than in it so that a row stays readable. A document the reference data has no name for
+ * shows its GUID, which is all there is to show.
+ */
+function documentCell(id) {
+    const cell = document.createElement('td');
 
-    let currentId = blockId;
-    while (window.ddsMap.reverseIdMap[currentId] != null) {
-        // TODO: Show trees only? How to display this
-        cells = '<td><ul>' +
-            window.ddsMap.reverseIdMap[currentId]
-                .filter((value, index, array) => array.indexOf(value) === index) // One result per tree/message found contained in
-                .map(id => ({ name: window.ddsMap.idNameMap[id], id }))
-                .map(ele => `<li class="link-element" x-guid=${ele.id}>${window.ddsMap.idNameMap[ele.id] || ele.id}</li>`)
-                .join('')
-            + '</ul></td>'; // + cells;
-        currentId = window.ddsMap.reverseIdMap[currentId];
+    if (!id) {
+        // Nothing at this level holds the line -- a block reached by no message, say.
+        // Saying so beats an empty cell, which reads as a level not yet drawn.
+        cell.innerText = '—';
+        cell.classList.add('rsearch-empty-level');
+        return cell;
     }
 
+    cell.innerText = window.ddsMap.idNameMap[id] || id;
+    cell.title = id;
 
-    var rows = `<tr>${cells}</tr>`;
+    return cell;
+}
 
+function noOccurrencesRow() {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
 
-    /*
-    var treeIds = {};
-    var messageIds = {};
+    // The index covers the base game only, so a mod's own content is not missing from
+    // it so much as never in it. Worth saying either way.
+    cell.colSpan = LEVELS.length;
+    cell.innerText = 'No base game tree, message or block says this line.';
+    row.append(cell);
 
-    window.ddsMap.reverseIdMap[guid].forEach(messageId => {
-        if(messageIds[messageId] == null ) messageIds[messageId] = {};
-        messageIds[messageId].push(guid);
-        window.ddsMap.reverseIdMap[messageId].forEach(treeId => {
-            if(treeIds[treeId] == null ) treeIds[treeId] = {};
-            treeIds[treeId].push(messageId);
-        })
-    });
+    return row;
+}
 
-    var rows = [];
-    Object.keys(treeIds).forEach(treeId => {
-        let messages = '<ul>';
-        treeIds[treeId].forEach(messageId => {
-            messages += `<li>${messageId}</li>`;
-        });
-        messages += '</ul>';
+/**
+ * Open one occurrence: the tree, the message under it that holds the block, and the
+ * block that says the line.
+ *
+ * The levels below the first are named rather than left to the cascade, which opens the
+ * first message and the first block of whatever it is given.
+ */
+async function openOccurrence(levels) {
+    // There is always a first: a row with no level to open is not a row at all.
+    const [top, ...below] = chain(levels);
 
-        var row = `<tr><td>${treeId}</td><td>${messages}</td><td>${}</td></tr>`;
-    })
-        */
-
-    document.querySelector('#rsearch-result-view').innerHTML = rows; // `<tr><td>${}</td><td>${}</td></tr>`;
-
-    document.querySelector('#rsearch-result-view').querySelectorAll('li').forEach(liEle => {
-        liEle.addEventListener('click', () => {
-            setIdAndLoad(liEle.getAttribute('x-guid'));
-        });
-    })
+    await loadDocument(top, null, below);
 }
 
 

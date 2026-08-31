@@ -12,7 +12,8 @@
  */
 import { describe, test, expect, beforeAll } from 'vitest';
 
-import { loadFurnitureChain } from './furnitureChain.js';
+import { loadFurnitureChain, explainFurniture } from './furnitureChain.js';
+import { parseFloor } from './floorModel.js';
 import { overlayChain, refName, CHAIN_TYPES } from './furnitureOverlay.js';
 
 let base;
@@ -497,5 +498,51 @@ describe('merging', () => {
 
     test('no base, nothing to lay anything over', () => {
         expect(overlayChain(null, [])).toBeNull();
+    });
+});
+
+
+describe('what the merge carries across untouched', () => {
+    /**
+     * Every block the base has, whether or not a mod can add to it.
+     *
+     * `walls` was left out, and it is the one block no mod contributes to -- which is
+     * exactly why nothing noticed. Selecting any mod at all replaced a 27-entry table
+     * with nothing, so every wall preset resolved to `{}` and every rule asking for a
+     * `wall` or a `ventUpper` behind a piece failed. A mailbox or an ATM against a plain
+     * wall was told it wanted one.
+     *
+     * Asserted over the base's own keys rather than a list, so the next block added to
+     * the reference file fails here instead of quietly going missing.
+     */
+    test('is every block, including the one no mod can add to', () => {
+        for (const assets of [[], [asset('FurniturePreset', 'Mine', { presetName: 'Mine' })]]) {
+            const merged = overlayChain(base, assets);
+
+            for (const block of Object.keys(base)) {
+                expect(Object.keys(merged[block] ?? {}).length, block)
+                    .toBeGreaterThanOrEqual(Object.keys(base[block]).length);
+            }
+
+            expect(Object.keys(merged.walls)).toHaveLength(27);
+            expect(merged.walls['0']).toEqual({ section: 'wall' });
+        }
+    });
+
+    /**
+     * The symptom, end to end. A plain wall behind a mailbox satisfies its one rule, and
+     * selecting a mod must not change that.
+     */
+    test('leaves a wall rule answering the same with a mod selected as without', async () => {
+        const model = parseFloor(await (await fetch('/refs/floors/blueprints/Eden_GroundFloor.json')).json());
+        const verdicts = (data) => explainFurniture(data, model, 10, 7, 'Mailboxes')
+            .groups.map((group) => `${group.address}:${group.verdict}`);
+
+        expect(verdicts(base)).toEqual(['CityHallLobby:possible', 'CorporateLobby:possible']);
+        expect(verdicts(overlayChain(base, []))).toEqual(verdicts(base));
+
+        expect(verdicts(overlayChain(base, [
+            asset('FurniturePreset', 'Unrelated', { presetName: 'Unrelated' }),
+        ]))).toEqual(verdicts(base));
     });
 });

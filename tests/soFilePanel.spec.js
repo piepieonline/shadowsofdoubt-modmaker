@@ -3,7 +3,9 @@ import {
     installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, confirms, queueConfirms,
     listDir, readFile,
 } from './support/harness.js';
-import { soFolderContent, caseWithCustomReference } from './support/fixtures.js';
+import {
+    soFolderContent, caseWithCustomReference, caseWithRoomPermissions,
+} from './support/fixtures.js';
 
 /**
  * The case flow's file panel, grouped by ScriptableObject type.
@@ -167,6 +169,164 @@ test('choosing another mod clears the search', async ({ page }) => {
 
     await expect(search(page)).toHaveValue('');
     await expect(entries(page).first()).toBeVisible();
+});
+
+/**
+ * The filter beside the search box: what the panel leaves out.
+ *
+ * Building one room writes a patch for every cluster, preset, material filter and light
+ * it admits, and none of them is about the room -- see flows/scriptableObject/scripts/
+ * roomPermissions.js. A folder with a few rooms in it is mostly those files, and the
+ * author's own work is buried among them.
+ *
+ * What is worth pinning is the pair: that the right files go, and that the panel says how
+ * many went. A browser that quietly omits files is indistinguishable from a folder that
+ * does not hold them, which is a worse failure than the clutter this fixes.
+ */
+
+const filterMenu = (page) => page.locator('#so-file-filter');
+const exclude = (page, kind) => filterMenu(page).locator(`input[value="${kind}"]`);
+const hiddenCount = (page) => page.locator('#so-file-hidden');
+
+/** The names under a category, without the `patch` tag the button beside them carries. */
+const named = (page, type) => section(page, type).locator('.file-panel-name');
+
+/** Tick a box in the filter menu, opening the menu if it is shut. */
+async function setExclusion(page, kind, on) {
+    if (!(await filterMenu(page).evaluate((menu) => menu.open))) {
+        await filterMenu(page).locator('summary').click();
+    }
+
+    await exclude(page, kind).setChecked(on);
+}
+
+test.describe('the room permission filter', () => {
+    test.beforeEach(async ({ page }) => {
+        await seedFs(page, caseWithRoomPermissions);
+        await selectContent(page, 'TestCase', '');
+    });
+
+    test('offers what can be left out, and leaves it in until asked', async ({ page }) => {
+        await filterMenu(page).locator('summary').click();
+
+        // No "Everything" row: an untouched menu already means it.
+        await expect(filterMenu(page).locator('label')).toHaveText([
+            'Exclude room permissions',
+            'Exclude surface and lighting permissions',
+        ]);
+        await expect(exclude(page, 'furniture')).not.toBeChecked();
+        await expect(hiddenCount(page)).toBeHidden();
+    });
+
+    test('the menu stays open while more than one box is ticked', async ({ page }) => {
+        // Unlike the bar's menus, whose items are picked *from* them. These are settings
+        // made inside one, and shutting after each would mean reopening to make the next.
+        await filterMenu(page).locator('summary').click();
+        await exclude(page, 'furniture').check();
+
+        await expect(filterMenu(page).locator('.browse-menu')).toBeVisible();
+    });
+
+    test('excluding room permissions drops the patches that only admit a room', async ({ page }) => {
+        await setExclusion(page, 'furniture', true);
+
+        // DeskChair and DeskCluster say nothing but "this room may use me" and go. What
+        // is left is BookShelf, which admits the room *and* moves a spawn chance -- an
+        // edit its author made -- and MyRoom_Desks, the mod's own cluster rather than a
+        // patch at all.
+        await expect(named(page, 'FurniturePreset')).toHaveText(['BookShelf']);
+        await expect(named(page, 'FurnitureCluster')).toHaveText(['MyRoom_Desks']);
+    });
+
+    test('surfaces and lighting are a separate choice', async ({ page }) => {
+        // The room's other two thirds. Ticking the furniture box leaves them alone.
+        await setExclusion(page, 'furniture', true);
+        await expect(section(page, 'RoomTypeFilter')).toHaveCount(1);
+        await expect(section(page, 'RoomLightingPreset')).toHaveCount(1);
+
+        await setExclusion(page, 'surfaces', true);
+
+        // Each held nothing else, so the categories go with them.
+        await expect(section(page, 'RoomTypeFilter')).toHaveCount(0);
+        await expect(section(page, 'RoomLightingPreset')).toHaveCount(0);
+    });
+
+    test('the panel says how many files it is holding back', async ({ page }) => {
+        await setExclusion(page, 'furniture', true);
+        await expect(hiddenCount(page)).toHaveText('2 files hidden by the filter');
+
+        await setExclusion(page, 'surfaces', true);
+        await expect(hiddenCount(page)).toHaveText('4 files hidden by the filter');
+
+        // And the button says so too, for when the line has been scrolled past.
+        await expect(filterMenu(page)).toHaveClass(/filtering/);
+
+        await setExclusion(page, 'furniture', false);
+        await expect(hiddenCount(page)).toHaveText('2 files hidden by the filter');
+    });
+
+    test('the count is of this list, not of the whole folder', async ({ page }) => {
+        await setExclusion(page, 'furniture', true);
+        await search(page).fill('Desk');
+
+        // Four files match Desk. DeskChair and DeskCluster are hidden; BookShelf is not
+        // and does not match anyway. Reporting the folder's two would be right by luck
+        // here and wrong the moment a search excludes one of them.
+        await expect(entries(page)).toHaveText(['MyRoom_Desks']);
+        await expect(hiddenCount(page)).toHaveText('2 files hidden by the filter');
+
+        await search(page).fill('DeskChair');
+        await expect(hiddenCount(page)).toHaveText('1 file hidden by the filter');
+    });
+
+    test('a panel the filter has emptied says that is why', async ({ page }) => {
+        await setExclusion(page, 'furniture', true);
+        await search(page).fill('DeskChair');
+
+        // Not "Nothing here is called DeskChair", which would be a lie: it is here, and a
+        // setting the author left switched on is what is keeping it off the screen.
+        await expect(entries(page)).toHaveCount(0);
+        await expect(page.locator('#so-file-list .file-panel-empty'))
+            .toHaveText('Everything called "DeskChair" here is hidden by the filter.');
+    });
+
+    test('a search that genuinely matches nothing still says so', async ({ page }) => {
+        await setExclusion(page, 'furniture', true);
+        await search(page).fill('nosuchfile');
+
+        await expect(page.locator('#so-file-list .file-panel-empty')).toContainText('nosuchfile');
+    });
+
+    test('the filter outlives the panel being rebuilt', async ({ page }) => {
+        await setExclusion(page, 'furniture', true);
+
+        // Renaming a preset relists the folder. The author has set the panel up to work
+        // in and should not have it handed back to them full of room patches.
+        await section(page, 'InteractablePreset').locator('.file-panel-open').click();
+        const presetName = page.locator(
+            `#trees li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('"presetName"')) input`
+        ).first();
+        await presetName.fill('IP_Renamed');
+        await presetName.blur();
+
+        await expect(entries(page)).toContainText(['IP_Renamed']);
+        await expect(hiddenCount(page)).toHaveText('2 files hidden by the filter');
+    });
+
+    test('choosing another mod clears the filter', async ({ page }) => {
+        await setExclusion(page, 'furniture', true);
+        await expect(hiddenCount(page)).toBeVisible();
+
+        // A filter carried into another mod takes files out of a list that has never
+        // been narrowed, with nothing on screen to explain it -- worse than a stale
+        // search, which at least leaves the words that did it in the box.
+        await selectContent(page, 'TestCase', '');
+
+        await expect(hiddenCount(page)).toBeHidden();
+        await expect(exclude(page, 'furniture')).not.toBeChecked();
+        await expect(filterMenu(page)).not.toHaveClass(/filtering/);
+        await expect(named(page, 'FurniturePreset')).toHaveText(['BookShelf', 'DeskChair']);
+    });
 });
 
 /**
