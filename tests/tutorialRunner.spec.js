@@ -446,6 +446,190 @@ test('the highlight still tracks the element it points at', async ({ page }) => 
     await expect(cutout).not.toHaveAttribute('d', first);
 });
 
+/**
+ * A case file with something nested to wait for.
+ *
+ * The DDS editor is what needs nested conditions -- a tree is nesting almost all the way
+ * down -- but its documents are named after a GUID minted at creation, so a test cannot
+ * point a step at one. The case editor renders the same jsonTree from a file whose path
+ * is known, which is what these are really about: the walk, not the flow.
+ *
+ * The inner `name` is deliberate. It is what a step asking for the document's own `name`
+ * must not find.
+ */
+const withNesting = {
+    ...soFolderContent,
+    'Mods/TestCase/testcase.sodso.json': JSON.stringify({
+        fileType: 'MurderMO',
+        name: '',
+        victimJobModifiers: [{ name: 'inner', jobs: [], jobBoost: 0 }],
+    }, null, 2),
+};
+
+const CASE_WINDOW = '.file-window[path="testcase.sodso.json"]';
+
+/**
+ * Open a collapsed node, the way jsonTree does it: a click on its label.
+ *
+ * Only the tests need this. The runner's conditions read rows whether or not their parent
+ * is expanded -- jsonTree builds the whole tree and hides it by class -- but a user
+ * cannot type into a row that is not on screen, and neither can Playwright.
+ */
+const expandNode = (page, scope, label) =>
+    page.locator(`${scope} li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('"${label}"'))`)
+        .first()
+        .locator(':scope > .jsontree_label-wrapper > .jsontree_label')
+        .click();
+
+/** The nesting fixture, with the case already open and the tutorial started. */
+async function openNestedCase(page) {
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, withNesting);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+
+    await page.locator('.file-panel-category[data-category="MurderMO"]')
+        .getByRole('button', { name: 'testcase' }).click();
+    await page.locator(CASE_WINDOW).waitFor();
+
+    await openTutorials(page);
+    await start(page);
+}
+
+test('a step can wait for a value nested inside the document', async ({ page }) => {
+    await useTutorial(page, {
+        steps: [
+            {
+                element: { file: 'testcase.sodso.json' },
+                title: 'Weight the job',
+                description: 'Set it to 20.',
+                advanceWhen: {
+                    field: 'victimJobModifiers.0.jobBoost',
+                    file: 'testcase.sodso.json',
+                    is: 20,
+                },
+            },
+            { element: '#select-mod', title: 'Done', description: 'That is it.' },
+        ],
+    });
+
+    await openNestedCase(page);
+
+    const popover = page.locator(POPOVER);
+    await expect(popover).toContainText('Weight the job');
+
+    await expandNode(page, CASE_WINDOW, 'victimJobModifiers');
+    await expandNode(page, CASE_WINDOW, '0');
+
+    // Something, but not what was asked for. Without this the walk could be matching the
+    // wrong row entirely and every other assertion here would still pass.
+    await editField(page, CASE_WINDOW, 'jobBoost', '5');
+    await expect(popover).toContainText('Weight the job');
+
+    await editField(page, CASE_WINDOW, 'jobBoost', '20');
+    await expect(popover).toContainText('Done');
+
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('a nested field of the same name does not satisfy a step', async ({ page }) => {
+    await useTutorial(page, {
+        steps: [
+            {
+                element: { file: 'testcase.sodso.json' },
+                title: 'Name the case',
+                description: 'Call it something.',
+                advanceWhen: { field: 'name', file: 'testcase.sodso.json', is: 'outer' },
+            },
+            { element: '#select-mod', title: 'Done', description: 'That is it.' },
+        ],
+    });
+
+    await openNestedCase(page);
+
+    const popover = page.locator(POPOVER);
+    await expect(popover).toContainText('Name the case');
+
+    await expandNode(page, CASE_WINDOW, 'victimJobModifiers');
+    await expandNode(page, CASE_WINDOW, '0');
+
+    // The element inside victimJobModifiers is already called `inner`, and putting the
+    // asked-for value in it must change nothing: an unqualified name means the
+    // document's own field, not the first one of that name anywhere in it.
+    const nested = page.locator(
+        `${CASE_WINDOW} li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('"name"')) input`
+    ).nth(1);
+    await nested.fill('outer');
+    await nested.blur();
+    await expect(popover).toContainText('Name the case');
+
+    await editField(page, CASE_WINDOW, 'name', 'outer');
+    await expect(popover).toContainText('Done');
+
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('a step can wait for an array to grow', async ({ page }) => {
+    await useTutorial(page, {
+        steps: [
+            {
+                element: { file: 'testcase.sodso.json' },
+                title: 'Add another',
+                description: 'Two of them.',
+                advanceWhen: {
+                    rows: 'victimJobModifiers',
+                    file: 'testcase.sodso.json',
+                    count: 2,
+                },
+            },
+            { element: '#select-mod', title: 'Done', description: 'That is it.' },
+        ],
+    });
+
+    await openNestedCase(page);
+
+    const popover = page.locator(POPOVER);
+    // One element already, so the step must be waiting rather than already satisfied.
+    await expect(popover).toContainText('Add another');
+
+    await page.locator(CASE_WINDOW)
+        .getByRole('button', { name: 'Add an element to "victimJobModifiers"' })
+        .first().click();
+
+    await expect(popover).toContainText('Done');
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('a step can ask for a popover of its own shape', async ({ page }) => {
+    await useTutorial(page, {
+        steps: [
+            {
+                element: '#select-mod', title: 'Beside something wide',
+                description: 'Reading.', popoverClass: 'tutorial-popover-narrow',
+            },
+            { element: '#select-content', title: 'Ordinary', description: 'Reading.' },
+        ],
+    });
+
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, soFolderContent);
+    await connectFolders(page, { modDir: 'Mods' });
+    await openTutorials(page);
+    await start(page);
+
+    // The class is what the narrow rule in core/chrome.css keys off. Without it a step
+    // pointing at a dialog card has no way to stop driver.js centring the popover over
+    // the button it has just told you to press -- see the DDS "Add new..." step.
+    const popover = page.locator(POPOVER);
+    await expect(popover).toContainText('Beside something wide');
+    await expect(popover).toHaveClass(/tutorial-popover-narrow/);
+
+    // And it is this step's, not the walkthrough's.
+    await popover.locator(FORWARD).click();
+    await expect(popover).toContainText('Ordinary');
+    await expect(popover).not.toHaveClass(/tutorial-popover-narrow/);
+});
+
 test('closing the walkthrough stops it watching', async ({ page }) => {
     await useTutorial(page, {
         steps: [

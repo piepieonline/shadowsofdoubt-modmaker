@@ -869,12 +869,19 @@
                                     placeholder="Search files" aria-label="Search files"
                                     oninput="filterFilePanel(this.value)" />
 
-                                <!-- What the list is made of, beside the box that finds
+                                <!-- What the list is made of, inside the box that finds
                                      something in it. Building one room writes a patch
                                      for every cluster, preset, material filter and light
                                      it admits, and thirty rooms of that buries the files
                                      an author wrote. See scripts/roomPermissions.js for
                                      what counts as one.
+
+                                     A funnel and no word, at the end of the box: narrowing
+                                     the list by name and narrowing it by kind are the same
+                                     job, and this is a 300px column where a labelled button
+                                     took a third of the row from the box it belongs to.
+                                     Named for a screen reader in aria-label, since the
+                                     drawing says nothing to one.
 
                                      No "Everything" row: an untouched menu already means
                                      it, and a checkbox that unticks the others is a radio
@@ -882,8 +889,15 @@
                                      screen as they are ticked, so this holds no
                                      data-menu-item -- see core/barMenu.js. -->
                                 <details class="browse browse-end file-panel-filter" id="so-file-filter">
-                                    <summary role="button" class="secondary outline"
-                                        title="Choose what the list leaves out">Filter</summary>
+                                    <summary role="button" aria-label="Filter files"
+                                        title="Choose what the list leaves out">
+                                        <svg viewBox="0 0 16 16" width="14" height="14"
+                                            aria-hidden="true" focusable="false">
+                                            <path d="M1.75 2.75h12.5l-4.75 5.6v5.15l-3-1.6V8.35z"
+                                                fill="none" stroke="currentColor" stroke-width="1.5"
+                                                stroke-linejoin="round" />
+                                        </svg>
+                                    </summary>
                                     <div class="browse-menu">
                                         <label>
                                             <input type="checkbox" value="furniture"
@@ -1058,8 +1072,23 @@
                             picker lists. The room's other three assets take it with a suffix.</small>
 
                         <label for="room-creator-donor">Copy from</label>
-                        <select id="room-creator-donor" aria-label="Room configuration to copy"></select>
-                        <small>Lighting, security, cleanliness and decor come from here.</small>
+
+                        <!-- The button is on the donor's row because it is about the
+                             donor. Furniture is the one thing copyFrom cannot carry --
+                             what furnishes a room is decided the other way round, by each
+                             cluster naming the room class it goes in -- so it takes a
+                             press of its own, and on its own line that press read as a
+                             third property of the room rather than as more of this one. -->
+                        <div class="room-creator-donor-row">
+                            <select id="room-creator-donor" aria-label="Room configuration to copy"></select>
+                            <button id="room-creator-copy-furniture" type="button" class="secondary outline"
+                                onclick="copyDonorFurniture()" disabled>Copy furniture</button>
+                        </div>
+                        <small>Lighting, security, cleanliness and decor come from here.
+                            Furniture does not, so the button ticks what this room is
+                            furnished with into the list below — once, after which it is
+                            yours to narrow.</small>
+                        <div id="room-creator-copied" role="status" aria-live="polite"></div>
 
                         <!-- Collapsed by default. Every field in here is optional, and a
                              room can be designed without answering any of them -- so it

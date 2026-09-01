@@ -32,6 +32,7 @@
  */
 import {
     admitted, closures, importantElements, surfaceFilters, unlitConfigurations, lightsFor,
+    clustersFor,
 } from '../../../core/spawnRules.js';
 
 import { getFile, tryGetFile, writeFile, readFileContent, removeFile } from '../../../core/fs.js';
@@ -41,7 +42,7 @@ import {
 import { PATCH_SUFFIX, PRESET_SUFFIX } from '../../../core/soFileName.js';
 import {
     planRoom, decideCluster, collisions, mergePatch, against, fullClosure, abandoned,
-    roomRefs, withoutRoom,
+    roomRefs, withoutRoom, sharedNames, patchFileOf,
 } from './roomPlan.js';
 import { scanRooms, choicesFrom } from './roomScan.js';
 
@@ -73,10 +74,30 @@ const state = {
     // reconciles it rather than refusing: the four assets are rewritten, newly admitted
     // furniture is patched in, and furniture taken back is patched out.
     editing: null,
+
+    // The last copy of a donor's furniture, as a record of something that happened rather
+    // than a setting: `{ donor, clusters, cloned }`, or null. Nothing reads it back into
+    // the choices -- once copied, the clusters are ordinary ticks.
+    copied: null,
 };
 
 /** The room being edited, or null once the name has moved off it. */
 const editingRoom = () => (state.editing && state.name === state.editing.roomType ? state.editing : null);
+
+/**
+ * What an opened room admits things through, as `{ asset, type }`.
+ *
+ * The scanner hands back four lists and the type is implied by which list a name is in.
+ * It has to be carried rather than read off the name, because half of what names these
+ * files *is* the type -- see `patchFileOf` -- and the names that need it are exactly the
+ * ones a name alone cannot identify.
+ */
+const admissionsOf = (room) => (!room ? [] : [
+    ...room.clusters.map((asset) => ({ asset, type: 'FurnitureCluster' })),
+    ...room.presets.map((asset) => ({ asset, type: 'FurniturePreset' })),
+    ...room.surfaces.map((asset) => ({ asset, type: 'RoomTypeFilter' })),
+    ...room.lighting.map((asset) => ({ asset, type: 'RoomLightingPreset' })),
+]);
 
 /** Test seam, and what the pane reads. */
 export const roomCreatorState = () => state;
@@ -240,6 +261,10 @@ export function roomCreatorChanged() {
         ? chain?.roomConfigs?.[state.donor]?.roomType ?? ''
         : '';
 
+    // A copy names the donor it came from, so it stops being true the moment the donor
+    // moves. The clusters it ticked stay -- they are the author's now.
+    if (state.copied && state.copied.donor !== state.donor) state.copied = null;
+
     state.search = $('#room-creator-search')?.value.trim().toLowerCase() ?? '';
 
     // The donor's own lights, until the author says otherwise. Nothing lights a brand new
@@ -332,6 +357,46 @@ export function toggleRoomCluster(name, on) {
     redraw();
 }
 
+/**
+ * Everything the donor is furnished with, ticked in one go.
+ *
+ * A button and not a setting. `copyFrom` on the `RoomConfiguration` carries the donor's
+ * lighting, security and decor because those are fields *on* it; furniture is decided the
+ * other way round, by each cluster naming the room classes it will go in, so there is
+ * nothing for `copyFrom` to carry and the room has to be added to 50-odd shipped assets
+ * instead. That is a large, visible act -- `ApartmentLivingRoom` is 77 clusters and 80
+ * presets, so 157 patches beside the four assets the room itself is -- and it belongs to a
+ * button the author presses once, not to a checkbox that quietly reapplies itself when
+ * something else moves.
+ *
+ * Nothing is taken back out first. A copy adds to what is already ticked, because the
+ * author who ticked something by hand and then reached for the donor's furniture wants
+ * both; and untangling one from the other afterwards is what "no tracking" rules out.
+ *
+ * **Clusters the context refuses are copied too**, and each becomes a clone with the gate
+ * that refused it relaxed -- `planRoom` already does exactly that for one ticked by hand
+ * before the floor was stated. A donor's room is furnished, and copying it minus the
+ * eleven things the third floor rules out would be a copy that quietly is not one.
+ */
+export function copyDonorFurniture() {
+    const names = clustersFor(chain, state.donor);
+    if (!names.length) return;
+
+    for (const name of names) state.clusters.add(name);
+
+    // One closure over the whole set rather than a pass per cluster: the closure walks all
+    // 399 clusters, and 77 walks of it to answer one question is 76 too many.
+    for (const preset of fullClosure(chain, names)) state.furniture.add(preset);
+
+    state.copied = {
+        donor: state.donor,
+        clusters: names.length,
+        cloned: names.filter((name) => decideCluster(rooms, name, state.context).action === 'clone').length,
+    };
+
+    redraw();
+}
+
 /** One piece of furniture within a cluster, admitted or not. */
 export function toggleRoomFurniture(name, on) {
     if (on) state.furniture.add(name);
@@ -396,8 +461,64 @@ function redraw() {
 
     out.replaceChildren(...parts);
 
+    drawCopy();
     drawContents(result);
     drawPlan();
+}
+
+/**
+ * The copy button, and what the last press of it did.
+ *
+ * The count is on the button rather than beside it because it is the thing that decides
+ * whether to press: one and 77 are both answers a shipped donor gives -- `Path` and
+ * `ApartmentLivingRoom` -- and which one is not guessable from the name beside it.
+ *
+ * Short, because it shares a row with the donor select and the select is the half worth
+ * the width. So the donor's name is not repeated here -- it is being read an inch to the
+ * left -- and the sentence that would not fit goes on the `title` and, where it is a
+ * reason the button cannot be pressed, into the note below where it is actually visible.
+ *
+ * A donor whose class no filter names gets the button disabled and the fact said out loud.
+ * `Atrium` is one -- so is every configuration in the game whose rooms are furnished by
+ * hand rather than by the generator -- and "nothing is placeable in an atrium" is a useful
+ * thing to learn early, where a button that appeared to do nothing would read as broken.
+ */
+function drawCopy() {
+    const button = $('#room-creator-copy-furniture');
+    const out = $('#room-creator-copied');
+    if (!button) return;
+
+    const names = state.donor ? clustersFor(chain, state.donor) : [];
+
+    button.disabled = !names.length;
+    button.textContent = names.length ? `Copy ${names.length} clusters` : 'Copy furniture';
+    button.title = !state.donor
+        ? 'Choose a room to copy from first'
+        : names.length
+            ? `Tick the ${names.length} furniture clusters ${state.donor} holds`
+            : `${state.donor} holds no furniture to copy`;
+
+    if (!out) return;
+
+    const parts = [];
+
+    if (state.donor && !names.length) {
+        parts.push(note(`${state.donor} has no furniture to copy: no cluster in the game names its `
+            + 'room class, so nothing the generator places goes in one. Tick what this room should '
+            + 'hold below.'));
+    }
+
+    // Said once, after the press. It describes what happened rather than what is set, so
+    // it does not follow the ticks around as they are narrowed afterwards.
+    if (state.copied) {
+        parts.push(note(`Copied ${state.copied.clusters} of ${state.copied.donor}’s furniture `
+            + `clusters${state.copied.cloned
+                ? `, ${state.copied.cloned} of which are refused where this room sits and are copied `
+                    + 'as clones with that one gate relaxed'
+                : ''}. Narrow them under “What goes in it”.`));
+    }
+
+    out.replaceChildren(...parts);
 }
 
 /**
@@ -436,33 +557,44 @@ function drawContents(result) {
         const box = document.createElement('input');
 
         const failures = refusals.get(name);
+        const admittedHere = state.clusters.has(name);
 
+        // A refused cluster cannot be ticked by hand -- the reason is the thing to read
+        // first, and a tick before reading it is a clone written by accident. But one the
+        // copy button brought in *is* in the room, as a clone, so it shows ticked and can
+        // be taken back out. A box that showed empty for something the plan below is about
+        // to write would be the pane disagreeing with itself.
         box.type = 'checkbox';
-        box.checked = !failures && state.clusters.has(name);
-        box.disabled = !!failures;
-        if (!failures) box.addEventListener('change', () => toggleRoomCluster(name, box.checked));
+        box.checked = admittedHere;
+        box.disabled = !!failures && !admittedHere;
+        if (!box.disabled) box.addEventListener('change', () => toggleRoomCluster(name, box.checked));
 
-        const decision = failures ? { action: 'patch' } : decideCluster(rooms, name, state.context);
+        const decision = decideCluster(rooms, name, state.context);
         const presets = closure[name] ?? [];
 
         const admitted = presets.filter((preset) => state.furniture.has(preset)).length;
 
         const caption = document.createElement('span');
-        caption.textContent = ` ${name} — ${state.clusters.has(name) && admitted !== presets.length
+        caption.textContent = ` ${name} — ${admittedHere && admitted !== presets.length
             ? `${admitted} of ${presets.length}`
             : `${presets.length} ${presets.length === 1 ? 'preset' : 'presets'}`}`
             + `${decision.action === 'clone' ? ', cloned' : ''}`;
 
         label.append(box, caption);
-        if (failures) label.className = 'room-creator-refused';
+
+        // Greyed only while it is out. Once it is in the room it is as real as any other
+        // ticked row, whatever the gate that made it a clone.
+        if (failures && !admittedHere) label.className = 'room-creator-refused';
         row.append(label);
 
+        // The reason stays on a cloned row: it is what the clone relaxes, and the author
+        // taking one back out wants to know why it needed cloning in the first place.
         if (failures) row.append(...whyNot(name, failures));
 
         // Its contents, once it is in. A cluster puts down a slot per element and the
         // game fills each from whatever carries that class -- so this is the furniture
         // the room would actually get, and the author may not want all of it.
-        if (!failures && state.clusters.has(name) && presets.length) row.append(contentsOf(name, presets));
+        if (admittedHere && presets.length) row.append(contentsOf(name, presets));
 
         return row;
     });
@@ -629,9 +761,10 @@ function drawPlan() {
 
     // Furniture this room admits today and would not after saving.
     const wanted = new Set(plan.files.map((entry) => entry.file));
-    const taken = !editing ? [] : [
-        ...editing.clusters, ...editing.presets, ...editing.surfaces, ...editing.lighting,
-    ].filter((asset) => !wanted.has(`${asset}.sodso_patch.json`));
+    const shared = sharedNames(rooms, chain);
+    const taken = admissionsOf(editing)
+        .filter((entry) => !wanted.has(patchFileOf(shared, entry.asset, entry.type)))
+        .map((entry) => entry.asset);
 
     const resaves = landing.filter((entry) => entry.landing === 'resave').length;
 
@@ -680,9 +813,10 @@ function drawPlan() {
     const unnamed = plan.problems.some((text) => text.includes('needs a name')
         || text.includes('not a usable asset name') || text.includes('needs a configuration'));
 
-    button.disabled = blocked || unnamed || clashes.length > 0;
+    button.disabled = blocked || unnamed || clashes.length > 0 || plan.collided.length > 0;
 
     if (blocked) button.textContent = 'Choose a mod to write into';
+    else if (plan.collided.length) button.textContent = 'Two of this room’s files share a name';
     else if (clashes.length) button.textContent = 'Change the name to write';
     else if (editing) button.textContent = `Save ${state.name}`;
     else if (appends) button.textContent = `Write ${landing.length - appends} files, add to ${appends}`;
@@ -822,6 +956,11 @@ export function openExistingRoom() {
     // another. Renaming ends that -- a new name is a new room, and the old one stays.
     state.editing = room;
 
+    // A copy of a donor's furniture done a moment ago was done to a different room. The
+    // note describing it would survive a same-donor open and read as though it described
+    // this one's ticks, which came from its files.
+    state.copied = null;
+
     $('#room-creator-name').value = choices.name;
     if ($('#room-creator-donor')) $('#room-creator-donor').value = choices.donor;
 
@@ -884,6 +1023,18 @@ export async function writeRoom() {
 
     const plan = planRoom(choices(), rooms, chain);
 
+    // Before the folder is touched at all: two of the room's own files wanting one name is
+    // decided by the room, not by what is on disk, and writing the set half-way would put
+    // down the very file that makes the second one unmergeable afterwards.
+    if (plan.collided.length) {
+        out.prepend(note(`Nothing has been written. ${plan.collided.map((entry) => `${entry.asset} `
+            + `is ${asProse(entry.types)} at once, so this room's changes to both would go to `
+            + `${entry.file} and only one would survive`).join('. ')}. The file naming is meant to `
+            + 'keep those apart, so this is a fault in the editor rather than in the room — it is '
+            + 'worth reporting.', 'warning'));
+        return;
+    }
+
     // Read before deciding anything. The cached list the pane draws its preview from is
     // whatever the folder held when it was opened, and a write has to answer to the folder
     // as it is now.
@@ -913,12 +1064,21 @@ export async function writeRoom() {
     // Furniture, surfaces and lights this room used to admit and no longer does. Read from
     // the folder rather than from what the pane started with, so a file edited elsewhere
     // since is still handled correctly.
+    //
+    // Both spellings for an ambiguous name. A room saved before the type went into these
+    // file names admits through the bare one, and leaving that behind would mean unticking
+    // a cluster took it out of the new file and not out of the old -- which reads as the
+    // untick not having worked. Nothing is lost by looking: a file that is not there is
+    // skipped, and one belonging to another room keeps everything but this room's own
+    // operations.
+    const shared = sharedNames(rooms, chain);
     const wanted = new Set(plan.files.map((entry) => entry.file));
-    const stale = editing
-        ? [...editing.clusters, ...editing.presets, ...editing.surfaces, ...editing.lighting]
-            .map((asset) => `${asset}${PATCH_SUFFIX}`)
-            .filter((file) => !wanted.has(file))
-        : [];
+    const stale = [...new Set(admissionsOf(editing)
+        .flatMap((entry) => [
+            patchFileOf(shared, entry.asset, entry.type),
+            `${entry.asset}${PATCH_SUFFIX}`,
+        ])
+        .filter((file) => !wanted.has(file)))];
 
     // Work out every merge before writing any of them, so a patch this room cannot be
     // added to stops the whole write rather than leaving the room half admitted.

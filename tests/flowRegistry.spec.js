@@ -62,7 +62,10 @@ const refShape = (page) => page.evaluate(() => ({
     hasCaseTemplates: 'MurderManifest' in (window.templates ?? {}),
     hasDdsTemplates: 'tree' in (window.templates ?? {}),
     hasIdNameMap: Boolean(window.ddsMap?.idNameMap),
-    // Only the case flow defines these, so they must not survive into the other.
+    // Only the case flow defines this, so it must not survive into the other. It was
+    // `typeMap` until a DDS document's traits, jobs and item pool became dropdowns of the
+    // game's assets -- both flows name assets now, and both install the list.
+    hasPathIdMap: Boolean(window.pathIdMap),
     hasTypeMap: Boolean(window.typeMap),
 }));
 
@@ -70,7 +73,7 @@ test('each flow reinstalls its reference data on every activation', async ({ pag
     await gotoFlow(page, '?flow=scriptableObject');
     const caseRefs = await refShape(page);
     expect(caseRefs.hasCaseTemplates).toBe(true);
-    expect(caseRefs.hasTypeMap).toBe(true);
+    expect(caseRefs.hasPathIdMap).toBe(true);
 
     await page.selectOption('#flow-picker', 'dds');
     await page.locator('html[data-flow-ready="dds"]').waitFor();
@@ -78,7 +81,8 @@ test('each flow reinstalls its reference data on every activation', async ({ pag
         hasCaseTemplates: false,
         hasDdsTemplates: true,
         hasIdNameMap: true,
-        hasTypeMap: false,
+        hasPathIdMap: false,
+        hasTypeMap: true,
     });
 
     // The second activation: the modules are cached, so nothing re-runs on import.
@@ -92,7 +96,8 @@ test('each flow reinstalls its reference data on every activation', async ({ pag
         hasCaseTemplates: false,
         hasDdsTemplates: true,
         hasIdNameMap: true,
-        hasTypeMap: false,
+        hasPathIdMap: false,
+        hasTypeMap: true,
     });
 });
 

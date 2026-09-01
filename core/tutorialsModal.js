@@ -16,6 +16,11 @@ export const TUTORIALS = [
         title: 'Theft Gone Wrong',
         summary: 'Build a murder case from scratch: a robbery that ends in a body.',
     },
+    {
+        id: 'wizcardschat',
+        title: 'Wizcards Casual Chat',
+        summary: 'Write a conversation: two citizens on their crunchers, in the DDS editor.',
+    },
 ];
 
 function render() {

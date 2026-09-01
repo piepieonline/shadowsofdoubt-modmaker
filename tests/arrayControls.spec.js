@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test';
 import {
-    installFsHarness, seedFs, connectFolders, selectContent, queuePrompts, readFile,
+    installFsHarness, seedFs, connectFolders, selectContent, prompts, readFile, listDir,
     alerts, collectPageErrors, gotoFlow, openDdsDocument, clipboard, setClipboard,
 } from './support/harness.js';
 import { ddsFixture, ddsFixtureWithContent, soFixture, TREE_GUID, MSG_GUID, MSG2_GUID }
     from './support/fixtures.js';
+import { GUID_PATTERN } from '../core/guid.js';
 
 /**
  * The +, −, copy and paste buttons on an array and on each of its elements.
@@ -21,7 +22,6 @@ import { ddsFixture, ddsFixtureWithContent, soFixture, TREE_GUID, MSG_GUID, MSG2
 const TREE_PATCH = `Mods/TestMod/Content/DDSContent/DDS/Trees/${TREE_GUID}.tree_patch`;
 const CASE_FILE = 'Mods/TestCase/testcase.sodso.json';
 const MOD_BLOCK_GUID = 'cccccccc-3333-4333-8333-333333333333';
-const REPLACEMENT_GUID = 'dddddddd-4444-4444-8444-444444444444';
 
 test.beforeEach(async ({ page }) => {
     await installFsHarness(page);
@@ -126,14 +126,64 @@ test('+ adds an element to the array and writes it', async ({ page }) => {
     const messages = namedNode(page, '#file-window-0', 'messages');
     await expect(elementCount(messages)).toHaveCount(2);
 
-    // A new message asks for the GUID of the message it points at.
-    await queuePrompts(page, [MSG_GUID]);
     await control(messages, 'add').click();
 
     await expect(elementCount(namedNode(page, '#file-window-0', 'messages'))).toHaveCount(3);
     await expect.poll(async () => (await treePatch(page))
         .some((op) => op.op === 'add' && op.path.startsWith('/messages'))).toBe(true);
     expect(errors).toEqual([]);
+});
+
+test('+ asks nothing, in either flow', async ({ page }) => {
+    // The whole of what a + does is add an element. The DDS flow used to describe each
+    // one through a `prompt()` first -- a GUID for a message, a name for a trait, an
+    // *index* for a trigger -- which is a second editor for the same act, sitting in
+    // front of the controls the tree gives the value a moment later.
+    await openTree(page);
+
+    const messages = namedNode(page, '#file-window-0', 'messages');
+    await control(messages, 'add').click();
+    await expect(elementCount(namedNode(page, '#file-window-0', 'messages'))).toHaveCount(3);
+
+    // A participant's triggers: a list of enum values, which the prompt asked for by
+    // index. The element is the first of them, in the dropdown that names them.
+    await expand(namedNode(page, '#file-window-0', 'participantA'));
+    await expand(namedNode(page, '#file-window-0', 'triggers'));
+    await control(namedNode(page, '#file-window-0', 'triggers'), 'add').click();
+
+    const triggers = namedNode(page, '#file-window-0', 'triggers');
+    await expect(elementCount(triggers)).toHaveCount(3);
+    await expect(elementNode(triggers, 2).locator('select')).toHaveValue('0');
+
+    expect(await prompts(page)).toEqual([]);
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('a new message is a document of its own, written into the mod', async ({ page }) => {
+    // Cancelling the GUID prompt is what this replaces, and it is what every walkthrough
+    // of the editor said to do: a message in a tree is a reference to a document, so
+    // adding one means there is a document to point at. The message brings its own block,
+    // as one created any other way does.
+    const errors = collectPageErrors(page);
+    await openTree(page);
+
+    const root = 'Mods/TestMod/Content/DDSContent/DDS';
+    // The fixture's folders carry a .keep, which is how they exist while empty.
+    const documents = async (kind) =>
+        (await listDir(page, `${root}/${kind}`)).filter((name) => name !== '.keep');
+
+    await control(namedNode(page, '#file-window-0', 'messages'), 'add').click();
+
+    await expect.poll(() => documents('Messages')).toHaveLength(1);
+    await expect.poll(() => documents('Blocks')).toHaveLength(1);
+
+    // Pointed at, rather than merely written: the element names the file's GUID.
+    const [messageFile] = await documents('Messages');
+    await expect.poll(async () => (await treePatch(page)).some((op) =>
+        op.op === 'add' && op.value?.msgID === messageFile.replace('.msg', ''))).toBe(true);
+
+    expect(errors).toEqual([]);
+    expect(await alerts(page)).toEqual([]);
 });
 
 test('− removes the element it sits on', async ({ page }) => {
@@ -177,15 +227,20 @@ test('what is copied is what the file holds, not the text shown beside it',
         await openDdsDocument(page, MOD_BLOCK_GUID, 'block');
 
         const replacements = namedNode(page, '#file-window-0', 'replacements');
-        await queuePrompts(page, [REPLACEMENT_GUID]);
         await control(replacements, 'add').click();
 
+        // Opened after the +, not before: the block's replacements start empty, so the
+        // node is closed, and what the + put in it is inside.
+        await expand(namedNode(page, '#file-window-0', 'replacements'));
+
         const added = elementNode(namedNode(page, '#file-window-0', 'replacements'), 0);
-        await expect(added).toBeAttached();
+        await expect(added).toBeVisible();
         await control(added, 'copy').click();
 
-        await expect.poll(async () => JSON.parse(await clipboard(page)))
-            .toMatchObject({ replaceWithID: REPLACEMENT_GUID });
+        // The GUID the line is keyed by, which a new replacement is given rather than
+        // asked for. What matters here is what travelled with it.
+        await expect.poll(async () => JSON.parse(await clipboard(page)).replaceWithID)
+            .toMatch(GUID_PATTERN);
         expect(await clipboard(page)).not.toContain('_ENG Localisation_');
     });
 

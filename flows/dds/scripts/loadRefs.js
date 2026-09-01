@@ -11,12 +11,13 @@
  * `newspaperArticle`.
  */
 import ddsMap from '../../../refs/generated/ddsContentIndex.json' with { type: 'json' };
+import soAssetsByType from '../../../refs/generated/soAssetsByType.json' with { type: 'json' };
 
 import baseGameStringsFiles from '../../../refs/authored/baseGameStringsFiles.json' with { type: 'json' };
 import templates from '../../../refs/authored/ddsTemplates.json' with { type: 'json' };
 import fieldDescriptions from '../../../refs/authored/fieldDescriptions.json' with { type: 'json' };
 
-import { enums, typeLayout } from '../../../core/refs.js';
+import { basicTypeTemplates, enums, typeLayout } from '../../../core/refs.js';
 
 /**
  * The flow's reference data, returned rather than assigned to window: the registry
@@ -34,5 +35,12 @@ export default {
     templates,
     typeLayout,
     enums,
+    // What a new array element is made of, for the types the layout describes no fields
+    // for. See scripts/elementTemplates.js.
+    basicTypeTemplates,
+    // The base game's assets by type, under the name the case flow publishes it as. A DDS
+    // document names some of them -- a participant's traits and jobs, a tree's item pool --
+    // and those rows are dropdowns of these. See scripts/assetFields.js.
+    typeMap: soAssetsByType,
     fieldDescriptions,
 };

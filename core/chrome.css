@@ -582,6 +582,23 @@ body.driver-active .driver-popover-next-btn {
     justify-self: end;
 }
 
+/*
+ * A popover narrow enough to stand beside a dialog, for the steps that ask for it.
+ *
+ * driver.js will not put a popover on a side it does not fit, and silently centres it
+ * over the highlighted element instead. A step pointing at a dialog card is where that
+ * bites: the DDS "Add new..." card is 660px wide and centred, which leaves 310px each
+ * side, and a popover at its 300px default needs that plus its own offset and a margin
+ * off the viewport edge. Ten pixels short, so it lands over the card -- on top of the
+ * Create button the step has just told you to press.
+ *
+ * Sixty pixels off the width is enough for the gutter, and the popover is a paragraph
+ * either way. Opted into per step, because everywhere else the wider one reads better.
+ */
+body.driver-active .driver-popover.tutorial-popover-narrow {
+    max-width: 240px !important;
+}
+
 /* The active flow needs a folder that is not set. */
 #folders-open[data-folders-missing]::after {
     content: " !";
@@ -647,32 +664,39 @@ body.driver-active .driver-popover-next-btn {
  */
 .file-panel-search {
     /* The gap under the box used to be the input's own bottom margin. It is the row's
-       now, so that the button beside the box does not have to carry a copy of it. */
+       now, so that the control inside the box does not have to carry a copy of it. */
     margin: 0 0 0.5rem;
     padding: 0;
+    /* What the filter is positioned against: the box fills the row, and the icon is laid
+       over the far end of it. */
+    position: relative;
     display: flex;
     align-items: start;
-    gap: 0.35rem;
 
     input {
-        /* Beside the button rather than under it, and what takes the width left over.
-           `min-width` because a flex item's default floor is its intrinsic width, which
-           for an input is wider than this column. */
+        /* The whole row. `min-width` because a flex item's default floor is its intrinsic
+           width, which for an input is wider than this column. */
         flex: 1;
         min-width: 0;
         margin: 0;
-        padding: 0.3rem 0.5rem;
+        /* Room at the end for the funnel and, once anything is typed, for the clear cross
+           beside it. WebKit draws that cross at the end of the *content* box, so padding
+           here is what moves it inboard of the icon rather than under it. */
+        padding: 0.3rem 2rem 0.3rem 0.5rem;
         height: auto;
         font-size: 0.8rem;
     }
 }
 
 /*
- * The button that says what the list leaves out, at the end of the search row.
+ * The control that says what the list leaves out, inside the end of the search box.
  *
- * Beside the box rather than inside it. An overlaid control would sit on top of the clear
- * cross a `type="search"` draws for itself as soon as anything is typed, which is the one
- * place in the row an author is most likely to be aiming at.
+ * Inlaid rather than beside: narrowing by name and narrowing by kind are the same job, and
+ * a labelled button took a third of a 300px row from the box it belongs to.
+ *
+ * It shares that end with the clear cross a `type="search"` draws for itself as soon as
+ * anything is typed. The input's right padding is what keeps them apart -- the cross sits
+ * at the end of the content box, so it lands inboard of the funnel rather than under it.
  *
  * Its menu is sized to the column. The panel around it scrolls, and a scroller clips what
  * hangs outside it in both directions -- `overflow-y: auto` makes `overflow-x` auto too --
@@ -680,20 +704,73 @@ body.driver-active .driver-popover-next-btn {
  * scrollbar on the file list.
  */
 .file-panel-filter {
-    flex: none;
+    /* How far inside the box the funnel sits. Named because the menu below is hung off
+       the same number in the other direction, and the two drifting apart is what would
+       leave a menu that does not line up with the box that opened it. */
+    --file-panel-filter-inset: 0.4rem;
 
+    /* As tall as the box and centred in it, rather than a half-height icon nudged down by
+       a translate: the height is the box's to decide, and a transform here would make this
+       a stacking context -- which would leave the open menu under the file list below it,
+       whatever z-index the menu asks for. */
+    position: absolute;
+    right: var(--file-panel-filter-inset);
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+
+    /* An icon in a text box, not a button in a row: Pico's button padding, border and
+       hover fill would draw a second box inside the first one, at the end of a field an
+       author is typing in. Bare and muted, and darkened rather than filled on hover --
+       the pointer over it is already a hand, and the box it sits in is the loudest thing
+       this corner should have in it. */
     > summary {
-        padding: 0.3rem 0.6rem;
-        font-size: 0.8rem;
-        white-space: nowrap;
+        display: flex;
+        width: auto;
+        padding: 0.15rem;
+        border: none;
+        background: none;
+        color: var(--pico-muted-color);
+        line-height: 0;
+
+        /* A step darker than muted, not --pico-color: this is marked up as a button, and
+           Pico sets --pico-color to --pico-primary-inverse on every one of those -- which
+           is white, on the white this box is drawn on. Same trap as .browse-menu-item
+           above. */
+        &:is(:hover, :focus-visible) {
+            color: var(--pico-secondary-hover);
+        }
+
+        /* Pico floats a chevron after every summary, which here would make two glyphs
+           where the whole point is one. The menu opening under the funnel says the same
+           thing, at the moment it is worth saying. */
+        &::after {
+            content: none;
+            display: none;
+        }
+    }
+
+    /* Pico puts --pico-spacing under an open summary -- a whole 1rem, meant for a
+       disclosure holding a paragraph. Left on, the funnel would jump up half of that the
+       moment the menu opened, because this row centres what is in it. Outweighs
+       `details[open] > summary`, which the `.browse` reset above does not. */
+    &[open] > summary {
+        margin-bottom: 0;
     }
 
     /* Filtering is a state the panel is in, and one an author leaves on and forgets. The
-       button says so on its own, for when the count below has been scrolled away from. */
+       icon says so on its own, for when the count below has been scrolled away from --
+       there is no label left to embolden, so the colour is the whole of the signal. */
     &.filtering > summary {
-        --pico-color: var(--pico-primary);
-        --pico-border-color: var(--pico-primary);
-        font-weight: bold;
+        color: var(--pico-primary);
+
+        /* Written out again because the rule above it is as specific: without this, a
+           filtering funnel would be the one control in the panel that does not answer the
+           pointer. */
+        &:is(:hover, :focus-visible) {
+            color: var(--pico-primary-hover);
+        }
     }
 
     /* The column, less the padding .file-panel carries in core/documentFlow.css and its
@@ -703,6 +780,10 @@ body.driver-active .driver-popover-next-btn {
         --browse-menu-width: calc(var(--file-panel-width) - 1.5rem - 2px);
         min-width: 0;
         white-space: normal;
+        /* Squared up with the box rather than with the funnel inside it. That width is the
+           column exactly, so hanging it off the icon put its far edge over the panel's
+           padding and its near edge past the panel's own. */
+        right: calc(-1 * var(--file-panel-filter-inset));
     }
 
     /* A row of the menu: the box and what it excludes, on one line each. Pico lays a

@@ -272,3 +272,41 @@
     padding-left: 20px;
     border-left: 1px dotted #c52f2180;
 }
+
+
+/* -------------------------------------------------------------------------- */
+/* The searchable dropdowns inside a document                                  */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * A field that names one of the game's assets is a searchable list rather than a text box
+ * -- the case flow's ScriptableObject references, and now the DDS flow's traits, jobs and
+ * item pool. The control is core/components/searchSelect/searchSelect.js; what is here is
+ * how it reads inside a JSON tree.
+ *
+ * Scoped to `#trees` because that is where these dropdowns are parented, and because the
+ * control is shared with the building flow's furniture checker -- which should not
+ * inherit a monospace palette chosen for a tree. It was the case flow's stylesheet until
+ * both editors had one of these; a rule only one flow loads is a rule the other silently
+ * does without, which here meant black-on-dark text in the DDS flow's dropdowns.
+ */
+#trees .select2-dropdown,
+#trees .select2-container--default .select2-selection--single {
+    font-family: monospace;
+    font-size: 14px;
+    color: black;
+
+    /* Pinned rather than inherited. The control takes its colours from Pico -- see
+       core/components/searchSelect/searchSelect.css -- and Pico follows the OS scheme,
+       which would leave this black text on a dark box. The trees are a light surface
+       whatever the rest of the page is doing, for the same reason chrome.css forces
+       `color-scheme: light` on them: jsonTree's palette is hardcoded. */
+    background-color: #fff;
+}
+
+#trees .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: inherit;
+}
+
+/* How wide one is, each flow says for itself -- as it does for the plain fields beside it.
+   Both need `!important` to say it: select2 writes a pixel width inline. */

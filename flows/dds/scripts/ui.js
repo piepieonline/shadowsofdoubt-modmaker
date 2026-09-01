@@ -4,6 +4,9 @@ import { createNewFile } from './modFileManager.js';
 import { renderFilePanel } from '../../../core/filePanel.js';
 import { WINDOW_DEPTHS, deleteTree } from './jsonTreeAdditions.js';
 import { listContent, STRINGS_OPEN_AS } from './contentList.js';
+// The case flow's listing of the same content folder. What it finds is what the fields
+// that name an asset offer -- see listModAssets below.
+import { listContent as listSOContent } from '../../scriptableObject/scripts/contentList.js';
 import { deleteDocument, deleteStringsFile } from './deleteDocument.js';
 import { refreshManifestPanel } from './manifestPanel.js';
 import { closeStringsWindow, openStringsFile, openStringsPath } from './stringsEditor.js';
@@ -34,6 +37,8 @@ export async function onModSelected(selection) {
         await loadI18n();
     }
 
+    await listModAssets();
+
     // An open strings file belongs to the mod it was opened from, and is identified by
     // a path relative to that mod's content folder -- which another mod can have a file
     // of its own at. Saving after a switch would write into the wrong one.
@@ -41,6 +46,31 @@ export async function onModSelected(selection) {
 
     await refreshManifestPanel();
     await refreshPanel();
+}
+
+/**
+ * Note what ScriptableObjects the mod defines, for the fields here that name one.
+ *
+ * A participant's traits and jobs and a tree's item pool are names of the game's assets,
+ * and a mod may add assets of those kinds -- in this same content folder, as case files.
+ * Offering them means knowing what is there, and the walk that answers that is the case
+ * flow's, on the same folder. Calling it rather than writing a second one is the point:
+ * the two would be reading the same files to answer the same question, and refs/README.md
+ * records what happened the last time this app kept two of something.
+ *
+ * Once per content folder, at the moment it is chosen. Nothing this editor does adds a
+ * ScriptableObject to the folder, so there is nothing later that could make it stale.
+ *
+ * Tolerated rather than required: a DDS-only mod's folder holds no case files, and one
+ * that cannot be read is a reason to offer the base game's names alone, not to refuse to
+ * open the editor.
+ */
+async function listModAssets() {
+    try {
+        await listSOContent(window.selectedMod?.baseFolder ?? null);
+    } catch (error) {
+        console.warn('Could not list the mod\'s ScriptableObjects', error);
+    }
 }
 
 /** Rebuild the left-hand list of what this mod contains. */

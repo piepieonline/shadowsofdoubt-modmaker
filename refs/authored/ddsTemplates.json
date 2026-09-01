@@ -3,10 +3,10 @@
         "document": {
             "background": "",
             "colour": {
-                "a": 0,
-                "b": 0,
-                "g": 0,
-                "r": 0
+                "a": 1,
+                "b": 1,
+                "g": 1,
+                "r": 1
             },
             "fill": 1,
             "size": {
@@ -15,8 +15,14 @@
             }
         },
         "id": "DEFAULT_GUID",
+        "ignoreGlobalRepeat": false,
+        "interactionCitizenLimitation": 0,
+        "interactionOnePerCity": false,
+        "itemPool": [],
         "messages": [],
         "name": "DEFAULT_NAME",
+        "newspaperCategory": 0,
+        "newspaperContext": 0,
         "participantA": {
             "connection": 15,
             "disableInbox": false,
@@ -84,6 +90,7 @@
         "fontSize": 22,
         "fontStyle": 0,
         "instanceID": "DEFAULT_GUID",
+        "isHandwriting": false,
         "lineSpace": 16,
         "links": [],
         "msgID": "DEFAULT_GUID",
@@ -104,30 +111,34 @@
         "wordSpace": 0
     },
     "treeMessageLinks": {
-        "from": "",
-        "to": "",
+        "choiceWeight": 0.5,
         "delayInterval": {
             "x": 0,
             "y": 0.01
         },
-        "useWeights": false,
-        "choiceWeight": 0.5,
-        "useKnowLike": false,
+        "dialogSuccessModifier": 0.5,
+        "from": "",
+        "isDialogSuccess": true,
         "know": 0.5,
         "like": 0.5,
-        "useTraits": false,
+        "secondaryBranchTrigger": false,
+        "to": "",
+        "traitConditions": 0,
         "traits": [],
-        "traitConditions": 0
+        "useKnowLike": false,
+        "useTraits": false,
+        "useWeights": false
     },
     "message": {
+        "baseSuccessChance": 0.5,
         "blocks": [],
+        "events": [],
         "id": "DEFAULT_GUID",
         "name": "DEFAULT_NAME"
     },
     "messageBlock": {
         "alwaysDisplay": true,
         "blockID": "DEFAULT_GUID",
-        "forceScope": 0,
         "group": 0,
         "instanceID": "DEFAULT_GUID",
         "traitConditions": 0,
@@ -135,8 +146,8 @@
         "useTraits": false
     },
     "block": {
-        "name": "DEFAULT_NAME",
         "id": "DEFAULT_GUID",
+        "name": "DEFAULT_NAME",
         "replacements": []
     },
     "blockReplacement": {
@@ -151,10 +162,12 @@
         "useTraits": false
     },
     "newspaper": {
-        "disabled": false,
         "category": 0,
+        "context": 0,
+        "ddsReference": "",
+        "disabled": false,
         "followupStories": [],
         "possibleImages": [],
-        "context": 0
+        "presetName": ""
     }
 }

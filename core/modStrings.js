@@ -25,11 +25,33 @@ import {
 } from './stringsCsv.js';
 
 /**
+ * The row being written, so that the next one waits for it.
+ *
+ * Writing a row is read-modify-write on a whole file: the rows are read, one is added or
+ * replaced, and the result is written back. Two of those at once lose one of the two --
+ * the second read misses the first row, and the second write puts the file back without
+ * it. `writeFile` cannot save them either: an append seeks to the size it read a moment
+ * ago, and a rewrite truncates.
+ *
+ * That used to need two hands. Now one gesture can raise two writes: the + on a message
+ * creates the document and the block under it, each with a row of its own, and typing a
+ * line commits on blur -- which is to say while the click that moved focus is already
+ * doing something else. The prompts this editor used to ask were what kept them apart,
+ * and they were not there for that.
+ *
+ * A single queue for every file rather than one per path: these are the same handful of
+ * CSVs in one mod, the work is milliseconds, and a queue per key is a map to invalidate.
+ */
+let lastWrite = Promise.resolve();
+
+/**
  * Write `text` against `key` in the CSV the loader reads from `virtualPath`.
  *
  * One question decides how it is written -- is there already a row for this key? -- so
  * it is asked once, of the rows themselves, rather than once of the file's text and
  * again of each line in a way that could disagree with it.
+ *
+ * Queued behind whatever row is being written already -- see `lastWrite`.
  *
  * The key and the line are quoted whichever way the row is written, which is the shape
  * the game's own CSVs are in and the shape the strings editor writes. `text` may arrive
@@ -42,7 +64,18 @@ import {
  *          manifest gained an entry -- all three so a caller can refresh whatever it
  *          has on screen that is now a row behind.
  */
-export async function writeStringsRow(contentFolder, virtualPath, key, text) {
+export function writeStringsRow(contentFolder, virtualPath, key, text) {
+    // The queue is what is awaited, not what is returned: a caller sees its own failure,
+    // and a failure does not stop the row after it from being written.
+    const write = lastWrite.then(
+        () => writeRow(contentFolder, virtualPath, key, text),
+        () => writeRow(contentFolder, virtualPath, key, text));
+
+    lastWrite = write.catch(() => {});
+    return write;
+}
+
+async function writeRow(contentFolder, virtualPath, key, text) {
     const datestring = editedStamp();
     const line = quote(unquoteText(text));
 

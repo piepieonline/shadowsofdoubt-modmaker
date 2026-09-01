@@ -296,12 +296,38 @@ generator is where the answer is:
 | `TraitPick` | `appliedFrequencyMin`, `appliedFrequencyMax` | assets have these two; layout declares `appliedFrequency` |
 | `TraitPickRule` | `baseChance`, `reasonChance` | assets have these two; layout declares `addChance` |
 | `NewspaperArticle` | `possibleImages` | in `ddsTemplates.json`, declared by no type |
-| `DDSBlockCondition` | `forceScope` | in `ddsTemplates.json`, declared by no type. Possibly a `DDSScope` reference, in which case it is a missing dropdown too |
+| ~~`DDSBlockCondition`~~ | ~~`forceScope`~~ | **Settled, and it was not the generator.** `DDSSaveClasses.DDSBlockCondition` has seven fields and no `forceScope`, matching the layout; the base game's own content has it in 88 of 96 block conditions. It is a field of an older format that the current class ignores, so it has been dropped from `ddsTemplates.json` rather than kept |
 | `CustomColorBlock` | `m_NormalColor` and its seven siblings | the type declares the property names (`normalColor`) but not the `m_`-prefixed serialised fields. `CustomSpriteState` and `CustomAnimationTriggers` carry both forms |
 | `AnimationCurve.Keyframe` | `inSlope`, `outSlope`, `serializedVersion` | ours, in `refs/authored/basicTypeLayouts.json` — not the generator's |
 
 The first two read as version drift between the shipped assets and the reflected types. If
 the generator and the asset export run against the same build, they should not disagree.
+
+---
+
+## 8a. `[NonSerialized]` fields are in the layout, and they should not be
+
+`soTypeLayout.json` describes what a file holds — it is what both editors build a new
+document from and what decides which fields carry a control. Two entries in it are fields
+the game never writes:
+
+| Type | Field | What it actually is |
+|---|---|---|
+| `DDSTreeSave` | `messageRef` | `[NonSerialized] Dictionary<string, DDSMessageSettings>` — an index the game builds after loading a tree. The layout reports it as `String[]` |
+| `DDSTreeSave` | `citizenAddCount` | `[NonSerialized] int` — a counter kept while the tree runs |
+
+Both are absent from all 39 base game trees checked, as they must be. The layout reporting
+a `Dictionary` as an array of strings is the same fact seen from the other side: whatever
+walks the type is reading fields it should be skipping, and guessing at the ones it cannot
+express.
+
+The DDS flow names these two and refuses to build them — see `NOT_WRITTEN_TO_A_FILE` in
+`flows/dds/scripts/elementTemplates.js`. Without that, a tree's `messageRef` carried a
+`+` like any other list of strings, and using it wrote a field into the mod's document that
+the game overwrites the moment it loads it.
+
+**The generator should skip fields marked `[NonSerialized]`.** That list is then empty and
+the flow's can go.
 
 ---
 
@@ -457,6 +483,8 @@ Two notes for whoever does it:
 - [ ] Stop writing the DDS `templates.json` / `enums.json`, if it does (§7)
 - [ ] Emit inherited fields, so they resolve — and check the five inferred rows and the six
       unresolved fields in §8, which the hand patch could not settle (§8)
+- [ ] Skip `[NonSerialized]` fields: `DDSTreeSave.messageRef` and `citizenAddCount` are in
+      the layout and in no file the game writes (§8a)
 - [ ] Say whether the ten furniture-chain types can join the asset export, so
       `refs/derived/` becomes reproducible from this repo (§10)
 

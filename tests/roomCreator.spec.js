@@ -118,6 +118,122 @@ test('warns that a donor no lighting preset names leaves the room dark', async (
     expect(await ticked()).toBe(6);
 });
 
+test('copies the donor’s furniture in one press, and says how much it took', async ({ page }) => {
+    await openPane(page);
+
+    // Nothing to copy until there is something to copy from.
+    const button = page.locator('#room-creator-copy-furniture');
+    await expect(button).toBeDisabled();
+    await expect(button).toHaveAttribute('title', 'Choose a room to copy from first');
+
+    // The count is on the button, because it is what decides whether to press it: ten
+    // clusters and seventy-seven are both answers a donor can give. The donor's name is
+    // not, because it is being read in the select this shares a row with.
+    await page.locator('#room-creator-donor').selectOption('CorporateCorridoor');
+    await expect(button).toBeEnabled();
+    await expect(button).toHaveText('Copy 10 clusters');
+    await expect(button).toHaveAttribute('title', 'Tick the 10 furniture clusters CorporateCorridoor holds');
+
+    await openSection(page, 'What goes in it');
+    const ticked = () => page.evaluate(() => document.querySelectorAll(
+        '#room-creator-clusters > li > label input[type="checkbox"]:checked').length);
+    expect(await ticked()).toBe(0);
+
+    await button.click();
+    expect(await ticked()).toBe(10);
+    await expect(page.locator('#room-creator-copied'))
+        .toContainText('Copied 10 of CorporateCorridoor’s furniture clusters');
+
+    // The copied ones sort to the top, with the furniture each brought.
+    const row = page.locator('#room-creator-clusters > li').first();
+    await expect(row).toContainText('AlarmSiren');
+    await expect(row.locator('.room-creator-contents input[type="checkbox"]')).not.toHaveCount(0);
+
+    // Ten clusters, their eight presets and the donor's three lights, on top of the four
+    // the room itself is.
+    await openSection(page, 'What will be written');
+    await expect(page.locator('#room-creator-plan')).toContainText('25 new files');
+    await expect(page.locator('#room-creator-plan')).toContainText('SecurityCamera.sodso_patch.json');
+});
+
+test('a copy is a one-off, so what it ticked survives the donor moving', async ({ page }) => {
+    await openPane(page);
+    await page.locator('#room-creator-donor').selectOption('CorporateCorridoor');
+    await page.locator('#room-creator-copy-furniture').click();
+
+    await openSection(page, 'What goes in it');
+    const ticked = () => page.evaluate(() => document.querySelectorAll(
+        '#room-creator-clusters > li > label input[type="checkbox"]:checked').length);
+    expect(await ticked()).toBe(10);
+
+    // The clusters are the author's from here, so a new donor leaves them where they are.
+    // The note goes, because it named the donor it came from.
+    await page.locator('#room-creator-donor').selectOption('BuildingBathroomFemale');
+    expect(await ticked()).toBe(10);
+    await expect(page.locator('#room-creator-copied')).not.toContainText('Copied');
+
+    // And pressing again adds to them rather than replacing them. Nineteen, not twenty:
+    // LeaningPoint is in both donors, and a cluster admitted twice is admitted once.
+    await page.locator('#room-creator-copy-furniture').click();
+    expect(await ticked()).toBe(19);
+});
+
+test('a donor no cluster names disables the copy, and says why rather than doing nothing', async ({ page }) => {
+    await openPane(page);
+
+    // Atrium is one of three shipped configurations in no cluster's filters at all -- the
+    // generator furnishes an atrium with nothing, and it is the donor the worked example
+    // uses. A button that appeared to do nothing would read as broken.
+    await page.locator('#room-creator-donor').selectOption('Atrium');
+
+    const button = page.locator('#room-creator-copy-furniture');
+    await expect(button).toBeDisabled();
+
+    // The reason is in the note rather than on the button, which has no room for it and
+    // is disabled anyway -- so its `title` would never be hovered into view.
+    await expect(page.locator('#room-creator-copied'))
+        .toContainText('Atrium has no furniture to copy: no cluster in the game names its room class');
+});
+
+test('furniture the room’s place refuses is copied as a clone, and can be taken back out', async ({ page }) => {
+    await openPane(page);
+
+    await page.getByText('Where the room sits').click();
+    await page.locator('#room-creator-floor').fill('3');
+    await page.locator('#room-creator-donor').selectOption('StreetFrontage');
+    await openSection(page, 'What goes in it');
+
+    // 14 of StreetFrontage's 19 are refused three floors up. They come across anyway --
+    // a copy minus what this floor rules out would quietly not be a copy -- each as a
+    // clone with the one gate that refused it relaxed.
+    await page.locator('#room-creator-copy-furniture').click();
+    await expect(page.locator('#room-creator-copied'))
+        .toContainText('Copied 19 of StreetFrontage’s furniture clusters, 14 of which are refused');
+
+    await page.locator('#room-creator-search').fill('2_ShantyShack');
+    const row = page.locator('#room-creator-clusters > li').first();
+
+    // Ticked, enabled and marked as a clone -- not the greyed, disabled row it is while
+    // it is out. The reason stays, because it is what the clone relaxes.
+    await expect(row).toContainText('2_ShantyShack');
+    await expect(row).toContainText(', cloned');
+    await expect(row.locator('> label input[type="checkbox"]')).toBeChecked();
+    await expect(row.locator('> label input[type="checkbox"]')).toBeEnabled();
+    await row.locator('.room-creator-why').click();
+    await expect(row.locator('.room-creator-reason')).toContainText('this room is on 3');
+
+    await openSection(page, 'What will be written');
+    await expect(page.locator('#room-creator-plan'))
+        .toContainText('_2_ShantyShack.FurnitureCluster.sodso.json');
+
+    // Untickable again, which is the half a disabled box could not do.
+    await openSection(page, 'What goes in it');
+    await row.locator('> label input[type="checkbox"]').uncheck();
+    await expect(row.locator('> label input[type="checkbox"]')).toBeDisabled();
+    await expect(page.locator('#room-creator-plan'))
+        .not.toContainText('_2_ShantyShack.FurnitureCluster.sodso.json');
+});
+
 /** The same pane, but with a mod to write into. */
 async function openPaneWithMod(page) {
     await page.addInitScript((k) => window.localStorage.setItem(k, 'true'), SPOILER_KEY);
@@ -304,6 +420,147 @@ test('writes the room into the mod, in dependency order', async ({ page }) => {
     expect(roomType.overrideFloorHeight).toBe(false);
 
     expect(errors).toEqual([]);
+});
+
+test('writes a room furnished from its donor, patch per cluster and per preset', async ({ page }) => {
+    const errors = collectPageErrors(page);
+    await openPaneWithMod(page);
+
+    // Park is one of only four shipped configurations whose furniture carries no name
+    // collision, so it is the one that copies and writes without anything being unticked
+    // first. Twenty-three clusters and their sixteen presets.
+    await page.locator('#room-creator-name').fill('Gardens');
+    await page.locator('#room-creator-donor').selectOption('Park');
+    await page.locator('#room-creator-copy-furniture').click();
+
+    await openSection(page, 'What will be written');
+    await page.locator('#room-creator-write').click();
+    await expect(page.locator('#room-creator-plan')).toContainText('files written');
+
+    const written = await listDir(page, 'Mods/TestCase');
+    expect(written).toEqual(expect.arrayContaining([
+        'GardensRCP.RoomClassPreset.sodso.json',
+        '2_ParkBench.sodso_patch.json',
+        'ParkBench.FurniturePreset.sodso_patch.json',
+    ]));
+
+    // Every cluster is a patch adding this room's filter, not a clone: nothing about where
+    // the room sits was stated, so no gate refused any of them.
+    const cluster = JSON.parse(await readFile(page, 'Mods/TestCase/2_ParkBench.sodso_patch.json'));
+    expect(cluster.fileType).toBe('FurnitureCluster');
+    expect(cluster.patches).toEqual([
+        { op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|GardensRTF' },
+    ]);
+
+    // And the preset that fills its slot is admitted separately, because the game
+    // re-filters furniture on the room class after the cluster has been offered.
+    //
+    // Typed, though this room patches no cluster called ParkBench: one exists in the game
+    // and the naming turns on whether the *name* is ambiguous rather than on what this
+    // room happens to admit. A rule that changed with the room would rename a file as
+    // furniture was ticked beside it.
+    const preset = JSON.parse(await readFile(page, 'Mods/TestCase/ParkBench.FurniturePreset.sodso_patch.json'));
+    expect(preset.fileType).toBe('FurniturePreset');
+
+    expect(errors).toEqual([]);
+});
+
+test('an asset that is a cluster and a preset gets a file for each, not one for both', async ({ page }) => {
+    await openPaneWithMod(page);
+
+    // SecurityDoorDouble is a FurnitureCluster and a FurniturePreset, and this room admits
+    // both -- the preset is what fills the cluster's own most important slot. The loader
+    // matches a patch by the name and type inside it, so the two can coexist; what they
+    // cannot share is a file name. Five of CorporateCorridoor's ten clusters are like this.
+    await page.locator('#room-creator-name').fill('Corridor');
+    await page.locator('#room-creator-donor').selectOption('CorporateCorridoor');
+    await page.locator('#room-creator-copy-furniture').click();
+
+    await openSection(page, 'What will be written');
+    await page.locator('#room-creator-write').click();
+    await expect(page.locator('#room-creator-plan')).toContainText('files written');
+
+    const written = await listDir(page, 'Mods/TestCase');
+    expect(written).toContain('SecurityDoorDouble.FurnitureCluster.sodso_patch.json');
+    expect(written).toContain('SecurityDoorDouble.FurniturePreset.sodso_patch.json');
+
+    // The bare name is not used at all where it would be ambiguous.
+    expect(written).not.toContain('SecurityDoorDouble.sodso_patch.json');
+
+    // Each is a patch of its own asset. Before the type went into the name, both were
+    // written to one file and the room silently lost whichever landed first.
+    const cluster = JSON.parse(await readFile(page, 'Mods/TestCase/SecurityDoorDouble.FurnitureCluster.sodso_patch.json'));
+    expect(cluster.name).toBe('SecurityDoorDouble');
+    expect(cluster.fileType).toBe('FurnitureCluster');
+    expect(cluster.patches).toEqual([
+        { op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|CorridorRTF' },
+    ]);
+
+    const preset = JSON.parse(await readFile(page, 'Mods/TestCase/SecurityDoorDouble.FurniturePreset.sodso_patch.json'));
+    expect(preset.fileType).toBe('FurniturePreset');
+
+    // And a name that was never ambiguous keeps the bare file it has always had.
+    expect(written).toContain('SecurityCameraLeftCorner.sodso_patch.json');
+
+    // The load order names the files as written, or the loader goes looking for ones that
+    // are not there.
+    const manifest = JSON.parse(await readFile(page, 'Mods/TestCase/murdermanifest.sodso.json'));
+    expect(manifest.fileOrder).toContain('REF:SecurityDoorDouble.FurnitureCluster');
+    expect(manifest.fileOrder).toContain('REF:SecurityDoorDouble.FurniturePreset');
+    expect(manifest.fileOrder).toContain('REF:SecurityCameraLeftCorner');
+});
+
+test('a room with a shared-name cluster reopens, and unticking it takes both files back', async ({ page }) => {
+    await openPaneWithMod(page);
+
+    await page.locator('#room-creator-name').fill('Corridor');
+    await page.locator('#room-creator-donor').selectOption('CorporateCorridoor');
+    await page.locator('#room-creator-copy-furniture').click();
+    await openSection(page, 'What will be written');
+    await page.locator('#room-creator-write').click();
+    await expect(page.locator('#room-creator-plan')).toContainText('files written');
+
+    // Reopen it. The scanner reads a patch's target from inside the file, so the type in
+    // the name changes nothing about what comes back.
+    await page.locator('#room-creator-modal button[rel="prev"]').click();
+    await page.getByRole('link', { name: 'Room Creator' }).click();
+    await page.locator('#room-creator-open').selectOption('CorridorRC');
+    await expect(page.locator('#room-creator-write')).toContainText('Save Corridor');
+
+    await openSection(page, 'What goes in it');
+    await page.locator('#room-creator-search').fill('SecurityDoorDouble');
+    await page.locator('#room-creator-clusters > li').first()
+        .locator('> label input[type="checkbox"]').uncheck();
+
+    await openSection(page, 'What will be written');
+    await page.locator('#room-creator-write').click();
+    await expect(page.locator('#room-creator-plan')).toContainText('listed in murdermanifest');
+
+    // Both halves go, and the load order stops naming either. A file left named and not
+    // there is what the loader trips over.
+    const after = await listDir(page, 'Mods/TestCase');
+    expect(after).not.toContain('SecurityDoorDouble.FurnitureCluster.sodso_patch.json');
+    expect(after).not.toContain('SecurityDoorDouble.FurniturePreset.sodso_patch.json');
+    expect(after).toContain('SecurityDoorTriple.FurnitureCluster.sodso_patch.json');
+
+    const manifest = JSON.parse(await readFile(page, 'Mods/TestCase/murdermanifest.sodso.json'));
+    expect(manifest.fileOrder).not.toContain('REF:SecurityDoorDouble.FurnitureCluster');
+    expect(manifest.fileOrder).not.toContain('REF:SecurityDoorDouble.FurniturePreset');
+});
+
+test('a copied cluster that can never resolve furniture is named before it is written', async ({ page }) => {
+    await openPane(page);
+
+    // SentryGunRightCorner is one of the six shipped clusters whose important element no
+    // furniture in the game carries. Copying a donor brings it in with the rest, and the
+    // failure it causes in game is silent -- one debug line and an unfurnished room.
+    await page.locator('#room-creator-donor').selectOption('CorporateCorridoor');
+    await page.locator('#room-creator-copy-furniture').click();
+
+    await openSection(page, 'What will be written');
+    await expect(page.locator('#room-creator-plan'))
+        .toContainText('SentryGunRightCorner needs 1x1SentryGunRightCorner');
+    await expect(page.locator('#room-creator-plan')).toContainText('no furniture in the game carries');
 });
 
 test('adds a second room to a patch the first already wrote', async ({ page }) => {

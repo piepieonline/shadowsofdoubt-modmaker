@@ -26,10 +26,18 @@
 export const PRESET_SUFFIX = '.sodso.json';
 
 /**
- * An override: a partial file applied over the base game asset **of the same name**.
+ * An override: a partial file applied over a base game asset.
  *
- * Deliberately not given a type. The file name is the whole of how a patch says what it
- * overrides, so a type in it would be a patch of something that does not exist.
+ * Which asset is settled by the `name` and `fileType` **inside** the file, not by what the
+ * file is called -- so the name is free, and is ordinarily the bare asset name because
+ * that is the shortest thing that says what the file is for.
+ *
+ * Ordinarily, not always. One name belongs to assets of more than one type all through the
+ * game's data -- `SecurityDoorDouble` is a `FurnitureCluster` and a `FurniturePreset`,
+ * `BreakerBox` is those and a `RoomTypeFilter` -- and a patch carries one `fileType`, so
+ * overriding two of them takes two files and the bare name only fits one. The type goes in
+ * the name of both when that happens: see `patchFileNameFor`. `assetNameOf` takes it off
+ * again, which is the same thing it does for an asset's own file name.
  */
 export const PATCH_SUFFIX = '.sodso_patch.json';
 
@@ -46,6 +54,21 @@ export function stemFor(name, type) {
 
 /** The whole file name, which is the stem plus what marks it as one of these. */
 export const fileNameFor = (name, type) => `${stemFor(name, type)}${PRESET_SUFFIX}`;
+
+/**
+ * The file name an override of a base game asset is stored under.
+ *
+ * `shared` says that this name belongs to assets of more than one type, so the bare name
+ * cannot stand for the one being patched -- only the caller knows, because it takes
+ * knowing every type the game has a `<name>` of. When it does, the stem carries the type
+ * exactly as an asset's own file name does.
+ *
+ * Only then. A type on every patch would rename files that have never been ambiguous, and
+ * the copy already in an author's folder would be left beside the new one, still loaded
+ * and still admitting whatever it admits.
+ */
+export const patchFileNameFor = (name, type, shared = false) =>
+    `${shared ? stemFor(name, type) : name}${PATCH_SUFFIX}`;
 
 /**
  * The asset a stem names, which is the stem with its type taken off.

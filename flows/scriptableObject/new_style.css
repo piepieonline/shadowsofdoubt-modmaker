@@ -202,6 +202,45 @@ ul li {
 }
 
 /*
+ * The donor and the button that copies its furniture, on one row.
+ *
+ * The select takes the width left over rather than a share of it: the options are long --
+ * a configuration name and the prose describing what it passes on -- and the button's
+ * label is short and fixed, so a `grid` splitting them evenly would truncate the half
+ * that carries the reading.
+ */
+.room-creator-donor-row {
+    display: flex;
+    /* Stretched rather than `start`: the two carry different padding, so top-aligning
+       them left the button a pixel and a half short of the select's bottom edge. */
+    align-items: stretch;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Scoped through the id, which is what the rule above giving every control in this dialog
+   a bottom margin uses. The row carries that margin now, so the select must not too. */
+#room-creator-modal .room-creator-donor-row select {
+    /* `min-width` because a flex item's default floor is its intrinsic width, which for a
+       select is as wide as its widest option. */
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+/* Quiet, and the height of the select beside it rather than Pico's full-size button. */
+#room-creator-modal .room-creator-donor-row button {
+    width: auto;
+    margin-bottom: 0;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    --pico-form-element-spacing-vertical: 0.3rem;
+    --pico-form-element-spacing-horizontal: 0.6rem;
+}
+
+/*
  * The cluster and lighting pickers. Scrolled rather than paged: what is being looked for
  * is found by the search box above, and a list that grows the dialog past the viewport
  * takes the verdict off screen with it.
@@ -503,32 +542,10 @@ ul li {
     display: none;
 }
 
-/*
- * This flow's dropdowns read as part of the tree, so they take the tree's face. Scoped to
- * `#trees`, which is where these dropdowns are parented, because the control is shared now
- * and the building flow's furniture checker should not inherit a monospace palette chosen
- * for a JSON tree.
- */
-#trees .select2-dropdown,
-#trees .select2-container--default .select2-selection--single {
-    font-family:monospace;
-    font-size: 14px;
-    color: black;
-
-    /* Pinned rather than inherited. The control takes its colours from Pico now -- see
-       core/components/searchSelect/searchSelect.css -- and Pico follows the OS scheme,
-       which would leave this black text on a dark box. The trees are a light surface
-       whatever the rest of the page is doing, for the same reason chrome.css forces
-       `color-scheme: light` on them: jsonTree's palette is hardcoded. */
-    background-color: #fff;
-}
-
-#trees .select2-container--default .select2-selection--single .select2-selection__rendered {
-    color: inherit;
-}
-
-/* As wide as the plain fields beside it -- see the width above, which select2 replaces
-   the element carrying it. !important because select2 writes a pixel width inline. */
+/* What a dropdown parented into `#trees` looks like is in core/documentFlow.css: both
+   editors put them there now -- a DDS document's traits are a searchable list of the
+   game's -- and a palette written here would have been this flow's alone.
+   How wide one is stays here, because this flow's fields fill their row. */
 #trees .select2 {
     width: 90% !important;
 }

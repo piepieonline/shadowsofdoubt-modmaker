@@ -15,7 +15,7 @@ import { describe, test, expect } from 'vitest';
 
 import {
     admits, admitted, gatesOf, closures, importantElements, surfaceFilters,
-    unlitConfigurations, lightsFor, ADVISORY, CONTEXT,
+    unlitConfigurations, lightsFor, clustersFor, ADVISORY, CONTEXT,
 } from './spawnRules.js';
 
 import rooms from '../refs/derived/roomCreator.json' with { type: 'json' };
@@ -327,6 +327,71 @@ describe('the closure', () => {
     test('never names a preset the chain file does not have', () => {
         for (const [name, presets] of Object.entries(closures(chain))) {
             for (const preset of presets) expect(chain.furniture[preset], `${name} -> ${preset}`).toBeTruthy();
+        }
+    });
+});
+
+
+describe('what furnishes a shipped room', () => {
+    test('answers with the clusters whose filters reach the configuration’s class', () => {
+        const ballroom = clustersFor(chain, 'Ballroom');
+        const ballroomFilters = new Set(Object.entries(chain.filters)
+            .filter(([, classes]) => classes.includes('Ballroom')).map(([name]) => name));
+
+        expect(ballroom).toHaveLength(55);
+        expect(ballroomFilters.size).toBeGreaterThan(0);
+
+        for (const name of ballroom) {
+            expect(chain.clusters[name].filters.some((filter) => ballroomFilters.has(filter)), name).toBe(true);
+        }
+
+        // And nothing outside it: a cluster no filter of this class names would be a room
+        // furnished with things it has never been seen holding.
+        for (const [name, cluster] of Object.entries(chain.clusters)) {
+            if (ballroom.includes(name) || cluster.disable) continue;
+            expect(cluster.filters.some((filter) => ballroomFilters.has(filter)), name).toBe(false);
+        }
+    });
+
+    /**
+     * The one gate of `blockedBy` applied here besides the filters. A disabled cluster is
+     * refused before its filters are read, so copying one into a room writes a patch the
+     * game will not act on.
+     */
+    test('leaves out the disabled clusters, which never place', () => {
+        const lobby = clustersFor(chain, 'Lobby');
+
+        expect(lobby).toHaveLength(52);
+        for (const name of lobby) expect(chain.clusters[name].disable, name).toBe(false);
+
+        // Every mailbox set in the game is disabled, and they name Lobby's filters -- so
+        // this is the case that would go unnoticed if the gate were dropped.
+        expect(lobby).not.toContain('Mailboxes30');
+        expect(chain.clusters.Mailboxes30.disable).toBe(true);
+    });
+
+    /**
+     * Not an error, and worth pinning: an author copying one of these gets a room the
+     * generator furnishes with nothing whatever the button does, and the pane says so
+     * rather than appearing to have done nothing.
+     */
+    test('three shipped configurations are in no cluster’s filters at all', () => {
+        const barren = Object.keys(chain.roomConfigs).filter((name) => !clustersFor(chain, name).length);
+        expect(barren.sort()).toEqual(['Atrium', 'Null', 'RooftopVent']);
+    });
+
+    test('says nothing for a configuration that is not in the game', () => {
+        expect(clustersFor(chain, 'PicnicAreaRC')).toEqual([]);
+        expect(clustersFor(chain, '')).toEqual([]);
+        expect(clustersFor(null, 'Ballroom')).toEqual([]);
+    });
+
+    /** The copy button ticks these, so every one of them has to be a row the pane draws. */
+    test('every configuration’s clusters are ones the gate file also carries', () => {
+        for (const configuration of Object.keys(chain.roomConfigs)) {
+            for (const name of clustersFor(chain, configuration)) {
+                expect(rooms.clusters[name], `${configuration} -> ${name}`).toBeTruthy();
+            }
         }
     });
 });

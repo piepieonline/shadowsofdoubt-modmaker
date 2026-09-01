@@ -13,7 +13,7 @@ import { describe, test, expect } from 'vitest';
 
 import {
     planRoom, decideCluster, assetNames, collisions, mergePatch, against, fullClosure, abandoned,
-    roomRefs, withoutRoom,
+    roomRefs, withoutRoom, sharedNames,
 } from './roomPlan.js';
 
 import rooms from '../../../refs/derived/roomCreator.json' with { type: 'json' };
@@ -292,6 +292,99 @@ describe('what would leave the room empty', () => {
 
         expect(planRoom({ ...picnicArea, name: '2 Rooms!' }, rooms, chain).problems)
             .toContain('"2 Rooms!" is not a usable asset name: letters, digits and underscores, starting with a letter.');
+    });
+});
+
+
+describe('one name belonging to two of the patched types', () => {
+    /**
+     * The case the game's data is full of. The loader matches a patch to its target by the
+     * `name` and `fileType` inside the file, so two patches of one name are fine -- but
+     * they are two files, and the bare name only fits one of them.
+     */
+    test('puts the type in both file names, so each has one of its own', () => {
+        // SecurityDoorDouble is a FurnitureCluster, a FurniturePreset, and in the closure
+        // of itself -- so admitting the cluster is what pulls the preset in beside it.
+        const result = planRoom({
+            ...picnicArea, context: {}, clusters: ['SecurityDoorDouble'],
+        }, rooms, chain);
+
+        const files = byFile(result);
+
+        expect(files['SecurityDoorDouble.FurnitureCluster.sodso_patch.json'].content).toEqual({
+            name: 'SecurityDoorDouble',
+            fileType: 'FurnitureCluster',
+            patches: [{ op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|PicnicAreaRTF' }],
+        });
+
+        expect(files['SecurityDoorDouble.FurniturePreset.sodso_patch.json'].content.fileType)
+            .toBe('FurniturePreset');
+
+        // Nothing under the bare name, and nothing left colliding.
+        expect(files['SecurityDoorDouble.sodso_patch.json']).toBeUndefined();
+        expect(result.collided).toEqual([]);
+    });
+
+    /** The load order names files, so it has to name the ones actually written. */
+    test('lists the typed stem in the load order', () => {
+        const result = planRoom({
+            ...picnicArea, context: {}, clusters: ['SecurityDoorDouble'],
+        }, rooms, chain);
+
+        expect(result.order).toContain('SecurityDoorDouble.FurnitureCluster');
+        expect(result.order).toContain('SecurityDoorDouble.FurniturePreset');
+        expect(result.order).not.toContain('SecurityDoorDouble');
+    });
+
+    /**
+     * The rule is narrow on purpose: a type on every patch would rename files that have
+     * never been ambiguous, leaving the copy already in an author's folder beside the new
+     * one, still loaded and still admitting whatever it admits.
+     */
+    test('leaves an unambiguous name exactly as it was', () => {
+        const files = byFile(plan());
+
+        expect(files['PicnicBench.sodso_patch.json']).toBeTruthy();
+        expect(files['PicnicBench.FurniturePreset.sodso_patch.json']).toBeUndefined();
+        expect(plan().order).toContain('PicnicBench');
+    });
+
+    /**
+     * How wide it is, pinned. 86 names belong to more than one of the four types a room
+     * patches -- `BreakerBox` and `WallClock` to three of them -- and 71 clusters share one
+     * with a preset in their own closure, which is the shape that needs no unusual choice
+     * to reach: admitting the cluster is enough to want both patches.
+     */
+    test('is 86 names, not a handful', () => {
+        const shared = sharedNames(rooms, chain);
+
+        expect(shared.size).toBe(86);
+        expect(shared).toContain('SecurityDoorDouble');
+        expect(shared).toContain('BreakerBox');
+        expect(shared).toContain('HousePlant');
+        expect(shared).not.toContain('PicnicTable');
+        expect(shared).not.toContain('PicnicBench');
+
+        const selfFilling = Object.keys(chain.clusters)
+            .filter((name) => chain.furniture[name])
+            .filter((name) => fullClosure(chain, [name]).includes(name));
+
+        expect(selfFilling).toHaveLength(71);
+    });
+
+    /**
+     * The invariant the naming exists to keep, against every cluster in the game rather
+     * than the handful known to be awkward: no two of a room's files may want one name,
+     * because the second written replaces the first and the room loses it silently.
+     */
+    test('no cluster in the game produces two files of one name', () => {
+        for (const name of Object.keys(chain.clusters)) {
+            const result = planRoom({ ...picnicArea, context: {}, clusters: [name] }, rooms, chain);
+            const files = result.files.map((entry) => entry.file);
+
+            expect(result.collided, name).toEqual([]);
+            expect(new Set(files).size, name).toBe(files.length);
+        }
     });
 });
 

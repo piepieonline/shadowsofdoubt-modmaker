@@ -29,8 +29,49 @@
  * one whose name is read by a human in normal use. This diverges from the templates on the
  * export server, which suffix all four.
  */
-import { PATCH_SUFFIX, PRESET_SUFFIX, stemFor } from '../../../core/soFileName.js';
+import { PATCH_SUFFIX, PRESET_SUFFIX, stemFor, patchFileNameFor } from '../../../core/soFileName.js';
 import { admits, closures, importantElements } from '../../../core/spawnRules.js';
+
+/**
+ * The four types a room patches, and where the reference data lists each one's names.
+ *
+ * Only these four. Whether a name is ambiguous is a question about the assets this tool
+ * would ever write a patch for -- a `FurnitureCluster` called `Bar` and an `AddressPreset`
+ * called `Bar` never contend for a file here, because a room has no reason to patch an
+ * address.
+ */
+const PATCHED_TYPES = [
+    ['FurnitureCluster', (rooms, chain) => chain?.clusters],
+    ['FurniturePreset', (rooms, chain) => chain?.furniture],
+    ['RoomTypeFilter', (rooms, chain) => chain?.filters],
+    ['RoomLightingPreset', (rooms) => rooms?.lighting],
+];
+
+/**
+ * The names that belong to more than one of the types a room patches.
+ *
+ * 86 of them, and not a curiosity: `SecurityDoorDouble` is a cluster and the preset that
+ * fills its own most important slot, so admitting that one cluster wants both patches at
+ * once. 71 clusters are in exactly that state and only four of the game's 76 furnishable
+ * configurations are free of it. `BreakerBox` and `WallClock` name three of the four types.
+ *
+ * Derived rather than listed, so a game update that makes another name ambiguous is
+ * followed by the naming rather than quietly breaking it.
+ */
+export function sharedNames(rooms, chain) {
+    const counts = new Map();
+
+    for (const [, where] of PATCHED_TYPES) {
+        for (const name of Object.keys(where(rooms, chain) ?? {})) {
+            counts.set(name, (counts.get(name) ?? 0) + 1);
+        }
+    }
+
+    return new Set([...counts].filter(([, count]) => count > 1).map(([name]) => name));
+}
+
+/** What a patch of one of the room's targets is called, given those names. */
+export const patchFileOf = (shared, name, type) => patchFileNameFor(name, type, shared.has(name));
 
 /**
  * The furniture a set of clusters could resolve, which is what admitting all of them
@@ -132,8 +173,10 @@ export function decideCluster(rooms, name, context) {
  * @param rooms   the parsed `refs/derived/roomCreator.json`
  * @param chain   the parsed `refs/derived/furnitureChain.json`
  *
- * @returns `{ files, order, problems }` -- `files` in dependency order, `order` the
- *          `fileOrder` entries for them, and `problems` what would stop this being written.
+ * @returns `{ files, order, problems, collided }` -- `files` in dependency order, `order`
+ *          the `fileOrder` entries for them, `problems` what would leave the room built
+ *          and wrong, and `collided` the assets whose patches want one file name, which is
+ *          the one thing here that stops a write outright.
  */
 export function planRoom(choices, rooms, chain) {
     const { name, donor, context = {}, clusters = [], surfaces = {}, lighting = [] } = choices;
@@ -162,14 +205,23 @@ export function planRoom(choices, rooms, chain) {
         },
     });
 
-    const patch = (assetName, type, patches) => files.push({
-        kind: 'patch',
-        asset: assetName,
-        type,
-        file: `${assetName}${PATCH_SUFFIX}`,
-        entry: assetName,
-        content: { name: assetName, fileType: type, patches },
-    });
+    // A name belonging to two of the patched types takes the type in its file name, so
+    // this room's change to each has a file of its own. The `name`/`fileType` inside are
+    // what the loader matches on and are the same either way.
+    const shared = sharedNames(rooms, chain);
+
+    const patch = (assetName, type, patches) => {
+        const file = patchFileOf(shared, assetName, type);
+
+        files.push({
+            kind: 'patch',
+            asset: assetName,
+            type,
+            file,
+            entry: file.slice(0, -PATCH_SUFFIX.length),
+            content: { name: assetName, fileType: type, patches },
+        });
+    };
 
     /* The four. Order is the order they reference each other. */
 
@@ -259,6 +311,33 @@ export function planRoom(choices, rooms, chain) {
         ]);
     }
 
+    /* Two of the room's files wanting one name, which the naming above exists to stop. */
+
+    // An invariant rather than an expected outcome: `sharedNames` puts the type into the
+    // file name of everything ambiguous, so nothing should reach here. It is checked
+    // because the failure it guards is silent and expensive -- two files of one name are
+    // written in order, the second replaces the first, and the room quietly loses an
+    // admission the plan said it had.
+    const byFile = new Map();
+    for (const entry of files) {
+        if (!byFile.has(entry.file)) byFile.set(entry.file, []);
+        byFile.get(entry.file).push(entry);
+    }
+
+    const collided = [...byFile.values()]
+        .filter((group) => group.length > 1)
+        .map((group) => ({
+            file: group[0].file,
+            asset: group[0].asset,
+            types: [...new Set(group.map((entry) => entry.type))].sort(),
+        }));
+
+    for (const entry of collided) {
+        problems.push(`${entry.asset} is ${and(entry.types)} at once and both would be written to `
+            + `${entry.file}, so only one would survive. Nothing has been written. This is not `
+            + 'meant to be reachable and is worth reporting.');
+    }
+
     /* What would leave the room built and empty. */
 
     if (!clusters.length) problems.push('Nothing furnishes this room, so it will be empty.');
@@ -289,7 +368,7 @@ export function planRoom(choices, rooms, chain) {
 
     if (!lighting.length) problems.push('No lighting preset accepts this room, so it gets no ceiling light.');
 
-    return { files, order: files.map((entry) => entry.entry), problems };
+    return { files, order: files.map((entry) => entry.entry), problems, collided };
 }
 
 /**

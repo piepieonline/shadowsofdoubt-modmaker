@@ -10,9 +10,10 @@ import soPathIds from '../../../refs/generated/soPathIds.json' with { type: 'jso
 
 import fieldDescriptions from '../../../refs/authored/fieldDescriptions.json' with { type: 'json' };
 
-// The type layout and the enums are shared with the DDS flow, and composed there so the
-// two cannot disagree about what a type is. See core/refs.js.
-import { enums, typeLayout as gameTypeLayout } from '../../../core/refs.js';
+// The type layout, the enums and what a value of a leaf type is are shared with the DDS
+// flow, and composed there so the two cannot disagree about what a type is.
+// See core/refs.js.
+import { basicTypeTemplates, enums, typeLayout as gameTypeLayout } from '../../../core/refs.js';
 
 import onlineTypes from '../../../refs/assets/index.json' with { type: 'json' };
 
@@ -59,23 +60,6 @@ const typeLayout = {
         }
     },
     ...gameTypeLayout
-};
-
-const basicTypeTemplates = {
-    Int32: 0,
-    Single: 0,
-    Boolean: false,
-    String: "",
-    // A TextAsset is named rather than described: a building preset's floorLayouts hold
-    // `blueprints` and `controlRoomVariants`, each a list of floor blueprint names --
-    // `FLOOR:Floors/MyFloor` for one the mod carries, the bare name for a base game one.
-    // The layout gives no shape for the type, so without this the flow could not make an
-    // element of either array and offered no + on them. They are the only TextAssets the
-    // game's layout describes, and both are arrays.
-    TextAsset: "",
-    Vector2: { x: 0, y: 0 },
-    Vector3: { x: 0, y: 0, z: 0 },
-    Color: { r: 0, g: 0, b: 0, a: 0 }
 };
 
 const pathIdMap = Object.keys(soPathIds).reduce((map, val) => {

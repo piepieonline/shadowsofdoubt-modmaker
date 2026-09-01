@@ -62,6 +62,16 @@
     min-width: 200px;
 }
 
+/* The same, for the fields that are a searchable list rather than a box -- a trait, a job,
+   an item pool. select2 replaces the <select> the rule above sizes, so the rule has to be
+   restated against what it puts there; `auto` rather than `max-content` because the
+   container is what holds the text, and `!important` because select2 writes a pixel width
+   inline. What one looks like is shared: see core/documentFlow.css. */
+#trees .select2 {
+    width: auto !important;
+    min-width: 200px;
+}
+
 /*
  * The strings editor: a window holding one file as the list of strings it is.
  *

@@ -9,6 +9,7 @@ import {
 import { cancelNewCasePopup } from './index.js';
 import {
     openRoomCreator, closeRoomCreator, roomCreatorChanged, writeRoom, openExistingRoom,
+    copyDonorFurniture,
 } from './scripts/roomCreator.js';
 import {
     startFieldSummary, cancelFieldSummary, closeFieldSummary, filterFieldSummary,
@@ -20,5 +21,6 @@ export default {
     updateSelectAllCopyFrom, filterFilePanel, toggleFileFilter, showHelp, closeHelp,
     cancelNewCasePopup,
     openRoomCreator, closeRoomCreator, roomCreatorChanged, writeRoom, openExistingRoom,
+    copyDonorFurniture,
     startFieldSummary, cancelFieldSummary, closeFieldSummary, filterFieldSummary,
 };

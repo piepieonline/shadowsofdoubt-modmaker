@@ -32,6 +32,11 @@ document's `name` and `id`, and `BossConfig.occupation` all resolved to nothing.
 regeneration undoes it. `core/refs.unit.spec.js` fails when it does, and
 [GENERATOR.md](GENERATOR.md) section 8 carries the map that was applied.
 
+The same file also lists two fields the game marks `[NonSerialized]` and never writes —
+`DDSTreeSave.messageRef` and `citizenAddCount`. Those are named in the DDS flow rather than
+edited out of the file, so a regeneration cannot silently put them back into a document.
+See section 8a, and `NOT_WRITTEN_TO_A_FILE` in `flows/dds/scripts/elementTemplates.js`.
+
 `floors/` is the exception to that split, and an uncomfortable one: it is game data that
 nobody generates. It is called out where it sits rather than filed under `authored/`,
 because nothing in it was authored — it was copied.

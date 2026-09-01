@@ -10,7 +10,9 @@
  *
  * The two files share no field, which is what keeps the two halves from becoming two
  * answers to one question. See `refs/README.md`. Nothing here re-implements a gate the
- * chain file carries, and nothing there implements one of these.
+ * chain file carries, and nothing there implements one of these -- with one deliberate
+ * exception, `clustersFor`, which restates the room-class match and says at its own
+ * docstring why it is stated rather than imported.
  *
  * ## Why an unstated context is not a refusal
  *
@@ -230,6 +232,49 @@ export function admitted(rooms, names, context = {}) {
     }
 
     return { possible: yes, refused: no };
+}
+
+/**
+ * The clusters a shipped room configuration is offered, by its room class.
+ *
+ * This is the room-class half, and the only thing in this module that is. It is here
+ * because of what the room creator's donor means: an author copying `Ballroom` is copying
+ * a room they have seen furnished, and the question "what furnishes it" has a flat answer
+ * that does not need a square, a floor or a blueprint. The building flow's
+ * `furnitureChain.js` answers the same question through `groupFor`, but its answer is
+ * bound to one node of one drawn floor -- there is nothing there to call with a
+ * configuration name and get a list back.
+ *
+ * Two of `blockedBy`'s three gates are applied. `disable` is, because a disabled cluster
+ * never places and patching it into a room writes a file the game ignores -- 55 of the 399
+ * are disabled. **Room size is not**, and cannot be: `min` and `max` are measured against a
+ * room the author has not drawn yet, so a cluster too big for the room they eventually
+ * paint is in this list and will not place. Same shape as an unstated gate above, and the
+ * same reason -- err wide rather than drop furniture that really can appear.
+ *
+ * @param chain         the parsed `refs/derived/furnitureChain.json`
+ * @param configuration a shipped `RoomConfiguration` name
+ * @returns cluster names, sorted; empty for a configuration whose class no filter names
+ */
+export function clustersFor(chain, configuration) {
+    const roomClass = chain?.roomConfigs?.[configuration]?.roomClass;
+    if (!roomClass) return [];
+
+    const reaching = new Set();
+    for (const [filter, classes] of Object.entries(chain?.filters ?? {})) {
+        if (classes.includes(roomClass)) reaching.add(filter);
+    }
+
+    // An empty set is a real answer, not a failure: `Atrium` is in no filter at all, so
+    // nothing is placeable in an atrium and a room copying one starts unfurnished whatever
+    // it copies.
+    if (!reaching.size) return [];
+
+    return Object.entries(chain?.clusters ?? {})
+        .filter(([, cluster]) => !cluster.disable
+            && (cluster.filters ?? []).some((filter) => reaching.has(filter)))
+        .map(([name]) => name)
+        .sort();
 }
 
 /**

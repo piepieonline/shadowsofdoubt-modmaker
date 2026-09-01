@@ -468,6 +468,35 @@ test('a collapsed node stays collapsed across an edit', async ({ page }) => {
     await expect(docNode).not.toHaveClass(/jsontree_node_expanded/);
 });
 
+test('a node the document opens on stays closed once it is closed', async ({ page }) => {
+    // The two above use `document`, which is nobody's default -- so neither of them could
+    // see this. A tree is arrived at with `messages` open, and that default used to be
+    // re-applied by the per-node setup on every rebuild. The setup is what puts the
+    // controls back after an edit, so closing `messages` to see past it lasted exactly
+    // until the next keystroke, and the snapshot that had recorded it closed was overruled
+    // a moment after being taken.
+    await gotoFlow(page, '?flow=dds');
+    await openTree(page);
+    await selectMod(page);
+
+    const messages = () => page.locator(
+        "#file-window-0 li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"messages\"'))"
+    ).first();
+
+    await expect(messages()).toHaveClass(/jsontree_node_expanded/);
+    await messages().locator('.jsontree_expand-button').first().click();
+    await expect(messages()).not.toHaveClass(/jsontree_node_expanded/);
+
+    await editField(page, '#file-window-0', 'name', 'ClosedAndLeftClosed');
+
+    const patchPath = `Mods/TestMod/Content/DDSContent/DDS/Trees/${TREE_GUID}.tree_patch`;
+    await expect.poll(async () => JSON.parse((await readFile(page, patchPath)) ?? '[]'))
+        .toContainEqual({ op: 'replace', path: '/name', value: 'ClosedAndLeftClosed' });
+
+    // Re-located rather than reused: the rebuild replaced the element the first one found.
+    await expect(messages()).not.toHaveClass(/jsontree_node_expanded/);
+});
+
 /**
  * Modal behaviour, asserted through visibility rather than the mechanism that
  * produces it. Phase 4 replaces hand-rolled .modal/.hidden divs with Pico <dialog>

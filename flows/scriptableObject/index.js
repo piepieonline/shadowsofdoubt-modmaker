@@ -4,7 +4,7 @@ import { assertModSelected, shouldSave, toSaveSafeJSON, writeWholeFile } from '.
 import { MANIFEST_FILE, refFor, renameListing } from '../../core/murderManifest.js';
 import { assetNameOf, assetOfPath, fileNameFor } from '../../core/soFileName.js';
 import { confirmRename } from '../../core/deletion.js';
-import { createEditLoop } from '../../core/document.js';
+import { createEditLoop, expandDefaultsOnce } from '../../core/document.js';
 import { decorateArrayNodes } from '../../core/arrayControls.js';
 import { decorateValueNodes, NodeKind } from '../../core/valueNodes.js';
 import { getJSONPointer } from '../../core/jsonPointer.js';
@@ -488,6 +488,11 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
         afterRebuild: () => { markDefaultValues(); syncOpenBase(); },
     });
 
+    // What this document is arrived at showing, and only the first time -- see
+    // core/document.js. A manifest's load order is the one that carries this flow: closing
+    // it and then adding a file used to open it again.
+    const openDefaultNodes = expandDefaultsOnce(['fileOrder', 'blocks', 'replacements']);
+
     runTreeSetup();
     markDefaultValues();
     syncOpenBase();
@@ -588,14 +593,7 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
             );
         }
 
-        // Auto-expand the useful keys
-        let expandedNodes = ['fileOrder', 'blocks', 'replacements'];
-        tree.expand(function (node) {
-            if (expandedNodes.includes(node.label)) {
-                node.childNodes.forEach(child => child.expand !== undefined && child.expand());
-                return true;
-            }
-        });
+        openDefaultNodes(tree);
 
         // Links for trees and blocks
         tree.findAndHandle(item => {

@@ -1,14 +1,22 @@
 import { getFile, readFileContent, tryGetFile } from '../../core/fs.js';
 import { assertModSelected, shouldSave, toSaveSafeJSON, writeWholeFile, writePatchAgainstVanilla } from '../../core/persistence.js';
-import { createEditLoop } from '../../core/document.js';
+import { createEditLoop, expandDefaultsOnce } from '../../core/document.js';
 import { decorateArrayNodes } from '../../core/arrayControls.js';
 import { decorateValueNodes, NodeKind } from '../../core/valueNodes.js';
 import { createTextEditor, createSelectEditor, parseEditedValue, renderedValue, setValue } from '../../core/valueEditors.js';
 import { getJSONPointer } from '../../core/jsonPointer.js';
 import { describeField, fieldPath, resolveField } from '../../core/typeHints.js';
 import { GUID_PATTERN } from '../../core/guid.js';
+import { searchSelect } from '../../core/components/searchSelect/searchSelect.js';
 import { addTreeElement } from './scripts/jsonTreeAdditions.js';
-import { cloneTemplate, createNewFile, createFileIfNotExisting, addOrModifyStrings, modPath } from './scripts/modFileManager.js';
+import { assetTypeOfField } from './scripts/assetFields.js';
+import { instanceOptions, isGeneratedId, isInstanceReference } from './scripts/instances.js';
+import { canBuildElement, elementTypeAt, newElement } from './scripts/elementTemplates.js';
+// The mod's own assets, by type. This is the case flow's listing of the content folder --
+// the same folder, listed the same way -- rather than a second walk of it that could
+// disagree; see the note on refreshing it in scripts/ui.js.
+import { moddedNamesOfType } from '../scriptableObject/scripts/contentList.js';
+import { createNewFile, createFileIfNotExisting, addOrModifyStrings, modPath } from './scripts/modFileManager.js';
 import { DDS_BLOCKS_VIRTUAL, ddsContentFolder, readManifest, stringsFileHandle, toReal } from '../../core/ddsManifest.js';
 import { newFile, refreshPanel } from './scripts/ui.js';
 
@@ -153,6 +161,11 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
         save: () => save(),
     });
 
+    // What this document is arrived at showing. Per open document, and only the first
+    // time: after that, what is open is what the author left open -- which is the whole
+    // of what createEditLoop's snapshot is for. See core/document.js.
+    const openDefaultNodes = expandDefaultsOnce(['messages', 'blocks', 'replacements']);
+
     runTreeSetup();
 
     let fileName = path.split('/').at(-1);
@@ -219,14 +232,7 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
             });
         });
 
-        // Auto-expand the useful keys
-        let expandedNodes = ['messages', 'blocks', 'replacements']
-        tree.expand(function (node) {
-            if (expandedNodes.includes(node.label)) {
-                node.childNodes.forEach(child => child.expand());
-                return true;
-            }
-        });
+        openDefaultNodes(tree);
 
         // A newspaper tree names an article that is configured in a file of its own,
         // which is written the first time the tree is opened rather than on save.
@@ -246,7 +252,46 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
         // `triggers` were typed as raw numbers however carefully the table listed them.
         decorateValueNodes(tree, {
             resolveNode: (item, valueEl) => {
-                const type = resolveField([rootType, ...fieldPath(item)], window.typeLayout)?.type;
+                const field = resolveField([rootType, ...fieldPath(item)], window.typeLayout);
+                const type = field?.type;
+
+                // Unquoted: jsonTree renders a string with its quotes, and what the
+                // document holds -- and what a list is matched against -- is the bare
+                // value inside them.
+                const currentValue = valueEl.innerText.replace(/"/g, '');
+
+                // A string that names one of the game's assets. Typed `String` by the
+                // layout like any other, so the field it sits in is what says so.
+                const assetType = assetTypeOfField(field, item.parent?.type === 'array');
+                if (assetType) {
+                    return {
+                        kind: NodeKind.REFERENCE,
+                        currentValue,
+                        placeholder: `Name a ${assetType}`,
+                        // The mod's own first, as the case flow offers them: an author
+                        // writing a trait condition is often naming something they just
+                        // made. A base game asset the mod patches is under both headings,
+                        // and both readings are true.
+                        groups: [
+                            { label: 'Modded', options: moddedNamesOfType(assetType) },
+                            { label: 'Vanilla', options: window.typeMap?.[assetType] ?? [] },
+                        ],
+                    };
+                }
+
+                // A string that names a message *in this tree*, by the instanceID the
+                // editor gave it. Read from the document rather than from the rendered
+                // tree: what the list offers is where each message sits, and a GUID on
+                // screen says nothing about which one it is.
+                if (isInstanceReference(field)) {
+                    return {
+                        kind: NodeKind.REFERENCE,
+                        currentValue,
+                        placeholder: 'Choose a message in this tree',
+                        options: instanceOptions(data),
+                    };
+                }
+
                 const options = window.enums[type];
                 if (options?.length > 0) {
                     // A boolean is an enum of ['false', 'true'], so it picks the control
@@ -265,10 +310,16 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
                 return {
                     kind: NodeKind.TEXT,
                     link: openTargetFor(item, valueEl),
-                    // The newspaper key is a way in to the article's own file rather
-                    // than part of this document: it is resolved on load and stripped
-                    // on save, so there is nothing here to edit.
-                    readOnly: item.label === DUMMY_KEYS.NEWSPAPER_DUMMY_KEY,
+                    readOnly:
+                        // The newspaper key is a way in to the article's own file rather
+                        // than part of this document: it is resolved on load and stripped
+                        // on save, so there is nothing here to edit.
+                        item.label === DUMMY_KEYS.NEWSPAPER_DUMMY_KEY
+                        // An instanceID is what the links and startingMessage point at.
+                        // Shown, because a document is worth being able to read whole,
+                        // and because it is still what a link pasted from elsewhere has
+                        // to be matched against -- but not editable. See scripts/instances.js.
+                        || isGeneratedId(field),
                 };
             },
             render: {
@@ -285,6 +336,30 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
                             );
                         }
                     );
+                },
+                // A value chosen from a list rather than typed: an asset of the game's, or
+                // a message of this tree's. What the list holds is decided above; all this
+                // does is put it on the screen and store what was picked.
+                [NodeKind.REFERENCE]: (valueEl, item, node) => {
+                    const list = document.createElement('select');
+                    valueEl.replaceChildren(list);
+
+                    searchSelect(list, {
+                        // The row of open documents, which is positioned and scrolls with
+                        // the control. See core/components/searchSelect/searchSelect.js.
+                        parent: document.querySelector('#trees'),
+                        groups: node.groups ?? null,
+                        options: node.options ?? null,
+                        value: node.currentValue,
+                        // A value that is on no list is still what the document holds, and
+                        // a control that cannot show it would read as an empty field over
+                        // a file that is not empty. It is also how a name gets in that
+                        // nothing here could know: a trait the mod has not written yet.
+                        allowCustom: true,
+                        placeholder: node.placeholder,
+                        memoryKey: `dds:${path}#${getJSONPointer(item)}`,
+                        onChange: (value) => modifyTreeElement(getJSONPointer(item), value),
+                    });
                 },
                 [NodeKind.TEXT]: (valueEl, item, node) => {
                     const input = createTextEditor(
@@ -303,11 +378,12 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
             // on save, and it is stripped here too, so what lands on the clipboard is
             // what the file holds rather than what the screen shows.
             serialize: (value) => toSaveSafeJSON(value, DUMMY_KEYS),
-            canAdd: (item) => hasElementTemplate(item.label),
+            canAdd: (item) => canBuildElement(elementTypeOf(item), elementRefs()),
             addElement: async (item) => {
-                const newContent = await getTemplateForItem(item);
+                const newContent = await buildElement(item);
 
-                // Cancelled at one of the prompts a new element is described through.
+                // An array the layout describes with a type nothing here can make a value
+                // of. canAdd keeps the + off those, so this is the belt to its braces.
                 if (newContent === null) return;
 
                 await updateTree([
@@ -315,6 +391,26 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
                 ]);
             },
         });
+    }
+
+    /** The game's name for the type of this array's elements, or null. */
+    function elementTypeOf(item) {
+        return elementTypeAt([rootType, ...fieldPath(item)], window.typeLayout);
+    }
+
+    /**
+     * A new element for `item`, filled in as far as it can be without asking anybody
+     * anything -- which, since the layout describes every array in a DDS document, is all
+     * the way. What is left to do to it is what the tree is for.
+     */
+    async function buildElement(item) {
+        const type = elementTypeOf(item);
+        const element = newElement(type, elementRefs());
+
+        if (element === null) return null;
+
+        await ELEMENT_DOCUMENTS[type]?.(element, item);
+        return element;
     }
 
     /**
@@ -429,55 +525,57 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
 }
 
 /**
- * What a new element of each array is.
+ * The part of a new element that is not a fact about its type.
  *
- * A switch before, which said the same thing but could only be asked; the + on an
- * array has to know in advance whether there is an answer, so that it is not offered
- * where there is none. See hasElementTemplate.
+ * Its shape comes from the game's layout -- see scripts/elementTemplates.js -- and what
+ * is left is what only this editor can do: write the document the element points at, and
+ * stamp the IDs that make it *this* use of one. Each of these used to be a `prompt()`
+ * standing between the + and the element, which is not how anything else in either
+ * editor is filled in.
+ *
+ * Every one of them is a value the author can still change afterwards, in the tree, with
+ * the control the field already has. A GUID typed at a prompt was never anything more
+ * than that -- and a document that was created and then pointed elsewhere is a file in
+ * the mod's folder, which is where every unused document in a mod already lives.
  */
-const ELEMENT_TEMPLATES = {
-    messages: async () => {
-        let message = cloneTemplate('treeMessage');
-        message.msgID = prompt(`Existing GUID (Or cancel to create a new file)`) || await createNewFile('message');
-        message.instanceID = crypto.randomUUID();
-        return message;
+const ELEMENT_DOCUMENTS = {
+    // A message in a tree is a reference to a document, so a new one is a new document.
+    // Cancelling the prompt this replaces did exactly this, which is what every
+    // walkthrough of the editor told an author to do.
+    DDSMessageSettings: async (element) => {
+        element.msgID = await createNewFile('message');
+        element.instanceID = crypto.randomUUID();
     },
-    links: async (item) => {
-        let treeMessageLinks = cloneTemplate('treeMessageLinks');
-        treeMessageLinks.to = prompt(`Existing instanceID`) || '';
-        // Read through renderedValue: by the time an element is added, the
-        // instanceID it links from is an input rather than text.
-        treeMessageLinks.from = renderedValue(item.parent.childNodes.find(node => node.label == 'instanceID'));
-        return treeMessageLinks;
+    // The same story one level down: a message names the blocks it is made of.
+    DDSBlockCondition: async (element) => {
+        element.blockID = await createNewFile('block');
+        element.instanceID = crypto.randomUUID();
     },
-    traits: async () => prompt(`Trait name`) || null,
-    blocks: async () => {
-        let block = cloneTemplate('messageBlock');
-        block.blockID = prompt(`Existing GUID (Or cancel to create a new file)`) || await createNewFile('block');
-        block.instanceID = crypto.randomUUID();
-        return block;
+    // A replacement's line lives in the strings CSV keyed by this GUID. The row is
+    // written empty rather than left out: it is what the `_ENG Localisation_` row beside
+    // the element resolves through, and without it the element has nowhere to be typed.
+    DDSReplacement: async (element) => {
+        element.replaceWithID = crypto.randomUUID();
+        await addOrModifyStrings(element.replaceWithID, '');
     },
-    replacements: async () => {
-        let replacement = cloneTemplate('blockReplacement');
-        let guid = prompt(`Existing GUID (Or cancel to create a new file)`);
-        if (guid) {
-            replacement.replaceWithID = guid;
-        } else {
-            replacement.replaceWithID = crypto.randomUUID();
-            await addOrModifyStrings(replacement.replaceWithID, prompt(`English Line`));
-        }
-        return replacement;
+    // Which message the link runs *from* is not a choice: it is the message the link was
+    // added to. Read through renderedValue, because by the time an element is added the
+    // instanceID beside it is an input rather than text.
+    DDSMessageLink: async (element, item) => {
+        element.from = renderedValue(
+            item.parent.childNodes.find(node => node.label == 'instanceID'));
     },
-    jobs: async () => prompt(`Job name`) || null,
-    triggers: async () => prompt(`Trigger index`) || null,
 };
 
-/** Whether an element can be made for the array named `label`. */
-export function hasElementTemplate(label) {
-    return label in ELEMENT_TEMPLATES;
-}
-
-export async function getTemplateForItem(item) {
-    const template = ELEMENT_TEMPLATES[item.label];
-    return template ? await template(item) : null;
-}
+/**
+ * The reference data an element is built from, as the registry installs it on activation.
+ *
+ * Read at the moment it is needed rather than captured: these are replaced on every
+ * activation, and a flow that is not the active one has no business building anything.
+ */
+const elementRefs = () => ({
+    typeLayout: window.typeLayout,
+    enums: window.enums,
+    templates: window.templates,
+    basicTypeTemplates: window.basicTypeTemplates,
+});

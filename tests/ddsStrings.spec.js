@@ -518,3 +518,36 @@ test('closing puts the window away, and choosing another mod does it for you', a
     await selectContent(page, 'BareMod', 'Content');
     await expect(page.locator('#strings-window')).toHaveCount(0);
 });
+
+test('two lines written at the same moment both land', async ({ page }) => {
+    // Writing a row is read-modify-write on the whole file, so two at once used to lose
+    // one: the second read missed the first row and the second write put the file back
+    // without it. It took two hands to do until the + on an array stopped asking
+    // questions -- now one click creates a message, the block under it and a row for
+    // each, while the line just typed is still committing on blur.
+    const errors = collectPageErrors(page);
+    await openMod(page);
+
+    await page.evaluate(async () => {
+        const { writeStringsRow } = await import('/core/modStrings.js');
+        const folder = window.selectedMod.baseFolder;
+        const file = 'Strings/English/DDS/dds.blocks.csv';
+
+        // Started together, deliberately: awaiting each in turn is the case that always
+        // worked.
+        await Promise.all([
+            writeStringsRow(folder, file, 'at-once-one', 'The first line'),
+            writeStringsRow(folder, file, 'at-once-two', 'The second line'),
+            writeStringsRow(folder, file, 'at-once-three', 'The third line'),
+        ]);
+    });
+
+    const csv = await readFile(page, MOD_CSV);
+    expect(csv).toContain('The first line');
+    expect(csv).toContain('The second line');
+    expect(csv).toContain('The third line');
+
+    // And nothing that was already there was written over.
+    expect(csv).toContain('Text for the mod block');
+    expect(errors).toEqual([]);
+});

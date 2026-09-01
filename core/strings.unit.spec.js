@@ -1,5 +1,7 @@
 import { test, expect } from 'vitest';
-import { makeNameFieldSafe, isNameFieldSafe, makeCSVSafe, capitalizeFirstLetter } from './strings.js';
+import {
+    makeNameFieldSafe, isNameFieldSafe, makeCSVSafe, capitalizeFirstLetter,
+} from './strings.js';
 
 /**
  * The string helpers everything the app writes passes through.

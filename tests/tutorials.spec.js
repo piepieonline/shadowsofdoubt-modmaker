@@ -116,51 +116,91 @@ async function scaffoldTheCase(page) {
         .getByRole('button', { name: 'theftgonewrong' }).click();
 }
 
-test('every step names a control and a condition the runner understands', async ({ page }) => {
-    // Parsed and checked here rather than played: the later steps need base game assets
-    // the fixtures do not have, and a typo in one of them should still be caught.
-    const definition = await page.request.get('/tutorials/theftgonewrong.tutorial.json')
-        .then((r) => r.json());
+/**
+ * Every walkthrough the app offers, by the id its file is named after.
+ *
+ * Read from the module the modal renders rather than listed again here, so a tutorial
+ * added to the app cannot quietly go unchecked -- which is the whole point of the static
+ * test below.
+ */
+const SHIPPED = ['theftgonewrong', 'wizcardschat'];
 
-    expect(definition.steps.length).toBeGreaterThan(0);
+test('the tutorials list offers exactly the walkthroughs that have files', async ({ page }) => {
+    await gotoFlow(page, '?flow=scriptableObject');
 
-    const NAMED = ['mod-chosen', 'content-chosen'];
-    const CONDITION_KEYS = ['visible', 'fileOpen', 'editor', 'field', 'saved', 'savedText'];
+    const listed = await page.evaluate(async () => {
+        const { TUTORIALS } = await import('/core/tutorialsModal.js');
+        return TUTORIALS.map((tutorial) => tutorial.id);
+    });
 
-    // Only the opening step puts you in an editor. Crossing between them mid-walkthrough
-    // is most of what there is to learn about how the app is laid out, so those steps
-    // ask and wait rather than doing it while you are reading.
-    expect(definition.steps.filter((step) => step.flow)).toHaveLength(1);
-    expect(definition.steps[0].flow).toBe('scriptableObject');
+    expect(listed).toEqual(SHIPPED);
 
-    for (const [index, step] of definition.steps.entries()) {
-        const where = `step ${index + 1} (${step.title})`;
-
-        expect(step.title, where).toBeTruthy();
-        expect(step.description, where).toBeTruthy();
-
-        if (step.flow) expect(['dds', 'scriptableObject'], where).toContain(step.flow);
-
-        // Steps point at a whole document window, never at a row inside the tree.
-        // Highlighting a row did not survive contact with the real thing: the trees are
-        // long, the rows move as they are expanded, and the highlight landed nowhere
-        // useful. The step names the key in its text instead.
-        if (typeof step.element === 'object') {
-            expect(step.element.field, `${where} should not target a field row`)
-                .toBeUndefined();
-            expect(Boolean(step.element.file || step.element.window), where).toBe(true);
-        }
-
-        if (step.advanceWhen === undefined) continue;
-
-        if (typeof step.advanceWhen === 'string') {
-            expect(NAMED, where).toContain(step.advanceWhen);
-        } else {
-            expect(Object.keys(step.advanceWhen).some((k) => CONDITION_KEYS.includes(k)), where)
-                .toBe(true);
-        }
+    for (const id of listed) {
+        const response = await page.request.get(`/tutorials/${id}.tutorial.json`);
+        expect(response.ok(), `${id} has no tutorial file`).toBe(true);
     }
 });
+
+for (const id of SHIPPED) {
+    test(`${id}: every step names a control and a condition the runner understands`,
+        async ({ page }) => {
+            // Parsed and checked here rather than played: the later steps need base game
+            // assets the fixtures do not have, and a typo in one should still be caught.
+            const definition = await page.request.get(`/tutorials/${id}.tutorial.json`)
+                .then((r) => r.json());
+
+            expect(definition.steps.length).toBeGreaterThan(0);
+
+            const NAMED = ['mod-chosen', 'content-chosen'];
+            const CONDITION_KEYS = [
+                'visible', 'fileOpen', 'editor', 'field', 'rows', 'saved', 'savedText',
+            ];
+
+            // Only the opening step puts you in an editor. Crossing between them
+            // mid-walkthrough is most of what there is to learn about how the app is laid
+            // out, so those steps ask and wait rather than doing it while you are reading.
+            expect(definition.steps.filter((step) => step.flow)).toHaveLength(1);
+            expect(definition.steps[0].flow).toBeTruthy();
+
+            for (const [index, step] of definition.steps.entries()) {
+                const where = `step ${index + 1} (${step.title})`;
+
+                expect(step.title, where).toBeTruthy();
+                expect(step.description, where).toBeTruthy();
+
+                if (step.flow) expect(['dds', 'scriptableObject'], where).toContain(step.flow);
+
+                // Steps point at a whole document window, never at a row inside the tree.
+                // Highlighting a row did not survive contact with the real thing: the trees
+                // are long, the rows move as they are expanded, and the highlight landed
+                // nowhere useful. The step names the key in its text instead.
+                if (typeof step.element === 'object') {
+                    expect(step.element.field, `${where} should not target a field row`)
+                        .toBeUndefined();
+                    expect(Boolean(step.element.file || step.element.window), where).toBe(true);
+                }
+
+                if (step.advanceWhen === undefined) continue;
+
+                if (typeof step.advanceWhen === 'string') {
+                    expect(NAMED, where).toContain(step.advanceWhen);
+                } else {
+                    const keys = Object.keys(step.advanceWhen);
+                    expect(keys.some((k) => CONDITION_KEYS.includes(k)), where).toBe(true);
+
+                    // A condition reading a document has to say which one: the DDS editor's
+                    // windows are levels of a drill-down at fixed ids, and one naming
+                    // neither a file nor a window would read whichever document is open.
+                    if (step.advanceWhen.field || step.advanceWhen.rows) {
+                        expect(
+                            Boolean(step.advanceWhen.file || step.advanceWhen.window),
+                            `${where} reads a document without saying which`,
+                        ).toBe(true);
+                    }
+                }
+            }
+        });
+}
 
 test('it walks from an empty mod to an open case', async ({ page }) => {
     await beginTutorial(page);

@@ -1,0 +1,386 @@
+{
+    "$comment": "A DDS-only walkthrough, modelled field for field on the base game's Nice_Place tree (688dcc47-3b4a-41fd-9b20-c1132c9814dd) so that its gating is copied rather than invented. Six parts: the tree and what makes it fire, who is talking, the four remaining messages, the links that chain them, the replacements that make one line three, and the ending that varies. Steps point at a whole document window and name the key in their text -- highlighting a row did not survive contact with the tree. A tree's file name is the GUID it was given on creation, so no step can name it: the documents are pointed at by window (#file-window-0 the tree, -1 the message, -2 the block) and the lines are checked in the mod's dds.blocks.csv, whose path is fixed. Steps gated on savedText read the file from disk, so they need Autosaving left on.",
+    "steps": [
+        {
+            "flow": "dds",
+            "element": "#select-mod",
+            "title": "Pick a mod to build in",
+            "description": "Choose a mod, and a content folder inside it. Everything this walkthrough makes goes under that folder's <code>DDSContent</code>, and nothing else in the mod is touched.<br><br>Leave <b>Autosaving</b> on: the steps ahead check your work by reading the files.",
+            "side": "bottom",
+            "advanceWhen": "content-chosen"
+        },
+        {
+            "element": "#new-file-button",
+            "title": "Start a conversation",
+            "description": "Click <b>Add new...</b>.<br><br>You are going to build a chat between two citizens about playing Wizcards on their crunchers — the same shape as the small talk the base game already puts in bars and diners.",
+            "side": "right",
+            "advanceWhen": {
+                "visible": "#new-dds-file-modal[open]"
+            }
+        },
+        {
+            "element": "#new-dds-file-modal article",
+            "title": "Name it, and give it its first line",
+            "description": "Choose <b>Tree</b> from the <b>Type</b> dropdown, name it <code>WizcardsChat</code>, and put <code>You still playing Wizcards?</code> in the <b>English line</b>.",
+            "side": "left",
+            "popoverClass": "tutorial-popover-narrow",
+            "advanceWhen": {
+                "visible": "#file-window-0[path$='.tree']"
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "Three documents, not one",
+            "description": "A tree, the message inside it, and the block inside that — one window each, left to right.<br><br>The split is the whole point of the format. The <b>tree</b> is the conversation: who is in it, when it happens, and which message follows which. A <b>message</b> is one thing said. A <b>block</b> is the words, and the words themselves are not even in it — the block holds an ID, and the line went into the mod's strings file keyed by that ID.<br><br>The name you gave it is only for finding it again, and the mod's name is put in front of it. What the game follows is the GUID in each window's title.",
+            "side": "left"
+        },
+        {
+            "element": "#file-window-0",
+            "title": "It is a v-mail until you say otherwise",
+            "description": "Find <code>treeType</code> near the bottom of the tree window and change it to <b>conversation</b>.<br><br>A new tree comes out as a <b>vmail</b> — the template's default, and the wrong thing for two people talking. This is the single most common reason a new tree never appears in game.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "treeType",
+                "window": "#file-window-0",
+                "is": 0
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "When the game goes looking for it",
+            "description": "Set <code>triggerPoint</code> to <b>whileTickOnTrackTarget</b>.<br><br>That is the base game's answer for idle chatter: it is considered while the citizens are being simulated near you, rather than at some one-off moment like a v-mail arriving.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "triggerPoint",
+                "window": "#file-window-0",
+                "is": 2
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "And how often",
+            "description": "Set <code>treeChance</code> to <code>0.25</code>.<br><br>It arrives at <code>1</code>, which means every eligible pair, every time — a city where nobody talks about anything else. A quarter is roughly what the base game's small talk uses.<br><br>Leave <code>repeat</code> at <b>sixHours</b> and <code>priority</code> at <code>3</code>: the same pair will not have this conversation twice in an afternoon, and it will lose to anything the game considers more important.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "treeChance",
+                "window": "#file-window-0",
+                "is": 0.25
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "Who starts it",
+            "description": "Expand <code>participantA</code> and set its <code>connection</code> to <b>friend</b>.<br><br>Participants are the roles, not the people — the game casts them when it looks for somewhere to play this. A is whoever speaks first.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "participantA.connection",
+                "window": "#file-window-0",
+                "is": 0
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "Where they have to be",
+            "description": "Click the <b>+</b> beside A's <code>triggers</code> five times, and pick each entry from the dropdown it comes with: <b>awake</b>, <b>noReactionState</b>, <b>indoors</b>, <b>publicLocation</b> and <b>sat</b>.<br><br>A new entry arrives as the first name in the list, which is <b>awake</b> — so one of the five is already done.<br><br>All of them have to hold at once, so this comes to: awake, not reacting to anything, sitting down, indoors, somewhere public. Two people in a bar.",
+            "side": "left",
+            "advanceWhen": {
+                "rows": "participantA.triggers",
+                "window": "#file-window-0",
+                "count": 5
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "And who they are talking to",
+            "description": "Set <code>participantB</code>'s <code>connection</code> to <b>anyAcquaintance</b>.<br><br>Looser than A on purpose. A has to be a friend of the person the game is building this around; B only has to be someone they know.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "participantB.connection",
+                "window": "#file-window-0",
+                "is": 18
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "B has less to satisfy",
+            "description": "Give B three <code>triggers</code> the same way: <b>awake</b>, <b>noReactionState</b> and <b>sat</b>.<br><br>No <code>indoors</code> or <code>publicLocation</code> — A's conditions already settle where this is happening, and every condition you add to a participant is another reason for the game not to find a pair.<br><br>Leave C and D alone. They are not <code>required</code>, and this conversation has two people in it.",
+            "side": "left",
+            "advanceWhen": {
+                "rows": "participantB.triggers",
+                "window": "#file-window-0",
+                "count": 3
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "The second thing said",
+            "description": "Find <code>messages</code> and click the <b>+</b> beside it. A new message — and the block inside it — is written into the mod, and the entry points at it.<br><br>Nothing is asked, because nothing has to be. To use a message another tree already has instead, put its GUID in <code>msgID</code> afterwards.",
+            "side": "left",
+            "advanceWhen": {
+                "rows": "messages",
+                "window": "#file-window-0",
+                "count": 2
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "B answers",
+            "description": "On the new entry <code>messages.1</code>, set <code>saidBy</code> to <code>1</code>, <code>saidTo</code> to <code>0</code>, and <code>order</code> to <code>1</code>.<br><br>Those numbers are the participants: 0 is A, 1 is B. A new message arrives as A talking to B, so this one has to be turned around.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "messages.1.order",
+                "window": "#file-window-0",
+                "is": 1
+            }
+        },
+        {
+            "element": "#file-window-2",
+            "title": "What B says",
+            "description": "Click the <b>➥</b> beside <code>messages.1</code>'s <code>msgID</code>. The message opens in the middle window and its block opens on the right.<br><br>In that block, put <code>Every night on my cruncher.</code> into <code>_ENG Localisation_</code> and click out of the box.<br><br>That row is not part of the file. It is the line looked up from the strings CSV, shown here so you can edit it in place — typing in it writes the CSV, not the block.",
+            "side": "right",
+            "advanceWhen": {
+                "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
+                "contains": "Every night on my cruncher."
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "A comes back",
+            "description": "Back on the tree window: <b>+</b> on <code>messages</code> again.",
+            "side": "left",
+            "advanceWhen": {
+                "rows": "messages",
+                "window": "#file-window-0",
+                "count": 3
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "A is already the speaker",
+            "description": "On <code>messages.2</code>, set <code>order</code> to <code>2</code> and leave <code>saidBy</code> and <code>saidTo</code> as they are.<br><br>A new message is A talking to B, which is what this one is. Only the odd-numbered ones need turning around.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "messages.2.order",
+                "window": "#file-window-0",
+                "is": 2
+            }
+        },
+        {
+            "element": "#file-window-2",
+            "title": "What A asks",
+            "description": "Drill into <code>messages.2</code> with <b>➥</b> and put <code>Any good at it?</code> in its block's <code>_ENG Localisation_</code>.",
+            "side": "right",
+            "advanceWhen": {
+                "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
+                "contains": "Any good at it?"
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "B again",
+            "description": "<b>+</b> on <code>messages</code> again.",
+            "side": "left",
+            "advanceWhen": {
+                "rows": "messages",
+                "window": "#file-window-0",
+                "count": 4
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "Turned around again",
+            "description": "On <code>messages.3</code>: <code>saidBy</code> <code>1</code>, <code>saidTo</code> <code>0</code>, <code>order</code> <code>3</code>.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "messages.3.order",
+                "window": "#file-window-0",
+                "is": 3
+            }
+        },
+        {
+            "element": "#file-window-2",
+            "title": "How good B claims to be",
+            "description": "Drill into <code>messages.3</code> and put <code>I hold my own.</code> in its block.<br><br>Deliberately flat. In a moment you will make this same line read three different ways depending on who is saying it.",
+            "side": "right",
+            "advanceWhen": {
+                "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
+                "contains": "I hold my own."
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "The last one",
+            "description": "<b>+</b> on <code>messages</code> one more time.",
+            "side": "left",
+            "advanceWhen": {
+                "rows": "messages",
+                "window": "#file-window-0",
+                "count": 5
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "A has the last word",
+            "description": "On <code>messages.4</code>, set <code>order</code> to <code>4</code>. <code>saidBy</code> and <code>saidTo</code> are already right.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "messages.4.order",
+                "window": "#file-window-0",
+                "is": 4
+            }
+        },
+        {
+            "element": "#file-window-2",
+            "title": "How it ends",
+            "description": "Drill into <code>messages.4</code> and put <code>Ain't no talking you into it?</code> in its block.<br><br>Five messages exist now, and not one of them leads to another. Nothing about the order you made them in tells the game what follows what — that is next.",
+            "side": "right",
+            "advanceWhen": {
+                "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
+                "contains": "Ain't no talking you into it?"
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "Chain the first two",
+            "description": "On <code>messages.0</code>, click the <b>+</b> beside <code>links</code>. Open the link it adds and set its <code>to</code> to <b>messages.1</b>.<br><br>That list is the messages in this tree, and what it writes is an <code>instanceID</code>. A message has two IDs: <code>msgID</code> names the document, and <code>instanceID</code> names <i>this use of it in this tree</i>. Links run between instances, so the same message can appear twice in a tree and be followed by something different each time — which is also why <code>instanceID</code> is the one field here you cannot type into.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "messages.0.links.0.to",
+                "window": "#file-window-0"
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "And the rest of the chain",
+            "description": "Three more, the same way: <code>messages.1</code> links to <code>messages.2</code>, <code>2</code> to <code>3</code>, and <code>3</code> to <code>4</code>.<br><br><code>from</code> fills itself in — the editor knows which message you added the link to. Leave <code>messages.4</code> with no links: that is what ends a conversation.<br><br>Check <code>startingMessage</code> at the bottom of the tree while you are here. It is the same list, and it already names <code>messages.0</code> — which is how the game knows where to begin.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "messages.3.links.0.to",
+                "window": "#file-window-0"
+            }
+        },
+        {
+            "element": "#file-window-2",
+            "title": "Back to what B said first",
+            "description": "Drill into <code>messages.1</code> and then into its block, so <code>Every night on my cruncher.</code> is the line in the right-hand window.<br><br>A flat line for a flat citizen. Rather than write a second message for the keen ones, you hang alternatives off this block.",
+            "side": "right",
+            "advanceWhen": {
+                "field": "_ENG Localisation_",
+                "window": "#file-window-2",
+                "is": "Every night on my cruncher."
+            }
+        },
+        {
+            "element": "#file-window-2",
+            "title": "The same line, from someone keen",
+            "description": "Click the <b>+</b> beside <code>replacements</code>, and put <code>Every night! I'm on a streak.</code> in the <code>_ENG Localisation_</code> row inside the new entry.<br><br>A replacement carries a line of its own, keyed by the <code>replaceWithID</code> beside it. That row writes the strings CSV exactly as the block's own line does.",
+            "side": "right",
+            "advanceWhen": {
+                "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
+                "contains": "Every night! I'm on a streak."
+            }
+        },
+        {
+            "element": "#file-window-2",
+            "title": "Say who gets it",
+            "description": "On <code>replacements.0</code>, set <code>useTraits</code> to <b>true</b> and add two <code>traits</code>: <code>Char-Enthusiastic</code> and <code>Char-Cheerful</code>. Leave <code>traitCondition</code> at <b>IfAnyOfThese</b> — either one will do.<br><br>Each row is the game's list of traits, searched by typing in it. What goes in the file is the bare name — not the <code>REF:CharacterTrait|…</code> form the case editor wants — and a trait your own mod defines is in the list too, above the game's.",
+            "side": "right",
+            "advanceWhen": {
+                "rows": "replacements.0.traits",
+                "window": "#file-window-2",
+                "count": 2
+            }
+        },
+        {
+            "element": "#file-window-2",
+            "title": "And from someone who has had enough",
+            "description": "A second replacement, the same way: line <code>I quit. Rigged deck.</code>",
+            "side": "right",
+            "advanceWhen": {
+                "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
+                "contains": "I quit. Rigged deck."
+            }
+        },
+        {
+            "element": "#file-window-2",
+            "title": "For the sour ones",
+            "description": "On <code>replacements.1</code>: <code>useTraits</code> <b>true</b>, traits <code>Char-Pessimistic</code> and <code>Char-Spiteful</code>.<br><br>One authored line now covers three kinds of person, and a citizen who is none of them gets the plain one. That is what makes the base game's chatter feel written rather than randomised.",
+            "side": "right",
+            "advanceWhen": {
+                "rows": "replacements.1.traits",
+                "window": "#file-window-2",
+                "count": 2
+            }
+        },
+        {
+            "element": "#file-window-2",
+            "title": "Do it again for the boast",
+            "description": "Drill into <code>messages.3</code>'s block — <code>I hold my own.</code> — and add two replacements the same way, with the lines <code>I'm unbeatable.</code> and <code>I lose every hand.</code>",
+            "side": "right",
+            "advanceWhen": {
+                "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
+                "contains": "I lose every hand."
+            }
+        },
+        {
+            "element": "#file-window-2",
+            "title": "And who they belong to",
+            "description": "Set <code>useTraits</code> on both, and give them their traits: <code>Char-Enthusiastic</code> and <code>Char-Cheerful</code> for the boast, <code>Char-Abrasive</code> and <code>Char-Pessimistic</code> for the surrender.<br><br>Do not leave <code>useTraits</code> off. A replacement with no condition on it replaces the line for everybody, which is a roundabout way of rewriting the block.",
+            "side": "right",
+            "advanceWhen": {
+                "rows": "replacements.1.traits",
+                "window": "#file-window-2",
+                "count": 2
+            }
+        },
+        {
+            "element": "#file-window-2",
+            "title": "Now the ending",
+            "description": "Drill into <code>messages.4</code> and its block, so <code>Ain't no talking you into it?</code> is in the right-hand window.<br><br>This is the closing line, and it only really works if B has been sour. Next you give A something else to say — not a replacement this time, but a second block.",
+            "side": "right",
+            "advanceWhen": {
+                "field": "_ENG Localisation_",
+                "window": "#file-window-2",
+                "is": "Ain't no talking you into it?"
+            }
+        },
+        {
+            "element": "#file-window-1",
+            "title": "A second thing A might say",
+            "description": "On the <b>message</b> window in the middle, click the <b>+</b> beside <code>blocks</code> — a new block is written for you, as a new message was. Drill into it with <b>➥</b> and give it the line <code>Deal me in next time.</code>",
+            "side": "bottom",
+            "advanceWhen": {
+                "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
+                "contains": "Deal me in next time."
+            }
+        },
+        {
+            "element": "#file-window-1",
+            "title": "Let the game pick one",
+            "description": "On the message window, set <b>both</b> blocks' <code>alwaysDisplay</code> to <b>false</b> and both their <code>group</code> to <code>1</code>.<br><br>Blocks in a message normally all play, one after another — that is how a long document is built out of parts. Give two of them the same non-zero group and turn <code>alwaysDisplay</code> off, and the game picks one of the group instead.",
+            "side": "bottom",
+            "advanceWhen": {
+                "field": "blocks.1.group",
+                "window": "#file-window-1",
+                "is": 1
+            }
+        },
+        {
+            "element": "#file-window-0",
+            "title": "And spare the cheerful ones",
+            "description": "Last thing, on the tree window. Open <code>messages.3</code>'s <code>links.0</code> — the link into the final message — and set <code>useTraits</code> to <b>true</b>, <code>traits</code> to <code>Char-Cheerful</code> and <code>Char-Enthusiastic</code>, and <code>traitConditions</code> to <b>IfNoneOfThese</b>.<br><br>Now the conversation only reaches its closing line when B is <i>not</i> one of those. A cheerful B answers the question and the chat simply stops there.<br><br>The gate is on the link, not on the message. That is the difference worth remembering: a trait on a block changes what is said, a trait on a link changes what happens next.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "messages.3.links.0.traitConditions",
+                "window": "#file-window-0",
+                "is": 2
+            }
+        },
+        {
+            "element": "#dds-file-list",
+            "title": "That is a conversation",
+            "description": "One tree, five messages, six blocks and ten lines of text — all of it in the panel on the left, and all of it in the mod.<br><br>Two citizens who know each other, sitting somewhere public, will now sometimes talk about Wizcards, and the conversation reads differently depending on which of them the game cast.<br><br>Worth trying from here: give <code>participantA</code> a <code>jobs</code> entry and set <code>useJobs</code>, so only certain workers have the conversation — that row is the same kind of list as <code>traits</code>, of the game's occupations; or open the tree's <code>document</code> and give it a background, a colour and a font — the same fields turn a tree into something the player reads rather than overhears.",
+            "side": "right"
+        }
+    ]
+}

@@ -87,6 +87,27 @@ function scopeFor({ file, window: selector }) {
     return file ? fileWindow(file) : null;
 }
 
+/** The key a row is labelled with, quotes and all -- jsonTree renders `"messages"`. */
+const rowLabel = (row) =>
+    row.querySelector(':scope > .jsontree_label-wrapper > .jsontree_label')?.textContent.trim();
+
+/**
+ * A row's own value, as opposed to anything nested below it.
+ *
+ * Simple and complex nodes agree on this much of the markup, so one selector reaches
+ * both. Only a simple node ends up with an editor inside it -- see decorateValueNodes --
+ * which is what makes reading a value through here safe: a step naming a whole object
+ * finds no input rather than the first input belonging to something inside it.
+ */
+const rowValue = (row) => row.querySelector(':scope > .jsontree_value-wrapper > .jsontree_value');
+
+/** The rows of a document, which hang off the root node's list. */
+const documentRows = (scope) => [...(scope?.querySelector('.jsontree_child-nodes')?.children ?? [])];
+
+/** The rows one level inside another, which hang off its value. See _NodeComplex. */
+const nestedRows = (row) =>
+    [...(rowValue(row)?.querySelector(':scope > .jsontree_child-nodes')?.children ?? [])];
+
 /**
  * The row a field is edited on.
  *
@@ -94,23 +115,35 @@ function scopeFor({ file, window: selector }) {
  * inside the row, and CSS cannot match on text. That is also why a step points at a
  * field by name instead of carrying a selector -- there is no selector to carry.
  *
- * Only the rows of the document's own object, so a step asking for `name` cannot land
- * on a `name` belonging to something nested inside it.
+ * A dotted name descends a level per segment: `participantA.connection`. Array elements
+ * come along for free, because jsonTree labels one by its index and quotes it exactly as
+ * it quotes a key -- so `messages.1.saidBy` needs no syntax of its own. That matters for
+ * the DDS editor, where a document is mostly nesting and the fields worth waiting for are
+ * hardly ever at the top.
+ *
+ * The walk starts at the document's own rows, so a step asking for `name` cannot land on
+ * a `name` belonging to something nested inside it.
+ *
+ * Rows exist whether or not their parent is expanded -- jsonTree builds the whole tree and
+ * expands by class -- so a condition does not depend on what the player has opened up.
  */
 function fieldRow(spec) {
-    const root = scopeFor(spec)?.querySelector('.jsontree_child-nodes');
-    if (!root) return null;
+    let rows = documentRows(scopeFor(spec));
+    let row = null;
 
-    for (const row of root.children) {
-        const label = row.querySelector(':scope > .jsontree_label-wrapper > .jsontree_label');
-        if (label?.textContent.trim() === `"${spec.field}"`) return row;
+    for (const segment of String(spec.field).split('.')) {
+        row = rows.find((candidate) => rowLabel(candidate) === `"${segment}"`) ?? null;
+        if (!row) return null;
+        rows = nestedRows(row);
     }
-    return null;
+
+    return row;
 }
 
 /** What a field currently holds, as the editor shows it. */
 function fieldValue(spec) {
-    const input = fieldRow(spec)?.querySelector('input, select');
+    const row = fieldRow(spec);
+    const input = row && rowValue(row)?.querySelector(':scope > input, :scope > select');
     return input ? input.value : null;
 }
 
@@ -185,15 +218,33 @@ function conditionFor(spec) {
         };
     }
 
+    // How many entries an array has grown to, which no value can say: an array is a row
+    // with children rather than something with an input to read. `count` is a floor, not
+    // a total -- a player who adds a sixth message has still done what the step asked.
+    if (spec.rows) {
+        return {
+            satisfied: () => {
+                const row = fieldRow({ ...spec, field: spec.rows });
+                return Boolean(row) && nestedRows(row).length >= spec.count;
+            },
+            subscribe: watchDom,
+        };
+    }
+
     if (spec.field) {
         return {
             // `is` omitted means any value will do -- for a field the player has to
             // fill in but whose contents are theirs to choose, and for the GUID fields,
             // whose value is whatever the document they just made happens to have.
+            //
+            // Where it is given, it is compared as text, because text is what a control
+            // holds. A tutorial writes it however the field reads: a number for a number,
+            // and for an enum the index behind the name -- that is what the dropdown's
+            // options carry, and what the document stores.
             satisfied: () => {
                 const value = fieldValue(spec);
                 if (value === null) return false;
-                return spec.is === undefined ? value.trim() !== '' : value === spec.is;
+                return spec.is === undefined ? value.trim() !== '' : value === String(spec.is);
             },
             subscribe: watchDom,
         };
@@ -408,6 +459,9 @@ async function runStep(tour, steps, index, live, signal) {
             description: step.description,
             side: step.side ?? 'bottom',
             align: step.align ?? 'start',
+            // For a step that has to stand beside something wide. See the narrow
+            // popover rule in core/chrome.css.
+            popoverClass: step.popoverClass,
             showProgress: true,
             progressText: `Step ${index + 1} of ${steps.length}`,
             // A live gated step is finished by doing the thing, so it offers no way

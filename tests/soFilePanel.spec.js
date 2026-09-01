@@ -206,6 +206,56 @@ test.describe('the room permission filter', () => {
         await selectContent(page, 'TestCase', '');
     });
 
+    test('is a funnel inside the search box, named for a reader who cannot see it', async ({ page }) => {
+        // The control is a drawing and nothing else, so the only name it has is the one
+        // written on it -- and it is reached by keyboard from the box it sits in.
+        await expect(page.getByRole('button', { name: 'Filter files' })).toBeVisible();
+
+        await page.locator('#so-file-search').focus();
+        await page.keyboard.press('Tab');
+        await expect(filterMenu(page).locator('summary')).toBeFocused();
+        await page.keyboard.press('Enter');
+        await expect(filterMenu(page)).toHaveJSProperty('open', true);
+
+        const edges = await page.evaluate(() => {
+            const sides = (selector) => {
+                const box = document.querySelector(selector).getBoundingClientRect();
+                return { left: box.left, right: box.right };
+            };
+            return {
+                box: sides('#so-file-search'),
+                icon: sides('#so-file-filter summary'),
+                menu: sides('#so-file-filter .browse-menu'),
+            };
+        });
+
+        // Inlaid: the funnel is over the end of the box, not in the row beside it.
+        expect(edges.icon.right).toBeLessThanOrEqual(edges.box.right);
+        expect(edges.icon.left).toBeGreaterThan(edges.box.left);
+
+        // And the menu hangs off the box rather than off the funnel, so it opens squared
+        // up with the column instead of a few pixels over the panel's padding.
+        expect(edges.menu.left).toBeCloseTo(edges.box.left, 0);
+        expect(edges.menu.right).toBeCloseTo(edges.box.right, 0);
+    });
+
+    test('leaves the box its own clear cross to be cleared by', async ({ page }) => {
+        // The cross a `type="search"` draws for itself lands at the end of its content
+        // box, which is where the funnel now is. The box's right padding is what keeps
+        // them apart, and it is the one part of this an author aims at without looking.
+        const room = await page.locator('#so-file-search').evaluate((box) => {
+            const style = getComputedStyle(box);
+            const icon = document.querySelector('#so-file-filter summary').getBoundingClientRect();
+            return {
+                padding: parseFloat(style.paddingRight),
+                // How far in from the box's edge the funnel reaches.
+                icon: box.getBoundingClientRect().right - icon.left,
+            };
+        });
+
+        expect(room.padding).toBeGreaterThan(room.icon);
+    });
+
     test('offers what can be left out, and leaves it in until asked', async ({ page }) => {
         await filterMenu(page).locator('summary').click();
 
