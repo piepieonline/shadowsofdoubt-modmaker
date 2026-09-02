@@ -1,0 +1,99 @@
+# Publish the app to GitHub Pages.
+#
+# The site is zero-build, so there is nothing to compile -- the deploy step is a copy of
+# the files the browser asks for, minus the ones only the tests and the dev server need.
+#
+# It is still gated on the suite. The tests run on Linux and the site is served from
+# Linux, while the app is developed on a case-insensitive filesystem: an import or a
+# `refs/` path whose case does not match the file on disk works locally and 404s once
+# published. That class of break is invisible until something reads the file, which is
+# exactly what the Playwright run does.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time, and never cancel one that has started: a half-published site is
+# worse than a stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Chromium only, matching playwright.shared.js -- Firefox and Safari have no File
+      # System Access API, so the app cannot run there at all.
+      - run: npx playwright install --with-deps chromium
+
+      # `npm test` is the unit suite followed by the Playwright one. `e2e/` is not
+      # collected by the default config; those specs play whole tutorials end to end and
+      # are asked for by name.
+      - run: npm test
+
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failures
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+
+      # What ships is the shell, the flows, the vendored libs and the reference data the
+      # flows fetch at runtime. Everything else in the repo is tooling: the specs live
+      # beside the modules they cover, so they are excluded by name rather than by
+      # directory.
+      - name: Stage the site
+        run: |
+          mkdir _site
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.local' \
+            --exclude='node_modules' \
+            --exclude='tests' \
+            --exclude='e2e' \
+            --exclude='test-support' \
+            --exclude='test-results' \
+            --exclude='playwright-report' \
+            --exclude='*.spec.js' \
+            --exclude='playwright*.js' \
+            --exclude='vitest.config.js' \
+            --exclude='package.json' \
+            --exclude='package-lock.json' \
+            --exclude='*.pem' \
+            ./ _site/
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
