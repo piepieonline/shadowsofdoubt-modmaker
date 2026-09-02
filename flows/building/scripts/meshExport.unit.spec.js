@@ -231,8 +231,11 @@ describe('where the base game disagrees with its own blueprints', () => {
      * generator shows up as a change in *which* buildings disagree rather than being
      * absorbed by a test that only ever checked the four that agree.
      */
-    it('OneFifthAve paints a window its blueprints do not have', async () => {
-        const { preset, data } = await generate('OneFifthAve');
+    it('OneFIfthAve paints a window its blueprints do not have', async () => {
+        // The capital I is the game's own spelling, and the file is named for it. Asking
+        // for OneFifthAve reads it anyway on a case-insensitive filesystem and 404s on
+        // Linux, where the preset comes back null and this fails at sortedWindows.
+        const { preset, data } = await generate('OneFIfthAve');
         const mine = counts(data);
         const theirs = counts(preset.sortedWindows);
 

@@ -1140,7 +1140,7 @@ no disagreement about which side a window landed on or which way the list runs â
 BrandyNetherland's 17. Where the rest differ it is the base game data disagreeing with its
 own blueprints, and the tests pin the disagreements rather than paper over them:
 
-- **OneFifthAve** paints 7 windows on the +Y wall of most floors where the blueprint has 6.
+- **OneFIfthAve** paints 7 windows on the +Y wall of most floors where the blueprint has 6.
 - **ShantyTown** floor 1 puts all 8 blocks in `left`; see limitation 6 below.
 - **EdenTower** is painted as a uniform curtain wall, reporting identical counts for floors
   whose blueprints give no windows at all.
