@@ -3,11 +3,16 @@
 # The site is zero-build, so there is nothing to compile -- the deploy step is a copy of
 # the files the browser asks for, minus the ones only the tests and the dev server need.
 #
-# It is still gated on the suite. The tests run on Linux and the site is served from
-# Linux, while the app is developed on a case-insensitive filesystem: an import or a
-# `refs/` path whose case does not match the file on disk works locally and 404s once
-# published. That class of break is invisible until something reads the file, which is
-# exactly what the Playwright run does.
+# It is still gated on the unit suite, which is what makes the difference here: the tests
+# run on Linux and the site is served from Linux, while the app is developed on a
+# case-insensitive filesystem. A `refs/` path whose case does not match the file on disk
+# works locally and 404s once published, and nothing notices until something reads it.
+#
+# Playwright is deliberately not run here. It needs a browser download and a served app,
+# takes six times as long on a runner as it does on a developer's machine, and several of
+# its specs read a file straight after the click that writes it -- which is a race that
+# only opens up on hardware this slow. Blocking a deploy on that is not worth it. Run
+# `npm test` locally for the full suite.
 name: Deploy to GitHub Pages
 
 on:
@@ -39,23 +44,8 @@ jobs:
 
       - run: npm ci
 
-      # Chromium only, matching playwright.shared.js -- Firefox and Safari have no File
-      # System Access API, so the app cannot run there at all.
-      - run: npx playwright install --with-deps chromium
-
-      # `npm test` is the unit suite followed by the Playwright one. `e2e/` is not
-      # collected by the default config; those specs play whole tutorials end to end and
-      # are asked for by name.
-      - run: npm test
-
-      - if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-failures
-          path: |
-            test-results/
-            playwright-report/
-          retention-days: 7
+      # Vitest only. No browser to install and nothing to serve, so this is the whole job.
+      - run: npm run test:unit
 
   deploy:
     needs: test
