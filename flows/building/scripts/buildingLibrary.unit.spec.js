@@ -184,7 +184,8 @@ test('a building with no floor list at all is not a failure', async () => {
 /* -------------------------------------------------------------------------- */
 
 test('a field left at the game\'s default is not written', () => {
-    const stub = library.stubFor('Thing', { floorLayouts: [], basementLayouts: [] });
+    const stub = library.stubFor(
+        'Thing', { floorLayouts: [], basementLayouts: [] }, { copyFrom: 'Thing' });
 
     // enableAlleywayWalls defaults to true and echelonFloorStart to 10, so neither
     // belongs in the file; changing one puts it back.
@@ -211,6 +212,19 @@ test('the fields identifying a stub are written even at their defaults', () => {
     expect(written.presetName).toBe('Thing');
     expect(written.copyFrom).toBeNull();
     expect(written.fileType).toBe('BuildingPreset');
+});
+
+test('a stub is not built without being told what it copies from', () => {
+    // The default used to be the preset's own name, which is the right answer for a stub of
+    // a base game building -- that is what a stub is -- and a ring for every other caller.
+    // Nothing about a name says which of the two it is, so there is no default to have.
+    expect(() => library.stubFor('Thing', null)).toThrow(/copies from/);
+    expect(() => library.stubFor('Thing', null, { title: 'A Thing' })).toThrow(/copies from/);
+
+    // Copying from nothing is an answer, and a different one from not saying.
+    expect(library.stubFor('Thing', null, { copyFrom: null }).copyFrom).toBeNull();
+    expect(library.stubFor('Thing', null, { copyFrom: 'Hotel' }).copyFrom)
+        .toBe('REF:BuildingPreset|Hotel');
 });
 
 

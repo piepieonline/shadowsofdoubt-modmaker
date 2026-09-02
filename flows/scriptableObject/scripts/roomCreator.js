@@ -45,9 +45,31 @@ import {
     roomRefs, withoutRoom, sharedNames, patchFileOf,
 } from './roomPlan.js';
 import { scanRooms, choicesFrom } from './roomScan.js';
+import { createStepper } from './creatorSteps.js';
 
 const CHAIN_PATH = '/refs/derived/furnitureChain.json';
 const ROOMS_PATH = '/refs/derived/roomCreator.json';
+
+/**
+ * What each step is for, said in the footer while it is being read.
+ *
+ * The order is the markup's -- `createStepper` reads the panes -- so these are keyed rather
+ * than listed, and a step renamed in one place and not the other loses its note instead of
+ * putting it on the wrong pane.
+ */
+const STEP_NOTES = {
+    identity: 'Lighting, security, cleanliness and decor come from the room you copy. '
+        + 'Furniture does not — it is decided the other way round, so it takes the button.',
+    where: 'Every one of these is optional. Blank is left open rather than guessed, so the '
+        + 'reach beside them errs wide.',
+    contents: 'A cluster brings its own presets with it. The ceiling lights start as the '
+        + 'donor’s, and are yours from the first one you untick.',
+    write: 'Nothing here is overwritten. A file that belongs to another room stops the '
+        + 'write rather than replacing what is in it.',
+};
+
+/** The step rail, built on first open. Null until the dialog is on screen. */
+let steps = null;
 
 let chain = null;
 let rooms = null;
@@ -199,6 +221,12 @@ export function summarise(data, chainData, current = state) {
 
     return {
         total: names.length,
+
+        // Every piece of furniture the game has, which is what `reachable` is a fraction
+        // of. Read from the chain rather than counted from the clusters: a preset in no
+        // cluster at all is still furniture this room does not reach.
+        catalogue: Object.keys(chainData.furniture ?? {}).length,
+
         possible,
         refused,
         refusedBy: [...refusedBy].sort((a, b) => b[1].length - a[1].length),
@@ -238,6 +266,11 @@ export async function openRoomCreator() {
     if (!dialog) return;
 
     dialog.toggleAttribute('open', true);
+
+    // Built once and kept, along with which step it was left on. Closing the pane to look
+    // at a file and coming back to the third step is the ordinary way this gets used, and
+    // a rail that reset to the first step every time would punish exactly that.
+    steps ??= createStepper(dialog);
 
     await loadRoomData();
     fillControls();
@@ -423,47 +456,210 @@ export function toggleRoomLight(name, on) {
  */
 function redraw() {
     const out = $('#room-creator-verdict');
+    const gates = $('#room-creator-gates');
     if (!out) return;
 
     if (!rooms || !chain) {
         out.replaceChildren(note('The reference data could not be loaded, so nothing here can be checked.'));
+        gates?.replaceChildren();
         return;
     }
 
     const result = summarise(rooms, chain, state);
-    const parts = [];
 
-    parts.push(headline(result));
+    /*
+     * What the room is and what it already reaches, on the step where it is decided.
+     *
+     * The two warnings are here rather than beside the gates because neither is about
+     * where the room sits: an unlit donor and a cluster that can never resolve its
+     * furniture are both consequences of the room you copied.
+     */
+    const verdict = [headline(result)];
 
     if (state.donor && result.unlit.includes(state.donor)) {
-        parts.push(note(`${state.donor} is one of the ${result.unlit.length} room configurations no `
+        verdict.push(note(`${state.donor} is one of the ${result.unlit.length} room configurations no `
             + 'lighting preset names, so a room copying it gets no ceiling light until one is patched '
             + 'to accept it.', 'warning'));
     } else if (state.donor && !state.lighting.size) {
-        parts.push(note(`Nothing lights this room. ${state.donor} is lit by `
-            + `${lightsFor(rooms, state.donor).join(', ')} — tick one of those below to patch it `
-            + 'into accepting your room.', 'warning'));
-    }
-
-    if (result.unanswered.length) {
-        parts.push(note(`Nothing has been said about ${asProse(result.unanswered)}, so `
-            + `${result.unanswered.length === 1 ? 'that gate is' : 'those gates are'} `
-            + 'left open rather than guessed. The list above errs wide.'));
+        verdict.push(note(`Nothing lights this room. ${state.donor} is lit by `
+            + `${lightsFor(rooms, state.donor).join(', ')} — tick one of those under “What goes in it” `
+            + 'to patch it into accepting your room.', 'warning'));
     }
 
     if (result.hollow.length) {
-        parts.push(note(`${result.hollow.length} of the clusters this room could take cannot resolve `
+        verdict.push(note(`${result.hollow.length} of the clusters this room could take cannot resolve `
             + 'furniture for an element they cannot do without, so each would be abandoned every time '
             + `it is attempted: ${result.hollow.map((entry) => entry.name).join(', ')}.`, 'warning'));
     }
 
-    if (result.refusedBy.length) parts.push(refusals(result));
+    out.replaceChildren(...verdict);
 
-    out.replaceChildren(...parts);
+    /*
+     * What the gates did, on the step where they are typed.
+     *
+     * These two used to sit under the headline, several controls above the fields that
+     * decide them. They are the only reading in the pane that answers a keystroke, so they
+     * belong beside the keystroke.
+     */
+    const said = [];
 
+    if (result.unanswered.length) {
+        said.push(note(`Nothing has been said about ${asProse(result.unanswered)}, so `
+            + `${result.unanswered.length === 1 ? 'that gate is' : 'those gates are'} `
+            + 'left open rather than guessed. The reach beside them errs wide.'));
+    }
+
+    if (result.refusedBy.length) said.push(refusals(result));
+
+    gates?.replaceChildren(...said);
+
+    drawReach(result);
     drawCopy();
     drawContents(result);
-    drawPlan();
+    drawChosen();
+
+    const plan = drawPlan();
+    drawSteps(result, plan);
+}
+
+/**
+ * How far the room reaches, as two bars beside the gates.
+ *
+ * The same two numbers the headline states in prose one step back. Restated rather than
+ * moved, because they are read for two different reasons: on the identity step the count is
+ * the answer to "what did copying that room get me", and here it is the needle that moves
+ * as a floor is typed. A sentence on another step cannot be watched.
+ */
+function drawReach(result) {
+    const out = $('#room-creator-reach');
+    if (!out) return;
+
+    const title = document.createElement('p');
+    title.className = 'creator-card-title';
+    title.textContent = 'Reach';
+
+    out.replaceChildren(
+        title,
+        bar('Clusters', `${result.possible.length} / ${result.total}`,
+            result.total ? result.possible.length / result.total : 0),
+        bar('Presets in reach', String(result.reachable.length),
+            // Against the whole catalogue, so the two bars are read on one scale: a room
+            // admitting every cluster still reaches only three quarters of the furniture.
+            result.catalogue ? result.reachable.length / result.catalogue : 0),
+    );
+}
+
+function bar(label, value, fraction) {
+    const wrapper = document.createElement('div');
+    const line = document.createElement('div');
+    const name = document.createElement('span');
+    const count = document.createElement('span');
+    const track = document.createElement('div');
+    const fill = document.createElement('div');
+
+    wrapper.className = 'room-creator-bar';
+    line.className = 'room-creator-bar-label';
+    count.className = 'room-creator-bar-value';
+    track.className = 'room-creator-bar-track';
+    fill.className = 'room-creator-bar-fill';
+
+    name.textContent = label;
+    count.textContent = value;
+    fill.style.width = `${Math.round(Math.min(Math.max(fraction, 0), 1) * 100)}%`;
+
+    line.append(name, count);
+    track.append(fill);
+    wrapper.append(line, track);
+    return wrapper;
+}
+
+/**
+ * The clusters this room holds, gathered as chips.
+ *
+ * The picker beside these lists what the gates allow, capped at forty rows and sorted with
+ * the refused ones last -- so a cluster ticked before the floor was stated can be off the
+ * bottom of it. Without this the pane could show a room and not show what is in it.
+ */
+function drawChosen() {
+    const out = $('#room-creator-chosen');
+    if (!out) return;
+
+    const names = [...state.clusters].sort();
+    const title = document.createElement('p');
+
+    title.className = 'creator-card-title';
+    title.textContent = names.length
+        ? `In this room · ${names.length} ${names.length === 1 ? 'cluster' : 'clusters'}`
+        : 'In this room';
+
+    if (!names.length) {
+        out.replaceChildren(title, note('Nothing yet. Tick a cluster beside this, or copy a '
+            + 'room’s furniture on the first step.'));
+        return;
+    }
+
+    const list = document.createElement('ul');
+    list.className = 'room-creator-chips';
+
+    for (const name of names) {
+        const row = document.createElement('li');
+        const chip = document.createElement('button');
+
+        chip.type = 'button';
+        chip.className = 'room-creator-chip';
+        chip.title = `Take ${name} back out of this room`;
+
+        // The name and the cross are one press. A chip is small, and two targets inside it
+        // is two ways to miss -- there is nothing else pressing one could mean.
+        chip.append(name, Object.assign(document.createElement('span'), { textContent: '✕' }));
+        chip.addEventListener('click', () => toggleRoomCluster(name, false));
+
+        row.append(chip);
+        list.append(row);
+    }
+
+    out.replaceChildren(title, list);
+}
+
+/**
+ * The rail: what each step has to say about itself, and the line under all of them.
+ *
+ * Read off the same `result` and plan the panes are drawn from rather than tracked, for the
+ * reason `redraw` rebuilds whole -- a rail that kept its own counts could disagree with the
+ * pane beside it about what the author last typed.
+ */
+function drawSteps(result, plan) {
+    if (!steps) return;
+
+    const stated = Object.keys(state.context).length;
+    const subtitle = $('#room-creator-subtitle');
+
+    if (subtitle) {
+        subtitle.textContent = state.name
+            ? `${state.name} · ${editingRoom() ? 'in this mod' : 'new'}`
+            : 'unnamed';
+    }
+
+    steps.update({
+        identity: { hint: state.name || 'not named yet', note: STEP_NOTES.identity },
+        where: {
+            hint: stated ? `${stated} of 7 stated` : 'nothing set',
+            note: STEP_NOTES.where,
+        },
+        contents: {
+            hint: `${state.clusters.size} ${state.clusters.size === 1 ? 'cluster' : 'clusters'}`,
+            note: STEP_NOTES.contents,
+        },
+        write: {
+            hint: plan ? `${plan.count} ${plan.count === 1 ? 'file' : 'files'}` : '',
+            note: STEP_NOTES.write,
+        },
+    });
+
+    // The first thing standing between this room and a write, or how far it reaches when
+    // nothing is. One line: the plan itself says the rest, on the step that is about it.
+    steps.say(plan?.problems?.[0]
+        ?? `${result.possible.length} of ${result.total} clusters suit this room.`);
 }
 
 /**
@@ -744,9 +940,15 @@ function contentsOf(name, presets) {
     return list;
 }
 
+/**
+ * What is about to be written, and a count of it for the rail.
+ *
+ * Returns `{ count, problems }` rather than drawing the rail itself: the rail is the same
+ * `planRoom` read twice over otherwise, and this pane redraws on every keystroke.
+ */
 function drawPlan() {
     const out = $('#room-creator-plan');
-    if (!out) return;
+    if (!out) return null;
 
     const plan = planRoom(choices(), rooms, chain);
     const editing = editingRoom();
@@ -806,8 +1008,9 @@ function drawPlan() {
 
     out.replaceChildren(...parts);
 
+    const counted = { count: landing.length, problems: plan.problems };
     const button = $('#room-creator-write');
-    if (!button) return;
+    if (!button) return counted;
 
     const blocked = !window.selectedMod?.baseFolder;
     const unnamed = plan.problems.some((text) => text.includes('needs a name')
@@ -821,6 +1024,8 @@ function drawPlan() {
     else if (editing) button.textContent = `Save ${state.name}`;
     else if (appends) button.textContent = `Write ${landing.length - appends} files, add to ${appends}`;
     else button.textContent = `Write ${landing.length} files`;
+
+    return counted;
 }
 
 /** The author's choices, in the shape `planRoom` reads. */

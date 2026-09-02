@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, gotoFlow } from './support/harness.js';
+import { installFsHarness, gotoFlow } from '../test-support/harness.js';
 
 /**
  * The panels beside the floorplan.
@@ -1291,7 +1291,12 @@ test('a room class no cluster targets says so rather than opening onto nothing',
     // as the panel having failed rather than as the room having no furniture.
     expect(shown.count).toBe('0');
     expect(shown.rows).toBe(0);
-    expect(shown.empty).toContain('No furniture cluster targets Atrium');
+
+    // The walk's own sentence rather than one of the panel's. The two used to word this
+    // separately, and the panel's named the room filters whatever had actually stopped the
+    // clusters -- see `unfurnishedReason`.
+    expect(shown.empty).toBe('No furniture cluster is placeable in Atrium rooms, so nothing is '
+        + 'furnished there at all.');
 });
 
 test('the section is absent, not empty, before the reference data arrives', async ({ page }) => {

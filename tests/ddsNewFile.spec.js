@@ -2,10 +2,10 @@ import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, alerts,
     readFile, listDir, addDdsContent,
-} from './support/harness.js';
+} from '../test-support/harness.js';
 import {
     ddsBareFixture, ddsManifestFixture, ddsManifestNoBlocksFixture, FLAT_MOD,
-} from './support/fixtures.js';
+} from '../test-support/fixtures.js';
 
 /**
  * Add new..., the one place this flow creates content.
@@ -21,7 +21,7 @@ const FLAT = 'Mods/FlatMod/plugins/BookcaseOffice/DDSContent';
 
 const modal = (page) => page.locator('#new-dds-file-modal');
 const section = (page, id) => page.locator(`.file-panel-category[data-category="${id}"]`);
-const rows = (page) => page.locator('#strings-window tbody tr');
+const rows = (page) => page.locator('#strings-window tbody.strings-rows tr');
 
 test.beforeEach(async ({ page }) => {
     await installFsHarness(page);
@@ -70,7 +70,7 @@ test('a document is asked for a name, a strings file for which file', async ({ p
 
     // A tree, a message and a block each end in a block with a line of text, so all
     // three are named and all three are asked what it says.
-    for (const type of ['tree', 'message', 'block']) {
+    for (const type of ['tree:0', 'message', 'block']) {
         await page.selectOption('#new-dds-file-type', type);
         await expect(name).toBeVisible();
         await expect(line).toBeVisible();
@@ -82,6 +82,74 @@ test('a document is asked for a name, a strings file for which file', async ({ p
     await expect(name).toBeHidden();
     await expect(line).toBeHidden();
     await expect(file).toBeVisible();
+});
+
+test('a tree is offered as the six things the game does with one', async ({ page }) => {
+    await openBareMod(page);
+    await page.locator('#new-file-button').click();
+
+    // "Tree" was one option, and the tree it made was a v-mail -- the template's own
+    // treeType, and the wrong answer five times out of six. What the game has is six
+    // formats sharing a struct, so that is what is asked for.
+    const kinds = page.locator('#new-dds-file-tree-kinds option');
+    await expect(kinds).toHaveText([
+        'Conversation', 'V-mail', 'Document', 'Newspaper article', 'Message library',
+        'Interaction dialog',
+    ]);
+
+    // The first of them is what the dialog opens on, with its line under the dropdown.
+    await expect(page.locator('#new-dds-file-type')).toHaveValue('tree:0');
+    await expect(page.locator('#new-dds-file-type-blurb'))
+        .toHaveText('Two citizens talking out loud in the world');
+
+    // A message, a block and a strings file have no kind, so nothing is said about them.
+    await page.selectOption('#new-dds-file-type', 'message');
+    await expect(page.locator('#new-dds-file-type-blurb')).toHaveText('');
+});
+
+test('a new tree is the kind that was asked for, and one the game will run', async ({ page }) => {
+    await openBareMod(page);
+
+    // Each kind's trigger point is the one the dispatching code looks for: a conversation
+    // registered under vmail(3) is considered by nothing, and a newspaper left at
+    // never(5) is filtered out of every article query. Both fail silently in game, which
+    // is why they are checked on what lands on disk rather than on what is on screen.
+    const kinds = [
+        { kind: 0, name: 'Chat', treeType: 0, triggerPoint: 0 },
+        { kind: 1, name: 'Mail', treeType: 1, triggerPoint: 3 },
+        { kind: 2, name: 'Note', treeType: 2, triggerPoint: 0 },
+        { kind: 3, name: 'Story', treeType: 3, triggerPoint: 6 },
+        { kind: 4, name: 'Library', treeType: 4, triggerPoint: 5 },
+        { kind: 5, name: 'Dialog', treeType: 5, triggerPoint: 7 },
+    ];
+
+    for (const { kind, name } of kinds) {
+        await addDdsContent(page, { type: 'tree', kind, name, line: `${name} line` });
+        await expect.poll(() => listDir(page, `${BARE}/DDS/Trees`)).toHaveLength(kind + 1);
+    }
+
+    const files = await listDir(page, `${BARE}/DDS/Trees`);
+    const trees = Object.fromEntries(await Promise.all(files.map(async (file) => {
+        const tree = JSON.parse(await readFile(page, `${BARE}/DDS/Trees/${file}`));
+        return [tree.name, tree];
+    })));
+
+    for (const { name, treeType, triggerPoint } of kinds) {
+        expect(trees[`BareMod-${name}`], name)
+            .toMatchObject({ treeType, triggerPoint });
+    }
+
+    // And the values each kind needs beyond those two. A document with no background on
+    // a 0x0 page opens blank; an interaction dialog at limitation 0 is added to nobody.
+    expect(trees['BareMod-Chat'].participantA).toMatchObject({
+        required: true, triggers: [0, 4],
+    });
+    expect(trees['BareMod-Note'].document)
+        .toMatchObject({ background: 'Paper', fill: 1, size: { x: 342, y: 482 } });
+    expect(trees['BareMod-Note'].messages[0].usePages).toBe(true);
+    expect(trees['BareMod-Dialog'].interactionCitizenLimitation).toBe(20);
+
+    expect(await alerts(page)).toEqual([]);
 });
 
 test('a document will not be created without a name', async ({ page }) => {

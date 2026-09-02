@@ -2,10 +2,10 @@ import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, confirms, queueConfirms,
     listDir, readFile,
-} from './support/harness.js';
+} from '../test-support/harness.js';
 import {
     soFolderContent, caseWithCustomReference, caseWithRoomPermissions,
-} from './support/fixtures.js';
+} from '../test-support/fixtures.js';
 
 /**
  * The case flow's file panel, grouped by ScriptableObject type.

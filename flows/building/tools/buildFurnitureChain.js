@@ -5,15 +5,31 @@
  *   node buildFurnitureChain.js /path/to/export
  *
  * The source is a folder per type holding one JSON file per asset, either on disk or
- * behind an HTTP server that indexes directories. Ten of those types describe how the
+ * behind an HTTP server that indexes directories. Twelve of those types describe how the
  * game decides what furniture a room gets; this reads them, resolves their cross
- * references, throws away every field the editor does not read, and writes what is left
- * as one file.
+ * references, throws away every field the editor does not read, and writes what is left as
+ * two files.
  *
- * The trimming is the point. The ten types are 1,381 files and 7.8 MB, which is not
- * something a hover can wait on; what survives is 236 KB, 21 KB over the wire, fetched
- * once per page. The fields kept are exactly those `furnitureChain.js` filters on, plus
- * the names it displays -- see the comment on each block below for why each one is here.
+ * The trimming is the point. The twelve types are 1,452 files and 8 MB, which is not
+ * something a hover can wait on; what survives is 233 KB of chain, 21 KB over the wire,
+ * fetched once per page, with 124 KB beside it for the room creator.
+ *
+ * The two files are read by two different panes and compose rather than overlap:
+ *
+ * | File | Read by | Answers |
+ * |---|---|---|
+ * | `furnitureChain.json` | the building flow's furniture panel | what could spawn on a square |
+ * | `roomCreator.json` | the room creator | what a room admits, given where it sits |
+ *
+ * A field belongs to exactly one of them. Writing one into two would be two answers to one
+ * question about the game, with nothing to say which was right -- the duplication
+ * `refs/README.md` exists to prevent, and what the reference-data tests pin.
+ *
+ * **There is no third file.** The furniture creator used to read one and now reads the
+ * author's own exported ScriptableObjects an asset at a time: a trim has to anticipate
+ * every question, that one had to be widened three times in a day, and the pane it served
+ * is opened deliberately rather than on every pointer move. See
+ * `flows/scriptableObject/scripts/furnitureAssets.js`.
  *
  * Where a field's meaning comes from the game's own code, the comment cites it by line in
  * `GenerationController.cs`, which is served at the root of the dump alongside
@@ -37,9 +53,10 @@ const OUT_ROOMS = join(ROOT, 'refs', 'derived', 'roomCreator.json');
 /**
  * The twelve types the two files are made of. Anything not here is not read.
  *
- * The last two are the room creator's alone: materials and lighting are gated on the room
- * the same way furniture is, and neither is reachable from a square, so the building
- * flow's walk never wanted them.
+ * `MaterialGroupPreset` and `RoomLightingPreset` are the room creator's alone: materials
+ * and lighting are gated on the room the same way furniture is, and neither is reachable
+ * from a square, so the building flow's walk never wanted them.
+ *
  */
 const TYPES = [
     'AddressPreset', 'RoomConfiguration', 'RoomTypePreset', 'RoomTypeFilter',
@@ -48,13 +65,10 @@ const TYPES = [
     'MaterialGroupPreset', 'RoomLightingPreset',
 ];
 
-
 // The enums and the wall-rule reader are shared with `furnitureOverlay.js`, which reads a
 // mod's `FurnitureClass` files into the same shape. See that module on why the enums are
 // not taken from `soEnums.json`.
-import {
-    WALL_SECTION_CLASS, wallRulesOf, stairwellOf,
-} from '../scripts/furnitureRules.js';
+import { WALL_SECTION_CLASS, wallRulesOf, stairwellOf } from '../../../core/furnitureRules.js';
 
 
 /* -------------------------------------------------------------------------- */

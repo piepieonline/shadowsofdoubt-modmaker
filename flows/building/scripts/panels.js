@@ -29,7 +29,7 @@ import {
 } from './dividerEnds.js';
 import {
     furnitureChain, furnitureAt, explainFurniture, furniturePresetSections,
-    findFurniturePreset, clusterWarnings, UNAPPLIED_GATES,
+    findFurniturePreset, clusterWarnings, unfurnishedReason, UNAPPLIED_GATES,
 } from './furnitureChain.js';
 import { searchSelect } from '../../../core/components/searchSelect/searchSelect.js';
 import { createSelectPool } from './keptSelects.js';
@@ -639,7 +639,7 @@ function variationControls(model, index, address, state, { onRebuild, canEdit = 
  *              when nothing is open
  * @param onOpen called with the slot to open
  */
-export function renderFloorPanel(container, floor, { onOpen, onGenerateMesh } = {}) {
+export function renderFloorPanel(container, floor, { onOpen, onGenerateMesh, onMeshRoof } = {}) {
     clear(container);
 
     if (!floor?.blueprint) {
@@ -685,7 +685,7 @@ export function renderFloorPanel(container, floor, { onOpen, onGenerateMesh } = 
     }));
 
     if (storey) container.appendChild(layoutSelect(storey, floor.slot, onOpen));
-    if (floor.mesh) container.appendChild(meshSection(floor.mesh, onGenerateMesh));
+    if (floor.mesh) container.appendChild(meshSection(floor.mesh, onGenerateMesh, onMeshRoof));
 }
 
 /**
@@ -701,7 +701,7 @@ export function renderFloorPanel(container, floor, { onOpen, onGenerateMesh } = 
  * and every edit made afterwards silently pulls it out of step. It is the one thing here
  * you would not otherwise think to check.
  */
-function meshSection(mesh, onGenerate) {
+function meshSection(mesh, onGenerate, onRoof) {
     const notes = [];
     if (mesh.stale) notes.push('Built from floors that have changed since — generate again.');
     if (mesh.status) notes.push(mesh.status);
@@ -717,9 +717,36 @@ function meshSection(mesh, onGenerate) {
             ...unless(mesh.canGenerate && !mesh.busy),
             onclick: () => onGenerate?.(),
         }),
+        roofToggle(mesh, onRoof),
         notes.length
             ? el('small', { class: mesh.stale ? 'mesh-note stale' : 'mesh-note', text: notes.join(' ') })
             : null,
+    ]);
+}
+
+/**
+ * Whether the next generation puts a top on the model.
+ *
+ * Ticked for the ordinary building, which is the one nothing is stacked on. Untick it for
+ * one that carries another floor above it: what would be its roof is that floor's
+ * underside, and two surfaces in the same place shimmer against each other as the camera
+ * moves past.
+ *
+ * It reads off the preset the last generation wrote, so a building that was built without
+ * a roof comes back unticked -- otherwise every edit to one of its floors would quietly
+ * put the roof back the next time the mesh was regenerated.
+ */
+function roofToggle(mesh, onRoof) {
+    return el('label', { class: 'mesh-roof', title: mesh.canGenerate
+        ? 'Cap the top of the model. Untick it when another floor sits above this building.'
+        : 'Needs a mod folder and a building to generate for' }, [
+        el('input', {
+            type: 'checkbox',
+            checked: mesh.roof ? 'checked' : null,
+            ...unless(mesh.canGenerate && !mesh.busy),
+            onchange: (event) => onRoof?.(event.target.checked),
+        }),
+        el('span', { text: 'Roof' }),
     ]);
 }
 
@@ -1600,15 +1627,26 @@ function furnitureGroup(group) {
 function fillFurnitureGroup(details, group) {
     if (details.querySelector('.furniture-row, .furniture-empty')) return;
 
-    // A room class no cluster targets. 22 of the base game's own address-and-room pairs
-    // are in this state -- every `Atrium`, and every `Null` room in a real address -- so
-    // it is a thing rooms are rather than a sign anything is wrong. Said, because a
-    // group that opened onto nothing would read as the panel having failed.
+    // A room no cluster furnishes. 22 of the base game's own address-and-room pairs are in
+    // this state -- every `Atrium`, and every `Null` room in a real address -- so it is a
+    // thing rooms are rather than a sign anything is wrong. Said, because a group that
+    // opened onto nothing would read as the panel having failed.
+    //
+    // The sentence is `unfurnishedReason`'s rather than one of this file's, because it is
+    // the same fact the preset check reports and this panel had its own wording for it: one
+    // that named the room *filters* whatever had actually stopped the clusters, so a room
+    // that was merely too big sent the author to widen a filter that was already wide
+    // enough.
+    //
+    // It answers only for a room no cluster reaches, and null otherwise -- clusters reaching
+    // this room and putting down slots the square itself has no use for is the other way to
+    // arrive here, and is the room being fine and this square not.
     if (group.classes.length === 0 && group.empty === 0) {
         details.appendChild(el('p', {
             class: 'status-note furniture-empty',
-            text: `No furniture cluster targets ${group.roomClass}, so the game furnishes `
-                + 'nothing here.',
+            text: unfurnishedReason(group)
+                ?? `Clusters are placeable in ${group.roomClass} rooms, but none of the slots `
+                    + 'they put down can be filled here.',
         }));
         return;
     }
@@ -2028,6 +2066,7 @@ export function createPanels(elements, model, state = createToolState(), handler
             renderFloorPanel(elements.floor, handlers.getFloor?.() ?? null, {
                 onOpen: handlers.onOpenFloor,
                 onGenerateMesh: handlers.onGenerateMesh,
+                onMeshRoof: handlers.onMeshRoof,
             });
         }
 

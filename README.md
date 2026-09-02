@@ -129,13 +129,14 @@ names them correctly, but demo mode reads no install and there is nothing else t
 
 ## Tests
 
-Two suites, and the line between them is worth knowing before adding a test.
+Three suites, and the line between them is worth knowing before adding a test.
 
 ```sh
-npm test                 # both, unit first
-npm run test:unit        # Vitest, ~1s
+npm test                 # unit and Playwright, unit first
+npm run test:unit        # Vitest, ~3s
 npm run test:unit:watch  # the one to leave running
-npm run test:playwright  # Chromium, ~2min
+npm run test:playwright  # Chromium, ~3min
+npm run test:e2e         # the walkthroughs, played. Not part of npm test
 npm run test:ui          # interactive Playwright
 npm run report           # last HTML report
 ```
@@ -149,22 +150,31 @@ tool does to a node.
 > a `document`. If a test needs one of the three, it belongs in the Playwright suite. `environment: 'node'`
 > makes the third of those a hard failure rather than a matter of discipline.
 
-The single exception is `fetch` for `/refs/**` (`tests/support/refs.js`), which serves the same files
+The single exception is `fetch` for `/refs/**` (`test-support/refs.js`), which serves the same files
 `http-server` does from the same paths. It is not a mock of anything, and nothing else is stubbed.
 
-**Playwright specs live in `tests/`**, named `*.spec.js`, and drive the real app in a real page.
+**Playwright specs live in `tests/`**, named `*.spec.js`, and drive the real app in a real page. This is the
+app's own coverage, a feature at a time, and it is what `npm test` runs.
+
+**`e2e/` holds one test per shipped tutorial**, which plays that walkthrough from its first step to its last:
+doing what every step asks, in order, from an empty mod to the file the tutorial set out to build. A step
+naming a control that is not there, or waiting on a condition the app never satisfies, leaves a player stuck
+with nowhere to click — and nothing short of playing the file finds that. They are about the tutorials rather
+than about the app, so they have a config of their own (`playwright.e2e.config.js`) and are asked for by name.
+`npm run demo` plays them paced and headed, to be watched.
 
 | | Tests | Wall clock |
 |---|---:|---:|
-| Unit (Vitest) | 168 | ~2s |
-| Playwright | 319 | ~6min |
+| Unit (Vitest) | 1065 | ~3s |
+| Playwright (`tests/`) | 685 | ~3min |
+| Walkthroughs (`e2e/`) | 2 | ~25s |
 
 The app stays zero-build: npm is only needed for tests and the dev server, never to use or deploy the site.
 
 Playwright tests never touch your real filesystem. `showDirectoryPicker` cannot be driven by Playwright, so the harness
-(`tests/support/harness.js`) seeds the Origin Private File System and hands the app genuine browser-native
+(`test-support/harness.js`) seeds the Origin Private File System and hands the app genuine browser-native
 `FileSystemDirectoryHandle` objects — real `createWritable`, `seek` and async `values()` rather than a mock.
-Fixtures live in `tests/support/fixtures.js`.
+Fixtures live in `test-support/fixtures.js`.
 
 These are **baseline** tests recorded against current behaviour, to refactor against in later phases. Where
 current behaviour looks wrong, the test asserts it anyway and says so in a comment.

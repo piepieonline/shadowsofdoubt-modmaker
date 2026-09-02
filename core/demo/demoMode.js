@@ -7,7 +7,7 @@
  * The point is that nothing about the app changes. Rather than teaching the flows about
  * a fake filesystem, this seeds the **Origin Private File System** and hands the shell
  * genuine browser-native `FileSystemDirectoryHandle` objects, exactly as the Playwright
- * harness does (see tests/support/harness.js). `createWritable({ keepExistingData })`,
+ * harness does (see test-support/harness.js). `createWritable({ keepExistingData })`,
  * `writable.seek()`, async `values()` and nested `getDirectoryHandle(..., { create })`
  * are the browser's real implementations, so every flow reads and writes the way it
  * always does and there is no demo-only code path to drift out of step.

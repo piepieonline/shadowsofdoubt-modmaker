@@ -12,13 +12,15 @@ import { addTreeElement } from './scripts/jsonTreeAdditions.js';
 import { assetTypeOfField } from './scripts/assetFields.js';
 import { instanceOptions, isGeneratedId, isInstanceReference } from './scripts/instances.js';
 import { canBuildElement, elementTypeAt, newElement } from './scripts/elementTemplates.js';
+import { Relevance, optionFilterFor, relevanceOf } from './scripts/treeViews.js';
+import { newspaperOptions, unnamedValueOption } from './scripts/newspaperFields.js';
 // The mod's own assets, by type. This is the case flow's listing of the content folder --
 // the same folder, listed the same way -- rather than a second walk of it that could
 // disagree; see the note on refreshing it in scripts/ui.js.
 import { moddedNamesOfType } from '../scriptableObject/scripts/contentList.js';
 import { createNewFile, createFileIfNotExisting, addOrModifyStrings, modPath } from './scripts/modFileManager.js';
 import { DDS_BLOCKS_VIRTUAL, ddsContentFolder, readManifest, stringsFileHandle, toReal } from '../../core/ddsManifest.js';
-import { newFile, refreshPanel } from './scripts/ui.js';
+import { applyViewVisibility, newFile, refreshPanel } from './scripts/ui.js';
 
 export const DUMMY_KEYS = {
     'LOCALISATION_DUMMY_KEY': '_ENG Localisation_',
@@ -232,6 +234,27 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
             });
         });
 
+        // What a tree of this kind actually reads. The six kinds of DDS tree barely share
+        // a format -- a document is a page with elements on it, a conversation is two
+        // citizens and a branch graph -- and the fields the other five need are noise in
+        // front of an author working on the sixth. See scripts/treeViews.js.
+        //
+        // Marked on every rebuild rather than decided once: `treeType` is a dropdown in
+        // this very tree, so changing it re-renders straight into the new view. Taking the
+        // rows off the screen is the switch's job, which is why the answer is applied
+        // rather than assumed -- a document opened under a switch that is already on has
+        // to arrive where every other open document already is.
+        const treeType = viewType();
+        tree.findAndHandle(() => true, item => {
+            const field = resolveField([rootType, ...fieldPath(item)], window.typeLayout);
+            item.el.classList.toggle(
+                'dds-irrelevant-node',
+                relevanceOf(field, treeType) === Relevance.HIDDEN
+            );
+        });
+
+        applyViewVisibility();
+
         openDefaultNodes(tree);
 
         // A newspaper tree names an article that is configured in a file of its own,
@@ -292,6 +315,22 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
                     };
                 }
 
+                // The two newspaper fields, which the game reads as numbers and this
+                // editor offers as lists. Asked before the enum lookup below, because the
+                // layout types them `Int32` and no enum answers to that -- so they were a
+                // box wanting a number that nothing on screen explained. See
+                // scripts/newspaperFields.js, and the note there on why the game's own
+                // `Category` enum is the wrong list for one of them.
+                const newspaperList = newspaperOptions(field);
+                if (newspaperList) {
+                    return {
+                        kind: NodeKind.ENUM,
+                        options: newspaperList,
+                        currentValue: valueEl.innerText,
+                        leadingOptions: unnamedValueOption(newspaperList, valueEl.innerText),
+                    };
+                }
+
                 const options = window.enums[type];
                 if (options?.length > 0) {
                     // A boolean is an enum of ['false', 'true'], so it picks the control
@@ -304,6 +343,10 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
                         options,
                         isBoolean,
                         currentValue: isBoolean ? options.indexOf(rendered) : rendered,
+                        // A field can be an enum without every value of that enum being
+                        // valid in it: which trigger points a tree may have is decided by
+                        // what kind of tree it is. See scripts/treeViews.js.
+                        include: optionFilterFor(field, viewType()),
                     };
                 }
 
@@ -325,7 +368,17 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
             render: {
                 [NodeKind.ENUM]: (valueEl, item, node) => {
                     createSelectEditor(
-                        valueEl, { options: node.options, selectedValue: node.currentValue },
+                        valueEl,
+                        {
+                            options: node.options,
+                            selectedValue: node.currentValue,
+                            // Part of the list, for a field whose valid values depend on
+                            // what kind of tree it is in.
+                            include: node.include ?? null,
+                            // The entry a file needs when it holds a number this list has
+                            // no name for -- a runtime-written newspaper context.
+                            leadingOptions: node.leadingOptions ?? [],
+                        },
                         async (value) => {
                             // Every other enum is stored as its index; a boolean is
                             // stored as a boolean, and writing 1 into one would be a
@@ -391,6 +444,22 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
                 ]);
             },
         });
+    }
+
+    /**
+     * Which kind of tree this window is showing part of, for the view.
+     *
+     * A tree says so itself. A message says nothing -- it is a document of its own, and
+     * the same message can be pulled into trees of different kinds -- so it takes the kind
+     * from the tree it was drilled into, which `loadFile` already passes down and already
+     * reads this way for the newspaper key.
+     *
+     * Undefined for a block, which has no per-kind fields, and for a message opened
+     * straight from the panel with no tree above it. Both mean "no view": everything is
+     * shown, which is the honest answer when there is nothing to go on.
+     */
+    function viewType() {
+        return rootType === ROOT_TYPES.tree ? data.treeType : parentData?.treeType;
     }
 
     /** The game's name for the type of this array's elements, or null. */

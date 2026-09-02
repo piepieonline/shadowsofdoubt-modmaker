@@ -21,7 +21,7 @@ import {
     readFootprints, trimToWindowFloors, buildMesh, collectWindows, buildWindowData,
     fillEnclosedVoids, paintTextures, windowPixels, toObj, prefabDefinition,
     generateBuilding, sourceFloorHash, isMeshStale,
-    MESH_SOURCE_FIELD, GENERATED_FIELDS, MESH_CHILD_LOCAL_Y,
+    MESH_SOURCE_FIELD, MESH_ROOF_FIELD, GENERATED_FIELDS, MESH_CHILD_LOCAL_Y,
 } from './meshExport.js';
 import { loadVanillaPreset, loadVanillaBlueprint, withoutDefaults } from './buildingLibrary.js';
 
@@ -63,6 +63,32 @@ const square = (x0, y0, x1, y1) => {
     for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) cells.push(`${x},${y}`);
     return cells;
 };
+
+/** The vertices of every face pointing a given way, which is how a cap is found. */
+const facing = (mesh, axis, sign) => mesh.vertices
+    .filter((_, index) => mesh.normals[index][axis] === sign);
+
+/** The mesh as quads, since four consecutive vertices are one and nothing else is. */
+const quads = (mesh) => mesh.vertices
+    .reduce((all, vertex, index) => {
+        if (index % 4 === 0) all.push({ corners: [], normal: mesh.normals[index] });
+        all[all.length - 1].corners.push(vertex);
+        return all;
+    }, []);
+
+/** How far a quad reaches along each axis, which is what tells a lip from a full cap. */
+const span = (quad) => ['x', 'y', 'z'].reduce((sizes, axis) => {
+    const values = quad.corners.map((corner) => corner[axis]);
+    return { ...sizes, [axis]: Math.max(...values) - Math.min(...values) };
+}, {});
+
+/** Shell space: 1.008 out, 0.108 up, and the same again spread over the height. */
+const LIFT = 13.5 * 0.008;
+const shell = (gridHeight) => (point) => ({
+    x: point.x * 1.008,
+    y: point.y * (1 + LIFT / gridHeight) + LIFT,
+    z: point.z * 1.008,
+});
 
 
 /* -------------------------------------------------------------------------- */
@@ -480,7 +506,8 @@ describe('trimToWindowFloors', () => {
         const { body, rooftops } = trimToWindowFloors(floors);
 
         expect(body).toHaveLength(1);
-        expect(rooftops).toEqual(['roof', 'vents']);
+        // The footprints themselves, in order, because the mesh is still built from them.
+        expect(rooftops.map((floor) => floor.blueprint)).toEqual(['roof', 'vents']);
     });
 
     it('keeps a rooftop that has floors above it', () => {
@@ -499,20 +526,59 @@ describe('trimToWindowFloors', () => {
 });
 
 describe('buildMesh', () => {
-    it('walls a single cell on all four sides, with a floor and a ceiling', () => {
+    it('walls a single cell on all four sides, with a ceiling and no floor', () => {
         const mesh = buildMesh([footprint(['5,5'])]);
 
-        // Four walls plus a cap top and bottom, two triangles each.
-        expect(mesh.vertices).toHaveLength(6 * 4);
-        expect(mesh.triangles).toHaveLength(6 * 6);
+        // Four walls plus the cap over them, two triangles each. The underside is the
+        // base, and it is not built.
+        expect(mesh.vertices).toHaveLength(5 * 4);
+        expect(mesh.triangles).toHaveLength(5 * 6);
     });
 
     it('puts no wall between two cells of the same floor', () => {
         const one = buildMesh([footprint(['5,5'])]).triangles.length;
         const two = buildMesh([footprint(['5,5', '6,5'])]).triangles.length;
 
-        // Six walls rather than eight, and two caps each way rather than one.
+        // Six walls rather than eight, and two caps rather than one.
         expect(two).toBe(one * 2 - 2 * 6);
+    });
+
+    it('leaves the underside of the lowest storey off', () => {
+        const mesh = buildMesh([footprint(square(5, 5, 8, 8)), footprint(square(5, 5, 8, 8))]);
+
+        expect(facing(mesh, 'y', -1)).toHaveLength(0);
+    });
+
+    it('caps the soffit under a storey that overhangs the one below', () => {
+        const mesh = buildMesh([footprint(['5,5']), footprint(['5,5', '6,5'])]);
+        const soffit = facing(mesh, 'y', -1);
+
+        // The overhanging square only, at the seam between the two storeys -- and still
+        // nothing under the storey standing on the ground. Measured in shell space, which
+        // is where every face of it is.
+        expect(soffit).toHaveLength(4);
+        const seam = shell(2 * FLOOR_HEIGHT)({ x: 0, y: FLOOR_HEIGHT, z: 0 }).y;
+        for (const vertex of soffit) expect(vertex.y).toBeCloseTo(seam, 6);
+    });
+
+    it('leaves every full upward face off for a building with another floor above it', () => {
+        // A storey that steps in, so there is a terrace to leave off as well as a top.
+        const floors = [footprint(square(5, 5, 8, 8)), footprint(square(6, 6, 7, 7))];
+
+        const decks = (mesh) => quads(mesh)
+            .filter((quad) => quad.normal.y === 1)
+            .filter((quad) => span(quad).x > 0.2 && span(quad).z > 0.2);
+
+        expect(decks(buildMesh(floors)).length).toBeGreaterThan(0);
+        // The lip is the only thing facing up now, and it is 10 cm across on one axis.
+        expect(decks(buildMesh(floors, { roof: false }))).toHaveLength(0);
+    });
+
+    it('keeps the walls of a building it puts no roof on', () => {
+        const floors = [footprint(square(5, 5, 8, 8))];
+        const walls = (mesh) => mesh.vertices.filter((_, i) => mesh.normals[i].y === 0);
+
+        expect(walls(buildMesh(floors, { roof: false }))).toEqual(walls(buildMesh(floors)));
     });
 
     it('caps only where the shape changes between storeys', () => {
@@ -564,6 +630,102 @@ describe('buildMesh', () => {
             expect(bandOf(uv.u)).toBe(bandOf(uv.u + 1e-9));
             expect(uv.u).toBeGreaterThanOrEqual(bandOf(uv.u) * 0.1875);
         }
+    });
+
+    it('builds the shell 1.008 across the grid, lifted that far and that much taller', () => {
+        const mesh = buildMesh([footprint(['3,3'])]);
+        const y = mesh.vertices.map((v) => v.y);
+
+        // The furthest corner of the lot: cell 3 is 12.6 m from the centre and its outer
+        // face another 0.9 m past that, which the outset pushes out by nearly 11 cm.
+        expect(Math.max(...mesh.vertices.map((v) => v.x))).toBeCloseTo(13.5 * 1.008, 9);
+        expect(Math.max(...mesh.vertices.map((v) => v.z))).toBeCloseTo(13.5 * 1.008, 9);
+
+        // The same distance again upwards, and again at the top: off the baseline by as
+        // much as it is proud of the grid, and that much taller than the storey it models.
+        expect(Math.min(...y)).toBeCloseTo(LIFT, 9);
+        expect(Math.max(...y)).toBeCloseTo(FLOOR_HEIGHT + 2 * LIFT, 9);
+        expect(Math.max(...y) - Math.min(...y)).toBeCloseTo(FLOOR_HEIGHT + LIFT, 9);
+    });
+
+    it('spreads the extra height over the storeys rather than adding it to the top', () => {
+        const mesh = buildMesh([footprint(['5,5']), footprint(['5,5']), footprint(['5,5'])]);
+        const y = [...new Set(mesh.vertices.map((v) => v.y))].sort((a, b) => a - b);
+
+        // Four levels, evenly spaced: one row taller than the others would show as one
+        // row of windows taller than the others.
+        expect(y).toHaveLength(4);
+        const steps = y.slice(1).map((value, i) => value - y[i]);
+        for (const step of steps) expect(step).toBeCloseTo(steps[0], 9);
+    });
+
+    it('measures the vertical UV from the bottom of the model, not the baseline', () => {
+        // The lift is geometry only. Taking `v` after it would start the texture partway
+        // up the wall and leave the top of it off the model.
+        const mesh = buildMesh([footprint(['5,5']), footprint(['5,5'])]);
+        const v = mesh.uvs.filter((uv) => uv.u < 0.75).map((uv) => uv.v);
+
+        expect(Math.min(...v)).toBeCloseTo(0, 9);
+        expect(Math.max(...v)).toBeCloseTo(1, 9);
+    });
+
+    it('measures the texture on the grid rather than on the outset shell', () => {
+        const mesh = buildMesh([footprint(['5,5'])]);
+        const bands = new Map();
+
+        for (const uv of mesh.uvs) {
+            if (uv.u >= 0.75) continue;
+            const band = Math.floor(uv.u / 0.1875);
+            bands.set(band, [...(bands.get(band) ?? []), uv.u]);
+        }
+
+        // One square is one of the fifteen nodes across its side. Taking the UV off a
+        // vertex that had already been pushed out would make it 1.008 of one, sliding
+        // every window away from the rectangle painted for it.
+        expect(bands.size).toBe(4);
+        for (const [, us] of bands) {
+            expect(Math.max(...us) - Math.min(...us))
+                .toBeCloseTo((0.1875 - 2 * (2 / 512)) / 15, 12);
+        }
+    });
+
+    it('rims an open top with 10 cm of masonry that meets exactly at the corners', () => {
+        const mesh = buildMesh([footprint(['5,5'])], { roof: false });
+        const lips = quads(mesh).filter((quad) => quad.normal.y === 1);
+
+        expect(lips).toHaveLength(4);
+
+        // A ring, not four overlapping strips: the four together cover the outer square
+        // less the inner one exactly, which they cannot do if any two share ground. Two
+        // coplanar faces over the same 10 cm square are what z-fights in game.
+        const outer = 1.8 * 1.008;
+        const area = lips.reduce((total, quad) => total + span(quad).x * span(quad).z, 0);
+
+        expect(area).toBeCloseTo(outer ** 2 - (outer - 0.2) ** 2, 9);
+        for (const lip of lips) {
+            expect(Math.min(span(lip).x, span(lip).z)).toBeCloseTo(0.1, 9);
+        }
+    });
+
+    it('puts the rim at the top of every wall with open sky over it', () => {
+        // Steps in, so the terrace at the seam has an edge of its own as well as the top.
+        const mesh = buildMesh(
+            [footprint(square(5, 5, 8, 8)), footprint(square(6, 6, 7, 7))], { roof: false });
+
+        const heights = [...new Set(quads(mesh)
+            .filter((quad) => quad.normal.y === 1)
+            .map((quad) => Math.round(quad.corners[0].y * 1e6) / 1e6))];
+
+        // Two levels of rim: round the terrace and round the top.
+        expect(heights).toHaveLength(2);
+    });
+
+    it('leaves the wall under a storey that carries on up without a rim', () => {
+        const straight = buildMesh([footprint(['5,5']), footprint(['5,5'])], { roof: false });
+        const lips = quads(straight).filter((quad) => quad.normal.y === 1);
+
+        // One rim, at the top. The seam between the two storeys is inside the building.
+        expect(lips).toHaveLength(4);
     });
 
     it('builds the same mesh twice from the same floors', () => {
@@ -712,10 +874,11 @@ describe('the OBJ', () => {
         const obj = toObj(buildMesh([footprint(['5,5'])]), 'Thing');
         const count = (prefix) => obj.split('\n').filter((line) => line.startsWith(prefix)).length;
 
-        expect(count('v ')).toBe(24);
-        expect(count('vt ')).toBe(24);
-        expect(count('vn ')).toBe(24);
-        expect(count('f ')).toBe(12);
+        // Four walls and the cap over them, four vertices and two triangles each.
+        expect(count('v ')).toBe(20);
+        expect(count('vt ')).toBe(20);
+        expect(count('vn ')).toBe(20);
+        expect(count('f ')).toBe(10);
     });
 });
 
@@ -792,11 +955,33 @@ describe('generateBuilding', () => {
         expect(result.reason).toMatch(/no floors above its ground floor/);
     });
 
-    it('says which floors were left out of the model', async () => {
+    it('says which floors were left out of the model and which are shell only', async () => {
         const result = await generateBuilding(
             'ShantyTown', await presetCopy('ShantyTown'), loadVanillaBlueprint);
 
-        expect(result.excluded).toEqual(['ShantyTown_GroundFloor01', 'ShantyTown_TowerRooftop']);
+        // The ground floor is drawn by the street frontage in front of it. The rooftop is
+        // in the model -- it just takes no row of the texture.
+        expect(result.excluded).toEqual(['ShantyTown_GroundFloor01']);
+        expect(result.shellOnly).toEqual(['ShantyTown_TowerRooftop']);
+    });
+
+    it('keeps a rooftop out of the window rows but in the model', async () => {
+        const preset = await presetCopy('ShantyTown');
+        const result = await generateBuilding('ShantyTown', preset, loadVanillaBlueprint);
+
+        // Five window rows, as before -- a rooftop is not a storey with windows on it.
+        expect(preset.floorCount).toBe(5);
+        expect(preset.sortedWindows).toHaveLength(5);
+
+        // But the model is six storeys of geometry. `ShantyTown_TowerRooftop` encloses
+        // nothing, so it adds no walls; the height it occupies is what shows.
+        expect(result.height).toBe(5 * FLOOR_HEIGHT);
+        const obj = result.files.find((file) => file.path.endsWith('.obj')).contents;
+        const top = Math.max(...obj.split('\n')
+            .filter((line) => line.startsWith('v '))
+            .map((line) => Number(line.split(' ')[2])));
+
+        expect(top).toBeGreaterThan(5 * FLOOR_HEIGHT);
     });
 
     it('reads each blueprint once however many slots name it', async () => {
@@ -814,6 +999,37 @@ describe('generateBuilding', () => {
         });
 
         expect(reads).toEqual(['Tenement_MainFloor1']);
+    });
+
+    it('records on the preset that the model was built with a roof', async () => {
+        const preset = await presetCopy('Townhouse');
+        await generateBuilding('Townhouse', preset, loadVanillaBlueprint);
+
+        expect(preset[MESH_ROOF_FIELD]).toBe(true);
+    });
+
+    it('leaves the top off, and says so, for a building with a floor above it', async () => {
+        const preset = await presetCopy('Townhouse');
+        const result = await generateBuilding(
+            'Townhouse', preset, loadVanillaBlueprint, { roof: false });
+
+        const upward = (obj) => obj.split('\n')
+            .filter((line) => line.startsWith('vn 0 1 0')).length;
+
+        const withRoof = await generateBuilding(
+            'Townhouse', await presetCopy('Townhouse'), loadVanillaBlueprint);
+
+        const off = upward(result.files.find((f) => f.path.endsWith('.obj')).contents);
+        const on = upward(withRoof.files.find((f) => f.path.endsWith('.obj')).contents);
+
+        expect(preset[MESH_ROOF_FIELD]).toBe(false);
+        // Not zero: the rim round the open top faces up too, so what this can say is that
+        // there is less of it and less of the model. That every upward face left is 10 cm
+        // of rim rather than a square of roof is asserted on the mesh itself, above.
+        expect(off).toBeGreaterThan(0);
+        expect(off).toBeLessThan(on);
+        expect(result.triangleCount).toBeLessThan(withRoof.triangleCount);
+        expect(preset.sortedWindows.flatMap((floor) => floor.front).length).toBeGreaterThan(0);
     });
 });
 

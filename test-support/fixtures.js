@@ -75,6 +75,11 @@ export const streamingAssets = {
         id: NEWS_TREE_GUID,
         name: 'TestNewspaper',
         treeType: 3,
+        // Int32 in the layout with no enum behind them, and the only kind of tree that
+        // reads either. The editor names their values all the same -- see
+        // flows/dds/scripts/newspaperFields.js.
+        newspaperCategory: 1,
+        newspaperContext: 5,
         messages: [{ msgID: NEWS_MSG_GUID, instanceID: 'instance-3', order: 0 }],
     }),
 
@@ -612,4 +617,214 @@ export const caseWithCustomReference = {
         name: 'HouseStyle',
         presetName: 'HouseStyle',
     }),
+};
+
+/**
+ * An exported ScriptableObjects folder, cut to what the furniture creator reads.
+ *
+ * The pane reads whole assets from the author's own export rather than a derived copy in
+ * this repo, so a test of it needs one. Small on purpose: enough to exercise every shape
+ * the pane distinguishes, and no more, because a fixture nobody can hold in their head is
+ * one whose failures have to be debugged before they can be read.
+ *
+ * What each asset is here for:
+ *
+ * | | |
+ * |---|---|
+ * | `HotelDesk` | two sub-objects it can place, one it cannot — the split the view turns on |
+ * | `BrownSofaSmall` | every sub-object parented, which is the extreme of that case |
+ * | `LargeBookcase` | named after its own prefab, unlike the other two |
+ * | `3x1LobbyDesk` | a 3x1 footprint, and one wall rule of each kind |
+ * | `OfficeCubicleX1` | the co-located trap: two classes on one tile, the second only after the first |
+ */
+const exported = (type, name, fields) =>
+    [`ExportedSOs/${type}/${name}.json`, json({ presetName: name, ...fields })];
+
+export const furnitureExport = Object.fromEntries([
+    exported('FurniturePreset', 'HotelDesk', {
+        prefab: 'REF:GameObject|HotelFrontDesk',
+        classes: ['REF:FurnitureClass|3x1LobbyDesk'],
+        allowedRoomFilters: ['REF:RoomTypeFilter|Lobby'],
+        universalDesignStyle: true,
+        minimumRoomSize: 4,
+        subObjects: [
+            {
+                preset: 'REF:SubObjectClassPreset|Computer',
+                parent: '',
+                localPos: { x: -1.023, y: 1, z: 0.266 },
+                localRot: { x: 0, y: 194.729, z: 0 },
+                belongsTo: 2,
+                security: 0,
+            },
+            {
+                preset: 'REF:SubObjectClassPreset|DeskItemOffice',
+                parent: '',
+                localPos: { x: -1.78, y: 1, z: 0.141 },
+                localRot: { x: 0, y: 175.07, z: 0 },
+                belongsTo: 2,
+                security: 0,
+            },
+            {
+                preset: 'REF:SubObjectClassPreset|DeskLamp',
+                parent: 'TopDrawer',
+                localPos: { x: 0.132, y: 0.751, z: -0.06 },
+                localRot: { x: 0, y: 0, z: 0 },
+                belongsTo: 0,
+                security: 0,
+            },
+        ],
+        integratedInteractables: [
+            { preset: 'REF:InteractablePreset|HotelDesk', pairToController: 0, belongsTo: 2 },
+            { preset: 'REF:InteractablePreset|HotelDesk', pairToController: 1, belongsTo: 3 },
+        ],
+    }),
+
+    exported('FurniturePreset', 'BrownSofaSmall', {
+        prefab: 'REF:GameObject|BrownSofaSmall',
+        classes: ['REF:FurnitureClass|2x1Sofa'],
+        allowedRoomFilters: ['REF:RoomTypeFilter|Lounge'],
+        universalDesignStyle: true,
+        minimumRoomSize: 4,
+        subObjects: [
+            {
+                preset: 'REF:SubObjectClassPreset|DeskLamp',
+                parent: 'SmallSofaSideTable1',
+                localPos: { x: 0.132, y: 0.751, z: -0.06 },
+                localRot: { x: 0, y: 0, z: 0 },
+                belongsTo: 0,
+                security: 0,
+            },
+        ],
+    }),
+
+    exported('FurniturePreset', 'LargeBookcase', {
+        prefab: 'REF:GameObject|LargeBookcase',
+        classes: ['REF:FurnitureClass|1x1BookcaseLarge'],
+        allowedRoomFilters: ['REF:RoomTypeFilter|Lounge'],
+        universalDesignStyle: true,
+        minimumRoomSize: 4,
+        subObjects: [],
+    }),
+
+    /*
+     * Furniture a newer game added: on disk, and absent from `soAssetsByType.json`.
+     *
+     * Deliberately left out of `furnitureTypeMap` below, so a picker that lists the export
+     * folder offers it and one that reads the generated table does not.
+     */
+    exported('FurniturePreset', 'NewInThisPatch', {
+        prefab: 'REF:GameObject|NewInThisPatch',
+        classes: ['REF:FurnitureClass|1x1BookcaseLarge'],
+        allowedRoomFilters: ['REF:RoomTypeFilter|Lounge'],
+        universalDesignStyle: true,
+        minimumRoomSize: 4,
+        subObjects: [],
+    }),
+
+    exported('FurniturePreset', 'OfficeCubicle', {
+        prefab: 'REF:GameObject|OfficeCubicle',
+        classes: ['REF:FurnitureClass|1x1OfficeCubicle'],
+        allowedRoomFilters: ['REF:RoomTypeFilter|OfficeSpace'],
+        universalDesignStyle: true,
+        minimumRoomSize: 4,
+        subObjects: [],
+    }),
+
+    /* A 3x1 slot, with one rule that refuses, one that only scores, and one node rule. */
+    exported('FurnitureClass', '3x1LobbyDesk', {
+        objectSize: { x: 3, y: 1 },
+        tall: true,
+        minimumZeroNodeWallCount: 0,
+        maximumZeroNodeWallCount: 3,
+        wallRules: [
+            { nodeOffset: { x: 0, y: 1 }, wallDirection: 2, option: 0, tag: 1, addScore: 0 },
+            { nodeOffset: { x: 0, y: 0 }, wallDirection: 7, option: 2, tag: 4, addScore: 2 },
+        ],
+        nodeRules: [
+            { offset: { x: 0, y: 1 }, option: 1, anyOccupiedTile: false,
+                furnitureClass: 'REF:FurnitureClass|2x1Sofa', addScore: 0 },
+        ],
+        blockedAccess: [
+            { disabled: false, nodeOffset: { x: 0, y: 0 },
+                blockExteriorDiagonals: false, blocked: [1, 2, 3] },
+        ],
+        awayFromClasses: ['REF:FurnitureClass|2x1Sofa'],
+        minimumNodeDistance: 1.2,
+
+        // Two, which is what the shipped class sets and what `HotelDesk` needs: it pairs
+        // the same InteractablePreset to controllers A and B as person0 and person1, and
+        // the count on the class has to reach the highest index the preset asks for.
+        assignBelongsToOwners: 2,
+    }),
+
+    exported('FurnitureClass', '2x1Sofa', { objectSize: { x: 2, y: 1 } }),
+    exported('FurnitureClass', '1x1BookcaseLarge', { objectSize: { x: 1, y: 1 }, tall: true }),
+    exported('FurnitureClass', '1x1OfficeCubicle', { objectSize: { x: 1, y: 1 } }),
+    exported('FurnitureClass', '1x1FilingCabinetUnderDesk', { objectSize: { x: 1, y: 1 } }),
+
+    exported('FurnitureCluster', 'FrontDesk', {
+        allowedRoomFilters: ['REF:RoomTypeFilter|Lobby'],
+        clusterElements: [
+            {
+                furnitureClass: 'REF:FurnitureClass|3x1LobbyDesk',
+                placements: [{ x: 0, y: 0 }],
+                facing: 0,
+                importantToCluster: true,
+                chanceOfPlacementAttempt: 1,
+            },
+        ],
+    }),
+
+    /* The trap HOW-IT-WORKS.md names: two classes on one tile, the second only after. */
+    exported('FurnitureCluster', 'OfficeCubicleX1', {
+        allowedRoomFilters: ['REF:RoomTypeFilter|OfficeSpace'],
+        clusterElements: [
+            {
+                furnitureClass: 'REF:FurnitureClass|1x1OfficeCubicle',
+                placements: [{ x: 0, y: 0 }],
+                facing: 0,
+                importantToCluster: true,
+                chanceOfPlacementAttempt: 1,
+            },
+            {
+                furnitureClass: 'REF:FurnitureClass|1x1FilingCabinetUnderDesk',
+                placements: [{ x: 0, y: 0 }],
+                facing: 0,
+                importantToCluster: false,
+                onlyValidIfPreviousObjectPlaced: true,
+                chanceOfPlacementAttempt: 1,
+            },
+        ],
+    }),
+
+    exported('SubObjectClassPreset', 'Computer', {
+        limitCountPerObject: true, maxPerObject: 1, perInstanceSpawnChance: 1,
+        perInstanceModifiers: [],
+    }),
+    exported('SubObjectClassPreset', 'DeskItemOffice', {
+        limitCountPerObject: false, perInstanceSpawnChance: 1, perInstanceModifiers: [],
+    }),
+    exported('SubObjectClassPreset', 'DeskLamp', {
+        limitCountPerObject: true, maxPerObject: 1, perInstanceSpawnChance: 1,
+        perInstanceModifiers: [],
+    }),
+    exported('SubObjectClassPreset', 'AshTray', {
+        limitCountPerObject: false, perInstanceSpawnChance: 1, perInstanceModifiers: [],
+    }),
+
+    /* Zero base chance, raised by trait rules -- so "never" would be the wrong reading. */
+    exported('SubObjectClassPreset', 'ToiletItem', {
+        limitCountPerObject: false, perInstanceSpawnChance: 0,
+        perInstanceModifiers: [{}, {}, {}],
+    }),
+]);
+
+/** The names `window.typeMap` has to carry for the pane's pickers to offer them. */
+export const furnitureTypeMap = {
+    FurniturePreset: ['BrownSofaSmall', 'HotelDesk', 'LargeBookcase', 'OfficeCubicle'],
+    FurnitureCluster: ['FrontDesk', 'OfficeCubicleX1'],
+
+    // What the interactable picker offers. Listed here rather than exported as assets
+    // because the pane only ever wants the names -- it reads no `InteractablePreset` file.
+    InteractablePreset: ['HidingPlace', 'HotelDesk', 'Lean'],
 };

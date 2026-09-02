@@ -17,13 +17,20 @@
  * than inside it. A strings file is not a level of that cascade, and the reason to have
  * it open is usually the block in the window next to it.
  *
+ * On request, the base game's own rows for the same file are listed under the mod's,
+ * read only. A mod's CSV is a handful of lines standing in front of a file of thousands,
+ * and what those lines are replacing was otherwise only readable by opening the game's
+ * copy outside this app. Read only because this editor writes into the mod and nowhere
+ * else: the game's files are not a mod author's to edit, and a mod that wants a line
+ * changed says so with a row of its own. See applyVanilla.
+ *
  * The catch is the cache. Block text is read once into window.stringMapping and
  * window.moddedStringMapping (see loadI18n) and resolved into each open document as it
  * loads (see createDummyKeys), so editing the file a mod's block text lives in leaves
  * both stale. Saving reseeds them; see afterSave.
  */
 import { fastDiv, fastElement } from '../../../core/dom.js';
-import { readFileContent, writeFile } from '../../../core/fs.js';
+import { readFileContent, tryGetFile, writeFile } from '../../../core/fs.js';
 import { assertModSelected, shouldSave } from '../../../core/persistence.js';
 import { editedStamp, parseStringsCsv, serialiseStringsCsv } from '../../../core/stringsCsv.js';
 import { closeWindow, createTreeWindow } from '../../../core/treeWindow.js';
@@ -56,6 +63,14 @@ let openFile = null;
  * second reads the rows the first has already written.
  */
 let writes = Promise.resolve();
+
+/**
+ * Whether the base game's own rows are listed below the mod's.
+ *
+ * Kept for the session rather than per file: it is how an author wants to read these
+ * files, not something about the one that happens to be open.
+ */
+let showVanilla = false;
 
 const basename = (path) => path.split('/').at(-1);
 
@@ -133,6 +148,14 @@ function render(text) {
         // as HTML.
         title: '<h2></h2><h3></h3>',
         actions: [
+            {
+                label: vanillaLabel(),
+                className: 'strings-vanilla-toggle',
+                // State-neutral: the label says which way the switch is about to go, and
+                // this says what the switch is about.
+                title: 'The base game\'s strings for this file, listed below your own',
+                onClick: (event) => toggleVanilla(event.currentTarget),
+            },
             { label: 'Save', onClick: () => save(true) },
             { label: 'Close', onClick: () => closeStringsWindow() },
         ],
@@ -162,8 +185,15 @@ function render(text) {
         + '<th scope="col"><span class="strings-unseen">Remove</span></th>'
         + '</tr></thead>';
 
-    const body = fastElement('tbody');
-    table.appendChild(body);
+    const body = fastElement('tbody', 'strings-rows');
+
+    // The base game's rows, below the mod's: a second body of the same table rather than
+    // a table of its own, so the two lists share their column widths and their headings
+    // instead of being a pair of lists that only look alike.
+    const vanillaBody = fastElement('tbody', 'strings-vanilla');
+    vanillaBody.hidden = true;
+
+    table.append(body, vanillaBody);
 
     const scroll = fastDiv('strings-scroll');
     scroll.appendChild(table);
@@ -184,9 +214,130 @@ function render(text) {
 
     openFile.windowEl = windowEl;
     openFile.bodyEl = body;
+    openFile.vanillaBodyEl = vanillaBody;
     openFile.headerNoteEl = headerNote;
 
+    // The button says what it will do; this says what it has done. Set here rather than
+    // through the action list, which has no view on a button that is a switch.
+    windowEl.querySelector('.strings-vanilla-toggle')
+        .setAttribute('aria-pressed', String(showVanilla));
+
     fill(text);
+
+    // A file opened while the switch is on has the base game's rows under it already.
+    applyVanilla();
+}
+
+const vanillaLabel = () => (showVanilla ? 'Hide vanilla' : 'Show vanilla');
+
+const count = (n, noun) => `${n} ${noun}${n === 1 ? '' : 's'}`;
+
+/** Turn the base game's rows on or off, for this file and the next one opened. */
+function toggleVanilla(button) {
+    showVanilla = !showVanilla;
+
+    button.innerText = vanillaLabel();
+    button.setAttribute('aria-pressed', String(showVanilla));
+
+    applyVanilla();
+}
+
+/**
+ * Put the base game's rows under the mod's, or take them away.
+ *
+ * Taken away rather than hidden: dds.blocks.csv alone is thousands of rows, and rows
+ * left in the document cost their memory whether or not anything is drawing them.
+ */
+function applyVanilla() {
+    openFile.vanillaBodyEl.hidden = !showVanilla;
+
+    if (!showVanilla) {
+        openFile.vanillaBodyEl.replaceChildren();
+        return;
+    }
+
+    fillVanilla(openFile);
+}
+
+/**
+ * The base game's rows for the file the window holds.
+ *
+ * Read at the *virtual* path -- where the game reads the mod's file from, which is the
+ * file the mod is overriding. A manifest can put the mod's copy anywhere in DDSContent,
+ * and where it happens to sit says nothing about what it stands in for.
+ *
+ * @returns rows, or a note saying why there are none to show
+ */
+async function readVanilla(file) {
+    if (!window.dirHandleStreamingAssets) {
+        return { note: 'Connect the game folder to see the base game\'s strings.' };
+    }
+
+    const handle = await tryGetFile(window.dirHandleStreamingAssets, file.virtual.split('/'), false);
+
+    // Not every strings file is one of the game's: a mod naming its own rooms or its own
+    // evidence writes a CSV the base game has no counterpart for.
+    if (!handle) return { note: `The base game has no ${file.virtual}.` };
+
+    return { rows: parseStringsCsv((await readFileContent(handle)) ?? '').rows };
+}
+
+/** Fill in the read-only half of the list. */
+async function fillVanilla(file) {
+    let result;
+
+    try {
+        result = await readVanilla(file);
+    } catch (error) {
+        console.warn('Could not read the base game strings', error);
+        result = { note: 'The base game file could not be read.' };
+    }
+
+    // Toggled off, closed or replaced by another file while it was being read.
+    if (file !== openFile || !showVanilla) return;
+
+    const { rows, note } = result;
+
+    file.vanillaBodyEl.replaceChildren(
+        vanillaHeading(note ?? `Base game — ${count(rows.length, 'string')}, read only.`),
+        // Built in one pass and appended once: a base game CSV is long enough that
+        // adding its rows one at a time is visible.
+        ...(rows ?? []).map(vanillaRow),
+    );
+}
+
+/**
+ * The line between the two lists: what is below it and where it came from.
+ *
+ * A row of the table rather than something above it, because that is what keeps it in
+ * step with the columns it divides while the list scrolls past.
+ */
+function vanillaHeading(text) {
+    const row = fastElement('tr', 'strings-vanilla-heading');
+    const cell = fastElement('td');
+
+    cell.colSpan = 3;
+    cell.innerText = text;
+    row.appendChild(cell);
+
+    return row;
+}
+
+/** One of the game's strings: the pair, said rather than offered as boxes to type in. */
+function vanillaRow({ key, text }) {
+    const row = fastElement('tr', 'strings-vanilla-row');
+
+    const keyCell = fastElement('td', 'strings-vanilla-key');
+    keyCell.innerText = key;
+
+    const textCell = fastElement('td');
+    textCell.innerText = text;
+
+    // The column the mod's rows keep their remove button in. Nothing here to remove --
+    // this file is the game's -- and the cell is what holds the columns lined up.
+    row.append(keyCell, textCell, fastElement('td', 'strings-remove-cell'));
+
+    return row;
 }
 
 /** Put a file's contents in the window, replacing whatever rows were there. */

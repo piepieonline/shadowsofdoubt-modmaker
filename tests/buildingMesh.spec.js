@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, gotoFlow, connectFolders, selectContent,
     readFile, listDir,
-} from './support/harness.js';
+} from '../test-support/harness.js';
 
 /**
  * Generating a building's model, wired into the flow.
@@ -91,6 +91,7 @@ const open = (page, building, blueprint, slot) => page.evaluate(async (request) 
 
 const generateButton = (page) => page.locator('#building-floor button', { hasText: 'Generate mesh' });
 const meshNote = (page) => page.locator('#building-floor .mesh-note');
+const roofBox = (page) => page.locator('#building-floor .mesh-roof input');
 
 /**
  * Press Generate mesh and wait for it to finish.
@@ -294,6 +295,74 @@ test('a building with nothing above its ground floor says so rather than writing
         await expect(meshNote(page)).toContainText('no floors above its ground floor');
         expect(await listDir(page, 'Plugins/MyTower/MyTowerPrefab')).toBeNull();
     });
+
+/**
+ * The roof checkbox.
+ *
+ * Whether the model gets a top is the one thing about generating that is the author's to
+ * say rather than the blueprint's, so it is the one thing here that has to survive being
+ * put down and picked up again. What the geometry it produces looks like is asserted in
+ * the unit suite; what these cover is that the answer reaches the generator and comes
+ * back out of the preset.
+ */
+test('leaving the roof off writes a model with a rim in place of a top', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'MyTower', 'Tenement_MainFloor1', UPPER_SLOT);
+
+    await generate(page);
+    const capped = await readFile(page, 'Plugins/MyTower/MyTowerPrefab/MyTower.obj');
+
+    await roofBox(page).uncheck();
+    await generate(page);
+    const open_ = await readFile(page, 'Plugins/MyTower/MyTowerPrefab/MyTower.obj');
+
+    const upward = (obj) => obj.split('\n').filter((line) => line === 'vn 0 1 0').length;
+
+    // Not none: the 10 cm rim round the open top faces up as well. What goes is the roof
+    // it rims. Which faces survive, and that they meet without overlapping, is asserted
+    // on the mesh itself in meshExport.unit.spec.js.
+    expect(upward(open_)).toBeGreaterThan(0);
+    expect(upward(open_)).toBeLessThan(upward(capped));
+
+    // The walls are still there: this leaves the top off, not the building.
+    expect(open_).toMatch(/^f \d+\/\d+\/\d+ /m);
+    expect((await preset(page)).modMakerBuildRoof).toBe(false);
+});
+
+test('a building built without a roof opens with the box still unticked', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'MyTower', 'Tenement_MainFloor1', UPPER_SLOT);
+
+    await roofBox(page).uncheck();
+    await generate(page);
+
+    // Opened again from scratch, which is where the answer has to come off the preset --
+    // otherwise the next generation quietly puts the roof back on.
+    await open(page, 'MyTower', 'Tenement_MainFloor1', UPPER_SLOT);
+    await expect(roofBox(page)).not.toBeChecked();
+});
+
+test('saving a floor does not tick the box back on', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'MyTower', 'Tenement_MainFloor1', UPPER_SLOT);
+    await generate(page);
+
+    // Unticked but not yet generated, so the preset on disk still says the mesh has a
+    // roof. Saving re-reads it to ask whether the model has gone stale, and the answer to
+    // that question is not an answer to this one.
+    await roofBox(page).uncheck();
+
+    await page.evaluate(async () => {
+        const { saveNow, openFloorModel } = await import('/flows/building/scripts/ui.js');
+        const model = await import('/flows/building/scripts/floorModel.js');
+
+        model.setWall(openFloorModel(), 9, 9, model.AXIS_X, '16');
+        await saveNow();
+    });
+
+    await expect(meshNote(page)).toContainText('generate again');
+    await expect(roofBox(page)).not.toBeChecked();
+});
 
 test('with no content folder chosen there is nowhere to generate into', async ({ page }) => {
     // A base game building can be opened and looked at with no content folder, which is

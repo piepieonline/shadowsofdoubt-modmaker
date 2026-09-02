@@ -2,11 +2,11 @@ import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, queuePicks, connectFolders, selectContent, gotoFlow,
     openDdsDocument,
-} from './support/harness.js';
+} from '../test-support/harness.js';
 import {
     ddsFixture, ddsFixtureWithContent, soFixture, pluginsFixture, ddsManifestFixture,
-    soFolderContent, FLAT_MOD, TREE_GUID,
-} from './support/fixtures.js';
+    soFolderContent, streamingAssets, ddsModDir, FLAT_MOD, TREE_GUID, MSG_GUID,
+} from '../test-support/fixtures.js';
 
 /**
  * The point of the merge: both flows share one persisted mod folder.
@@ -501,4 +501,126 @@ test('mods are listed with what each of their folders holds', async ({ page }) =
     // A loader with nothing editable says so rather than looking broken.
     await page.selectOption('#select-mod', 'UnityExplorer');
     await expect(page.locator('#select-content option')).toHaveText(['Nothing editable in this mod']);
+});
+
+/**
+ * Keeping the author's place through an edit, which is core/document.js's job for both
+ * flows.
+ *
+ * Editing anything rebuilds the whole tree, and a rebuilt tree arrives collapsed. The
+ * reopening used to happen after the save, so for as long as the write took, the document
+ * on screen was a couple of hundred pixels of collapsed keys -- and a scroll position
+ * measured against the full document does not survive that. The author was thrown to the
+ * top of the file on every dropdown change.
+ *
+ * Which document showed it was a matter of shape rather than of flow, which is why this
+ * is one test over both. A DDS tree's height is `messages` expanded, so it lost almost
+ * all of it; a case file's is top-level keys, which survive a collapse -- so the case
+ * flow looked fine until a case file was given an array and the array was opened. Both
+ * documents below are built to the same shape: a dropdown near the top, and every bit of
+ * height in one array under it.
+ */
+
+/** A tree that is only tall because `messages` is open, and an enum above it to change. */
+const scrollTestTree = {
+    ...streamingAssets,
+    ...ddsModDir,
+    [`StreamingAssets/DDS/Trees/${TREE_GUID}.tree`]: JSON.stringify({
+        id: TREE_GUID,
+        name: 'ScrollTree',
+        treeType: 1,
+        messages: Array.from({ length: 40 }, (_, i) => ({
+            msgID: MSG_GUID, instanceID: `instance-${i}`, order: i,
+        })),
+    }, null, 2),
+};
+
+/** The same shape as a case file: `disabled` is a Boolean, which this flow renders as one. */
+const scrollTestCase = {
+    ...soFolderContent,
+    'Mods/TestCase/testcase.sodso.json': JSON.stringify({
+        fileType: 'MurderMO',
+        name: 'testcase',
+        disabled: false,
+        murdererTraitModifiers: Array.from({ length: 40 }, (_, i) => ({
+            name: `rule ${i}`, modifier: i,
+        })),
+    }, null, 2),
+};
+
+/**
+ * Make saving take a frame, as writing to a folder on disk does.
+ *
+ * OPFS answers fast enough that the collapsed document is often never painted, and the
+ * fault then hides behind the browser's scroll anchoring putting the position back by
+ * luck. What is being tested is that the editor does not depend on that luck.
+ */
+async function slowSaves(page) {
+    await page.addInitScript(() => {
+        const original = FileSystemFileHandle.prototype.createWritable;
+        FileSystemFileHandle.prototype.createWritable = async function (...args) {
+            await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 30)));
+            return original.apply(this, args);
+        };
+    });
+}
+
+/** Scroll a document to the bottom and report where that was. */
+async function scrollToBottom(page, selector) {
+    return page.locator(selector).evaluate((el) => {
+        el.scrollTop = el.scrollHeight;
+        return el.scrollTop;
+    });
+}
+
+test('a dropdown change keeps the DDS flow where the author was', async ({ page }) => {
+    await slowSaves(page);
+    await gotoFlow(page, '?flow=dds');
+    await seedFs(page, scrollTestTree);
+    await connectFolders(page, { streamingAssets: 'StreamingAssets', modDir: 'Mods' });
+    await selectContent(page, 'TestMod', 'Content');
+    await openDdsDocument(page, TREE_GUID);
+
+    const scroller = '#file-window-0 .jsontree-container';
+    await page.locator(`${scroller} .jsontree_child-nodes`).first().waitFor();
+
+    // `messages` opens with the document, so there is nothing to expand by hand here.
+    const before = await scrollToBottom(page, scroller);
+    expect(before).toBeGreaterThan(0);
+
+    await page.locator(`#file-window-0 li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('"treeType"')) select`)
+        .first().selectOption({ index: 2 });
+
+    await expect.poll(() => page.locator(scroller).evaluate((el) => el.scrollTop)).toBe(before);
+});
+
+test('a dropdown change keeps the case flow where the author was', async ({ page }) => {
+    await slowSaves(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, scrollTestCase);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'TestCase', '');
+
+    const window_ = '.file-window[path="testcase.sodso.json"]';
+    const scroller = `${window_} .jsontree-container`;
+    await page.locator('.file-panel-category[data-category="MurderMO"]')
+        .getByRole('button', { name: 'testcase' }).click();
+    await page.locator(scroller).waitFor();
+
+    // Opened by hand: this flow opens `fileOrder` with a document, which a MurderMO
+    // has not got. What the author left open is what the rebuild has to put back.
+    await page.locator(`${window_} li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('"murdererTraitModifiers"')) .jsontree_expand-button`)
+        .first().click();
+
+    const before = await scrollToBottom(page, scroller);
+    expect(before).toBeGreaterThan(0);
+
+    await page.locator(`${window_} li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('"disabled"')) select`)
+        .first().selectOption({ index: 1 });
+
+    await expect.poll(() => page.locator(scroller).evaluate((el) => el.scrollTop)).toBe(before);
+
+    // And the array is still open, which is what that position was measured against.
+    await expect(page.locator(`${window_} li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('"murdererTraitModifiers"'))`)
+        .first()).toHaveClass(/jsontree_node_expanded/);
 });

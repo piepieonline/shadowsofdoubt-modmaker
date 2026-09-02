@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, connectFolders, selectContent, queuePrompts,
     readFile, listDir, alerts, gotoFlow, editField, fieldInput, openDdsDocument, addDdsContent,
-} from './support/harness.js';
-import { ddsFixture, ddsBareFixture, pluginsFixture, TREE_GUID } from './support/fixtures.js';
+} from '../test-support/harness.js';
+import { ddsFixture, ddsBareFixture, pluginsFixture, TREE_GUID } from '../test-support/fixtures.js';
 
 /**
  * The controls in the shell header that used to be per-flow: Autosaving, and creating

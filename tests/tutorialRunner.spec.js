@@ -1,16 +1,19 @@
 import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, alerts, editField, fieldInput,
-} from './support/harness.js';
-import { soFolderContent } from './support/fixtures.js';
+    queuePrompts,
+} from '../test-support/harness.js';
+import { soFolderContent } from '../test-support/fixtures.js';
 
 /**
  * The tutorial runner's mechanics, against tutorials written for the test rather than
  * the shipped one -- so a change to the walkthrough's wording is not a test failure.
  *
- * What matters here is the waiting. A walkthrough builds a real mod, so a step has to
- * be finished by doing the thing; a step that could be clicked past would leave the
- * next one pointing at something that does not exist yet.
+ * What matters here is the waiting. A walkthrough builds a real mod, so a step has to be
+ * finished by doing the thing: its way forward stays locked until the app is in the state
+ * the step describes, because a step that could be clicked past would leave the next one
+ * pointing at something that does not exist yet. Doing the thing only unlocks the step --
+ * leaving it is always a press of the button.
  */
 
 const POPOVER = '.driver-popover';
@@ -56,7 +59,7 @@ async function openCase(page) {
     await selectContent(page, 'TestCase', '');
 }
 
-test('a step waits for the user to do it, rather than offering Next', async ({ page }) => {
+test('a step cannot be moved past until it has been done', async ({ page }) => {
     await useTutorial(page, {
         steps: [
             {
@@ -77,10 +80,84 @@ test('a step waits for the user to do it, rather than offering Next', async ({ p
     const popover = page.locator(POPOVER);
     await expect(popover).toContainText('Choose a mod');
     // The point of the whole thing: a step that has not been done cannot be skipped.
-    await expect(popover.locator(FORWARD)).toBeHidden();
+    await expect(popover.locator(FORWARD)).toBeDisabled();
 
     await page.selectOption('#select-mod', 'TestCase');
+
+    // Doing it opens the way forward and no more. The step is still on screen to be
+    // read against what just happened, until it is left on purpose.
+    await expect(popover.locator(FORWARD)).toBeEnabled();
+    await expect(popover).toContainText('Choose a mod');
+
+    await popover.locator(FORWARD).click();
     await expect(popover).toContainText('Choose where');
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('a step marked autoAdvance carries itself once it has been done', async ({ page }) => {
+    await useTutorial(page, {
+        steps: [
+            {
+                element: '#select-mod', title: 'Choose a mod', description: 'Pick one.',
+                advanceWhen: 'mod-chosen', autoAdvance: true,
+            },
+            { element: '#select-content', title: 'Choose where', description: 'Pick a folder.' },
+        ],
+    });
+
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, soFolderContent);
+    await connectFolders(page, { modDir: 'Mods' });
+
+    await openTutorials(page);
+    await start(page);
+
+    const popover = page.locator(POPOVER);
+    await expect(popover).toContainText('Choose a mod');
+
+    // Locked all the same. Carrying itself is about saving a press once the thing is
+    // done, not about letting it be skipped.
+    await expect(popover.locator(FORWARD)).toBeDisabled();
+
+    // And then no press. For a step whose doing is the whole of it -- set this field,
+    // add this row -- the description is spent by the time the condition is met, and a
+    // button between each of a dozen of them is a dozen presses saying nothing.
+    await page.selectOption('#select-mod', 'TestCase');
+    await expect(popover).toContainText('Choose where');
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('a step already satisfied when it is reached opens straight away', async ({ page }) => {
+    // The condition is met before the step is ever drawn -- done while reading the step
+    // before, which is ordinary. driver.js throws its popover away and builds another
+    // for every step, and does it a frame or two into the transition, so the unlocking
+    // has to survive being done to a button that is about to be replaced.
+    await useTutorial(page, {
+        steps: [
+            { element: '#select-content', title: 'First', description: 'Reading.' },
+            {
+                element: '#select-mod', title: 'Choose a mod',
+                description: 'Pick one.', advanceWhen: 'mod-chosen',
+            },
+        ],
+    });
+
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, soFolderContent);
+    await connectFolders(page, { modDir: 'Mods' });
+
+    // Done before the walkthrough ever reaches the step that asks for it.
+    await page.selectOption('#select-mod', 'TestCase');
+
+    await openTutorials(page);
+    await start(page);
+
+    const popover = page.locator(POPOVER);
+    await expect(popover).toContainText('First');
+    await popover.locator(FORWARD).click();
+
+    await expect(popover).toContainText('Choose a mod');
+    await expect(popover.locator(FORWARD)).toBeEnabled();
     expect(await alerts(page)).toEqual([]);
 });
 
@@ -147,6 +224,7 @@ test('you can step back to re-read, and forward to return', async ({ page }) => 
     await expect(page.locator(BACK)).toBeHidden();
 
     await page.selectOption('#select-mod', 'TestCase');
+    await page.locator(FORWARD).click();
     await expect(progress(page)).toHaveText('Step 2 of 3');
     await page.locator(FORWARD).click();
     await expect(progress(page)).toHaveText('Step 3 of 3');
@@ -163,7 +241,9 @@ test('you can step back to re-read, and forward to return', async ({ page }) => 
     await expect(progress(page)).toHaveText('Step 1 of 3');
 
     // Forward returns to where the walkthrough had got to, rather than starting over.
-    await expect(page.locator(FORWARD)).toBeVisible();
+    // A step being re-read is never locked: it was done on the way through, and asking
+    // for its condition again would mean undoing it to get back.
+    await expect(page.locator(FORWARD)).toBeEnabled();
     await page.locator(FORWARD).click();
     await expect(progress(page)).toHaveText('Step 2 of 3');
     await page.locator(FORWARD).click();
@@ -172,7 +252,7 @@ test('you can step back to re-read, and forward to return', async ({ page }) => 
     expect(await alerts(page)).toEqual([]);
 });
 
-test('a live step that has not been done offers no way forward', async ({ page }) => {
+test('a live step that has not been done locks the way forward', async ({ page }) => {
     await useTutorial(page, {
         steps: [
             { element: '#select-content', title: 'First', description: 'Reading.' },
@@ -192,8 +272,13 @@ test('a live step that has not been done offers no way forward', async ({ page }
     await page.locator(FORWARD).click();
     await expect(progress(page)).toHaveText('Step 2 of 2');
 
-    // Gated and not yet done: back to re-read is offered, forward is not.
-    await expect(page.locator(FORWARD)).toBeHidden();
+    // Gated and not yet done: forward is there and locked, rather than missing. The
+    // button is what says the walkthrough is waiting, and it says what for.
+    await expect(page.locator(FORWARD)).toBeVisible();
+    await expect(page.locator(FORWARD)).toBeDisabled();
+    await expect(page.locator(FORWARD)).toHaveAttribute('title', /carry on/);
+
+    // And back to re-read is still offered.
     await expect(page.locator(BACK)).toBeVisible();
 });
 
@@ -257,6 +342,8 @@ test('a step waits for a file to be opened, then points at a field inside it', a
     await page.locator('.file-panel-category[data-category="MurderMO"]')
         .getByRole('button', { name: 'testcase' }).click();
 
+    await expect(popover.locator(FORWARD)).toBeEnabled();
+    await popover.locator(FORWARD).click();
     await expect(popover).toContainText('Describe the case');
 
     // jsonTree renders the key as text, which no CSS selector can match, so the runner
@@ -299,13 +386,45 @@ test('a field step waits for the value the tutorial asked for', async ({ page })
 
     const CASE = '.file-window[path="testcase.sodso.json"]';
 
-    // Something, but not what was asked for: the walkthrough must not move on.
+    // Something, but not what was asked for: the way forward stays shut.
     await editField(page, CASE, 'notes', 'Something else');
-    await expect(popover).toContainText('Describe the case');
+    await expect(popover.locator(FORWARD)).toBeDisabled();
 
     await editField(page, CASE, 'notes', 'A robbery');
+    await expect(popover.locator(FORWARD)).toBeEnabled();
+
+    await popover.locator(FORWARD).click();
     await expect(popover).toContainText('Done');
 
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('a step can wait for the folder it asked for to be the one being edited', async ({ page }) => {
+    await useTutorial(page, {
+        steps: [
+            {
+                element: '#new-content', title: 'Make one',
+                description: 'Name it Fresh.', advanceWhen: { contentFolder: 'Fresh' },
+            },
+            { element: '#select-content', title: 'Arrived', description: 'In the new folder.' },
+        ],
+    });
+
+    await openCase(page);
+    await openTutorials(page);
+    await start(page);
+
+    // A folder is already open -- the fixture's -- so `content-chosen` would have let this
+    // step through before the folder it names existed. It waits for that one by name.
+    await expect(page.locator(POPOVER)).toContainText('Make one');
+    await expect(page.locator(FORWARD)).toBeDisabled();
+
+    await queuePrompts(page, ['Fresh']);
+    await page.locator('#new-content').click();
+
+    await expect(page.locator(FORWARD)).toBeEnabled();
+    await page.locator(FORWARD).click();
+    await expect(page.locator(POPOVER)).toContainText('Arrived');
     expect(await alerts(page)).toEqual([]);
 });
 
@@ -329,6 +448,7 @@ test('a step can wait for the user to change editor themselves', async ({ page }
     await expect(page.locator('html[data-flow-ready="scriptableObject"]')).toBeAttached();
 
     await page.selectOption('#flow-picker', 'dds');
+    await page.locator(FORWARD).click();
     await expect(page.locator(POPOVER)).toContainText('Arrived');
     expect(await alerts(page)).toEqual([]);
 });
@@ -524,9 +644,12 @@ test('a step can wait for a value nested inside the document', async ({ page }) 
     // Something, but not what was asked for. Without this the walk could be matching the
     // wrong row entirely and every other assertion here would still pass.
     await editField(page, CASE_WINDOW, 'jobBoost', '5');
-    await expect(popover).toContainText('Weight the job');
+    await expect(popover.locator(FORWARD)).toBeDisabled();
 
     await editField(page, CASE_WINDOW, 'jobBoost', '20');
+    await expect(popover.locator(FORWARD)).toBeEnabled();
+
+    await popover.locator(FORWARD).click();
     await expect(popover).toContainText('Done');
 
     expect(await alerts(page)).toEqual([]);
@@ -561,9 +684,12 @@ test('a nested field of the same name does not satisfy a step', async ({ page })
     ).nth(1);
     await nested.fill('outer');
     await nested.blur();
-    await expect(popover).toContainText('Name the case');
+    await expect(popover.locator(FORWARD)).toBeDisabled();
 
     await editField(page, CASE_WINDOW, 'name', 'outer');
+    await expect(popover.locator(FORWARD)).toBeEnabled();
+
+    await popover.locator(FORWARD).click();
     await expect(popover).toContainText('Done');
 
     expect(await alerts(page)).toEqual([]);
@@ -591,11 +717,14 @@ test('a step can wait for an array to grow', async ({ page }) => {
     const popover = page.locator(POPOVER);
     // One element already, so the step must be waiting rather than already satisfied.
     await expect(popover).toContainText('Add another');
+    await expect(popover.locator(FORWARD)).toBeDisabled();
 
     await page.locator(CASE_WINDOW)
         .getByRole('button', { name: 'Add an element to "victimJobModifiers"' })
         .first().click();
 
+    await expect(popover.locator(FORWARD)).toBeEnabled();
+    await popover.locator(FORWARD).click();
     await expect(popover).toContainText('Done');
     expect(await alerts(page)).toEqual([]);
 });

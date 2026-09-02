@@ -2,13 +2,20 @@
  * The enums a furniture placement rule is written in, and the reader that turns a raw
  * `FurnitureClass` into the rules the resolver applies.
  *
- * Shared by the two places a class is read: `../tools/buildFurnitureChain.js`, which
- * reduces the game's own assets to `refs/derived/furnitureChain.json`, and
- * `furnitureOverlay.js`, which reads a mod's `.sodso.json` of the same type. They differ
- * only in how a reference resolves -- a pathID in the dump, a `REF:Type|Name` string in a
- * mod file -- which is the `name` argument. Everything else has to agree exactly, because
- * a mod's class that came out shaped differently from a shipped one is an answer that is
- * wrong only for the author's own content, which is the last place it would be noticed.
+ * Shared by the three places a class is read: `flows/building/tools/buildFurnitureChain.js`,
+ * which reduces the game's own assets to the derived reference data;
+ * `flows/building/scripts/furnitureOverlay.js`, which reads a mod's `.sodso.json` of the
+ * same type; and the ScriptableObject flow's furniture creator, which reads the rules to
+ * draw them and writes them back. The first two differ only in how a reference resolves --
+ * a pathID in the dump, a `REF:Type|Name` string in a mod file -- which is the `name`
+ * argument. Everything else has to agree exactly, because a mod's class that came out
+ * shaped differently from a shipped one is an answer that is wrong only for the author's
+ * own content, which is the last place it would be noticed.
+ *
+ * In `core/` rather than in the building flow because a third reader arrived, which is the
+ * same reason `spawnRules.js` came out of it. The enums below are index-addressed and
+ * recovered from a decompiled source; a second transcription of one is the failure this
+ * module exists to make impossible.
  *
  * ## The enums are index-addressed, and the obvious source for them is wrong
  *

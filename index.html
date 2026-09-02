@@ -200,11 +200,18 @@
                         <li><a href="#" onclick="event.preventDefault();showBrowse()">Browse...</a></li>
                         <li><a href="#" onclick="event.preventDefault();showReverseSearch()">Reverse Search</a></li>
                     </ul>
-                    <!-- Empty, and kept: .flow-bar is a three column grid, so removing
-                         the middle one puts Help where the middle used to be. Typing a
-                         GUID to load one lived here; Browse... does that, and knows
-                         which documents exist. -->
-                    <ul></ul>
+                    <!-- Off is the filtered view, which is how a page loads: a tree shows
+                         the fields its own treeType is read for and hides the rest. See
+                         flows/dds/scripts/treeViews.js. -->
+                    <ul>
+                        <li>
+                            <label>
+                                <input type="checkbox" role="switch" id="dds-show-all-fields"
+                                    onclick="toggleShowAllFields()"/>
+                                Show all fields
+                            </label>
+                        </li>
+                    </ul>
                     <!-- Tools, as the same menu all three flows carry. See the note on
                          the building flow's copy of it. -->
                     <ul>
@@ -277,14 +284,23 @@
                         <h5><strong>Add new...</strong></h5>
                     </header>
                     <form id="new-dds-file-form" onsubmit="event.preventDefault();submitNewDdsFile()">
+                        <!-- A tree is six formats sharing one struct, and which one it is
+                             decides what the game does with it -- so it is asked here
+                             rather than left in a dropdown inside the document. The six
+                             options are filled in by showNewDdsFile from TREE_KINDS; see
+                             flows/dds/scripts/treeKinds.js. -->
                         <label>
                             Type
                             <select id="new-dds-file-type" onchange="updateNewDdsFileForm()">
-                                <option value="tree">Tree</option>
+                                <optgroup label="Tree" id="new-dds-file-tree-kinds"></optgroup>
                                 <option value="message">Message</option>
                                 <option value="block">Block</option>
                                 <option value="strings">Strings file</option>
                             </select>
+                            <!-- What the chosen kind of tree is, in the game rather than
+                                 in the format. Empty for the three answers that are not
+                                 trees, whose own names say enough. -->
+                            <small id="new-dds-file-type-blurb"></small>
                         </label>
                         <label id="new-dds-file-name-field">
                             Name
@@ -809,6 +825,7 @@
                     <ul>
                         <li><a href="#" onclick="event.preventDefault();document.querySelector('#asset-explorer-modal').toggleAttribute('open')">Asset Explorer</a></li>
                         <li><a href="#" onclick="event.preventDefault();openRoomCreator()">Room Creator</a></li>
+                        <li><a href="#" onclick="event.preventDefault();openFurnitureCreator()">Furniture Creator</a></li>
                     </ul>
                     <ul>
                         <li id="editing-mode-control-group">
@@ -1043,141 +1060,601 @@
     
             <!-- Room creator. A room is four assets and a patch per thing admitted, so
                  this presents the room rather than the assets: a name, a room to copy,
-                 and where the room is meant to sit. What it admits is redrawn under
-                 those on every keystroke, because a room class that reaches nothing
-                 builds cleanly and furnishes nothing -- there is no error to wait for.
+                 and where the room is meant to sit.
+
+                 Dealt out as four steps rather than stacked as one column. Each of them is
+                 wide -- a picker beside what ticking it does, a plan beside the warnings
+                 about it -- because the two questions worth answering here, what does this
+                 admit and what is about to be written, were the two furthest from the top
+                 of the column this used to be. What it admits is still redrawn on every
+                 keystroke: a room class that reaches nothing builds cleanly and furnishes
+                 nothing, so there is no error to wait for. See scripts/creatorSteps.js.
 
                  Reads the reference data only, so it opens without a mod folder. -->
-            <dialog id="room-creator-modal">
+            <dialog id="room-creator-modal" class="creator-modal">
                 <article>
-                    <header>
-                        <button aria-label="Close" rel="prev" onclick="closeRoomCreator()"></button>
+                    <header class="creator-head">
                         <h5><strong>Room Creator</strong></h5>
+                        <span class="creator-subtitle" id="room-creator-subtitle"></span>
+                        <button aria-label="Close" rel="prev" onclick="closeRoomCreator()"></button>
                     </header>
 
-                    <!-- Rooms already in this mod, found by following references rather
-                         than by reading names -- so one assembled by hand is found the
-                         same way one written here is. Opening a room loads what its files
-                         say and reports what could not be read. -->
-                    <label for="room-creator-open">Open a room</label>
-                    <select id="room-creator-open" aria-label="Open a room from this mod"
-                        onchange="openExistingRoom()" disabled></select>
-                    <div id="room-creator-opened" role="region" aria-live="polite"
-                        aria-label="What was read back"></div>
+                    <div class="creator-body">
+                        <nav class="creator-rail" aria-label="Steps">
+                            <p class="creator-rail-heading">Steps</p>
+                            <!-- Filled from the panes below, by createStepper. -->
+                            <div class="creator-steps"></div>
+                            <p class="creator-rail-note" role="status"></p>
+                        </nav>
 
-                    <form oninput="roomCreatorChanged()" onsubmit="event.preventDefault()">
-                        <label for="room-creator-name">Room name</label>
-                        <input id="room-creator-name" placeholder="PicnicArea" autocomplete="off" />
-                        <small>Names the RoomTypePreset, which is what the floorplan editor's room
-                            picker lists. The room's other three assets take it with a suffix.</small>
+                        <div class="creator-panes">
+                            <!-- What the room is, and what that already reaches. The two
+                                 halves are on one step because the count on the right is
+                                 the answer to the donor on the left: copying a room is
+                                 the one choice here that moves it by dozens. -->
+                            <form class="creator-pane" data-step="identity" data-step-label="Identity"
+                                oninput="roomCreatorChanged()" onsubmit="event.preventDefault()">
+                                <div class="creator-col">
+                                    <!-- Rooms already in this mod, found by following
+                                         references rather than by reading names -- so one
+                                         assembled by hand is found the same way one written
+                                         here is. Opening a room loads what its files say and
+                                         reports what could not be read. -->
+                                    <div class="creator-card">
+                                        <p class="creator-card-title">Open a room</p>
+                                        <select id="room-creator-open" aria-label="Open a room from this mod"
+                                            onchange="openExistingRoom()" disabled></select>
 
-                        <label for="room-creator-donor">Copy from</label>
+                                        <p class="creator-card-title">Room name</p>
+                                        <input id="room-creator-name" placeholder="PicnicArea" autocomplete="off" />
+                                        <small>Names the RoomTypePreset, which is what the floorplan
+                                            editor's room picker lists. The room's other three assets
+                                            take it with a suffix.</small>
+                                    </div>
 
-                        <!-- The button is on the donor's row because it is about the
-                             donor. Furniture is the one thing copyFrom cannot carry --
-                             what furnishes a room is decided the other way round, by each
-                             cluster naming the room class it goes in -- so it takes a
-                             press of its own, and on its own line that press read as a
-                             third property of the room rather than as more of this one. -->
-                        <div class="room-creator-donor-row">
-                            <select id="room-creator-donor" aria-label="Room configuration to copy"></select>
-                            <button id="room-creator-copy-furniture" type="button" class="secondary outline"
-                                onclick="copyDonorFurniture()" disabled>Copy furniture</button>
+                                    <!-- The button is on the donor's row because it is about
+                                         the donor. Furniture is the one thing copyFrom cannot
+                                         carry -- what furnishes a room is decided the other way
+                                         round, by each cluster naming the room class it goes in
+                                         -- so it takes a press of its own, and on a line of its
+                                         own that press read as a third property of the room
+                                         rather than as more of this one. -->
+                                    <div class="creator-card">
+                                        <p class="creator-card-title">Copy from</p>
+                                        <div class="room-creator-donor-row">
+                                            <select id="room-creator-donor" aria-label="Room configuration to copy"></select>
+                                            <button id="room-creator-copy-furniture" type="button" class="secondary outline"
+                                                onclick="copyDonorFurniture()" disabled>Copy furniture</button>
+                                        </div>
+                                        <small>Lighting, security, cleanliness and decor come from
+                                            here. Furniture does not, so the button ticks what this
+                                            room is furnished with into the list under “What goes in
+                                            it” — once, after which it is yours to narrow.</small>
+                                        <div id="room-creator-copied" role="status" aria-live="polite"></div>
+                                    </div>
+                                </div>
+
+                                <div class="creator-col">
+                                    <div id="room-creator-verdict" class="creator-card" role="region"
+                                        aria-live="polite" aria-label="What this room admits"></div>
+                                    <div id="room-creator-opened" class="creator-scroll" role="region"
+                                        aria-live="polite" aria-label="What was read back"></div>
+                                </div>
+                            </form>
+
+                            <!-- Every field in here is optional, and a room can be designed
+                                 without answering any of them -- so what they do to the reach
+                                 is drawn beside them rather than under a fold. -->
+                            <form class="creator-pane" data-step="where" data-step-label="Where the room sits"
+                                oninput="roomCreatorChanged()" onsubmit="event.preventDefault()">
+                                <!-- One column, not two. The gates want the pane's whole
+                                     width -- seven of them four across, and in two thirds
+                                     of it the selects were narrower than the words in
+                                     them -- so what they did goes underneath instead. -->
+                                <div class="creator-col">
+                                    <div class="creator-card">
+                                        <p class="creator-card-title">Gates</p>
+                                        <small>Every one of these is optional. What you leave blank is
+                                            left open rather than guessed, and the reading beside them
+                                            says so.</small>
+
+                                        <div class="creator-fields">
+                                            <label>Floor
+                                                <input id="room-creator-floor" type="number" step="1" placeholder="any" />
+                                            </label>
+                                            <label>District wealth
+                                                <input id="room-creator-wealth" type="number" step="0.1" min="0" max="1" placeholder="any" />
+                                            </label>
+                                            <label>Grubbiness
+                                                <input id="room-creator-grub" type="number" step="0.1" min="0" max="1" placeholder="any" />
+                                            </label>
+                                            <label>Residences in the building
+                                                <input id="room-creator-residences" type="number" step="1" min="0" placeholder="any" />
+                                            </label>
+                                            <label>Open plan
+                                                <select id="room-creator-openPlan">
+                                                    <option value="">Not decided</option>
+                                                    <option value="yes">Yes</option>
+                                                    <option value="no">No</option>
+                                                </select>
+                                            </label>
+                                            <label>Address has inhabitants
+                                                <select id="room-creator-inhabitants">
+                                                    <option value="">Not decided</option>
+                                                    <option value="yes">Yes</option>
+                                                    <option value="no">No</option>
+                                                </select>
+                                            </label>
+                                            <label class="creator-field-wide">District
+                                                <select id="room-creator-district" aria-label="District"></select>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- What the gates above did, and how far the room
+                                         reaches once they have. Under the controls rather
+                                         than a step away: these are the only readings in
+                                         the pane that answer a keystroke. -->
+                                    <div class="creator-row">
+                                        <div id="room-creator-gates" class="creator-col creator-col-wide"
+                                            role="region" aria-live="polite"
+                                            aria-label="What these gates refuse"></div>
+                                        <div class="creator-col">
+                                            <div id="room-creator-reach" class="creator-card" role="region"
+                                                aria-live="polite" aria-label="How far this room reaches"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <!-- What furnishes the room. Refused clusters are listed rather
+                                 than dropped: the reason one cannot go in is the thing that
+                                 tells an author how to change the room so that it fits. -->
+                            <section class="creator-pane" data-step="contents" data-step-label="What goes in it">
+                                <div class="creator-col creator-col-wide">
+                                    <div class="creator-card creator-card-fill">
+                                        <input id="room-creator-search" type="search" autocomplete="off"
+                                            placeholder="Search furniture clusters" aria-label="Search furniture clusters"
+                                            oninput="roomCreatorChanged()" />
+                                        <ul id="room-creator-clusters" class="room-creator-picker"></ul>
+                                    </div>
+                                </div>
+
+                                <div class="creator-col">
+                                    <!-- What is ticked, gathered. The list beside it is capped
+                                         at what fits and sorted by what the gates say, so a
+                                         cluster admitted an hour ago can be off the bottom of
+                                         it -- and "what is actually in this room" is then a
+                                         question the pane showing the room cannot answer. -->
+                                    <div id="room-creator-chosen" class="creator-card" role="region"
+                                        aria-live="polite" aria-label="Clusters in this room"></div>
+
+                                    <div class="creator-card creator-card-fill">
+                                        <p class="creator-card-title">Ceiling lights</p>
+                                        <small>No lighting preset names a new room, so it gets no ceiling
+                                            light until one is patched to accept it. The ones lighting the
+                                            room you copied are ticked to start with; untick any you do
+                                            not want.</small>
+                                        <ul id="room-creator-lights" class="room-creator-picker"></ul>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="creator-pane" data-step="write" data-step-label="What will be written">
+                                <div class="creator-col">
+                                    <!-- A brand new room class is in no material filter, so it
+                                         has no wallpaper, flooring or ceiling until one names
+                                         it. On this step because it is the last thing decided
+                                         rather than the first, and because leaving it alone is
+                                         a perfectly ordinary answer. -->
+                                    <div class="creator-card">
+                                        <p class="creator-card-title">Materials</p>
+                                        <label>Walls
+                                            <select id="room-creator-surface-walls" aria-label="Wall materials" onchange="roomCreatorChanged()"></select>
+                                        </label>
+                                        <label>Floor
+                                            <select id="room-creator-surface-floor" aria-label="Floor materials" onchange="roomCreatorChanged()"></select>
+                                        </label>
+                                        <label>Ceiling
+                                            <select id="room-creator-surface-ceiling" aria-label="Ceiling materials" onchange="roomCreatorChanged()"></select>
+                                        </label>
+                                        <small>The filters that would also bring their own furniture are
+                                            listed and greyed rather than left out.</small>
+                                    </div>
+                                </div>
+
+                                <div class="creator-col creator-col-wide">
+                                    <div id="room-creator-plan" class="creator-scroll" role="region"
+                                        aria-live="polite" aria-label="Files this room comes to"></div>
+                                </div>
+                            </section>
                         </div>
-                        <small>Lighting, security, cleanliness and decor come from here.
-                            Furniture does not, so the button ticks what this room is
-                            furnished with into the list below — once, after which it is
-                            yours to narrow.</small>
-                        <div id="room-creator-copied" role="status" aria-live="polite"></div>
+                    </div>
 
-                        <!-- Collapsed by default. Every field in here is optional, and a
-                             room can be designed without answering any of them -- so it
-                             should not be the tallest thing in the dialog. -->
-                        <details>
-                            <summary>Where the room sits</summary>
-                            <small>Every one of these is optional. What you leave blank is left open
-                                rather than guessed, and the list below says so.</small>
+                    <footer class="creator-foot">
+                        <span class="creator-foot-note" role="status"></span>
+                        <button type="button" class="creator-back secondary outline">Back</button>
+                        <button type="button" class="creator-next secondary outline">Next</button>
+                        <button id="room-creator-write" type="button" onclick="writeRoom()" disabled>Write</button>
+                    </footer>
+                </article>
+            </dialog>
 
-                            <div class="grid">
-                                <label>Floor
-                                    <input id="room-creator-floor" type="number" step="1" placeholder="any" />
-                                </label>
-                                <label>District wealth
-                                    <input id="room-creator-wealth" type="number" step="0.1" min="0" max="1" placeholder="any" />
-                                </label>
-                                <label>Grubbiness
-                                    <input id="room-creator-grub" type="number" step="0.1" min="0" max="1" placeholder="any" />
-                                </label>
-                            </div>
+            <!-- Furniture creator. Furniture is three assets the way a room is four --
+                 the cluster arranges, the class decides where a slot may be, the preset
+                 is the model -- and the hop an author cannot make by reading a file is
+                 from a preset to the arrangements it appears in.
 
-                            <div class="grid">
-                                <label>Open plan
-                                    <select id="room-creator-openPlan">
-                                        <option value="">Not decided</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
-                                </label>
-                                <label>Address has inhabitants
-                                    <select id="room-creator-inhabitants">
-                                        <option value="">Not decided</option>
-                                        <option value="yes">Yes</option>
-                                        <option value="no">No</option>
-                                    </select>
-                                </label>
-                                <label>Residences in the building
-                                    <input id="room-creator-residences" type="number" step="1" min="0" placeholder="any" />
-                                </label>
-                            </div>
+                 Six steps rather than one column, for the reason the room creator has
+                 four: every one of these is a list beside the thing that edits it, and
+                 stacked they were a scroll apart. The 3D view is a single WebGL context
+                 and there is only one of it, so the stepper moves it into whichever pane
+                 declares a slot for it -- see placeView in scripts/furnitureCreator.js.
 
-                            <label for="room-creator-district">District</label>
-                            <select id="room-creator-district" aria-label="District"></select>
-                        </details>
-                    </form>
+                 What is drawn is the game's own positions over a box the size of the
+                 class's footprint, because a shipped model is in an asset bundle this app
+                 cannot open -- which the pane says rather than letting a wireframe pass
+                 for a desk.
 
-                    <hr />
-                    <div id="room-creator-verdict" role="region" aria-live="polite"
-                        aria-label="What this room admits"></div>
+                 Reads the reference data only, so it opens without a mod folder. -->
+            <dialog id="furniture-creator-modal" class="creator-modal">
+                <article>
+                    <header class="creator-head">
+                        <h5><strong>Furniture Creator</strong></h5>
+                        <span class="creator-subtitle" id="furniture-creator-subtitle"></span>
+                        <button aria-label="Close" rel="prev" onclick="closeFurnitureCreator()"></button>
+                    </header>
 
-                    <!-- What furnishes the room. Only what the context above admits is
-                         listed: a row that could be ticked but never placed would be a
-                         promise this pane cannot keep. -->
-                    <details>
-                        <summary>What goes in it</summary>
+                    <!-- The 3D pane, parked here between steps. It is moved into the
+                         [data-view-slot] of whichever pane is showing, and lives outside
+                         all of them so that no pane owns it: the WebGL context is built
+                         once and never disposed, so the element must survive every redraw
+                         any of those panes does. -->
+                    <div id="furniture-creator-viewport" class="creator-viewport" hidden>
+                        <!-- Sized by CSS rather than by attributes: the canvas inside is
+                             measured from this element, and a canvas measured against a box
+                             with no height comes out 1px tall. -->
+                        <div id="furniture-creator-view" class="furniture-creator-view"></div>
+                        <button type="button" class="secondary outline creator-viewport-reset"
+                            onclick="resetFurnitureView()">Reset view</button>
+                    </div>
 
-                        <input id="room-creator-search" type="search" autocomplete="off"
-                            placeholder="Search furniture clusters" aria-label="Search furniture clusters"
-                            oninput="roomCreatorChanged()" />
-                        <ul id="room-creator-clusters" class="room-creator-picker"></ul>
+                    <div class="creator-body">
+                        <nav class="creator-rail" aria-label="Steps">
+                            <p class="creator-rail-heading">Steps</p>
+                            <div class="creator-steps"></div>
+                            <p class="creator-rail-note" role="status"></p>
+                        </nav>
 
-                        <!-- A brand new room class is in no material filter, so it has no
-                             wallpaper, flooring or ceiling until one names it. -->
-                        <div class="grid">
-                            <label>Walls
-                                <select id="room-creator-surface-walls" aria-label="Wall materials" onchange="roomCreatorChanged()"></select>
-                            </label>
-                            <label>Floor
-                                <select id="room-creator-surface-floor" aria-label="Floor materials" onchange="roomCreatorChanged()"></select>
-                            </label>
-                            <label>Ceiling
-                                <select id="room-creator-surface-ceiling" aria-label="Ceiling materials" onchange="roomCreatorChanged()"></select>
-                            </label>
+                        <div class="creator-panes">
+                            <!-- What the model is: the picker, the model itself, and the
+                                 three levels it sits in. -->
+                            <section class="creator-pane" data-step="source" data-step-label="Source">
+                                <div class="creator-col">
+                                    <div class="creator-card creator-card-fill">
+                                        <input id="furniture-creator-search" type="search" autocomplete="off"
+                                            placeholder="Search furniture presets"
+                                            aria-label="Search furniture presets"
+                                            oninput="furnitureCreatorChanged()" />
+                                        <ul id="furniture-creator-presets" class="room-creator-picker"></ul>
+                                    </div>
+                                </div>
+
+                                <div class="creator-col creator-col-wide" data-view-slot></div>
+
+                                <div class="creator-col">
+                                    <div id="furniture-creator-summary" class="creator-scroll" role="region"
+                                        aria-live="polite" aria-label="What this furniture is"></div>
+                                </div>
+                            </section>
+
+                            <!-- The rules a FurnitureClass states, drawn on the grid they
+                                 are written on. Front is up: every offset and direction is
+                                 in the furniture's own frame, and the generator tries all
+                                 four quarter turns of it. -->
+                            <section class="creator-pane" data-step="placement" data-step-label="Placement">
+                                <div class="creator-col creator-col-wide">
+                                    <div class="creator-card">
+                                        <label class="furniture-creator-class-row" hidden>
+                                            Slot
+                                            <select id="furniture-creator-class"
+                                                aria-label="Which furniture class"
+                                                onchange="furnitureClassChanged()"></select>
+                                        </label>
+
+                                        <!-- How big the piece is. The one field the diagram is
+                                             drawn from rather than one drawn on it, so it sits
+                                             above the grid instead of in the rule editor. -->
+                                        <form class="furniture-creator-footprint"
+                                            oninput="placementSizeChanged()" onsubmit="event.preventDefault()">
+                                            <label for="furniture-creator-size-x">Footprint</label>
+                                            <input id="furniture-creator-size-x" type="number"
+                                                min="1" step="1" aria-label="Nodes across" />
+                                            <span>×</span>
+                                            <input id="furniture-creator-size-y" type="number"
+                                                min="1" step="1" aria-label="Nodes deep" />
+                                            <span>nodes</span>
+                                        </form>
+                                    </div>
+
+                                    <div class="creator-card creator-card-fill">
+                                        <div id="furniture-creator-placement" class="furniture-creator-placement"></div>
+                                    </div>
+
+                                    <!-- Adding is per tile, on the grid. These two act on what
+                                         is already marked, so they stay outside the editor —
+                                         Revert has to be reachable when nothing is. -->
+                                    <div class="furniture-creator-buttons">
+                                        <button type="button" class="secondary outline"
+                                            id="furniture-creator-rule-remove"
+                                            onclick="removePlacementRule()" disabled>Remove this one</button>
+                                        <button type="button" class="secondary outline"
+                                            id="furniture-creator-rule-revert"
+                                            onclick="revertPlacementEdits()" disabled>Revert rules</button>
+                                    </div>
+                                </div>
+
+                                <div class="creator-col">
+                                    <!-- The editor for whichever rule is marked. The three
+                                         kinds are different enough to be three forms shown one
+                                         at a time, with the kind select above them: it is what
+                                         makes an occupancy rule and a closed way out reachable
+                                         at all, since a class with none of either has none to
+                                         mark. -->
+                                    <div id="furniture-creator-rule-editor" class="furniture-creator-editor" hidden>
+                                        <small id="furniture-creator-rule-meaning"></small>
+
+                                        <form oninput="placementRuleChanged()" onsubmit="event.preventDefault()">
+                                            <label for="furniture-creator-rule-kind">This one is about</label>
+                                            <select id="furniture-creator-rule-kind"></select>
+
+                                            <div id="furniture-creator-rule-wall">
+                                                <div class="grid">
+                                                    <label>Wants
+                                                        <select id="furniture-creator-rule-option"></select>
+                                                    </label>
+                                                    <label>On its
+                                                        <select id="furniture-creator-rule-dir"></select>
+                                                    </label>
+                                                </div>
+                                                <label for="furniture-creator-rule-tag">Which is</label>
+                                                <select id="furniture-creator-rule-tag"></select>
+                                            </div>
+
+                                            <div id="furniture-creator-rule-node" hidden>
+                                                <div class="grid">
+                                                    <label>Wants
+                                                        <select id="furniture-creator-rule-node-option"></select>
+                                                    </label>
+                                                    <label for="furniture-creator-rule-class">Standing there
+                                                        <input id="furniture-creator-rule-class"
+                                                            placeholder="1x1Chair, or * for anything"
+                                                            autocomplete="off" />
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <!-- Not a placement rule. This is what standing
+                                                 here does to the room, so the ways out are
+                                                 checkboxes rather than one direction. -->
+                                            <div id="furniture-creator-rule-block" hidden>
+                                                <fieldset id="furniture-creator-block-dirs"
+                                                    class="furniture-creator-block-dirs"></fieldset>
+                                                <label>
+                                                    <input id="furniture-creator-block-diagonals" type="checkbox" />
+                                                    Also the diagonals on the tiles next to it
+                                                </label>
+                                            </div>
+
+                                            <div class="grid">
+                                                <label>At tile x
+                                                    <input id="furniture-creator-rule-at-x" type="number" step="1" />
+                                                </label>
+                                                <label>At tile y
+                                                    <input id="furniture-creator-rule-at-y" type="number" step="1" />
+                                                </label>
+                                            </div>
+                                        </form>
+                                    </div>
+
+                                    <div id="furniture-creator-placement-notes" class="creator-scroll"></div>
+
+                                    <small>Front is up. Everything here is written in the
+                                        furniture's own frame, and the generator tries all four
+                                        quarter turns of it — so this is the one the author
+                                        wrote, not a compass bearing. Click a tile to mark it,
+                                        then press its + to put a rule on it.</small>
+                                </div>
+                            </section>
+
+                            <section class="creator-pane" data-step="sits" data-step-label="What sits on it">
+                                <div class="creator-col creator-col-wide">
+                                    <div class="creator-card creator-card-fill">
+                                        <p class="creator-card-title">Positions · metres from origin</p>
+                                        <small>Positions are the model's own, in metres from its origin.
+                                            Click one to mark it in the view, then drag it there or type
+                                            the numbers here.</small>
+                                        <ul id="furniture-creator-subobjects" class="room-creator-picker"></ul>
+                                    </div>
+
+                                    <div class="creator-card">
+                                        <label>
+                                            <input type="checkbox" id="furniture-creator-parented"
+                                                onchange="toggleParentedSubObjects()" />
+                                            Draw the ones hanging off a transform, at the origin
+                                        </label>
+                                        <small id="furniture-creator-parented-count"></small>
+                                        <small>These sit relative to a named part of the model — a drawer, a
+                                            door — which this app cannot open, so where they really are is not
+                                            knowable here. Drawing them puts them at the model's origin
+                                            instead, which is somewhere they are not.</small>
+                                        <ul id="furniture-creator-parented-list" class="room-creator-picker"></ul>
+                                    </div>
+                                </div>
+
+                                <div class="creator-col">
+                                    <div data-view-slot class="creator-view-slot"></div>
+
+                                    <!-- The editor for whichever one is marked. Hidden rather
+                                         than empty when nothing is: six blank number fields read
+                                         as a form waiting to be filled in rather than as a tool
+                                         with no subject. -->
+                                    <div id="furniture-creator-editor" class="furniture-creator-editor" hidden>
+                                        <strong id="furniture-creator-editing"></strong>
+                                        <small id="furniture-creator-live"></small>
+
+                                        <form oninput="furnitureSubObjectChanged()" onsubmit="event.preventDefault()">
+                                            <div class="grid">
+                                                <label>Across (x)
+                                                    <input id="furniture-creator-pos-x" type="number" step="0.01" />
+                                                </label>
+                                                <label>Up (y)
+                                                    <input id="furniture-creator-pos-y" type="number" step="0.01" />
+                                                </label>
+                                                <label>Through (z)
+                                                    <input id="furniture-creator-pos-z" type="number" step="0.01" />
+                                                </label>
+                                            </div>
+
+                                            <div class="grid">
+                                                <label>Tilt (x°)
+                                                    <input id="furniture-creator-rot-x" type="number" step="1" />
+                                                </label>
+                                                <label>Turn (y°)
+                                                    <input id="furniture-creator-rot-y" type="number" step="1" />
+                                                </label>
+                                                <label>Roll (z°)
+                                                    <input id="furniture-creator-rot-z" type="number" step="1" />
+                                                </label>
+                                            </div>
+                                        </form>
+
+                                        <label>
+                                            <input type="checkbox" id="furniture-creator-rotate"
+                                                onchange="furnitureDragModeChanged()" />
+                                            Drag to turn rather than to move
+                                        </label>
+
+                                        <div class="furniture-creator-buttons">
+                                            <button type="button" class="secondary outline"
+                                                onclick="addFurnitureSubObject()">Add another</button>
+                                            <button type="button" class="secondary outline"
+                                                onclick="removeFurnitureSubObject()">Remove this one</button>
+                                            <button type="button" class="secondary outline"
+                                                onclick="revertFurnitureEdits()">Revert all</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Stage 5 of the chain: not what stands on the model, but what can
+                                 be done with it. Each entry pairs an InteractablePreset to an
+                                 InteractableController inside the prefab, and that controller is
+                                 what supplies its position — so the ids that can be used are the
+                                 ones the prefab has, which is knowable here only when the prefab
+                                 is one of this mod's own .sodprefab.json files. -->
+                            <section class="creator-pane" data-step="built" data-step-label="What is built into it">
+                                <div class="creator-col creator-col-wide">
+                                    <div class="creator-card creator-card-fill">
+                                        <small>Where a citizen works, sits, or hides. Each one is created at
+                                            a controller inside the model rather than spawned, so which ids
+                                            are usable is whatever the model already has — pairing to one it
+                                            has not got puts the interactable at the origin.</small>
+
+                                        <div id="furniture-creator-interactable-notes"></div>
+                                        <ul id="furniture-creator-interactables" class="room-creator-picker"></ul>
+
+                                        <!-- Outside the editor, because it has to be reachable with
+                                             nothing marked: a preset carrying none of these has none
+                                             to mark, and without this the first one could never be
+                                             written. -->
+                                        <button type="button" class="secondary outline"
+                                            id="furniture-creator-interactable-add"
+                                            onclick="addFurnitureInteractable()">Add an interactable</button>
+                                    </div>
+                                </div>
+
+                                <div class="creator-col">
+                                    <div data-view-slot class="creator-view-slot"></div>
+
+                                    <!-- Hidden rather than empty when nothing is marked, for the
+                                         reason the sub-object editor is: three blank controls read
+                                         as a form waiting to be filled in. -->
+                                    <div id="furniture-creator-interactable-editor"
+                                        class="furniture-creator-editor" hidden>
+                                        <strong id="furniture-creator-interactable-editing"></strong>
+                                        <small id="furniture-creator-interactable-meaning"></small>
+
+                                        <form oninput="furnitureInteractableChanged()"
+                                            onsubmit="event.preventDefault()">
+                                            <label for="furniture-creator-interactable-preset">Creates</label>
+                                            <input id="furniture-creator-interactable-preset"
+                                                list="furniture-creator-interactable-presets"
+                                                placeholder="HotelDesk" autocomplete="off" />
+                                            <datalist id="furniture-creator-interactable-presets"></datalist>
+
+                                            <div class="grid">
+                                                <label>Pairs to controller
+                                                    <select id="furniture-creator-interactable-controller"></select>
+                                                </label>
+                                                <label>Belongs to
+                                                    <select id="furniture-creator-interactable-owner"></select>
+                                                </label>
+                                            </div>
+                                        </form>
+
+                                        <div class="furniture-creator-buttons">
+                                            <button type="button" class="secondary outline"
+                                                id="furniture-creator-interactable-remove"
+                                                onclick="removeFurnitureInteractable()">Remove this one</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="creator-pane" data-step="appears" data-step-label="Where it appears">
+                                <div class="creator-col creator-col-wide">
+                                    <div class="creator-card creator-card-fill">
+                                        <small>The clusters with a slot one of its classes fills. Nothing in
+                                            the files points this way round — a preset names classes and so
+                                            does a cluster — so this is the hop worth having.</small>
+                                        <ul id="furniture-creator-clusters" class="room-creator-picker"></ul>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Three assets, not one. A preset on its own is a reskin: the model
+                                 joins the draw for a slot others also fill, in whatever
+                                 arrangement was already there. A class whose only member is this
+                                 preset, and a cluster that puts that class down, is what makes
+                                 the slot this model or nothing. -->
+                            <section class="creator-pane" data-step="write" data-step-label="What will be written">
+                                <div class="creator-col">
+                                    <div class="creator-card">
+                                        <p class="creator-card-title">Name</p>
+                                        <input id="furniture-creator-name" placeholder="MyDesk" autocomplete="off"
+                                            oninput="furnitureNameChanged()" />
+                                        <small>Names the FurniturePreset, which is what the floorplan editor's
+                                            furniture panel lists. Its class and cluster take it with a
+                                            suffix.</small>
+                                    </div>
+                                </div>
+
+                                <div class="creator-col creator-col-wide">
+                                    <div id="furniture-creator-plan" class="creator-scroll" role="region"
+                                        aria-live="polite" aria-label="Files this furniture comes to"></div>
+                                </div>
+                            </section>
                         </div>
+                    </div>
 
-                        <label>Ceiling lights</label>
-                        <small>No lighting preset names a new room, so it gets no ceiling light
-                            until one is patched to accept it. The ones lighting the room you
-                            copied are ticked to start with; untick any you do not want.</small>
-                        <ul id="room-creator-lights" class="room-creator-picker"></ul>
-                    </details>
-
-                    <details>
-                        <summary>What will be written</summary>
-                        <div id="room-creator-plan" role="region" aria-live="polite"
-                            aria-label="Files this room comes to"></div>
-                        <button id="room-creator-write" onclick="writeRoom()" style="width: 100%"
+                    <footer class="creator-foot">
+                        <span class="creator-foot-note" role="status"></span>
+                        <button type="button" class="creator-back secondary outline">Back</button>
+                        <button type="button" class="creator-next secondary outline">Next</button>
+                        <button id="furniture-creator-write" type="button" onclick="writeFurniture()"
                             disabled>Write</button>
-                    </details>
+                    </footer>
                 </article>
             </dialog>
 
@@ -1187,11 +1664,14 @@
                     <header>
                         <button aria-label="Close" rel="prev" onclick="document.querySelector('#select-fields-modal').removeAttribute('open')"></button>
                         <h5>
-                            <strong>Select fields to override</strong>
+                            <strong id="select-fields-modal-title">Select fields to override</strong>
                         </h5>
                     </header>
                     <small>
-                        <p>Fields selected here will be overridden from the copyFrom base. Warning: Unselecting a field will reset it's value to the default.</p>
+                        <!-- Both are written as the dialog opens: what choosing fields means
+                             depends on whether the document is one of the mod's own files or
+                             an override of a base game asset. See showSelectFieldsDialog. -->
+                        <p id="select-fields-modal-note">Fields selected here will be overridden from the copyFrom base. Warning: Unselecting a field will reset its value to the default.</p>
                         <label><input type="checkbox" id="select-fields-modal-select-all" onchange="updateSelectAllCopyFrom()"/> (De)Select all</label>
                         <ul id="select-fields-modal-field-list">
                             <li>field 1</li>
@@ -1239,31 +1719,6 @@
                              this tool can read -- see updateNewFileSubmitState. -->
                         <small id="new-file-modal-note" class="hidden"></small>
                         <button id="new-file-modal-submit" type="submit" style="width: 100%">Create File</button>
-                    </form>
-                </article>
-            </dialog>
-
-            <!-- New case dialog: Murder/Side Job/Other. The name and the folder itself
-                 come from the shell's New content button, and DDS folders are made when
-                 there is DDS content to put in them. -->
-            <dialog id="new-case-modal">
-                <article>
-                    <header>
-                        <button aria-label="Close" rel="prev" onclick="cancelNewCasePopup()"></button>
-                        <h5>
-                            <strong>New Case</strong>
-                        </h5>
-                    </header>
-                    <form onsubmit="event.preventDefault();newCasePromiseResolve(this['new-case-modal-case-type'].value)">
-                        <label>
-                            File Type
-                            <select id="new-case-modal-case-type">
-                                <option value="MurderMO">Murder</option>
-                                <option value="JobPreset">Side Job</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </label>
-                        <button type="submit" style="width: 100%">Create Case</button>
                     </form>
                 </article>
             </dialog>

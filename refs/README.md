@@ -116,7 +116,7 @@ reason: `DDSBlockCondition.forceScope` and `NewspaperArticle.possibleImages`.
 
 | File | Holds | Published as |
 |---|---|---|
-| `ddsTemplates.json` | the skeleton of a new tree, message, block and newspaper | `window.templates` |
+| `ddsTemplates.json` | the skeleton of a new tree, message, block and newspaper — `DDSSaveClasses`' own field initialisers, nothing else | `window.templates` |
 | `baseGameStringsFiles.json` | a copy of the game's `Strings/English` folder listing: its 130 CSVs as paths, without the `.csv` | `window.baseGameStringsFiles` |
 | `basicTypeLayouts.json` | Unity's built-in types — `Vector2`, `Color`, `AnimationCurve` — in the same shape as `soTypeLayout.json`, which does not contain them | folded into `window.typeLayout` |
 | `basicEnums.json` | `Boolean` and `WeightedMode`, which the generator does not emit | folded into `window.enums` |
@@ -126,6 +126,19 @@ reason: `DDSBlockCondition.forceScope` and `NewspaperArticle.possibleImages`.
 `window.templates` is shared with `generated/` on purpose: only one flow is active at a
 time and the registry swaps the whole global surface on activation. See the `loadRefs`
 note in `core/flowRegistry.js`.
+
+`ddsTemplates.json` is the game's class initialisers and stops there — what
+`new DDSTreeSave()` holds, field for field, which is why the layout cannot produce it: the
+layout gives a type and no value, so anything built from it is `0`/`false`/`""` and
+*overrides* an initialiser that is not zero. `flows/dds/scripts/elementTemplates.js` keeps
+that pairing honest and its spec fails when a field goes missing.
+
+What the template deliberately does **not** hold is anything that depends on which of the
+six kinds of tree is being made. A `DDSTreeSave` is a conversation, a v-mail, a document, a
+newspaper column, a message library or a dialog chain, and one skeleton can only be one of
+them — it used to be a v-mail, so five kinds out of six came out set to a `treeType` and a
+`triggerPoint` the game would never dispatch them on. That half lives in
+`flows/dds/scripts/treeKinds.js`, applied over the template at creation.
 
 `baseGameStringsFiles.json` is authored only in the sense that a person typed it in.
 Nothing in it was decided here: it is `Strings/English` as the game ships it, read off a
@@ -208,34 +221,38 @@ generator's to overwrite.
 |---|---|---|---|
 | `furnitureChain.json` | how the game decides what furniture a room gets: address presets, room configurations, room type filters, furniture clusters, classes and presets, plus what each wall preset is, trimmed to the fields the editor filters on | `flows/building/tools/buildFurnitureChain.js` | `flows/building/scripts/furnitureChain.js` |
 | `roomCreator.json` | the gates the square walk does not read: every cluster gate below the room class, design-style and wealth limits, per-room and per-address caps, which filters supply materials, what a room configuration passes on when it is copied, and which lighting presets accept it | `flows/building/tools/buildFurnitureChain.js` | the room creator, in the ScriptableObject flow |
+| `furnitureCreator.json` | what a piece of furniture is rather than whether it may be placed: the model each preset names, the sub-object slots on it and where they sit, the interactables it instances, where each cluster element stands and which way it faces, the prop classes a slot can hold, and the placement rules that score or cannot be checked rather than gate | `flows/building/tools/buildFurnitureChain.js` | the furniture creator, in the ScriptableObject flow |
 
-Both are the **base game's** alone. What the building flow actually answers against is this
-with the selected mod's own assets merged over it — see
+All three are the **base game's** alone. What the building flow actually answers against is
+this with the selected mod's own assets merged over it — see
 `flows/building/scripts/furnitureOverlay.js`, which reads them from the content folder at
 runtime and never writes here.
 
-### One dump, two files, no field in both
+### One dump, three files, no field in two
 
-The two come out of one run of one tool, and that is deliberate. They answer different
-questions about the same twelve types: the building flow asks what could spawn on a square
-and filters on the handful of gates a blueprint records, while the room creator asks what a
-room admits once an author has stated the floor, the wealth and the address kind, so it
-needs the thirty-odd gates below that, plus materials and lighting.
+The three come out of one run of one tool, and that is deliberate. They answer different
+questions about the same thirteen types: the building flow asks what could spawn on a square
+and filters on the handful of gates a blueprint records; the room creator asks what a room
+admits once an author has stated the floor, the wealth and the address kind, so it needs the
+thirty-odd gates below that, plus materials and lighting; the furniture creator asks what is
+actually there once something has been placed, which is geometry and nothing else filters on.
 
 Splitting them keeps the pointer-move path cheap — the building flow does not fetch the
 half it never reads — and running one tool keeps the two from disagreeing about what the
 game contains. Two readers of one dump is how `ddsMap.json` came to have two answers.
 
-**No field appears in both files**, which is the rule that makes them safe to join. A
+**No field appears in two of the files**, which is the rule that makes them safe to join. A
 cluster is `furnitureChain.clusters[name]` merged with `roomCreator.clusters[name].gates`;
 `disable` and the room-size bounds live only in the first, and everything else only in the
-second. A name that resolves in one and not the other is a bug in the tool.
+second. Its elements are read zipped with `furnitureCreator.clusters[name].elements` —
+same order, same length, both being `clusterElements` read in order. A name that resolves in
+one file and not another is a bug in the tool.
 
-`furnitureChain.json` is derived from a dump of twelve ScriptableObject types — 1,461 files
-and 7.9 MB — reduced to 233 KB, about 21 KB over the wire, with `roomCreator.json` a further
-124 KB and 11 KB. That reduction is the reason they exist: the building flow answers "what
-could spawn on this square" on every pointer move, and neither the dump nor a fetch per
-hover can be in that path.
+`furnitureChain.json` is derived from a dump of thirteen ScriptableObject types — 1,538
+files and 8 MB — reduced to 233 KB, about 21 KB over the wire, with `roomCreator.json` a
+further 124 KB and 11 KB, and `furnitureCreator.json` 206 KB and 30 KB. That reduction is
+the reason they exist: the building flow answers "what could spawn on this square" on every
+pointer move, and neither the dump nor a fetch per hover can be in that path.
 
 `roomCreator.json` compresses the same way, against `_gateDefaults` and `_classDefaults` at
 the top of the file. Those tables are the **commonest value of each field across the shipped
@@ -273,11 +290,36 @@ rules on a class to be read against, and it is **not** `authored/wallPresetKinds
 under another name. That table says what a wall looks like, for drawing it; this says what
 the generator sees. They disagree about dividers, and each is right about its own question.
 
+`furnitureCreator.json` compresses the same way and for the same reason. On a cluster
+element, absent `at` is the anchor node — 410 of the 1,139 — and absent `facing` is `down`,
+which 803 are; the fine `offset` and `scale` appear 32 and 91 times. On a sub-object,
+`parent` and `security` are written only when set.
+
+Its `classes` block is the half of a `FurnitureClass` the chain file does not carry, and the
+split is by what a rule *does* rather than by who reads it. A rule that refuses a placement
+is a gate and lives in the chain file, because the building flow applies it on every pointer
+move; here are the 135 that only add to a placement score, the 9 whose tags no blueprint can
+answer, and the three fields about what has already been placed nearby — `nodeRules`,
+`blockedAccess` and `awayFromClasses`, plus the 18 custom node weights. Read joined, the two
+are the whole of a class. 218 of the 262 carry something here.
+
+Its positions and rotations are **rounded to a thousandth**, which is a tenth of a
+millimetre and saves 88 KB across 1,504 sub-objects. That makes it a lossy read: a preset
+written back out from this data carries the rounded numbers rather than the game's. Nothing
+anyone can see moves, and it is still not a faithful copy of the asset.
+
 The enums a wall rule is written in do **not** come from `generated/soEnums.json` — see
 `flows/building/scripts/furnitureRules.js`, which says why that file cannot answer for
-`WallRule` and where the declaration order comes from instead.
+`WallRule` and where the declaration order comes from instead. The three
+`furnitureCreator.json` resolves to names — `FurnitureFacing`, `SubObjectOwnership`,
+`InteractableID` — are transcribed from the same source for the same reason, and
+`FurnitureFacing` is a live instance of the problem: `soEnums.json` holds it twice, and the
+copy keyed on the field name `facing` is alphabetised, which swaps `up` with `left` on 275
+of the 1,139 elements. Resolving them in the tool means an app reading that file never
+touches an index.
 
-Regenerate both against a dump served over HTTP or sitting on disk — one run writes the two:
+Regenerate all three against a dump served over HTTP or sitting on disk — one run writes
+them:
 
 ```
 node flows/building/tools/buildFurnitureChain.js http://<host>:<port>

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, connectFolders, selectContent, gotoFlow } from './support/harness.js';
-import { caseWithDdsReference, TREE_GUID } from './support/fixtures.js';
+import { installFsHarness, seedFs, connectFolders, selectContent, gotoFlow } from '../test-support/harness.js';
+import { caseWithDdsReference, TREE_GUID } from '../test-support/fixtures.js';
 
 /**
  * Following a DDS reference out of a case file.

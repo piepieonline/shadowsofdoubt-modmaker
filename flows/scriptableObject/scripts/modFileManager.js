@@ -1,40 +1,6 @@
 import { createFileIfMissing, deepClone } from '../../../core/files.js';
 import { makeCSVSafe, makeNameFieldSafe } from '../../../core/strings.js';
-import { refFor } from '../../../core/murderManifest.js';
 import { PATCH_SUFFIX, PRESET_SUFFIX, stemFor } from '../../../core/soFileName.js';
-
-/**
- * Lay out a new case inside a content folder: the preset it revolves around, and the
- * manifest telling the loader what to load and in what order.
- *
- * No DDS folders. This used to offer to create them, on the grounds that the case
- * might gain dialogue later; the DDS flow now makes them when there is a document to
- * put in them, so a folder full of empty directories is no longer the price of a case.
- */
-export async function scaffoldCase(folder, name, type) {
-    const hasPreset = type === 'MurderMO' || type === 'JobPreset';
-
-    if (hasPreset) {
-        await createFileIfNotExisting(name, type, folder, (content) => {
-            content.name = name;
-            content.presetName = name;
-            content.notes = name;
-            content.copyFrom = null;
-            return content;
-        });
-    }
-
-    await createFileIfNotExisting('murdermanifest', 'MurderManifest', folder, (content) => {
-        if (hasPreset) {
-            // Named exactly as the file is named. This used to lowercase what it wrote,
-            // which `isListed` tolerates and the loader does too -- but an entry that
-            // does not match the file it names is one an author has to read twice, and
-            // there is now more of it to disagree about.
-            content.fileOrder.splice(0, 0, refFor(stemFor(name, type)));
-        }
-        return content;
-    });
-}
 
 export function cloneTemplate(template) {
     var templateToClone = template in window.enums ? 0 : window.templates[template];
@@ -96,20 +62,12 @@ export async function createOverrideIfNotExisting(name, type, handle) {
  * The stem is the caller's next problem rather than an afterthought: the manifest has to
  * name the file, and the file is not named after the asset alone -- see
  * core/soFileName.js.
- *
- * The manifest is the one file here that is not a typed asset, so it is the one file
- * whose name carries no type. That is the same fact as its having no `fileType`, which
- * is why one test governs both.
  */
-export async function createFileIfNotExisting(filename, type, handle, newFileContentCallback) {
-    const isAsset = type !== 'MurderManifest';
-    const stem = isAsset ? stemFor(filename, type) : filename;
+export async function createFileIfNotExisting(assetName, type, handle, newFileContentCallback) {
+    const stem = stemFor(assetName, type);
 
-    await createFileIfMissing(handle, [`${stem}${PRESET_SUFFIX}`], () => {
-        const template = cloneTemplate(type);
-        if (isAsset) template.fileType = type;
-        return newFileContentCallback(template);
-    });
+    await createFileIfMissing(handle, [`${stem}${PRESET_SUFFIX}`], () =>
+        newFileContentCallback({ ...cloneTemplate(type), fileType: type }));
 
     return stem;
 }

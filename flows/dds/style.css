@@ -166,6 +166,36 @@
     width: 2.5rem;
 }
 
+/*
+ * The base game's rows, listed under the mod's own.
+ *
+ * A rule and a gap say where one list ends and the other begins, and the muted colour
+ * says the rest: nothing below the line is this mod's to edit.
+ */
+#trees .strings-vanilla-heading td {
+    border-top: 1px solid var(--pico-muted-border-color);
+    padding-top: 0.75rem;
+    /* Enough that the two lists do not read as one long one, and no more: the point of
+       having them in one table is that a row is a row wherever it sits. */
+    padding-bottom: 0.35rem;
+    font-size: 0.75em;
+    color: var(--pico-muted-color);
+}
+
+#trees .strings-vanilla-row td {
+    /* The boxes above have a border and padding of their own; matching them keeps the
+       text of the two lists in one column rather than two that nearly line up. */
+    padding: 0.4rem 0.65rem;
+    color: var(--pico-muted-color);
+    /* A line of dialogue is as long as it is, and there is no box to scroll it in. */
+    overflow-wrap: anywhere;
+}
+
+#trees .strings-vanilla-key {
+    font-family: monospace;
+    font-size: 0.85em;
+}
+
 /* Read out, not drawn. */
 #trees .strings-unseen {
     position: absolute;
@@ -421,4 +451,19 @@
     .manifest-broken {
         border-left: 3px solid var(--pico-del-color);
     }
+}
+
+/*
+ * Views: the fields a tree of this kind never reads.
+ *
+ * Marked by the setup pass in flows/dds/index.js against the table in
+ * scripts/treeViews.js, and taken off the screen by "Show all fields" in the flow bar.
+ * Two classes rather than one because the mark and the answer are separate facts -- a
+ * document rebuilt by an edit is re-marked, and has to land wherever the switch stands.
+ *
+ * Display only. The row goes; the value stays in the file and is written back out
+ * untouched.
+ */
+.hidden-irrelevant-node {
+    display: none;
 }

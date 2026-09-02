@@ -12,6 +12,7 @@ import {
     setIdAndLoad, newFile,
     showBrowse, updateBrowse, updateBrowseTypeahead, showReverseSearch,
     updateRSearch, updateRSearchResultsTable, showHelp, openModal, closeModal,
+    toggleShowAllFields,
 } from './scripts/ui.js';
 import {
     showNewDdsFile, closeNewDdsFile, updateNewDdsFileForm, submitNewDdsFile,
@@ -23,5 +24,6 @@ export default {
     showNewDdsFile, closeNewDdsFile, updateNewDdsFileForm, submitNewDdsFile,
     showBrowse, updateBrowse, updateBrowseTypeahead, showReverseSearch,
     updateRSearch, updateRSearchResultsTable, showHelp, openModal, closeModal,
+    toggleShowAllFields,
     toggleDdsManifestPanel: toggleManifestPanel,
 };

@@ -15,6 +15,8 @@
  * So one is read-only and the other is a list of the instances actually in the document.
  */
 
+import { TreeType } from './treeViews.js';
+
 /** `<owner type>.<field>`, for the checks below. */
 const key = (resolved) => `${resolved.ownerType}.${resolved.field}`;
 
@@ -72,14 +74,29 @@ export function instanceOptions(document) {
     return messages
         .map((message, index) => ({
             value: message?.instanceID,
-            text: describe(message ?? {}, index),
+            text: describe(message ?? {}, index, document?.treeType),
         }))
         .filter((option) => Boolean(option.value));
 }
 
-function describe(message, index) {
+/**
+ * What one message reads as in the list.
+ *
+ * Where it sits, first and always: `messages.3` is what the tree in front of the author
+ * says. Then whatever else distinguishes it -- the element it places, and the order it is
+ * drawn in.
+ *
+ * The order is named only on a document, which is the one kind of tree that reads it. It
+ * used to be named everywhere, and on a conversation that meant every entry in the list
+ * ending in `(order 0)` -- a field the view takes off the screen for that kind of tree,
+ * repeated down a dropdown, distinguishing nothing. See scripts/treeViews.js.
+ */
+function describe(message, index, treeType) {
     const named = message.elementName ? ` — ${message.elementName}` : '';
-    const order = Number.isFinite(message.order) ? ` (order ${message.order})` : '';
 
-    return `messages.${index}${named}${order}`;
+    const drawn = treeType === TreeType.DOCUMENT && Number.isFinite(message.order)
+        ? ` (order ${message.order})`
+        : '';
+
+    return `messages.${index}${named}${drawn}`;
 }

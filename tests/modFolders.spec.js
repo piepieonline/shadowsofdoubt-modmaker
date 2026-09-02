@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, gotoFlow } from './support/harness.js';
-import { pluginsFixture } from './support/fixtures.js';
+import { installFsHarness, seedFs, gotoFlow } from '../test-support/harness.js';
+import { pluginsFixture } from '../test-support/fixtures.js';
 
 /**
  * Finding editable content inside a BepInEx plugins folder.

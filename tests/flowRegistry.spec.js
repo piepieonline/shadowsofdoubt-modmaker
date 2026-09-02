@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, gotoFlow } from './support/harness.js';
+import { installFsHarness, gotoFlow } from '../test-support/harness.js';
 
 /**
  * The flow contract. A flow is one kind of mod content; core dispatches through the

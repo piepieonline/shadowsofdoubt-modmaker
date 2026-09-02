@@ -35,12 +35,17 @@
  * than a label per coordinate.
  *
  * This module owns no model state. It is handed a floor model, reads it, and draws it.
+ *
+ * The camera, the orbit controls, the keyboard, the resize observer and the frame
+ * scheduling are not here either: they are `core/viewer3d.js`, which the furniture
+ * creator's model view uses as well. What is left in this file is the floor.
  */
 import {
     NODE_GRID, NODES_PER_TILE, TILE_GRID, AXIS_X, AXIS_Y,
     nodeAt, tileAt, getWall, isPaintable, isOutsideNode, tileParts, roomColour,
 } from './floorModel.js';
 import { dividerPostAtLowEnd } from './dividerEnds.js';
+import { createViewer } from '../../../core/viewer3d.js';
 
 /** View units. A node is 1 wide, so the grid is 21 x 21 and the origin is a corner. */
 const CELL = 1;
@@ -68,25 +73,16 @@ const DEFAULT_EYE = [
 ];
 
 /**
- * How near and how far the camera may stand, and how far one press of a camera key moves.
+ * How near and how far the camera may stand, in nodes.
  *
- * The bounds are not only the keyboard's: without them a zoom in carries on through the
- * floor and a zoom out loses the building. The grid is 21 across and the default eye
- * stands about 27 back from the middle of it, so these are a close look at a few cells
- * and a view with room to spare around the whole floor.
- *
- * The steps are sized for a key held down as much as for one tapped. A browser repeats at
- * about thirty a second, so a step small enough to aim with is still a turn in a second or
- * so of holding.
+ * Without them a zoom in carries on through the floor and a zoom out loses the building.
+ * The grid is 21 across and the default eye stands about 27 back from the middle of it, so
+ * these are a close look at a few cells and a view with room to spare around the whole
+ * floor. How far one press of a camera key moves is the viewer's and is proportional to
+ * these rather than fixed against them -- see core/viewer3d.js.
  */
 const MIN_DISTANCE = 4;
 const MAX_DISTANCE = 80;
-const KEY_ORBIT = 0.06;
-const KEY_ZOOM = 1.1;
-const KEY_PAN = 0.05;
-
-/** Straight down is a degenerate spherical angle, so the tilt stops just short of it. */
-const MIN_POLAR = 0.001;
 
 /**
  * The floor's x axis, reversed, which is the whole of the difference between the game's
@@ -409,187 +405,34 @@ const MISMATCH_COLOUR = [0.85, 0.15, 0.15];
  * is easier to keep correct in one place than spread across the tool code.
  */
 export async function createScene(container) {
-    const THREE = await import('three');
-    const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
-    const { Text } = await import('troika-three-text');
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio ?? 1, 2));
-    container.appendChild(renderer.domElement);
-    renderer.domElement.style.display = 'block';
-    renderer.domElement.style.width = '100%';
-    renderer.domElement.style.height = '100%';
-
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x14161a);
-
     const middle = (NODE_GRID * CELL) / 2;
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 500);
-    camera.position.set(...DEFAULT_EYE);
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(middle, 0, middle);
-    controls.enableDamping = true;
-    // The floor is a plane; letting the camera under it only ever loses the model.
-    controls.maxPolarAngle = Math.PI * 0.48;
-    controls.minDistance = MIN_DISTANCE;
-    controls.maxDistance = MAX_DISTANCE;
 
     /*
-     * The left button belongs to the tools, not to the camera -- unless alt is held.
+     * The camera, the controls and everything bound to the canvas: see core/viewer3d.js.
      *
-     * OrbitControls has it orbit by default, which would mean every stroke also swung
-     * the view. So it is given nothing -- a mouse action of null falls through the
-     * control's switch and leaves it in no state at all -- and orbiting moves to the
-     * middle and right buttons, either of which does it.
+     * The left button is withheld from the camera because it belongs to the tools -- a
+     * drag paints, and a drag that also swung the view would make every stroke a fight.
+     * Alt lends it back for the length of one drag, which is what `reserveLeftButton`
+     * asks for, and is the whole of what a trackpad has to reach for.
      *
-     * Pan is not given a button of its own and does not need one: OrbitControls pans
-     * instead of rotating whenever ctrl or shift is held on a button set to ROTATE, so
-     * both of these pan with a modifier. Neither collides with the tools' modifiers,
-     * which are on the left button only.
+     * Everything else is the viewer's default, and the defaults are this view's own
+     * numbers because this is where they were written. The tilt stopping short of the
+     * horizontal matters here for a reason worth stating: the floor is a plane, and a
+     * camera let under it only ever loses the model.
      */
-    controls.mouseButtons = {
-        LEFT: null,
-        MIDDLE: THREE.MOUSE.ROTATE,
-        RIGHT: THREE.MOUSE.ROTATE,
-    };
+    const viewer = await createViewer(container, {
+        eye: DEFAULT_EYE,
+        target: [middle, 0, middle],
+        minDistance: MIN_DISTANCE,
+        maxDistance: MAX_DISTANCE,
+        reserveLeftButton: true,
+        label: 'Floorplan view',
+    });
 
-    controls.update();
+    const { THREE, scene, camera, controls, renderer } = viewer;
+    const { draw, invalidate, resize, project: projectPoint, resetView } = viewer;
 
-    /*
-     * Alt lends the left button to the camera for the length of one drag.
-     *
-     * A Mac trackpad has no middle button at all, and its right one is a two-finger click
-     * that cannot be held through a drag without a third finger -- so orbiting was
-     * reachable only by the gesture a trackpad is worst at. Alt+drag is what Maya,
-     * Sketchfab and most orbit views on the web use, and here it collides with nothing:
-     * OrbitControls picks pan over rotate on ctrl, meta and shift and never reads alt, and
-     * the tools' modifiers are those same three. Alt+shift+drag pans, for free.
-     *
-     * Which button orbits has to be settled before OrbitControls sees the press, and it
-     * binds its own pointerdown on the canvas as it is constructed -- ahead of the tools'.
-     * Listeners on one element run in the order they were added whatever phase they asked
-     * for, so no second canvas listener can get in front of it. A capture listener on the
-     * container can: an ancestor's capture phase runs before the target's handlers.
-     *
-     * Read on the press alone. Alt taken up or put down part way through does not change
-     * what the drag already is.
-     */
-    const chooseLeftButton = (event) => {
-        controls.mouseButtons.LEFT = event.altKey ? THREE.MOUSE.ROTATE : null;
-    };
-    container.addEventListener('pointerdown', chooseLeftButton, { capture: true });
-
-    /*
-     * The middle button orbits, so it must not also do what the browser does with it.
-     *
-     * Chrome and Firefox on Windows and Linux start autoscroll on a middle press, which
-     * would leave a scroll cursor stuck over the canvas for the whole of a drag.
-     * OrbitControls does not stop it: it listens on pointerdown, and preventing that
-     * does not suppress the mouse event the browser acts on. So the mouse event is what
-     * is caught here.
-     */
-    const suppressAutoscroll = (event) => { if (event.button === 1) event.preventDefault(); };
-    renderer.domElement.addEventListener('mousedown', suppressAutoscroll);
-
-    /*
-     * The camera on the keyboard: arrows orbit, shift+arrows pan, - and + zoom.
-     *
-     * OrbitControls has key handling of its own and it is not this one. `listenToKeyEvents`
-     * puts pan on the bare arrows, rotate on the modified ones, and zoom on nothing at
-     * all, so the camera is moved here instead -- by writing the position and letting
-     * `update` reconcile, which is what resetView already does.
-     *
-     * The keys are the canvas's rather than the window's. An arrow means something in a
-     * text field and in the trees and lists this app is mostly made of, and a handler on
-     * the window would be left guessing which of those was asking; one on a canvas that
-     * can hold focus never has to guess. Pressing in the view focuses it, so clicking on
-     * the thing you want to steer is the whole of the ceremony.
-     */
-    renderer.domElement.tabIndex = 0;
-    renderer.domElement.setAttribute('aria-label',
-        'Floorplan view. Arrow keys orbit, shift with arrow keys pans, minus and plus zoom.');
-
-    const focusOnPress = () => renderer.domElement.focus({ preventScroll: true });
-    renderer.domElement.addEventListener('pointerdown', focusOnPress);
-
-    /** Where the camera stands relative to what it looks at, which every key move works on. */
-    const cameraOffset = () => camera.position.clone().sub(controls.target);
-
-    function orbitBy(theta, phi) {
-        const spherical = new THREE.Spherical().setFromVector3(cameraOffset());
-
-        spherical.theta += theta;
-        spherical.phi = Math.min(
-            Math.max(spherical.phi + phi, controls.minPolarAngle + MIN_POLAR),
-            controls.maxPolarAngle);
-
-        camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(spherical));
-    }
-
-    function dollyBy(factor) {
-        const offset = cameraOffset();
-        const distance = Math.min(
-            Math.max(offset.length() * factor, controls.minDistance), controls.maxDistance);
-
-        camera.position.copy(controls.target).add(offset.setLength(distance));
-    }
-
-    /**
-     * Pan across the screen rather than the world.
-     *
-     * Right is the camera's right and up is its up, so which way a key shifts the view
-     * does not depend on where the camera has been orbited to. The eye and what it looks
-     * at move together: moving only the eye would swing the view, which is orbiting.
-     */
-    function panBy(right, up) {
-        camera.updateMatrixWorld();
-
-        const step = cameraOffset().length() * KEY_PAN;
-        const move = new THREE.Vector3()
-            .setFromMatrixColumn(camera.matrixWorld, 0)
-            .multiplyScalar(right * step)
-            .add(new THREE.Vector3()
-                .setFromMatrixColumn(camera.matrixWorld, 1)
-                .multiplyScalar(up * step));
-
-        camera.position.add(move);
-        controls.target.add(move);
-    }
-
-    /*
-     * An arrow moves the camera the way it points -- left orbits leftwards, up climbs --
-     * so the floor appears to swing the other way. That is the direction OrbitControls'
-     * own keys take and the one every other orbit view takes with them.
-     */
-    function onKeyDown(event) {
-        // A key with ctrl, meta or alt on it belongs to the browser or to the OS.
-        if (event.ctrlKey || event.metaKey || event.altKey) return;
-
-        const pans = event.shiftKey;
-
-        switch (event.key) {
-            case 'ArrowLeft': pans ? panBy(-1, 0) : orbitBy(-KEY_ORBIT, 0); break;
-            case 'ArrowRight': pans ? panBy(1, 0) : orbitBy(KEY_ORBIT, 0); break;
-            case 'ArrowUp': pans ? panBy(0, 1) : orbitBy(0, -KEY_ORBIT); break;
-            case 'ArrowDown': pans ? panBy(0, -1) : orbitBy(0, KEY_ORBIT); break;
-
-            // Shift is not consulted here: + is a shifted = on most layouts, and _ a
-            // shifted -, so both spellings of each key mean the same zoom.
-            case '-': case '_': dollyBy(KEY_ZOOM); break;
-            case '=': case '+': dollyBy(1 / KEY_ZOOM); break;
-
-            default: return;
-        }
-
-        // Only now that a key is known to be the camera's: an arrow this did not use is
-        // still the page's to scroll with.
-        event.preventDefault();
-        controls.update();
-        invalidate();
-    }
-
-    renderer.domElement.addEventListener('keydown', onKeyDown);
+    const { Text } = await import('troika-three-text');
 
     scene.add(new THREE.AmbientLight(0xffffff, 1.9));
     const sun = new THREE.DirectionalLight(0xffffff, 1.1);
@@ -636,44 +479,9 @@ export async function createScene(container) {
     const forwardArrow = buildForwardArrow(THREE);
     scene.add(forwardArrow);
 
-    const raycaster = new THREE.Raycaster();
-    const pointer = new THREE.Vector2();
-
     let model = null;
     let overlay = Overlay.ADDRESS;
-    let frame = null;
     let wantTileOverlay = false;
-
-    /* ---------------------------------------------------------------- */
-
-    function resize() {
-        const width = container.clientWidth || 1;
-        const height = container.clientHeight || 1;
-
-        renderer.setSize(width, height, false);
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        draw();
-    }
-
-    const observer = new ResizeObserver(resize);
-    observer.observe(container);
-
-    function draw() {
-        controls.update();
-        renderer.render(scene, camera);
-    }
-
-    /** Draw on the next frame, so a run of edits costs one render rather than many. */
-    function invalidate() {
-        if (frame !== null) return;
-        frame = requestAnimationFrame(() => {
-            frame = null;
-            draw();
-        });
-    }
-
-    controls.addEventListener('change', invalidate);
 
     /* ---------------------------------------------------------------- */
 
@@ -794,22 +602,13 @@ export async function createScene(container) {
 
     /* ---------------------------------------------------------------- */
 
-    /** Put the pointer's position into normalised device coordinates. */
-    function toDevice(event) {
-        const rect = renderer.domElement.getBoundingClientRect();
-        pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-        raycaster.setFromCamera(pointer, camera);
-    }
-
     /**
      * The cell under a screen point, or null.
      *
      * The instance index is the coordinate, so nothing has to be looked up.
      */
     function cellAt(event) {
-        toDevice(event);
-        const hit = raycaster.intersectObject(cellHits, false)[0];
+        const hit = viewer.rayFrom(event).intersectObject(cellHits, false)[0];
         if (!hit || hit.instanceId === undefined) return null;
 
         return {
@@ -831,8 +630,7 @@ export async function createScene(container) {
 
     /** The wall under a screen point, or null. */
     function wallAt(event) {
-        toDevice(event);
-        const hit = raycaster.intersectObject(walls, false)[0];
+        const hit = viewer.rayFrom(event).intersectObject(walls, false)[0];
         if (!hit || hit.instanceId === undefined) return null;
         return wallOfInstance(hit.instanceId);
     }
@@ -846,8 +644,7 @@ export async function createScene(container) {
      * behind the wall it appears to be on.
      */
     function pickAt(event) {
-        toDevice(event);
-        const hits = raycaster.intersectObjects([cellHits, walls], false);
+        const hits = viewer.rayFrom(event).intersectObjects([cellHits, walls], false);
         const hit = hits[0];
         if (!hit || hit.instanceId === undefined) return null;
 
@@ -906,37 +703,14 @@ export async function createScene(container) {
             along ? (y + 0.5) * CELL : (y + 1) * CELL);
     }
 
-    function projectPoint(x, y, z) {
-        const rect = renderer.domElement.getBoundingClientRect();
-        const point = new THREE.Vector3(x, y, z).project(camera);
-
-        if (point.z > 1) return null;
-
-        return {
-            left: rect.left + ((point.x + 1) / 2) * rect.width,
-            top: rect.top + ((-point.y + 1) / 2) * rect.height,
-        };
-    }
-
-    /** Frame the whole floor again, for a "reset view" control. */
-    function resetView() {
-        camera.position.set(...DEFAULT_EYE);
-        controls.target.set(middle, 0, middle);
-        controls.update();
-        invalidate();
-    }
-
-    function dispose() {
-        observer.disconnect();
-        if (frame !== null) cancelAnimationFrame(frame);
-        controls.dispose();
-        renderer.domElement.removeEventListener('mousedown', suppressAutoscroll);
-        renderer.domElement.removeEventListener('pointerdown', focusOnPress);
-        renderer.domElement.removeEventListener('keydown', onKeyDown);
-
-        // This one is not on the canvas, so it does not go when the canvas does.
-        container.removeEventListener('pointerdown', chooseLeftButton, { capture: true });
-
+    /*
+     * What this scene built, let go of when the view is.
+     *
+     * Registered rather than called: the viewer stops everything that could draw before
+     * running this and releases the renderer after it, so nothing renders geometry that
+     * is being disposed underneath it. See `onDispose` in core/viewer3d.js.
+     */
+    viewer.onDispose(() => {
         for (const mesh of [cells, ghostCells, ceilingCaps, cellHits, walls, wallParts]) {
             mesh.geometry.dispose();
             mesh.material.dispose();
@@ -963,16 +737,14 @@ export async function createScene(container) {
         // leaving the next reader to check.
         for (const piece of forwardArrow.children) piece.geometry.dispose();
         forwardArrow.children[0]?.material.dispose();
-
-        renderer.dispose();
-        renderer.domElement.remove();
-    }
+    });
 
     resize();
 
     return {
         setModel, setOverlay, setTileOverlay, setSelected, refresh, resize, draw, invalidate,
-        cellAt, wallAt, pickAt, project, projectWall, resetView, dispose,
+        cellAt, wallAt, pickAt, project, projectWall, resetView,
+        dispose: viewer.dispose,
         get canvas() { return renderer.domElement; },
         get overlay() { return overlay; },
         // Which square is marked, so a caller can check the view agrees with whatever

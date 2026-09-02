@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, collectPageErrors,
     contrastGap,
-} from './support/harness.js';
-import { soFixtureWithAssets } from './support/fixtures.js';
+} from '../test-support/harness.js';
+import { soFixtureWithAssets } from '../test-support/fixtures.js';
 
 /**
  * The field summary: one field's values across every asset of its type.

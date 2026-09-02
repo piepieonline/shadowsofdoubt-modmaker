@@ -2,9 +2,9 @@ import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, connectFolders, selectContent, prompts, readFile, listDir,
     alerts, collectPageErrors, gotoFlow, openDdsDocument, clipboard, setClipboard,
-} from './support/harness.js';
+} from '../test-support/harness.js';
 import { ddsFixture, ddsFixtureWithContent, soFixture, TREE_GUID, MSG_GUID, MSG2_GUID }
-    from './support/fixtures.js';
+    from '../test-support/fixtures.js';
 import { GUID_PATTERN } from '../core/guid.js';
 
 /**

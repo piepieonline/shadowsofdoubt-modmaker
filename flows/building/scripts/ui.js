@@ -34,7 +34,7 @@ import {
     loadFloorIndex, stubFor, readCustomPreset, stairwellElevators,
 } from './buildingLibrary.js';
 import {
-    generateBuilding, writeGeneratedBuilding, isMeshStale, GENERATED_FIELDS,
+    generateBuilding, writeGeneratedBuilding, isMeshStale, GENERATED_FIELDS, MESH_ROOF_FIELD,
 } from './meshExport.js';
 import { createScene, Overlay, describeCell } from './scene.js';
 import { createToolState, attachPainting, nearestEdge, Tool, PaintMode } from './tools.js';
@@ -435,7 +435,21 @@ function floorEntry(building, option, modFloors) {
  * one piece of editor state a blueprint has nowhere to store.
  */
 export async function openFloor({ building, blueprint, slot }, selections = [], { quiet = false } = {}) {
-    const found = await resolveBlueprint(contentFolder(), blueprint);
+    // A floor that could not be *read* is a different answer from one that is not there,
+    // and neither is a reason to leave a click doing nothing visible. resolveBlueprint
+    // raises rather than quietly handing back the base game's copy of a floor the mod has
+    // its own version of -- see buildingLibrary.js -- and this is where that has to be
+    // said, because nothing above awaits this.
+    let found = null;
+
+    try {
+        found = await resolveBlueprint(contentFolder(), blueprint);
+    } catch (error) {
+        console.error('Could not read the floor', error);
+        alert(error.message);
+        return;
+    }
+
     if (!found) {
         if (!quiet) alert(`Could not find a floor called "${blueprint}".`);
         return;
@@ -449,7 +463,43 @@ export async function openFloor({ building, blueprint, slot }, selections = [], 
     // are read here rather than each time they are drawn, which is on every edit: it is a
     // file read, and neither the building's floor list nor its stairwell changes while one
     // of its floors is open.
-    const preset = await presetOfBuilding(building);
+    //
+    // A read that fails leaves the building unknown rather than stopping the floor opening,
+    // and unknown is already handled below: the floor opens on its own and saving it
+    // touches no preset. That is the safe half of the two, and it is the same answer this
+    // gives a name nothing answers to.
+    let preset = null;
+
+    try {
+        preset = await presetOfBuilding(building);
+    } catch (error) {
+        console.error('Could not read the building this floor belongs to', error);
+    }
+
+    /**
+     * The building this floor is actually held to belong to, which is the name only when
+     * something answers to it.
+     *
+     * A name with no preset behind it is not a building to save against, and there are two
+     * ways to arrive holding one. A restored session names the building in the URL, and the
+     * content folder that came back is not always the one the URL named -- see
+     * restoreSession, which asks for a folder and takes what it is given. And a preset that
+     * will not parse reads as absent here, exactly as one that is not there does.
+     *
+     * Kept, either would put the name in front of the next autosave, which has to answer
+     * "what does this mod's <name> look like" and would have nothing to answer with. That
+     * is where a preset copying from itself came from.
+     *
+     * The floor still opens. It is a file in its own right, worth looking at and worth
+     * editing; what it loses is the storey it sits in, which the Floor panel says plainly.
+     * The slot goes with the building, because a slot is a position in a building.
+     */
+    const inBuilding = preset ? building : null;
+
+    if (building && !inBuilding && !quiet) {
+        alert(`Could not find a building called "${building}", so "${blueprint}" has been `
+            + 'opened on its own. Saving it will not change any building.');
+    }
 
     const model = parseFloor(found.data, { selections });
 
@@ -459,9 +509,9 @@ export async function openFloor({ building, blueprint, slot }, selections = [], 
     model.stairwellElevators = await stairwellElevators(contentFolder(), preset);
 
     open = {
-        building,
+        building: inBuilding,
         blueprint,
-        slot,
+        slot: inBuilding ? slot : null,
         isCustom: found.isCustom,
         model,
         // What the Floor panel steps through.
@@ -487,8 +537,9 @@ export async function openFloor({ building, blueprint, slot }, selections = [], 
 
     // What the last generation said was about the last building. Whether this one's mesh
     // is out of date is a fresh question, answered below once the floor is on screen --
-    // it reads every floor of the building, so it is not something to wait for.
-    meshState = { busy: false, stale: null, status: '' };
+    // it reads every floor of the building, so it is not something to wait for. So is
+    // whether it has a roof, which comes off the same read of the same preset.
+    meshState = NO_MESH_STATE;
 
     await showOpenFloor();
     refreshMeshState();
@@ -568,6 +619,7 @@ function openFloorContext() {
             busy: meshState.busy,
             stale: meshState.stale,
             status: meshState.status,
+            roof: meshState.roof,
         },
     };
 }
@@ -590,6 +642,7 @@ function updateFloorPanel() {
         renderFloorPanel(container, openFloorContext(), {
             onOpen: openSlot,
             onGenerateMesh: generateMesh,
+            onMeshRoof: setMeshRoof,
         });
     }
 }
@@ -814,6 +867,7 @@ function renderPanels() {
         getFloor: openFloorContext,
         onOpenFloor: openSlot,
         onGenerateMesh: generateMesh,
+        onMeshRoof: setMeshRoof,
         canPaint: canEdit(),
     });
 
@@ -1005,6 +1059,28 @@ function markDirty() {
     saveTimer = setTimeout(() => { saveTimer = null; saveFloor(); }, SAVE_DELAY);
 }
 
+/**
+ * The preset a building's floors should be written into, or null once the author has been
+ * told why there is none.
+ *
+ * `presetForSaving` refuses rather than inventing a preset for a building it cannot read or
+ * cannot find -- see buildingLibrary.js, and the file that inventing one produced. Every
+ * caller of this is a button, so a refusal has to be said out loud: swallowed, the button
+ * would appear to do nothing whatever.
+ *
+ * Not used by the autosave, which has more to say than the refusal itself -- the floor is
+ * already written by then -- and more to do about it. See saveFloor.
+ */
+async function presetToWrite(folder, buildingName) {
+    try {
+        return (await presetForSaving(folder, buildingName)).preset;
+    } catch (error) {
+        console.error('Could not read the building to write it back', error);
+        alert(error.message);
+        return null;
+    }
+}
+
 /** Write a pending autosave now, for before the open floor is replaced. */
 async function flushPendingSave() {
     if (saveTimer === null) return;
@@ -1037,9 +1113,36 @@ export async function saveFloor(force = false) {
     await writeCustomBlueprint(folder, open.model.floorName, serialiseFloor(open.model));
 
     if (open.building) {
-        const { preset } = await presetForSaving(folder, open.building);
-        if (open.slot) open.slot = setBlueprint(preset, open.slot, open.model.floorName);
-        await writeCustomPreset(folder, open.building, preset);
+        // Both read before the awaits below, because `open` is replaced by whatever is
+        // opened next and the message has to name the floor that was actually written.
+        const building = open.building;
+        const floorName = open.model.floorName;
+
+        try {
+            const { preset } = await presetForSaving(folder, building);
+            if (open.slot) open.slot = setBlueprint(preset, open.slot, open.model.floorName);
+            await writeCustomPreset(folder, building, preset);
+        } catch (error) {
+            // The blueprint is already on disk, so nothing drawn has been lost; what failed
+            // is pointing the building at it. presetForSaving refuses rather than inventing
+            // a preset, so this is reached with the building's file exactly as it was --
+            // which is the point of it refusing.
+            //
+            // The building is then let go of, for the same reason openFloor declines to
+            // take one it cannot find: the autosave comes back on the next stroke, and a
+            // name that failed once will fail every time. Repeating the alert per stroke
+            // would be worse than the slot the floor gives up, and holding the name while
+            // saying nothing more would be worse than both.
+            console.error('Could not save the floor against its building', error);
+
+            if (open?.building === building) {
+                open.building = null;
+                open.slot = null;
+            }
+
+            alert(`"${floorName}" has been saved, but it could not be pointed at `
+                + `${building}: ${error.message}`);
+        }
     }
 
     // The floor may have been saved under a new name, and its building may have become
@@ -1076,15 +1179,22 @@ export async function saveNow() {
 /* -------------------------------------------------------------------------- */
 
 /**
- * What the last generation did, and whether the building's model still matches its
- * floors.
+ * What the last generation did, whether the building's model still matches its floors,
+ * and whether the next one puts a top on it.
  *
  * `stale` is three-valued on purpose. `true` and `false` are answers about a building
  * whose mesh this app generated; `null` is *no question* -- a building copying its model
  * from a base game one, or one that has never had a mesh generated, has nothing that
  * could have gone out of date and nothing regenerating would fix.
+ *
+ * `roofChosen` is what keeps the checkbox from being answered over the top of. The
+ * preset only learns the answer when a mesh is generated, so between ticking the box and
+ * pressing the button every autosave reads a preset that still says the old thing --
+ * and without this, the first one would untick it again.
  */
-let meshState = { busy: false, stale: null, status: '' };
+const NO_MESH_STATE = { busy: false, stale: null, status: '', roof: true, roofChosen: false };
+
+let meshState = NO_MESH_STATE;
 
 /**
  * A blueprint's data by name, which is what the generator reads floors through.
@@ -1095,6 +1205,18 @@ let meshState = { busy: false, stale: null, status: '' };
  */
 const resolveFloorData = async (blueprint) =>
     (await resolveBlueprint(contentFolder(), blueprint))?.data ?? null;
+
+/**
+ * Remember whether the next mesh gets a top, without redrawing to say so.
+ *
+ * The checkbox is already showing what was just clicked, and the Floor panel is rebuilt
+ * from scratch every time it is drawn -- so redrawing here would take the focus off the
+ * box the author is still on and put nothing new on screen. Nothing is written to the
+ * preset either: the answer belongs to the mesh, and there is no mesh until Generate.
+ */
+function setMeshRoof(roof) {
+    meshState = { ...meshState, roof, roofChosen: true };
+}
 
 /**
  * Build the model, textures, prefab and window data for the open floor's building.
@@ -1123,15 +1245,17 @@ export async function generateMesh() {
     if (dirty) await saveFloor(true);
 
     const building = open.building;
-    meshState = { busy: true, stale: null, status: 'Reading the floors…' };
+    const roof = meshState.roof;
+
+    meshState = { ...meshState, busy: true, stale: null, status: 'Reading the floors…' };
     updateFloorPanel();
 
     try {
         const { preset } = await presetForSaving(folder, building);
-        const result = await generateBuilding(building, preset, resolveFloorData);
+        const result = await generateBuilding(building, preset, resolveFloorData, { roof });
 
         if (!result.ok) {
-            meshState = { busy: false, stale: null, status: result.reason };
+            meshState = { ...meshState, busy: false, stale: null, status: result.reason };
         } else {
             // The prefab before the preset that points at it, for the same reason a floor
             // is written before the building that names it: a preset naming a model that
@@ -1140,11 +1264,19 @@ export async function generateMesh() {
             await writeGeneratedBuilding(folder, building, result.files);
             await writeCustomPreset(folder, building, preset, { alsoWritten: GENERATED_FIELDS });
 
-            meshState = { busy: false, stale: false, status: describeGeneration(result) };
+            // The preset now says what the checkbox says, so reading it back is no longer
+            // reading a stale answer over the top of the author's.
+            meshState = {
+                busy: false, stale: false, status: describeGeneration(result),
+                roof, roofChosen: false,
+            };
         }
     } catch (error) {
         console.error('Could not generate the building mesh', error);
-        meshState = { busy: false, stale: null, status: `Could not generate: ${error.message}` };
+        meshState = {
+            ...meshState, busy: false, stale: null,
+            status: `Could not generate: ${error.message}`,
+        };
     }
 
     // The building may have become the mod's just now, which changes what Browse lists
@@ -1162,12 +1294,13 @@ function describeGeneration(result) {
         `${result.windowCount} window${result.windowCount === 1 ? '' : 's'}`,
     ];
 
-    // Both are worth saying out loud rather than only in the console. A floor that could
-    // not be read is a hole in the model, and the ground floor and rooftop being left out
-    // is deliberate but surprising -- the ground floor is drawn by the street frontage in
-    // front of it and an open rooftop has no facade.
+    // All three are worth saying out loud rather than only in the console. A floor that
+    // could not be read is a hole in the model, and what the ground floor and a rooftop
+    // get is deliberate but surprising -- the ground floor is drawn by the street frontage
+    // in front of it, and a rooftop is in the silhouette without being a window row.
     const notes = [];
     if (result.excluded.length) notes.push(`Not modelled: ${result.excluded.join(', ')}.`);
+    if (result.shellOnly.length) notes.push(`Shell only: ${result.shellOnly.join(', ')}.`);
     if (result.missing.length) notes.push(`Floors not found: ${result.missing.join(', ')}.`);
 
     return [`${parts.join(', ')}.`, ...notes].join(' ');
@@ -1193,7 +1326,14 @@ async function refreshMeshState() {
 
         if (open?.building !== building || meshState.busy) return;
 
-        meshState = { ...meshState, stale };
+        meshState = {
+            ...meshState,
+            stale,
+            // Only until the author has said otherwise. Between ticking the box and
+            // generating, the preset still describes the mesh on disk rather than the one
+            // about to be built, and this runs after every autosave.
+            roof: meshState.roofChosen ? meshState.roof : (preset?.[MESH_ROOF_FIELD] ?? true),
+        };
         updateFloorPanel();
     } catch (error) {
         // Whether a mesh is out of date is a footnote. A folder that went away underneath
@@ -1442,8 +1582,12 @@ async function addStorey(buildingName, { isBasement = false } = {}) {
     await flushPendingSave();
 
     // Read before the question is asked, because what the building already has is what
-    // decides which answers are worth offering. Nothing is written by reading it.
-    const { preset } = await presetForSaving(folder, buildingName);
+    // decides which answers are worth offering. Nothing is written by reading it -- but a
+    // building that cannot be read is one there is no point asking about, since the answer
+    // could not be written either.
+    const preset = await presetToWrite(folder, buildingName);
+    if (!preset) return;
+
     const against = adjoiningStorey(storeysOf(enumerateSlots(preset)), { isBasement });
 
     const start = await askStoreyStart(buildingName, { isBasement, against });
@@ -1497,7 +1641,12 @@ async function writeNewFloor(folder, buildingName, { storey = null, isBasement =
     // depends on what the building has now -- the dialog above is not modal, and the
     // building may have gained a floor while it was open. Still only read: the write
     // order is the blueprint and then the building, as below.
-    const { preset } = await presetForSaving(folder, buildingName);
+    //
+    // Before the blueprint is written, so that a building that refuses leaves nothing
+    // behind. A floor written for a building that could not be pointed at it is a file
+    // nothing reads and nothing lists.
+    const preset = await presetToWrite(folder, buildingName);
+    if (!preset) return;
 
     const data = await newFloorData(folder, name, preset, { storey, isBasement, start });
     await writeCustomBlueprint(folder, name, data);
@@ -1723,8 +1872,11 @@ async function deleteFloor(buildingName, blueprint, slot) {
     await deleteCustomBlueprint(folder, blueprint);
 
     if (buildingName && slot) {
-        const { preset } = await presetForSaving(folder, buildingName);
-        if (removeBlueprint(preset, slot)) {
+        // A building that cannot be read leaves the slot naming a floor that has gone,
+        // which is the lesser of the two: the file is deleted either way, and the author
+        // has been told which building still points at it.
+        const preset = await presetToWrite(folder, buildingName);
+        if (preset && removeBlueprint(preset, slot)) {
             await writeCustomPreset(folder, buildingName, preset);
         }
     }
@@ -1739,7 +1891,7 @@ function closeFloor() {
     hovered = null;
     hoveredKey = null;
     dirty = false;
-    meshState = { busy: false, stale: null, status: '' };
+    meshState = NO_MESH_STATE;
 
     // Before the model goes: what was selected was a square of the floor being closed.
     clearSelection();

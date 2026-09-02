@@ -2,8 +2,8 @@
  * Creating a new content folder inside a mod.
  *
  * One button in the shell header, for every flow. What goes *in* the folder is the
- * active flow's business -- a case needs a manifest and a preset, DDS content needs
- * nothing until there is a document to write.
+ * active flow's business -- a building mod needs the layout its editor reads back, and
+ * cases and DDS content need nothing until there is a document to write.
  *
  * Where it goes follows the folder you are working in, so a new one lands beside it:
  *

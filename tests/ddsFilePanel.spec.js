@@ -2,11 +2,11 @@ import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, alerts, openDdsDocument,
     confirms, queueConfirms, listDir, readFile,
-} from './support/harness.js';
+} from '../test-support/harness.js';
 import {
     ddsFixtureWithContent, ddsLinkedContent, TREE_GUID, MSG_GUID,
     MOD_TREE_GUID, MOD_MSG_GUID, MOD_BLOCK_GUID,
-} from './support/fixtures.js';
+} from '../test-support/fixtures.js';
 
 /**
  * The left-hand panel listing what a mod contains.

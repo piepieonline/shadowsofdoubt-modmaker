@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, openDdsDocument } from './support/harness.js';
-import { caseWithDdsReference, ddsFixtureWithContent, TREE_GUID } from './support/fixtures.js';
+import { installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, openDdsDocument } from '../test-support/harness.js';
+import { caseWithDdsReference, ddsFixtureWithContent, TREE_GUID } from '../test-support/fixtures.js';
 
 /**
  * What is open survives a trip to the other editor.

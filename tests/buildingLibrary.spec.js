@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, gotoFlow, readFile } from './support/harness.js';
+import { installFsHarness, seedFs, gotoFlow, readFile } from '../test-support/harness.js';
 
 /**
  * Buildings and their floor slots.
@@ -168,6 +168,70 @@ test('a stub written from a base game building enumerates the same slots', async
 
     expect(compared.after).toEqual(compared.before);
     expect(compared.after.length).toBeGreaterThan(0);
+});
+
+/**
+ * What a stub is *not* written for.
+ *
+ * A stub copies from the building it is a stub of, and the name it copies from is its own.
+ * That is only true of a base game building, and presetForSaving used to build one for any
+ * name at all -- so a name nothing answered to produced a preset copying from itself, with
+ * an empty floor list for the slot being saved to append to. Written back over the file it
+ * was built because it could not read, that is a building reduced to its own name and one
+ * floor.
+ */
+test('a building neither the mod nor the base game has is not saved against', async ({ page }) => {
+    const result = await withLibrary(page, async (library, contentFolder) => {
+        try {
+            await library.presetForSaving(contentFolder, 'NoSuchTower');
+            return { threw: false, message: null };
+        } catch (error) {
+            return { threw: true, message: error.message };
+        }
+    });
+
+    expect(result.threw).toBe(true);
+    expect(result.message).toContain('NoSuchTower');
+
+    // And nothing reached the folder. A stub here would be a building copying from itself.
+    expect(await readFile(page, 'Plugins/TallTower/NoSuchTower.BuildingPreset.sodso.json')).toBeNull();
+});
+
+test('a preset that will not parse is reported rather than written over', async ({ page }) => {
+    const before = await readFile(page, 'Plugins/TallTower/Broken.sodso.json');
+
+    const result = await withLibrary(page, async (library, contentFolder) => {
+        const found = await library.findCustomPreset(contentFolder, 'Broken');
+
+        try {
+            await library.presetForSaving(contentFolder, 'Broken');
+            return { found, threw: false, message: null };
+        } catch (error) {
+            return { found, threw: true, message: error.message };
+        }
+    });
+
+    // Absent and unreadable are different answers, because they call for different things.
+    expect(result.found).toEqual({ preset: null, unreadable: 'Broken.sodso.json' });
+
+    expect(result.threw).toBe(true);
+    expect(result.message).toContain('Broken.sodso.json');
+
+    // The text is the author's, and is what turns one bad file into a lost building if it
+    // is taken for an absent one. It is still there, byte for byte, to be repaired.
+    expect(await readFile(page, 'Plugins/TallTower/Broken.sodso.json')).toBe(before);
+});
+
+test('a building the mod holds is read rather than stubbed', async ({ page }) => {
+    const found = await withLibrary(page, async (library, contentFolder) => (
+        library.findCustomPreset(contentFolder, 'TallTower')
+    ));
+
+    expect(found.unreadable).toBeNull();
+    expect(found.preset.presetName).toBe('TallTower');
+
+    // Its own copyFrom, untouched. No save decides that field.
+    expect(found.preset.copyFrom).toBeNull();
 });
 
 

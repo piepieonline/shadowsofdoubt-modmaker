@@ -225,10 +225,41 @@ async function findPresetFile(contentFolder, name, type = BUILDING_TYPE) {
     return null;
 }
 
-/** A mod's building preset, or null if the folder has no such file. */
-export async function readCustomPreset(contentFolder, name) {
+/**
+ * A mod's building preset, and which of the two ways there can be none of it.
+ *
+ *   `{ preset }`               the folder holds one and it reads
+ *   `{ unreadable: fileName }` the folder holds one and it does not parse
+ *   neither                    the folder holds none
+ *
+ * The distinction exists for one caller and is the whole reason this is separate from
+ * `readCustomPreset`. Everything that only *shows* a preset is right to treat the two the
+ * same -- there is nothing to show either way. Everything that goes on to **write** the
+ * file is not: a preset that will not parse is a preset whose contents are still on disk
+ * and still the author's, and taking it for an absent one is how a save comes to overwrite
+ * a building it could not read. See presetForSaving.
+ *
+ * A file holding the literal `null` is unreadable too. It parses, but it is not a preset,
+ * and it is not something to write over on the strength of having parsed.
+ */
+export async function findCustomPreset(contentFolder, name) {
     const found = await findPresetFile(contentFolder, name);
-    return found ? readJson(found.handle) : null;
+    if (!found) return { preset: null, unreadable: null };
+
+    const preset = await readJson(found.handle);
+    return preset
+        ? { preset, unreadable: null }
+        : { preset: null, unreadable: found.fileName };
+}
+
+/**
+ * A mod's building preset, or null if the folder has no readable one.
+ *
+ * For reading. A caller about to write the file back wants findCustomPreset, which says
+ * whether the null means there is no file or means there is one this could not read.
+ */
+export async function readCustomPreset(contentFolder, name) {
+    return (await findCustomPreset(contentFolder, name)).preset;
 }
 
 /**
@@ -616,6 +647,14 @@ function newFloorSetting() {
  * That order is what makes editing a base game floor work at all. A floor saved into
  * the mod keeps the name the building already refers to, so the building needs no
  * change and the mod's copy simply shadows the original.
+ *
+ * The fall-through is only ever taken because the mod has no such floor. It used to be
+ * taken because reading the mod's failed as well, which is the same trap the preset side
+ * had and a worse one to fall into: a mod floor named after a base game one is exactly
+ * what editing a base game floor produces, so the fallback finds something, opens it, and
+ * the next autosave writes the game's own copy over the author's work.
+ *
+ * @throws when the mod holds this floor and it could not be read
  */
 export async function resolveBlueprint(contentFolder, blueprintName) {
     if (!blueprintName) return null;
@@ -627,13 +666,32 @@ export async function resolveBlueprint(contentFolder, blueprintName) {
     return vanilla ? { data: vanilla, isCustom: false } : null;
 }
 
-/** A blueprint the mod holds, or null. */
+/**
+ * A blueprint the mod holds, or null when it holds no such file.
+ *
+ * A file that is there and will not parse raises rather than answering null. Null means
+ * "look elsewhere for this floor", and elsewhere is the base game's copy -- which is not
+ * the floor the author has been drawing, and would be written over it.
+ *
+ * A blueprint is 60 KB of coordinates that nothing hand-edits, so there is no repairable
+ * middle case to keep the way a manifest or a preset has one. Unreadable means broken.
+ *
+ * @throws when the file is there and does not parse
+ */
 export async function readCustomBlueprint(contentFolder, name) {
     const floors = await tryGetFolder(contentFolder, [FLOORS_DIR]);
     if (!floors) return null;
 
     const handle = await tryGetFile(floors, [`${name}.json`]);
-    return handle ? readJson(handle) : null;
+    if (!handle) return null;
+
+    const data = await readJson(handle);
+    if (!data) {
+        throw new Error(`This mod's copy of "${name}" is not readable as JSON, so it cannot `
+            + 'be opened. Repair or remove the file in the Floors folder.');
+    }
+
+    return data;
 }
 
 /** The blueprints the mod holds, by name. */
@@ -671,8 +729,20 @@ export async function listCustomBlueprints(contentFolder) {
  * points at, and it is the key its readable name is stored against -- so it has to be
  * safe as an identifier and as a file name. `title` is the readable name, and defaults
  * to the preset name for the stubs nobody titled.
+ *
+ * **`copyFrom` has no default and must be stated, `null` included.** It used to default to
+ * `presetName`, which is right for the one case it was written for -- a stub of a base game
+ * building is that building with this mod's floors in it, so it copies from its own name --
+ * and silently wrong for every other. A caller that reached here with a name the base game
+ * does not have got back a preset copying from itself: a ring the loader follows round
+ * without ever reaching an asset that answers. Nothing about the name says which case it
+ * is, so the caller says.
  */
-export function stubFor(presetName, sourcePreset, { copyFrom = presetName, title = presetName } = {}) {
+export function stubFor(presetName, sourcePreset, { copyFrom, title = presetName } = {}) {
+    if (copyFrom === undefined) {
+        throw new Error('A stub has to state what it copies from, even when that is nothing');
+    }
+
     return {
         name: title,
         presetName,
@@ -867,23 +937,66 @@ export async function createCustomBuilding(contentFolder, presetName, { copyFrom
  *
  * This is the step that keeps base game presets read-only: whatever the author had
  * open, what gets written is always the mod's own copy.
+ *
+ * Three answers, and only one of them writes anything:
+ *
+ *   the mod holds it        that preset, to be written back into its own file
+ *   the base game holds it  a stub copying from it, which is what a base game building
+ *                           becomes the first time a floor is saved against it
+ *   neither does            an error, because there is nothing to save against
+ *
+ * That last one used to be a stub as well, built from a null source and copying from its
+ * own name. It is the shape a corrupted preset takes: `copyFrom` pointing at itself, the
+ * five identifying fields, and one floor -- the slot being saved, which setBlueprint
+ * appends to the empty floor list it was handed. Everything the building actually said
+ * about itself is gone, and the file it replaced is the file it could not read.
+ *
+ * So an unreadable preset is reported rather than treated as an absent one. `copyFrom` is
+ * settled when a building is created and by the author thereafter; no save decides it.
+ *
+ * @throws when the mod holds a preset that will not parse, or when neither the mod nor the
+ *         base game has a building of this name
  */
 export async function presetForSaving(contentFolder, name) {
-    const existing = await readCustomPreset(contentFolder, name);
-    if (existing) return { preset: existing, created: false };
+    const { preset, unreadable } = await findCustomPreset(contentFolder, name);
+    if (preset) return { preset, created: false };
 
-    return { preset: stubFor(name, await loadVanillaPreset(name)), created: true };
+    if (unreadable) {
+        throw new Error(`"${unreadable}" is not readable as JSON. Repair or remove it before `
+            + `saving against ${name}, so that what it holds is not written over.`);
+    }
+
+    const vanilla = await loadVanillaPreset(name);
+    if (!vanilla) {
+        throw new Error(`Neither this mod nor the base game has a building called "${name}", `
+            + 'so there is nothing to save a floor against.');
+    }
+
+    // A stub of a base game building copies from the building it is a stub of, which is
+    // the one case where a preset's own name is the right thing to copy from.
+    return { preset: stubFor(name, vanilla, { copyFrom: name }), created: true };
 }
 
 
 /* -------------------------------------------------------------------------- */
 
+/**
+ * A file's contents as JSON, or null when the text is there and will not parse.
+ *
+ * The read is deliberately outside the catch. A file that will not parse is a fact about
+ * what the file says, and callers are right to shrug at it -- listing what they can rather
+ * than failing a whole folder over one bad file. A read that *fails* says nothing about the
+ * file at all, and answering it with the same null tells the caller the file holds nothing
+ * when what happened is that nobody managed to look.
+ *
+ * Which matters because the callers go on to write. See findCustomPreset and core/fs.js.
+ */
 async function readJson(handle) {
+    const text = await readFileContent(handle);
+
     try {
-        return JSON.parse(await readFileContent(handle));
+        return JSON.parse(text);
     } catch {
-        // A file that will not parse is not a building. Callers list what they can
-        // rather than failing the whole folder over one bad file.
         return null;
     }
 }

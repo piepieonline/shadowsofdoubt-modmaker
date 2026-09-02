@@ -155,10 +155,11 @@ export function addTreeElement(path, parent, readOnly, fileType, source, editorC
         // A row of their own: the first label is far longer than Save/Copy/Close, and
         // the editor bar caps button width at 100px.
         secondaryActions: [
-            // Only where choosing fields means something. One of the mod's own files is
-            // made of the fields it states; a patch holds the whole asset and saves what
-            // has changed about it, so there is no set of fields to pick -- see
-            // loadFileContent, which is where that is decided.
+            // Only where choosing fields means something, which is on anything the mod
+            // owns. One of the mod's own files is made of the fields it states; an
+            // override is made of the fields it changes about a base game asset, and the
+            // same dialog is where either is picked -- see showSelectFieldsDialog. A base
+            // game asset states every field it has and none of them is the mod's.
             {
                 label: 'Select Override Fields',
                 onClick: () => editorCallbacks.showSelectFieldsDialog(),

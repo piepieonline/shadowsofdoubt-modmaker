@@ -3,6 +3,7 @@ import { createFileIfMissing, deepClone } from '../../../core/files.js';
 import { makeCSVSafe, makeNameFieldSafe } from '../../../core/strings.js';
 import { DDS_BLOCKS_VIRTUAL, DDS_CONTENT_ROOT } from '../../../core/ddsManifest.js';
 import { writeStringsRow } from '../../../core/modStrings.js';
+import { applyTreeKind } from './treeKinds.js';
 import { loadI18n } from '../index.js';
 
 /**
@@ -69,8 +70,11 @@ const rungName = (name, rung) => (rung ? `${name}-${rung}` : name);
  * @param line         the English line the block at the bottom of it says
  * @param rung         what this level is, when it is one of the levels below the
  *                     document that was actually asked for
+ * @param treeType     which of the six kinds of tree to make. Only for a fresh tree: a
+ *                     copy is the kind of the thing it was copied from, and a message or
+ *                     a block has no kind at all.
  */
-export async function createNewFile(type, templateData, { name, line, rung } = {}) {
+export async function createNewFile(type, templateData, { name, line, rung, treeType } = {}) {
     /**
      * Fresh, or a copy of something that already exists.
      *
@@ -102,6 +106,13 @@ export async function createNewFile(type, templateData, { name, line, rung } = {
             return createNewFileImpl('tree', async newContent => {
                 if (fromTemplate) {
                     newContent.messages.push(cloneTemplate('treeMessage'));
+
+                    // What kind of tree this is, and the values that kind needs to be a
+                    // tree the game will run. Applied before the GUIDs below, so those
+                    // are the last word: the template is the shape of a `DDSTreeSave` and
+                    // this is which of the six it is. See scripts/treeKinds.js.
+                    applyTreeKind(newContent, treeType);
+
                     // Named after the tree it belongs to: it is a rung of this document
                     // rather than a document anyone went looking for.
                     newContent.messages[0].msgID = await createNewFile('message', undefined, {

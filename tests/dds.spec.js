@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, queuePicks, connectFolders, selectContent, queuePrompts, prompts, readFile, listDir, alerts, collectPageErrors, topLevelLabels, gotoFlow, fieldInput, editField, openDdsDocument, addDdsContent } from './support/harness.js';
+import { installFsHarness, seedFs, queuePicks, connectFolders, selectContent, queuePrompts, prompts, readFile, listDir, alerts, collectPageErrors, topLevelLabels, gotoFlow, fieldInput, editField, openDdsDocument, addDdsContent, showAllDdsFields } from '../test-support/harness.js';
 import {
     ddsFixture, ddsBareFixture, ddsReverseSearchFixture,
     TREE_GUID, MSG_GUID, MSG2_GUID, BLOCK_GUID, BLOCK_TEXT, BLOCK2_GUID, BLOCK2_TEXT,
     NEWS_TREE_GUID, NEWS_MSG_GUID,
-} from './support/fixtures.js';
+} from '../test-support/fixtures.js';
 
 /**
  * Baseline smoke tests for the DDS flow, recorded against the app as it behaves
@@ -265,6 +265,16 @@ async function selectMod(page) {
     await selectContent(page, 'TestMod', 'Content');
 }
 
+/**
+ * Take the view off, so every field the document has is on the screen.
+ *
+ * The fixture is a vmail, and a vmail does not read `document`, `stopMovement` or a
+ * message's `order`. The tests below that use those fields are not about the view -- they
+ * are about the edit loop and the boolean control, and picked a handy field to exercise
+ * them with -- so they say so rather than being rewritten around a different field.
+ */
+const showAllFields = showAllDdsFields;
+
 test('every value carries the control that edits it', async ({ page }) => {
     await gotoFlow(page, '?flow=dds');
     await openTree(page);
@@ -430,6 +440,7 @@ test('expanded nodes stay expanded across an edit', async ({ page }) => {
     await gotoFlow(page, '?flow=dds');
     await openTree(page);
     await selectMod(page);
+    await showAllFields(page);
 
     const docNode = page.locator("#file-window-0 li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"document\"'))").first();
     await docNode.locator('.jsontree_expand-button').first().click();
@@ -452,6 +463,7 @@ test('a collapsed node stays collapsed across an edit', async ({ page }) => {
     await gotoFlow(page, '?flow=dds');
     await openTree(page);
     await selectMod(page);
+    await showAllFields(page);
 
     const docNode = page.locator("#file-window-0 li:has(> .jsontree_label-wrapper > .jsontree_label:text-is('\"document\"'))").first();
     await expect(docNode).not.toHaveClass(/jsontree_node_expanded/);
@@ -858,6 +870,7 @@ test('a boolean is a dropdown, and is stored as a boolean', async ({ page }) => 
     await gotoFlow(page, '?flow=dds');
     await openTree(page);
     await selectMod(page);
+    await showAllFields(page);
 
     // Booleans reach the dropdown through refs/authored/basicEnums.json, which both
     // flows now read. This flow made you type `false` into a box before.

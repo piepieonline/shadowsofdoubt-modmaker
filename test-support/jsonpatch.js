@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { runInThisContext } from 'node:vm';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 // The unminified build: a stack trace out of a failing operation should name something.
 runInThisContext(readFileSync(join(ROOT, 'libs/JSON-Patch/fast-json-patch.js'), 'utf8'));

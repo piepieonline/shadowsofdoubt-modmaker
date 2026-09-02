@@ -1,7 +1,7 @@
 import { readFileContent, tryGetFile } from '../../core/fs.js';
 import { deepClone, renameFile } from '../../core/files.js';
 import { assertModSelected, shouldSave, toSaveSafeJSON, writeWholeFile } from '../../core/persistence.js';
-import { MANIFEST_FILE, refFor, renameListing } from '../../core/murderManifest.js';
+import { blankManifest, ensureListed, MANIFEST_FILE, refFor, renameListing } from '../../core/murderManifest.js';
 import { assetNameOf, assetOfPath, fileNameFor } from '../../core/soFileName.js';
 import { confirmRename } from '../../core/deletion.js';
 import { createEditLoop, expandDefaultsOnce } from '../../core/document.js';
@@ -54,29 +54,50 @@ const PRESET_NAME_FIELD = 'presetName';
  */
 const COPY_FROM_FIELD = 'copyFrom';
 
-export async function initAndLoad(path) {
+/** A content folder was chosen: close what the last one had open and show its load order. */
+export async function openContentFolder() {
     let openWindows = document.querySelectorAll('.file-window');
     for(let i = openWindows.length - 1; i >= 0; i--) {
         deleteTree(openWindows[i]);
     }
-    await loadFile(path, false);
+    await openManifest();
+}
+
+/**
+ * Show the folder's load order, writing nothing.
+ *
+ * A content folder need not hold a manifest. Making one no longer lays a case out inside
+ * it -- the folder starts empty and gains files as the author asks for them -- so what is
+ * opened here for a folder without one is a blank manifest held in memory. It reaches disk
+ * with the first save, which is the same moment the first file it lists does.
+ *
+ * That the document exists at all is what makes the folder usable: Add new file is bound
+ * as the manifest loads, so a folder with no manifest and no document would have no way to
+ * gain either.
+ */
+async function openManifest() {
+    const folder = window.selectedMod?.baseFolder;
+    const handle = folder ? await tryGetFile(folder, [MANIFEST_FILE]) : null;
+    const contents = handle ? await readFileContent(handle) : JSON.stringify(blankManifest(), null, 2);
+
+    await loadFileContent(MANIFEST_FILE, contents, false);
 }
 
 /**
  * Rebuild the manifest panel where it stands, for when something outside it has changed
  * what the manifest says -- a preset renamed, a file deleted.
  *
- * Not initAndLoad, which would also close every document the author has open. Nothing
- * happens when the panel is not showing: there is no manifest on screen to be out of date,
- * and building one because a file was deleted would be an editing session appearing on its
- * own.
+ * Not openContentFolder, which would also close every document the author has open.
+ * Nothing happens when the panel is not showing: there is no manifest on screen to be out
+ * of date, and building one because a file was deleted would be an editing session
+ * appearing on its own.
  */
 export async function reloadManifestPanel() {
     const container = document.getElementById('manifest_content_tree');
     if (!container?.hasChildNodes()) return;
 
     container.replaceChildren();
-    await loadFile(MANIFEST_FILE.slice(0, -NEW_SUFFIX.length), false);
+    await openManifest();
 }
 
 /**
@@ -373,11 +394,12 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
             const base = baseAsset();
             return base && openDerivedFrom(base);
         },
-        // Which fields a file states is what an override used to be made of, and is still
-        // what one of the mod's own files is made of -- the ones it does not state, it
-        // takes from its copyFrom. A patch states nothing: it holds the whole asset and
-        // saves the difference, so there is no set of fields here to choose.
-        showSelectFieldsDialog: mode === Mode.NEW ? showSelectFieldsDialog : null,
+        // Which fields a file states is what one of the mod's own files is made of -- the
+        // ones it does not state, it takes from its copyFrom. A patch states no fields at
+        // all, so there the same dialog lists the fields it changes about the asset it
+        // overrides, and turning one off takes that change back out. Nothing for a base
+        // game asset, whose fields are the game's.
+        showSelectFieldsDialog: mode === Mode.VIEW ? null : showSelectFieldsDialog,
     });
 
     if(!treeEle) return;
@@ -915,6 +937,24 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
         }
 
         await writeWholeFile(window.selectedMod.baseFolder, path.split('/'), getSaveSafeJSON());
+
+        // What the mod offers to point at is what the manifest names -- see
+        // moddedNamesOfType in scripts/contentList.js -- so the listing behind the
+        // reference fields is only as current as the manifest it was read with.
+        //
+        // Making a file refreshes that listing itself, but it has to: the file is written
+        // and opened there, and the manifest gains it here, one step later, when the
+        // load order this is saving comes back. Refreshing only there left every new
+        // asset missing from the dropdowns until some other file was made, which walked
+        // the folder again and picked up the one before it.
+        //
+        // On the manifest's own save rather than at the one place that adds to it,
+        // because adding is not the only way the load order changes: removing a file or
+        // editing the order by hand changes what may be pointed at just as much.
+        if (isManifestFile) {
+            const { refreshPanel } = await import('./scripts/ui.js');
+            await refreshPanel();
+        }
     }
 
     /**
@@ -979,14 +1019,70 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
         await reloadManifestPanel();
     }
 
+    /**
+     * The root fields this override changes, which is the whole of what it is.
+     *
+     * A patch states no fields of its own: the document is the base game's asset and the
+     * file is the difference between the two, so the fields the author has decided
+     * anything about are exactly the ones where they now disagree. Compared by their
+     * written form, which is how markDefaultValues decides the same question for the marks
+     * it leaves on the tree.
+     *
+     * Field by field rather than operation by operation. What gets written is a list of
+     * changes and one of them could in principle be dropped on its own, but that list is
+     * ordered and each operation is built against the document as the ones before it left
+     * it -- so taking one out of the middle can leave the paths and `[field=value]`
+     * selectors after it pointing at a document that no longer exists. A root field always
+     * reverts cleanly, and an override of one field written as three operations is one
+     * decision the author made.
+     *
+     * A field the override adds, which the base game's asset does not carry at all, counts
+     * as changed like any other. It is the one case where putting it back means taking the
+     * key away rather than restoring a value.
+     */
+    const overriddenFields = () =>
+        [...new Set([...Object.keys(baseDocument ?? {}), ...Object.keys(data)])]
+            .filter((key) => JSON.stringify(data[key]) !== JSON.stringify(baseDocument?.[key]));
+
+    /**
+     * Choose what this document overrides, which is a different question for each kind of
+     * file and the same dialog for both.
+     *
+     * One of the mod's own files is made of the fields it states and takes the rest from
+     * its copyFrom, so the list is every field the type has and the choice is which of them
+     * the file carries. An override carries no fields, so the list is the ones it changes
+     * about the base game's asset, all of them selected, and the only choice is whether to
+     * keep each -- turning one off puts the game's value back, which is the same thing as
+     * taking that change out of the file.
+     */
     async function showSelectFieldsDialog() {
+        const isPatch = mode === Mode.PATCH;
+
         let fieldList = document.querySelector('#select-fields-modal-field-list');
         fieldList.replaceChildren();
         document.querySelector('#select-fields-modal').setAttribute("open", "");
 
+        document.querySelector('#select-fields-modal-title').innerText = isPatch
+            ? 'Fields this override changes'
+            : 'Select fields to override';
+        document.querySelector('#select-fields-modal-note').innerText = isPatch
+            ? `Every field this override changes about ${fileType}/${patchTarget}. Unselecting one `
+                + "puts the base game's value back and takes the change out of the override."
+            : 'Fields selected here will be overridden from the copyFrom base. Warning: '
+                + 'Unselecting a field will reset its value to the default.';
+
+        // Nothing is held back from an override's list. Those four are held back from one
+        // of the mod's own files because they are what the file is rather than what it
+        // says -- its name, its type, and where it copies from -- and an override states
+        // none of them. A difference in any field of one is a change its author made, and
+        // that includes the fields the tree itself does not show.
         let hiddenFields = ['presetName', 'copyFrom', 'name', 'type'];
-        let dataToShow = Object.keys(window.templates[data.fileType]).filter(el => !hiddenFields.includes(el));
-        let currentFields = Object.keys(data).filter(el => !hiddenFields.includes(el));
+        let dataToShow = isPatch
+            ? overriddenFields()
+            : Object.keys(window.templates[data.fileType]).filter(el => !hiddenFields.includes(el));
+        let currentFields = isPatch
+            ? dataToShow
+            : Object.keys(data).filter(el => !hiddenFields.includes(el));
 
         let isSelectAllChecked = false;
         let isSelectAllIndeterminate  = false;
@@ -1006,18 +1102,30 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
             }
 
             label.appendChild(checkbox)
-            label.innerHTML += key;
+            // Appended rather than `innerHTML +=`, which serialised the label and parsed it
+            // back: the checkbox in the list was then a different element from the one this
+            // loop is holding, which is why the change listener that used to be here was
+            // commented out as not working. A field name is also text rather than markup,
+            // and an override's field names come from a file rather than from the type.
+            label.append(key);
 			li.appendChild(label);
 			fieldList.appendChild(li);
-
-            // TODO: Not working?
-            /*
-            checkbox.addEventListener('change', () => {
-                document.querySelector('#select-fields-modal-select-all').indeterminate = true;
-                console.log('asd')
-            });
-            */
 		});
+
+        // An override that changes nothing yet, which is what every one of them starts as
+        // and what one just emptied out here becomes. An empty list reads as a dialog that
+        // failed to fill rather than as an answer, so it says which it is.
+        if(!dataToShow.length) {
+            let li = document.createElement('li');
+            li.id = 'select-fields-modal-empty';
+            li.innerText = isPatch
+                ? 'This override does not change anything yet.'
+                : `${fileType} has no fields to choose from.`;
+            fieldList.appendChild(li);
+        }
+
+        // There is nothing to (de)select when there is nothing listed.
+        document.querySelector('#select-fields-modal-select-all').disabled = !dataToShow.length;
 
         // Setup the Select all option
         if(isSelectAllIndeterminate) {
@@ -1033,6 +1141,26 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
             let patches = [];
 
             fieldList.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+                // Every field an override lists is one it changes, so the only thing to act
+                // on is one turned off: the field goes back to what the base game's asset
+                // says and stops being part of the difference the file is made of.
+                if(isPatch) {
+                    if(checkbox.checked) return;
+
+                    patches.push(checkbox.value in baseDocument
+                        // `add` rather than `replace`, because a field the override took
+                        // away is not there to be replaced -- and adding a key an object
+                        // already has is how RFC 6902 writes over one.
+                        //
+                        // Cloned: what is patched in is what the document then holds, and
+                        // the base is what the next save is compared against. Handing the
+                        // document a value the base still points at would make the two
+                        // move together, and an override that can never differ again.
+                        ? { op: 'add', path: '/' + checkbox.value, value: deepClone(baseDocument[checkbox.value]) }
+                        : { op: 'remove', path: '/' + checkbox.value });
+                    return;
+                }
+
                 // If it's currently included, but unchecked, delete it
                 if(currentFields.includes(checkbox.value) && !checkbox.checked) {
                     patches.push({
@@ -1163,7 +1291,21 @@ export async function getTemplateForItem(templateName) {
             });
         }
 
-        // The folder has a new file in it.
+        // Listed on disk as the file is written, rather than left to the load order this
+        // returns into. That entry reaches the file when the manifest document saves, and
+        // the manifest is the one document with no Save button of its own -- it is a
+        // navigation panel, see addTreeElement -- so with autosaving off nothing would
+        // ever write it. A file the manifest does not name is a file the game never reads,
+        // which is a mod that silently does nothing.
+        //
+        // The document gains the same entry a moment later and saving it writes the same
+        // list, so this is not a second entry: it is the same one, written earlier.
+        await ensureListed(window.selectedMod.baseFolder, stem);
+
+        // The folder has a new file in it. Not the manifest panel: the load order this
+        // returns into is about to gain the entry and rebuild that panel itself, and
+        // reopening the manifest here would leave that edit being applied to a document
+        // that is no longer on the page.
         const { refreshPanel } = await import('./scripts/ui.js');
         await refreshPanel();
 
@@ -1189,30 +1331,6 @@ export async function getTemplateForItem(templateName) {
 
     newTemplate = cloneTemplate(templateName);
     return newTemplate;
-}
-
-/**
- * Creates a promise that is pending while the new case modal is open, and resolves to
- * null if it is dismissed. Dismissing used to leave the promise pending for good,
- * which now matters: the caller has a folder waiting to be laid out.
- */
-export async function showNewCasePopup() {
-    let popupPromise = new Promise((resolve) => {
-        window.newCasePromiseResolve = (type) => resolve(type == null ? null : { type });
-    });
-
-    document.querySelector('#new-case-modal').toggleAttribute('open', true);
-
-    return popupPromise;
-}
-
-export function cancelNewCasePopup() {
-    window.newCasePromiseResolve?.(null);
-    closeNewCasePopup();
-}
-
-export function closeNewCasePopup() {
-    document.querySelector('#new-case-modal').toggleAttribute('open', false);
 }
 
 /**
@@ -1244,11 +1362,12 @@ export function useAsNewFile(type, name) {
         return;
     }
 
-    // Bound by the manifest document as it loads, so an unbound button is a folder whose
-    // manifest could not be read. Said rather than silently doing nothing, which is what
-    // clicking a button bound to nothing does.
+    // Bound by the manifest document as it loads, and a folder without one is opened on a
+    // blank manifest -- so an unbound button is a manifest that would not parse. Said
+    // rather than silently doing nothing, which is what clicking a button bound to nothing
+    // does.
     if (!addFile.onclick) {
-        alert(`This folder has no ${MANIFEST_FILE}, so there is nothing to add a new file to.`);
+        alert(`This folder's ${MANIFEST_FILE} could not be read, so there is nothing to add a new file to.`);
         return;
     }
 

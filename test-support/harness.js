@@ -16,11 +16,63 @@
  * skipped, which is what lets a test tell it apart from opening the picker.
  */
 
+/** Whether this is a paced run being watched rather than an ordinary one. See `npm run demo`. */
+const demoRun = () => Boolean(Number(process.env.TUTORIAL_DEMO ?? 0));
+
+/**
+ * Say on screen that a run being watched is a run, not somebody's own work.
+ *
+ * Demo mode itself cannot be used for this. `?demo` connects folders of its own and then
+ * disables changing them -- which is the promise it makes, and which leaves a test unable
+ * to connect the fixture it is about to run against. So the app's strip is borrowed rather
+ * than its mode: the element is the one index.html already carries, so it is styled and
+ * placed exactly as the real thing, and the words are this harness's own because the real
+ * ones tell you to reload without a parameter that is not in the URL.
+ *
+ * An init script rather than a one-off, so it survives the reload a flow switch does.
+ */
+const markAsDemoRun = (page) => page.addInitScript(() => {
+    const show = () => {
+        const banner = document.getElementById('demo-banner');
+        if (!banner) return;
+
+        banner.innerHTML = '<strong>Demo run</strong> — a walkthrough being played by '
+            + 'the test suite, against made-up content inside the browser. Nothing here is '
+            + 'read from or written to your own folders.';
+        banner.hidden = false;
+    };
+
+    // The script runs before the document does, so there is nothing to find yet.
+    document.addEventListener('DOMContentLoaded', show, { once: true });
+});
+
+/**
+ * Put what is about to be used in the middle of the screen, for a run being watched.
+ *
+ * A document is far taller than the pane holding it -- the tree the DDS walkthrough builds
+ * is 1760px of rows in a 481px scroller -- so the row a step is about is usually well below
+ * the fold. Playwright does not mind: it scrolls only where an action needs a hit test, and
+ * `fill` and `selectOption` reach the element without one, so the value changes a thousand
+ * pixels down and a watcher sees a still screen and no reason for the step to have passed.
+ *
+ * Nothing under an ordinary run, where the point is the assertion rather than the sight of
+ * it, and where scrolling would be a difference between what is watched and what CI runs.
+ *
+ * Instant rather than smooth: a paced run leaves a second before the action either way, and
+ * an animation still running when the action lands is a moving target to click.
+ */
+export async function reveal(locator) {
+    if (!demoRun()) return;
+    await locator.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+}
+
 /**
  * Installs the picker stub and OPFS helpers. Must be called before `page.goto`, since
  * the stub has to be in place before the app's scripts run.
  */
 export async function installFsHarness(page) {
+    if (demoRun()) await markAsDemoRun(page);
+
     await page.addInitScript(() => {
         // Directories the app will receive from showDirectoryPicker, in call order.
         window.__pickerQueue = [];
@@ -214,6 +266,19 @@ export const openDdsDocument = (page, guid, type = null) =>
     page.evaluate(([g, t]) => window.setIdAndLoad(g, t), [guid, type]);
 
 /**
+ * Take the DDS view off, so every field a document holds is on the screen.
+ *
+ * A tree is shown the fields its own `treeType` is read for -- see
+ * flows/dds/scripts/treeViews.js -- and the fixtures are mostly vmails, which read
+ * neither `document`, nor `stopMovement`, nor a message's `order`, nor `itemPool`.
+ *
+ * For a test that is about something else and reached for a handy field to exercise it
+ * with. A test about the view itself drives the switch directly, in tests/ddsViews.spec.js.
+ */
+export const showAllDdsFields = (page, on = true) =>
+    page.locator('#dds-show-all-fields').setChecked(on);
+
+/**
  * Answer the Add new... dialog's File question.
  *
  * Typed rather than set. The list is the game's strings files as a searchable select,
@@ -233,11 +298,17 @@ export async function pickStringsFile(page, path) {
 /**
  * Create DDS content through the Add new... dialog.
  *
+ * The dialog offers a tree as one of the six kinds the game has rather than as "tree", so
+ * `type: 'tree'` picks a conversation unless a `kind` says which. Named that way round
+ * because what most of these tests are about is a document being written at all, and a
+ * conversation is the plainest of the six -- the tests that care say so.
+ *
  * @param fields type, and then name and line for a document, or strings for a CSV
+ * @param fields.kind a `TreeType` index, for `type: 'tree'`
  */
-export async function addDdsContent(page, { type, name, line = '', strings }) {
+export async function addDdsContent(page, { type, kind = 0, name, line = '', strings }) {
     await page.locator('#new-file-button').click();
-    await page.selectOption('#new-dds-file-type', type);
+    await page.selectOption('#new-dds-file-type', type === 'tree' ? `tree:${kind}` : type);
 
     if (type === 'strings') {
         await pickStringsFile(page, strings);
@@ -262,6 +333,7 @@ export const fieldInput = (page, scope, label) =>
 
 /** Edit a field the way a user does: type into it, then leave. */
 export async function editField(page, scope, label, value) {
+    await reveal(fieldInput(page, scope, label));
     await fieldInput(page, scope, label).fill(value);
     await fieldInput(page, scope, label).blur();
 }

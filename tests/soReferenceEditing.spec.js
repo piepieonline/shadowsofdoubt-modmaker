@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, alerts } from './support/harness.js';
-import { soFolderContent } from './support/fixtures.js';
+import { installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, alerts } from '../test-support/harness.js';
+import { soFolderContent } from '../test-support/fixtures.js';
 
 /**
  * Editing a reference field in the case editor.
@@ -116,6 +116,48 @@ test('picking a reference writes it to the file', async ({ page }) => {
         const handle = await window.selectedMod.baseFolder.getFileHandle('testcase.sodso.json');
         return JSON.parse(await (await handle.getFile()).text()).compatibleWith;
     })).toEqual([`REF:MurderPreset|${chosen.trim()}`]);
+
+    expect(await alerts(page)).toEqual([]);
+});
+
+/**
+ * An asset made while a document is open is something that document can point at.
+ *
+ * What the mod offers is what its manifest names, and making a file is two writes: the
+ * file itself, and the manifest entry that follows it. The listing behind every reference
+ * field used to be re-read between the two, so a new asset was missing from the dropdowns
+ * until some later file was made and the folder was walked again -- and the walkthrough
+ * that makes two files and joins them could not be finished, because the second could not
+ * be pointed at the first.
+ *
+ * Driven through the dialog rather than by writing the two files, because the order of
+ * those writes is the whole of what went wrong.
+ */
+test('an asset made while a document is open can be pointed at', async ({ page }) => {
+    await page.locator('#manifest_add_item_button').click();
+    await page.fill('#new-file-modal-file-name', 'LaterMurderPreset');
+    await page.selectOption('#new-file-modal-file-type', 'MurderPreset');
+    await page.locator('#new-file-modal-submit').click();
+
+    // Back to the document that was already open when it was made.
+    await page.locator('.file-panel-category[data-category="MurderMO"]')
+        .getByRole('button', { name: 'testcase' }).click();
+
+    await addRefElement(page, 'compatibleWith');
+    await page.locator(`${WINDOW} .select2-selection`).first().click();
+    await page.locator('.select2-search__field').fill('LaterMurderPreset');
+
+    // Anchored, because select2 gives the Modded heading an option of its own and the
+    // heading's text is the label with its children's run together after it.
+    const offered = page.locator('.select2-results__option')
+        .filter({ hasText: /^LaterMurderPreset$/ });
+    await expect(offered).toHaveCount(1);
+
+    await offered.click();
+    await expect.poll(async () => page.evaluate(async () => {
+        const handle = await window.selectedMod.baseFolder.getFileHandle('testcase.sodso.json');
+        return JSON.parse(await (await handle.getFile()).text()).compatibleWith;
+    })).toEqual(['REF:MurderPreset|LaterMurderPreset']);
 
     expect(await alerts(page)).toEqual([]);
 });

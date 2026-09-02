@@ -15,7 +15,7 @@
  * of the game's hundreds. So a type is reachable here only if the author connected a
  * folder or it is one of those nine, and `reason` says which of the two failed.
  */
-import { readFileContent, tryGetFile } from './fs.js';
+import { readFileContent, tryGetFile, tryGetFolder } from './fs.js';
 import { resolveReferences } from './soReferences.js';
 
 /**
@@ -40,8 +40,17 @@ export async function readBaseAsset(type, name) {
     let text = null;
 
     if (window.dirHandleExportedSOPath) {
-        const handle = await tryGetFile(window.dirHandleExportedSOPath, path.split('/'));
-        if (handle) text = await readFileContent(handle);
+        // A read that fails is not an export that lacks the asset, and the two would
+        // otherwise be told apart by nothing: falling through to the shipped copy would
+        // quietly diff a patch against a different build of the game than the author
+        // connected. Reported as a reason, which is what this function answers with.
+        try {
+            const handle = await tryGetFile(window.dirHandleExportedSOPath, path.split('/'));
+            if (handle) text = await readFileContent(handle);
+        } catch (error) {
+            console.error('Could not read the exported ScriptableObject', error);
+            return { reason: `${path} could not be read from your exported ScriptableObjects: ${error.message}` };
+        }
     }
 
     if (text == null) {
@@ -65,6 +74,47 @@ export async function readBaseAsset(type, name) {
         // browser will parse. An unreadable base is an unpatchable asset.
         return { reason: `${path} is not valid JSON, so there is nothing to compare against` };
     }
+}
+
+/**
+ * Every asset name of one type.
+ *
+ * The export folder itself where there is one, listed rather than looked up. That is the
+ * difference worth having: `soAssetsByType.json` is generated from whichever build of the
+ * game was dumped, so an asset a newer version added is in the author's export and absent
+ * from the list -- present on disk, invisible in every picker.
+ *
+ * Falls back to the generated list, which is what there is with no export folder connected
+ * and is still the right answer then: it names what this tool ships assets for.
+ *
+ * Sorted, because a directory hands names back in whatever order it holds them and the
+ * order a picker lists them in should not depend on the file system.
+ */
+export async function listBaseAssets(type) {
+    const listed = window.typeMap?.[type] ?? [];
+    if (!window.dirHandleExportedSOPath) return listed;
+
+    const names = [];
+
+    try {
+        const folder = await tryGetFolder(window.dirHandleExportedSOPath, [type]);
+
+        // An export that has no folder for this type is an export that does not hold it,
+        // and the generated list is a better answer than none. So is a folder that could
+        // not be walked -- this fills a picker and nothing is written on the answer, which
+        // is what makes degrading to the shipped list safe here and not in readBaseAsset.
+        if (!folder) return listed;
+
+        for await (const entry of folder.values()) {
+            if (entry.kind === 'file' && entry.name.endsWith('.json')) {
+                names.push(entry.name.slice(0, -'.json'.length));
+            }
+        }
+    } catch {
+        return listed;
+    }
+
+    return names.sort();
 }
 
 /**

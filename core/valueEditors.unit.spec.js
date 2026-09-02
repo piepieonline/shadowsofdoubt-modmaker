@@ -9,7 +9,7 @@ import { parseEditedValue } from './valueEditors.js';
  * prefilled rather than being discarded or written as text.
  *
  * `prompt` is stubbed here to stand in for that user, which is what
- * tests/support/harness.js does for the Playwright suite. Nothing else is stubbed: the
+ * test-support/harness.js does for the Playwright suite. Nothing else is stubbed: the
  * function reaches no further.
  */
 

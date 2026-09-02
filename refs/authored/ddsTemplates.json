@@ -27,7 +27,7 @@
             "connection": 15,
             "disableInbox": false,
             "jobs": [],
-            "required": true,
+            "required": false,
             "traitConditions": 0,
             "traits": [],
             "triggers": [],
@@ -38,7 +38,7 @@
             "connection": 15,
             "disableInbox": false,
             "jobs": [],
-            "required": true,
+            "required": false,
             "traitConditions": 0,
             "traits": [],
             "triggers": [],
@@ -72,8 +72,8 @@
         "startingMessage": "DEFAULT_GUID_MESSAGE_1_INSTANCE",
         "stopMovement": true,
         "treeChance": 1,
-        "treeType": 1,
-        "triggerPoint": 3
+        "treeType": 0,
+        "triggerPoint": 0
     },
     "treeMessage": {
         "alignH": 0,
@@ -97,8 +97,8 @@
         "order": 0,
         "paraSpace": 0,
         "pos": {
-            "x": -30,
-            "y": -175
+            "x": 0,
+            "y": -64
         },
         "rot": 0,
         "saidBy": 0,

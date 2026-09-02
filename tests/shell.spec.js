@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, gotoFlow, seedFs, connectFolders, contrastGap } from './support/harness.js';
-import { ddsFixture, TREE_GUID } from './support/fixtures.js';
+import { installFsHarness, gotoFlow, seedFs, connectFolders, contrastGap } from '../test-support/harness.js';
+import { ddsFixture, TREE_GUID } from '../test-support/fixtures.js';
 
 /**
  * The shell: one page hosting every flow, chosen by URL.
@@ -196,7 +196,7 @@ const barLayout = (page) => page.evaluate(() => {
 
 for (const [flow, links] of [
     ['dds', ['Browse...', 'Reverse Search']],
-    ['scriptableObject', ['Asset Explorer', 'Room Creator']],
+    ['scriptableObject', ['Asset Explorer', 'Room Creator', 'Furniture Creator']],
 ]) {
     test(`the ${flow} header is one line: links left, controls centred, tools right`, async ({ page }) => {
         await gotoFlow(page, `?flow=${flow}`);

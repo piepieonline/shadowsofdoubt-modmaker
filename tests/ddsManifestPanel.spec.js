@@ -2,11 +2,11 @@ import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, connectFolders, selectContent, readFile, alerts, gotoFlow,
     fieldInput, openDdsDocument, confirms,
-} from './support/harness.js';
+} from '../test-support/harness.js';
 import {
     ddsManifestFixture, ddsManifestNoBlocksFixture, ddsManifestBrokenFixture,
     ddsFixtureWithContent, FLAT_MOD, TREE_GUID,
-} from './support/fixtures.js';
+} from '../test-support/fixtures.js';
 
 /**
  * The panel showing what a mod's ddsmanifest declares.

@@ -1,4 +1,3 @@
-import { scaffoldCase } from './modFileManager.js';
 import {
     renderFilePanel, filterCategories, withoutEntries, countEntries,
 } from '../../../core/filePanel.js';
@@ -8,7 +7,8 @@ import { decodeList, encodeList, syncNow } from '../../../core/urlState.js';
 import { listContent } from './contentList.js';
 import { deleteAsset } from './deleteAsset.js';
 import { forgetScannedTypes } from './assetScan.js';
-import { initAndLoad, loadFile, loadFileFromFolder, loadFileFromOnlineRepo, openBaseGameAsset, reloadManifestPanel, showNewCasePopup, closeNewCasePopup, Source } from '../index.js';
+import { forgetFurnitureAssets } from './furnitureAssets.js';
+import { openContentFolder, loadFile, loadFileFromFolder, loadFileFromOnlineRepo, openBaseGameAsset, reloadManifestPanel, Source } from '../index.js';
 
 //Manifest Panel
 export function toggleManifestPanel() {
@@ -77,6 +77,10 @@ export async function onFoldersConnected() {
 	// mid-session is a different set of assets to answer from, and the ones read before it
 	// arrived were whatever this tool happens to ship.
 	forgetScannedTypes();
+
+	// And what the furniture creator has read one asset at a time, which is the same set
+	// of assets reached the same way.
+	forgetFurnitureAssets();
 }
 
 /** A content folder was chosen in the shell: show its manifest and its files. */
@@ -84,7 +88,7 @@ export async function onModSelected(selection) {
 	document.getElementById('manifest_content_tree').replaceChildren();
 
 	if (selection) {
-		await initAndLoad('murdermanifest');
+		await openContentFolder();
 	}
 
 	// A search left over from the last mod would narrow this one to a list of nothing,
@@ -302,23 +306,6 @@ export async function toggleEditMode(editingMode) {
 	document.getElementById('viewing-mode-control-group').classList.toggle('hidden', editingMode)
 }
 
-
-// Murder loading
-/**
- * The shell is about to create a content folder: ask what kind of case goes in it, and
- * answer with how to lay it out.
- *
- * A case is a manifest plus, usually, the preset it revolves around. The folder itself
- * and its name are the shell's, so this only asks what it alone knows.
- */
-export async function newContent(name) {
-	const chosen = await showNewCasePopup();
-	closeNewCasePopup();
-
-	if (!chosen) return null;
-
-	return (folder) => scaffoldCase(folder, name, chosen.type);
-}
 
 /** The switch that says whether default values are on the screen. */
 const HIDE_DEFAULTS = '#hide-default-values';

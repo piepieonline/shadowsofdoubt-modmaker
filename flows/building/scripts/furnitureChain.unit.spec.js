@@ -21,7 +21,7 @@ import {
 import { overlayChain } from './furnitureOverlay.js';
 import {
     WALL_RULE, BLOCKING_DIRECTION, WALL_SECTION_CLASS, UNREADABLE_TAGS,
-} from './furnitureRules.js';
+} from '../../../core/furnitureRules.js';
 
 // Read here rather than in the resolver, which deliberately no longer consults it: the
 // divider test asserts that what this table calls a blank is counted all the same.
@@ -854,6 +854,141 @@ describe('why a preset has no slot to sit in', () => {
     });
 
     /**
+     * The state the sentence above used to be given for as well, and the one that sent a
+     * reader to the wrong file.
+     *
+     * A bank archive of 213 squares, with four bookcase clusters patched onto its own room
+     * filter and reaching it fine: every one of them caps at 99 squares
+     * (`GenerationController.cs:3463`), so the room furnishes nothing and the filter had
+     * nothing to do with it. "No furniture cluster is placeable in BankArchivesRCP rooms" is
+     * true of the outcome and false about the cause, and the fix it implies -- widen the
+     * filter -- is one the author had already made.
+     *
+     * Reproduced here as one cluster wanting a bigger room than this Atrium, because the
+     * gate is the same one either way round and the number is what the sentence has to
+     * quote. Singular throughout, which is the shape a mod's own single cluster is in.
+     */
+    test('a room every cluster is the wrong size for says so as a size', async () => {
+        const merged = overlayChain(chain, [
+            asset('RoomTypeFilter', 'Atrium', {
+                presetName: 'Atrium',
+                fileType: 'RoomTypeFilter',
+                roomClasses: ['REF:RoomClassPreset|Atrium'],
+            }, true),
+            asset('FurnitureCluster', 'MyBigRoomCluster', {
+                presetName: 'MyBigRoomCluster',
+                fileType: 'FurnitureCluster',
+                allowedRoomFilters: ['REF:RoomTypeFilter|Atrium'],
+                minimumRoomSize: 500,
+                clusterElements: [{ furnitureClass: 'REF:FurnitureClass|My1x1Statue' }],
+            }),
+            asset('FurniturePreset', 'MyAtriumStatue', {
+                presetName: 'MyAtriumStatue',
+                fileType: 'FurniturePreset',
+                classes: ['REF:FurnitureClass|My1x1Statue'],
+                allowedRoomFilters: ['REF:RoomTypeFilter|Atrium'],
+                minimumRoomSize: 0,
+            }),
+        ]);
+
+        const explained = await square('CityHall_FirstFloor', 9, 6, 'MyAtriumStatue', merged);
+        const [group] = explained.groups;
+
+        expect(group.stage).toBe('cluster');
+        expect(group.reason).toBe('One furniture cluster reaches Atrium rooms, but it needs a '
+            + `room of at least 500 squares, and this one has ${explained.roomSize}. Nothing is `
+            + 'furnished here at all.');
+
+        // The filters are not mentioned, because widening one is the edit that would not
+        // have helped -- the mistake the old sentence invited.
+        expect(group.reason).not.toMatch(/allowedRoomFilters|roomClasses|placeable/);
+    });
+
+    /**
+     * The bank's own shape: several clusters reaching the room and every one of them capped
+     * below its size. The bound is quoted because they agree on it, for the reason
+     * `carrierHint` gives -- clusters wanting different sizes have no single number between
+     * them and quoting one attaches it to all.
+     */
+    test('clusters agreeing on the size they want have that size quoted', async () => {
+        const cluster = (name) => asset('FurnitureCluster', name, {
+            presetName: name,
+            fileType: 'FurnitureCluster',
+            allowedRoomFilters: ['REF:RoomTypeFilter|Atrium'],
+            minimumRoomSize: 0,
+            useMaximumRoomSize: true,
+            maximumRoomSize: 2,
+            clusterElements: [{ furnitureClass: 'REF:FurnitureClass|My1x1Statue' }],
+        });
+
+        const merged = overlayChain(chain, [
+            asset('RoomTypeFilter', 'Atrium', {
+                presetName: 'Atrium',
+                fileType: 'RoomTypeFilter',
+                roomClasses: ['REF:RoomClassPreset|Atrium'],
+            }, true),
+            cluster('MySmallCluster'),
+            cluster('MyOtherSmallCluster'),
+            asset('FurniturePreset', 'MyAtriumStatue', {
+                presetName: 'MyAtriumStatue',
+                fileType: 'FurniturePreset',
+                classes: ['REF:FurnitureClass|My1x1Statue'],
+                allowedRoomFilters: ['REF:RoomTypeFilter|Atrium'],
+                minimumRoomSize: 0,
+            }),
+        ]);
+
+        const explained = await square('CityHall_FirstFloor', 9, 6, 'MyAtriumStatue', merged);
+
+        expect(explained.groups[0].reason).toBe('2 furniture clusters reach Atrium rooms, but '
+            + 'they all need a room of no more than 2 squares, and this one has '
+            + `${explained.roomSize}. Nothing is furnished here at all.`);
+    });
+
+    /**
+     * One cluster too big for the room and one too small. There is no number that is true of
+     * both, so none is quoted and the room's own size carries the sentence instead.
+     */
+    test('clusters wanting different sizes are given no single number', async () => {
+        const merged = overlayChain(chain, [
+            asset('RoomTypeFilter', 'Atrium', {
+                presetName: 'Atrium',
+                fileType: 'RoomTypeFilter',
+                roomClasses: ['REF:RoomClassPreset|Atrium'],
+            }, true),
+            asset('FurnitureCluster', 'MyBigRoomCluster', {
+                presetName: 'MyBigRoomCluster',
+                fileType: 'FurnitureCluster',
+                allowedRoomFilters: ['REF:RoomTypeFilter|Atrium'],
+                minimumRoomSize: 500,
+                clusterElements: [{ furnitureClass: 'REF:FurnitureClass|My1x1Statue' }],
+            }),
+            asset('FurnitureCluster', 'MySmallRoomCluster', {
+                presetName: 'MySmallRoomCluster',
+                fileType: 'FurnitureCluster',
+                allowedRoomFilters: ['REF:RoomTypeFilter|Atrium'],
+                minimumRoomSize: 0,
+                useMaximumRoomSize: true,
+                maximumRoomSize: 2,
+                clusterElements: [{ furnitureClass: 'REF:FurnitureClass|My1x1Statue' }],
+            }),
+            asset('FurniturePreset', 'MyAtriumStatue', {
+                presetName: 'MyAtriumStatue',
+                fileType: 'FurniturePreset',
+                classes: ['REF:FurnitureClass|My1x1Statue'],
+                allowedRoomFilters: ['REF:RoomTypeFilter|Atrium'],
+                minimumRoomSize: 0,
+            }),
+        ]);
+
+        const explained = await square('CityHall_FirstFloor', 9, 6, 'MyAtriumStatue', merged);
+
+        expect(explained.groups[0].reason).toBe('2 furniture clusters reach Atrium rooms, but no '
+            + `room of ${explained.roomSize} squares is the size any of them wants. Nothing is `
+            + 'furnished here at all.');
+    });
+
+    /**
      * A room whose clusters put down one slot class, which is the shape a mod's own small
      * room is usually in -- one cluster, one element -- and the case the ATM vestibule this
      * was written for was in. Both halves of the head go singular, and neither says "none of
@@ -1210,6 +1345,22 @@ describe('problems in the mod\'s own assets', () => {
         expect(warnings).toEqual([]);
     });
 
+    /**
+     * The kept caveat, pinned so the split between what the mod wrote and what it patched
+     * cannot quietly take it with it. A patch that does not state `clusterElements` inherits
+     * the shipped ones, and the zero chance is still there in the cluster the game loads --
+     * unlike the city-wide check, which the same patch says nothing new about.
+     */
+    test('a patched cluster is still checked for elements that cannot place', () => {
+        const warnings = warn([asset('FurnitureCluster', '2_ArmchairFacingTVWithTable', {
+            minimumRoomSize: 2,
+        }, true)]);
+
+        expect(warnings).toHaveLength(1);
+        expect(warnings[0].cluster).toBe('2_ArmchairFacingTVWithTable');
+        expect(warnings[0].text).toContain('chanceOfPlacementAttempt of 0');
+    });
+
     test('a zero scale places the furniture at no size at all', () => {
         const warnings = warn([asset('FurnitureCluster', 'MyDeskCluster',
             clusterWith({ localScale: { x: 0, y: 0, z: 0 } }))]);
@@ -1270,6 +1421,139 @@ describe('problems in the mod\'s own assets', () => {
                 OnlyAllowInBuildings: true,
                 allowedInBuildings: ['REF:BuildingPreset|CityBank'],
             })])).toEqual([]);
+        });
+
+        /**
+         * The shape every custom room in a mod is in: a `RoomClassPreset`, a
+         * `RoomTypeFilter` naming it, and a cluster gated on that filter. The mechanism is
+         * city-wide and the reach is not -- the class exists in no building but this one, so
+         * there is no other room for the cluster to turn up in.
+         *
+         * This is the correct arrangement, and warning about it fired on the right answer
+         * far more often than on the defect.
+         */
+        test('a cluster reaching only the mod\'s own room classes is not reported', () => {
+            expect(warn([
+                asset('RoomClassPreset', 'MyLobbyRCP', {
+                    presetName: 'MyLobbyRCP',
+                    fileType: 'RoomClassPreset',
+                }),
+                asset('RoomTypeFilter', 'MyLobbyRTF', {
+                    presetName: 'MyLobbyRTF',
+                    fileType: 'RoomTypeFilter',
+                    roomClasses: ['REF:RoomClassPreset|MyLobbyRCP'],
+                }),
+                asset('FurnitureCluster', 'MyOwnRoomCluster', {
+                    presetName: 'MyOwnRoomCluster',
+                    fileType: 'FurnitureCluster',
+                    allowedRoomFilters: ['REF:RoomTypeFilter|MyLobbyRTF'],
+                    clusterElements: [{
+                        furnitureClass: 'REF:FurnitureClass|My1x1Desk',
+                        chanceOfPlacementAttempt: 1,
+                    }],
+                }),
+                desk({}),
+            ])).toEqual([]);
+        });
+
+        /**
+         * A cluster gated on both, which is the mistake the mod's own class was hiding: the
+         * shipped filter is the half that leaves the building, and it is the only half the
+         * sentence names. Naming the mod's own class alongside it would put the room the
+         * author does want in a list of rooms they do not.
+         */
+        test('a cluster reaching both names only the base game\'s rooms', () => {
+            const warnings = warn([
+                asset('RoomClassPreset', 'MyLobbyRCP', {
+                    presetName: 'MyLobbyRCP',
+                    fileType: 'RoomClassPreset',
+                }),
+                asset('RoomTypeFilter', 'MyLobbyRTF', {
+                    presetName: 'MyLobbyRTF',
+                    fileType: 'RoomTypeFilter',
+                    roomClasses: ['REF:RoomClassPreset|MyLobbyRCP'],
+                }),
+                asset('FurnitureCluster', 'MyLeakyCluster', {
+                    presetName: 'MyLeakyCluster',
+                    fileType: 'FurnitureCluster',
+                    allowedRoomFilters: [
+                        'REF:RoomTypeFilter|MyLobbyRTF',
+                        'REF:RoomTypeFilter|CorporateLobby',
+                    ],
+                    clusterElements: [{
+                        furnitureClass: 'REF:FurnitureClass|My1x1Desk',
+                        chanceOfPlacementAttempt: 1,
+                    }],
+                }),
+                desk({}),
+            ]);
+
+            expect(warnings).toHaveLength(1);
+            expect(warnings[0].text).toContain('reaches every CorporateLobby in the city');
+            expect(warnings[0].text).not.toContain('MyLobbyRCP');
+        });
+
+        /**
+         * A shipped cluster the mod widened onto its own filter, which is what a mod adding
+         * a custom room to existing furniture writes. It was city-wide before the patch and
+         * the patch did not make it so -- and the remedy on offer, gating the preset that
+         * fills it, would take a shipped preset out of every other room in the city.
+         *
+         * `BookcaseLarge` is the bank archive's own case: four shipped bookcase clusters
+         * patched onto one new room filter, four warnings about the base game's reach.
+         */
+        test('a shipped cluster the mod only patched is not reported', () => {
+            const widened = asset('FurnitureCluster', 'BookcaseLarge', {
+                allowedRoomFilters: [
+                    ...chain.clusters.BookcaseLarge.filters.map((f) => `REF:RoomTypeFilter|${f}`),
+                    'REF:RoomTypeFilter|CorporateLobby',
+                ],
+            }, true);
+
+            const bookcase = asset('FurniturePreset', 'MyBookcase', {
+                presetName: 'MyBookcase',
+                fileType: 'FurniturePreset',
+                classes: ['REF:FurnitureClass|1x1BookcaseLarge'],
+            });
+
+            expect(warn([widened, bookcase])).toEqual([]);
+
+            // The same cluster written by the mod rather than patched is still reported, so
+            // the silence above is about the patch and not about the cluster's contents.
+            const written = asset('FurnitureCluster', 'MyBookcaseCluster', {
+                presetName: 'MyBookcaseCluster',
+                fileType: 'FurnitureCluster',
+                allowedRoomFilters: ['REF:RoomTypeFilter|CorporateLobby'],
+                clusterElements: [{
+                    furnitureClass: 'REF:FurnitureClass|1x1BookcaseLarge',
+                    chanceOfPlacementAttempt: 1,
+                }],
+            });
+
+            expect(warn([written, bookcase])).toHaveLength(1);
+        });
+
+        /**
+         * A preset the mod patched rather than wrote is not one to gate either: it is the
+         * base game's, in every other room already, and confining it would take it out of
+         * them. The cluster here is the mod's own, so only the preset decides.
+         */
+        test('a shipped preset the mod only patched does not raise it', () => {
+            const cluster = asset('FurnitureCluster', 'MyBookcaseCluster', {
+                presetName: 'MyBookcaseCluster',
+                fileType: 'FurnitureCluster',
+                allowedRoomFilters: ['REF:RoomTypeFilter|CorporateLobby'],
+                clusterElements: [{
+                    furnitureClass: 'REF:FurnitureClass|1x1BookcaseLarge',
+                    chanceOfPlacementAttempt: 1,
+                }],
+            });
+
+            const patched = asset('FurniturePreset', 'LargeBookcase', {
+                minimumRoomSize: 2,
+            }, true);
+
+            expect(warn([cluster, patched])).toEqual([]);
         });
 
         /**

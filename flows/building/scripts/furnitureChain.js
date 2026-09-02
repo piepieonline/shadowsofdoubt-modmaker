@@ -376,9 +376,20 @@ function groupFor(data, cache, preset, roomType, roomSize, walls, model, x, y) {
     // no class contributes nothing to `slots` while still being placeable here.
     let clusterCount = 0;
 
+    // And the ones a filter reaches that this room is the wrong *size* for, kept apart from
+    // the ones no filter reaches at all. `clusterCount` alone cannot tell those two apart
+    // either, and they are opposite fixes -- widen a filter, or change the room -- so a
+    // room that comes to nothing has to say which of them it is. See `unfurnishedReason`.
+    const sized = [];
+
     const slots = new Set();
     for (const cluster of Object.values(data.clusters ?? {})) {
-        if (!clusterFits(cluster, filters, roomSize)) continue;
+        const gate = blockedBy(cluster, filters, roomSize);
+
+        if (gate) {
+            if (gate === 'size') sized.push(sizeBound(cluster, roomSize));
+            continue;
+        }
 
         clusterCount++;
         for (const element of cluster.elements) if (element.class) slots.add(element.class);
@@ -392,6 +403,13 @@ function groupFor(data, cache, preset, roomType, roomSize, walls, model, x, y) {
         filters,
         slots,
         clusterCount,
+
+        // Carried so the sentence can be built from the group alone, by the panel as well
+        // as by the walk -- the panel has no `square` and would otherwise have to be handed
+        // the size separately or word the same fact its own way.
+        roomSize,
+        sizedOut: sized.length,
+        sizeBounds: [...new Set(sized)],
     };
 
     // The grid and the coordinate travel with the square because stage 6 reads the walls
@@ -606,11 +624,15 @@ export function findFurniturePreset(data, typed) {
  * merging, which is the only record of what came from where -- without an overlay this is
  * empty, which is the right answer for a page with no mod selected.
  *
- * One caveat, kept deliberately: a `.sodso_patch.json` that does not state
+ * The two element checks run over what the mod **patched** as well as what it wrote, and
+ * that is a caveat kept deliberately: a `.sodso_patch.json` that does not state
  * `clusterElements` inherits the shipped ones, so patching either of the two base clusters
  * that hold a zero chance reports it. The warning is still true of the patched cluster --
  * it does have an element that never places -- and the alternative is tracking which
  * fields a patch stated all the way through the merge for a case worth two clusters.
+ *
+ * `cityWideWarning` is the other way round and runs only over what the mod wrote, for
+ * reasons that are its own rather than this trade-off's. See `ownedByMod`.
  *
  * Returns a flat list, most severe first:
  *
@@ -625,11 +647,14 @@ export function clusterWarnings(data) {
     const mod = ownedByMod(data);
     const warnings = [];
 
-    for (const name of mod.clusters) {
+    for (const name of mod.touched) {
         const cluster = data.clusters?.[name];
         if (!cluster) continue;
 
         warnings.push(...elementWarnings(name, cluster));
+
+        // Written by the mod, not merely patched by it -- see `ownedByMod`.
+        if (!mod.clusters.has(name)) continue;
 
         const reach = cityWideWarning(data, mod, name, cluster);
         if (reach) warnings.push(reach);
@@ -643,17 +668,37 @@ export function clusterWarnings(data) {
     return cache.warnings;
 }
 
-/** The names the mod contributed, by the two types these checks are about. */
+/**
+ * The names the mod contributed, by the types these checks are about.
+ *
+ * `touched` is every cluster the mod reached, written or patched, and is what the element
+ * checks run over: a patch that does not state `clusterElements` inherits the shipped ones,
+ * and the warning is still true of the cluster the game will load.
+ *
+ * The other three are what the mod **wrote**, patches excluded, and that is what the
+ * city-wide check runs over instead. A patched shipped asset is one an author can act on
+ * only within the base game's reach: the cluster was city-wide before they touched it, the
+ * preset filling it is in every other room already, and the remedy -- confine the preset to
+ * an address type or a building -- would take a shipped preset out of the city rather than
+ * keep the mod's own furniture in. See `cityWideWarning`.
+ */
 function ownedByMod(data) {
+    const touched = new Set();
+
     const clusters = new Set();
     const furniture = new Set();
+    const roomClasses = new Set();
 
     for (const asset of data.applied ?? []) {
+        if (asset.type === 'FurnitureCluster') touched.add(asset.name);
+        if (asset.patch) continue;
+
         if (asset.type === 'FurnitureCluster') clusters.add(asset.name);
         if (asset.type === 'FurniturePreset') furniture.add(asset.name);
+        if (asset.type === 'RoomClassPreset') roomClasses.add(asset.name);
     }
 
-    return { clusters, furniture };
+    return { touched, clusters, furniture, roomClasses };
 }
 
 /**
@@ -700,7 +745,7 @@ function elementWarnings(name, cluster) {
 }
 
 /**
- * A cluster that will turn up in every room of its class in the city.
+ * A cluster that will turn up in rooms the mod does not own.
  *
  * Room filters are city-wide. A cluster allowed in `CorporateLobby` is offered to every
  * corporate lobby there is, not to the one building the mod ships -- which is how a set of
@@ -711,12 +756,37 @@ function elementWarnings(name, cluster) {
  * question asked is whether any of the mod's own presets that could fill this cluster sets
  * either, and the warning is raised only when none does.
  *
- * Scoped to the mod's presets on purpose. A cluster whose slots are filled entirely by
- * shipped furniture is city-wide too, but the advice would be to gate the base game's
- * presets, which is not something an author should be told to do. Silent there rather than
- * unhelpful.
+ * ## What it does not fire on, and why
+ *
+ * **A room class the mod wrote itself.** A cluster whose filters reach nothing but the
+ * mod's own classes reaches nothing but the mod's own rooms, however city-wide the
+ * mechanism is -- the class is in no building but theirs, so there is no other room for it
+ * to turn up in. That is the arrangement working, and it is the shape every custom room in
+ * a mod is in: a `RoomClassPreset`, a `RoomTypeFilter` naming it, and a cluster gated on
+ * that filter. Warned about, the check fired on the correct case more often than on the
+ * defect. So the reach is counted over base game classes only, and the sentence names those
+ * rather than every class the filters touch -- they are the rooms the author did not mean.
+ *
+ * **A cluster the mod only patched.** See `ownedByMod`: it was city-wide before the patch,
+ * and the fix offered would be one the author cannot make without taking a shipped preset
+ * out of the rest of the city.
+ *
+ * **A cluster whose slots only shipped furniture fills.** City-wide too, but the advice
+ * would again be to gate the base game's presets. Silent rather than unhelpful.
+ *
+ * A cluster reaching no room class at all -- no filters, or filters naming nothing -- is
+ * left alone here as well. It places nowhere, which is a different problem from placing too
+ * widely and is not one this check is written to find.
  */
 function cityWideWarning(data, mod, name, cluster) {
+    const classes = new Set();
+    for (const filter of cluster.filters) {
+        for (const roomClass of data.filters?.[filter] ?? []) classes.add(roomClass);
+    }
+
+    const vanilla = [...classes].filter((roomClass) => !mod.roomClasses.has(roomClass)).sort();
+    if (vanilla.length === 0) return null;
+
     const slots = new Set(cluster.elements.map((element) => element.class).filter(Boolean));
     if (slots.size === 0) return null;
 
@@ -726,23 +796,15 @@ function cityWideWarning(data, mod, name, cluster) {
     if (filling.length === 0) return null;
     if (filling.some((preset) => isGated(data.furniture[preset]))) return null;
 
-    const classes = new Set();
-    for (const filter of cluster.filters) {
-        for (const roomClass of data.filters?.[filter] ?? []) classes.add(roomClass);
-    }
-
-    const where = classes.size > 0
-        ? `every ${and([...classes].sort())} in the city`
-        : 'every room its filters reach';
-
     const one = filling.length === 1;
 
     return {
         cluster: name,
         severity: 'degrades',
-        text: `${name} is gated only by room filters, so it reaches ${where} rather than just `
-            + `this mod's building. ${and(filling.sort())} ${one ? 'fills' : 'fill'} its slots and `
-            + `${one ? 'sets' : 'set'} neither allowedInAddressesOfType nor allowedInBuildings.`,
+        text: `${name} is gated only by room filters, so it reaches every ${and(vanilla)} in the `
+            + `city rather than just this mod's building. ${and(filling.sort())} `
+            + `${one ? 'fills' : 'fill'} its slots and ${one ? 'sets' : 'set'} neither `
+            + 'allowedInAddressesOfType nor allowedInBuildings.',
     };
 }
 
@@ -925,17 +987,20 @@ function clusterReason(data, group, square, furniture) {
         ? `its class ${furniture.classes[0]}`
         : `any of its classes (${and(furniture.classes)})`;
 
-    // `${roomClass} rooms` rather than `a ${roomClass}` throughout. An article would have to
-    // be guessed from the name -- and the vowel rule that gets `an Atrium` right gets `a
-    // Utility` wrong -- while the plural is exact for any name a mod invents. It also says
-    // the true thing: a room filter names a class city-wide, not this one room.
-    if (group.clusterCount === 0) {
-        return `No furniture cluster is placeable in ${group.roomClass} rooms, so nothing is `
-            + 'furnished there at all.';
-    }
+    // A room that comes to nothing comes to nothing whatever this preset lists, so it is
+    // said in the room's own terms and shared with the panel, which reaches the same state
+    // from the other side.
+    const unfurnished = unfurnishedReason(group);
+    if (unfurnished) return unfurnished;
 
     const count = group.slots.size;
 
+    // `${roomClass} rooms` rather than `a ${roomClass}` throughout, here and there. An
+    // article would have to be guessed from the name -- and the vowel rule that gets `an
+    // Atrium` right gets `a Utility` wrong -- while the plural is exact for any name a mod
+    // invents. It also says the true thing: a room filter names a class city-wide, not this
+    // one room.
+    //
     // Placeable clusters, none of whose elements names a class. Not a state the base game
     // is in anywhere, and one a mod reaches by writing `clusterElements` without a
     // `furnitureClass` on any of them.
@@ -953,6 +1018,51 @@ function clusterReason(data, group, square, furniture) {
 
     const hint = missingSlotHint(data, group, square, furniture);
     return hint ? `${head} ${hint}` : head;
+}
+
+/**
+ * Why a room gets no furniture at all, or null if it gets some.
+ *
+ * Two states, and the sentence used to say the first of them for both. "No furniture cluster
+ * is placeable in BankArchivesRCP rooms" is read -- correctly, given the words -- as *no
+ * cluster names this class*, which sends the author to their `RoomTypeFilter` to widen
+ * something that is already wide enough. The bank archive that prompted this had four
+ * clusters patched onto its filter and reaching it fine; the room is 213 squares and every
+ * bookcase cluster in the game stops at 99 (`useMaximumRoomSize`, `GenerationController.cs`
+ * :3463). The filter was never the problem, and the reason named it anyway.
+ *
+ * So the size case is said as a size: how many clusters reach the class, what they want,
+ * and what this room is. The fix that follows from it is the room's shape or the cluster's
+ * bound, neither of which the old sentence pointed at.
+ *
+ * Exported because the panel says the same thing when a group opens onto nothing, and two
+ * wordings of one fact is how the misreading above got in.
+ */
+export function unfurnishedReason(group) {
+    if (group.clusterCount > 0) return null;
+
+    if (group.sizedOut === 0) {
+        return `No furniture cluster is placeable in ${group.roomClass} rooms, so nothing is `
+            + 'furnished there at all.';
+    }
+
+    const many = group.sizedOut > 1;
+
+    // "Reach" rather than "is placeable in", which the sentences below this one use of a
+    // cluster that clears every gate. These clear the filter and fail the next one, and
+    // calling both the same thing is what put the reader in the wrong file.
+    const who = many
+        ? `${group.sizedOut} furniture clusters reach ${group.roomClass} rooms`
+        : `One furniture cluster reaches ${group.roomClass} rooms`;
+
+    // The bound quoted only when every cluster agrees on it, for the reason `carrierHint`
+    // gives: clusters wanting different sizes have no single number between them, and
+    // quoting one of them attaches it to all of them.
+    return group.sizeBounds.length === 1
+        ? `${who}, but ${many ? 'they all need' : 'it needs'} a room of ${group.sizeBounds[0]}, `
+            + `and this one has ${group.roomSize}. Nothing is furnished here at all.`
+        : `${who}, but no room of ${group.roomSize} squares is the size `
+            + `${many ? 'any of them wants' : 'it wants'}. Nothing is furnished here at all.`;
 }
 
 /**
@@ -1778,8 +1888,11 @@ function configFor(data, preset, roomType) {
  * edit a filter when the block is the room's size would be the same class of mistake the
  * note on `clusterReason` describes -- a true sentence read as the wrong instruction.
  *
- * `clusterFits` is this, collapsed. One implementation, so the set of clusters a room is
- * given and the reason a preset is refused cannot disagree about which of them fit.
+ * The one implementation, read by `groupFor` for the clusters a room is given and by
+ * `carriersOf` for the gate one carrier is stopped at, so the set and the reason cannot
+ * disagree about which of them fit. `groupFor` used to ask a boolean wrapper instead, and
+ * threw away the gate it had already computed -- which is why a room that came to nothing
+ * could not say whether the filters or the size did it.
  */
 function blockedBy(cluster, filters, roomSize) {
     if (cluster.disable) return 'disable';
@@ -1788,9 +1901,6 @@ function blockedBy(cluster, filters, roomSize) {
     if (cluster.max !== null && roomSize > cluster.max) return 'size';
     return null;
 }
-
-/** Whether a cluster could be attempted in a room of this class and size. */
-const clusterFits = (cluster, filters, roomSize) => blockedBy(cluster, filters, roomSize) === null;
 
 /**
  * How many of a square's four edges carry a wall.

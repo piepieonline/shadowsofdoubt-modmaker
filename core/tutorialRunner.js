@@ -7,13 +7,16 @@
  * happened, so a Next button lets you arrive at "name the murder file" with no file
  * open and nothing to point at.
  *
- * A step names a condition instead of offering Next, and this advances when the app
- * satisfies it. The conditions live in a table here rather than in the tutorial, so a
- * tutorial stays data: see CONDITIONS.
+ * So a step names a condition, and its Next button stays locked until the app satisfies
+ * it: the walkthrough will not run ahead of the mod being built, and the player still
+ * decides when to move on. A step whose doing is the whole of it can say `autoAdvance`
+ * and carry itself, which is what keeps a run of small edits from being a run of button
+ * presses. The conditions live in a table here rather than in the tutorial, so a tutorial
+ * stays data: see CONDITIONS.
  */
 import { onSelectionChanged, currentModName } from './modSelection.js';
 import { switchFlow } from './navigation.js';
-import { tryGetFile, readFileContent } from './fs.js';
+import { probeFile, readFileContent } from './fs.js';
 
 // Fetched only once a tutorial starts. Nobody pays for it just by loading the app,
 // which is why this is a dynamic import rather than a tag in index.html.
@@ -162,15 +165,28 @@ function poll(fn) {
 const valueAt = (data, path) =>
     path.split('.').reduce((node, key) => (node == null ? undefined : node[key]), data);
 
-/** A file in the content folder as it currently stands on disk, or null. */
+/**
+ * A file in the content folder as it currently stands on disk, or null.
+ *
+ * probeFile rather than tryGetFile, and the whole of the difference is that this is asked
+ * on a timer. A step waits for the author to write a file, so "not there" is the expected
+ * answer for as long as they take, and a read that fails in the middle of that is a reason
+ * to ask again 400ms later rather than to end the step. Nothing here writes.
+ */
 async function savedText(path) {
     const base = window.selectedMod?.baseFolder;
     if (!base) return null;
 
-    const handle = await tryGetFile(base, path.split('/'));
+    const handle = await probeFile(base, path.split('/'));
     if (!handle) return null;
 
-    return (await readFileContent(handle)) ?? null;
+    try {
+        return (await readFileContent(handle)) ?? null;
+    } catch {
+        // Caught for the same reason: a file being rewritten under the poll is a file to
+        // look at again, not a walkthrough to abandon.
+        return null;
+    }
 }
 
 /** The same, parsed. Null while a file is absent or not yet valid JSON. */
@@ -206,6 +222,21 @@ function conditionFor(spec) {
 
     if (spec.fileOpen) {
         return { satisfied: () => Boolean(fileWindow(spec.fileOpen)), subscribe: watchDom };
+    }
+
+    // The content folder being worked in, for a step that asks for one to be made. Named
+    // rather than found on the page: the dropdown holds it as an option's value, which no
+    // selector can match on -- and `content-chosen` would be satisfied by whichever folder
+    // was already open, which is the one the step is asking to move away from.
+    //
+    // By its name alone, not the path: where a new folder goes follows the mod's own
+    // convention -- `plugins/theftgonewrong` in most mods and `theftgonewrong` in some --
+    // and a walkthrough cannot know which mod it is being played in.
+    if (spec.contentFolder) {
+        return {
+            satisfied: () => window.selectedMod?.contentPath.split('/').pop() === spec.contentFolder,
+            subscribe: onSelectionChanged,
+        };
     }
 
     // Waiting for the editor to be changed, as opposed to a step's `flow`, which
@@ -392,6 +423,43 @@ function watchHighlightMarks() {
     return () => observer.disconnect();
 }
 
+/**
+ * Lock or unlock the way forward.
+ *
+ * driver.js takes a `disableButtons` option and it is only half of this: it is read when
+ * the popover is built, so it can set the button up locked but has no way of letting it
+ * go again while the step is still on screen. The other half is done here.
+ *
+ * Nothing fights over the state afterwards. Scrolling and resizing only re-position the
+ * popover, and a new step throws the popover away and builds another, so a lock cannot
+ * be inherited by the step after it either.
+ */
+function setForwardEnabled(enabled) {
+    const button = document.querySelector('.driver-popover-next-btn');
+    if (!button) return;
+
+    button.disabled = !enabled;
+    button.classList.toggle('driver-popover-btn-disabled', !enabled);
+    button.title = enabled ? '' : 'Do what this step asks to carry on';
+}
+
+/**
+ * Keep the forward button in the state the step wants, however late the popover arrives.
+ *
+ * driver.js builds the popover for a step on an animation frame partway through the
+ * transition from the last one, so a step whose condition is already met -- the player
+ * did it while reading the step before -- would otherwise unlock a button that has since
+ * been thrown away, and the one that replaces it would stay locked for good.
+ *
+ * Watching body's own children is enough and stays quiet: the popover wrapper is a
+ * direct child of it, and the app's own churn is all further down.
+ */
+function watchForward(isEnabled) {
+    const observer = new MutationObserver(() => setForwardEnabled(isEnabled()));
+    observer.observe(document.body, { childList: true });
+    return () => observer.disconnect();
+}
+
 /** The running tutorial, so starting one cannot leave another behind. */
 let active = null;
 
@@ -413,9 +481,9 @@ export function stopTutorial() {
  * a different editor entirely. So the sequence is run here and driver.js is asked to
  * draw one step at a time.
  *
- * @param live whether this is as far as the walkthrough has got. A step being re-read
- *             is not being re-done, so it must not fly past on a condition it already
- *             met -- going back would be useless if it did.
+ * @param live whether this is as far as the walkthrough has got. A step being re-read is
+ *             not being re-done, so it is never locked -- asking for its condition again
+ *             would mean undoing the step to get back to where you were.
  * @returns 'forward' or 'back'
  */
 async function runStep(tour, steps, index, live, signal) {
@@ -445,10 +513,36 @@ async function runStep(tour, steps, index, live, signal) {
 
     // Watched before the popover is drawn, so a step finished the instant it appears is
     // not missed.
+    //
+    // Meeting the condition unlocks the step; leaving it is a press of the button.
+    // Moving on the instant the app agrees took the popover away mid-sentence -- a step
+    // is read after doing the thing as often as before -- and left no way to look at
+    // what had just been done.
+    //
+    // `autoAdvance` opts a step out of that, and the walkthroughs use it for the ones
+    // where the doing is the whole of the step: set this field, add this row, open this
+    // dialog. There is nothing to look back at, the description is spent by the time the
+    // thing is done, and a button between each of a dozen of them is a dozen presses
+    // saying nothing. It is the steps that explain what just happened, or ask for
+    // several things at once, that are worth stopping on.
     const gated = live && Boolean(step.advanceWhen);
+    const auto = gated && step.autoAdvance === true;
+    let unlocked = false;
+    let unwatchForward = null;
+
     if (gated) {
+        // An auto step is locked too, right up until it leaves: a step that has not been
+        // done cannot be skipped either way.
+        if (!auto) unwatchForward = watchForward(() => unlocked);
+
         waitFor(conditionFor(step.advanceWhen), visit.signal).then(() => {
-            if (!visit.signal.aborted) leave('forward');
+            if (visit.signal.aborted) return;
+            if (auto) {
+                leave('forward');
+                return;
+            }
+            unlocked = true;
+            setForwardEnabled(true);
         });
     }
 
@@ -464,15 +558,18 @@ async function runStep(tour, steps, index, live, signal) {
             popoverClass: step.popoverClass,
             showProgress: true,
             progressText: `Step ${index + 1} of ${steps.length}`,
-            // A live gated step is finished by doing the thing, so it offers no way
-            // forward. One being re-read always does -- that is how you get back to
-            // where you were. Both keep the close button: a walkthrough you cannot
-            // leave is a trap.
+            // Every step offers a way forward, and a live gated one offers it locked
+            // until the thing has been done -- so the button says what the walkthrough
+            // is waiting for rather than the step simply refusing to end. A step being
+            // re-read is never locked: it was done on the way through, and unlocking it
+            // again would mean undoing it. Both keep the close button: a walkthrough you
+            // cannot leave is a trap.
             showButtons: [
                 ...(index > 0 ? ['previous'] : []),
-                ...(gated ? [] : ['next']),
+                'next',
                 'close',
             ],
+            disableButtons: gated ? ['next'] : [],
             prevBtnText: '←',
             nextBtnText: '→',
             onPrevClick: () => leave('back'),
@@ -485,6 +582,7 @@ async function runStep(tour, steps, index, live, signal) {
 
     const direction = await left;
     signal.removeEventListener('abort', endVisit);
+    unwatchForward?.();
     visit.abort();
     return direction;
 }

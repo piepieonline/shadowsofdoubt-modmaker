@@ -14,7 +14,7 @@
  *               windows -- one footprint per storey, unioned across that storey's layouts
  *   mesh        a wall quad wherever an enclosed square has a neighbour that is not, and
  *               a cap wherever a square appears or disappears between one storey and the
- *               next
+ *               next -- bar the underside of the lowest storey, which faces the ground
  *   textures    1024 x 512, flat fills with a rectangle per window: what it looks like,
  *               what glows when a light is on, what glows when none is, and the packed
  *               material mask
@@ -71,6 +71,47 @@ import wallPresetKinds from '../../../refs/authored/wallPresetKinds.json' with {
 const NODE_SIZE = 1.8;
 const FLOOR_HEIGHT = 5.4;
 const LOT_SIZE = 27;
+
+/**
+ * How much wider than the lot it measures the shell is drawn.
+ *
+ * A model built exactly on the node grid sits a shade inside the walls of the floors it
+ * was derived from, and what a generated building has needed on top of it is a 1.008
+ * scale applied in Unity -- pushing each side out by about 11 cm at the edge of the lot.
+ * Baked in here instead, so what the OBJ says is what the building is rather than
+ * something that is only right once a transform has been put over it.
+ *
+ * Across only. Every vertical measurement in the game is the same 5.4 m a storey --
+ * window rows, floor heights, where furniture stands -- and stretching Y by 0.8% would
+ * put the model further out of step with all of them with each storey it gained.
+ */
+const WALL_OUTSET = 1.008;
+
+/**
+ * How far the whole shell is lifted off the ground.
+ *
+ * The distance the outset moves the edge of the lot, applied upwards -- so the shell is
+ * off the baseline by the same amount it is proud of the grid on all four sides. Derived
+ * from `WALL_OUTSET` rather than written as 0.108 so that changing one changes both;
+ * they are the same measurement pointed in different directions.
+ *
+ * The top rises by it as well, so the shell is that much taller than the storeys it
+ * models rather than merely shifted up them. Spread over the whole height rather than
+ * added to the top storey: 0.108 m across a five storey building is a tenth of a percent
+ * on each, where putting it all in the last one would be two percent on that one alone
+ * and show as one window row taller than the rest.
+ */
+const BASE_LIFT = (LOT_SIZE / 2) * (WALL_OUTSET - 1);
+
+/**
+ * How far in from the edge the rim round an open top reaches.
+ *
+ * 10 cm of masonry in the finished model, so it is measured against `WALL_OUTSET`: the
+ * strip is laid out on the grid and pushed out with everything else, and a tenth of a
+ * metre on the grid would come out a hair over one on the building.
+ */
+const LIP_DEPTH = 0.1;
+const LIP_INSET = LIP_DEPTH / WALL_OUTSET;
 
 /** The 15 paintable nodes of the 21, and the coordinate the lot is centred on. */
 const GRID_CENTRE = 10;
@@ -235,6 +276,35 @@ const cellCentre = (cell) => ({
     y: 0,
     z: (GRID_CENTRE - cell.y) * NODE_SIZE,
 });
+
+/**
+ * Grid space to shell space: out on all four sides, up off the ground, and that much
+ * taller again.
+ *
+ * Applied to positions and to nothing else. A UV is a fraction of a side and a texture
+ * column is one of fifteen, and both are measured off the grid the windows were counted
+ * on -- so taking either from a point that has already been pushed out would slide the
+ * whole texture 0.8% towards the corners of each side, and the painted rectangles with
+ * it. The vertical UV has the same problem in the other direction: measured after the
+ * lift, the bottom of the model would no longer be the bottom of the texture. The
+ * geometry moves; what is painted on it stays where the blueprint put it.
+ *
+ * The vertical is affine, which is what lets the UVs stay on the grid: the top of the
+ * shell and the top of the texture are still the same place, and every seam between them
+ * still falls at the same fraction of the way up.
+ *
+ * @param gridHeight the storeys being modelled, in metres -- every storey, not only the
+ *                   ones with a window row, since the rooftop is part of the shell
+ */
+const shellSpace = (gridHeight) => {
+    const stretch = gridHeight > 0 ? 1 + BASE_LIFT / gridHeight : 1;
+
+    return (point) => ({
+        x: point.x * WALL_OUTSET,
+        y: point.y * stretch + BASE_LIFT,
+        z: point.z * WALL_OUTSET,
+    });
+};
 
 /**
  * `Mathf.RoundToInt`, which rounds a half to the nearest *even* whole number.
@@ -443,14 +513,19 @@ export function fillEnclosedVoids(cells) {
  * than by the building's own texture, and an open rooftop has no facade at all. Both
  * would otherwise take a row of the texture and shift every floor above them.
  *
- * @returns the body storeys, and the names of the ones trimmed off the top
+ * The rooftops are returned rather than discarded. They take no row of the texture, and
+ * they are still part of the building's silhouette -- `CityBank_Floor2` is three rows of
+ * penthouse across the top of the lot with an open deck beside it, and dropping it left
+ * the building a storey short from the street. `buildMesh` takes them as shell.
+ *
+ * @returns the body storeys, and the rooftop storeys trimmed off the top
  */
 export function trimToWindowFloors(floors) {
     const body = floors.slice(1);
     const rooftops = [];
 
     while (body.length && body[body.length - 1].isRooftop) {
-        rooftops.unshift(body.pop().blueprint);
+        rooftops.unshift(body.pop());
     }
 
     return { body, rooftops };
@@ -471,35 +546,74 @@ const NO_CELLS = new Set();
  * outside of the building, wherever that is. The second walks the seams *between*
  * storeys and caps a square that stops (a roof) or starts (a soffit under an overhang).
  *
- * Vertical UVs run over the whole building rather than per storey, so window row 3 of 8
+ * Vertical UVs run over the body storeys rather than per storey, so window row 3 of 8
  * lands in the fourth eighth of the texture whatever the building's height.
+ *
+ * @param roof  false for a building something else is stacked on top of, which leaves off
+ *              every upward-facing surface -- the top and the terrace of any storey that
+ *              steps in -- and puts a lip round the edge in their place. What is above
+ *              them is the floor of somebody else's mesh, and two surfaces in one place
+ *              is what shimmers as the camera moves.
+ * @param above the rooftop storeys, stacked on the body and built as shell only: see
+ *              `onOuterShell`. They take no row of the texture, so the vertical UV still
+ *              runs over `body` alone and their walls are mapped to flat masonry.
  */
-export function buildMesh(body) {
+export function buildMesh(body, { roof = true, above = [] } = {}) {
+    const storeys = [...body, ...above];
     const height = body.length * FLOOR_HEIGHT;
-    const buffers = { vertices: [], normals: [], uvs: [], triangles: [] };
+    const buffers = {
+        vertices: [], normals: [], uvs: [], triangles: [],
+        place: shellSpace(storeys.length * FLOOR_HEIGHT),
+    };
 
-    for (let floor = 0; floor < body.length; floor++) {
-        const cells = body[floor].enclosed;
+    for (let floor = 0; floor < storeys.length; floor++) {
+        const cells = storeys[floor].enclosed;
+        const under = floor > 0 ? storeys[floor - 1].enclosed : NO_CELLS;
+        const over = floor + 1 < storeys.length ? storeys[floor + 1].enclosed : NO_CELLS;
+        const shellOnly = floor >= body.length;
 
         for (const cell of sortedCells(cells)) {
             for (let band = 0; band < BAND_OUTWARDS.length; band++) {
                 const step = BAND_NEIGHBOURS[band];
-                if (cells.has(cellKey(cell.x + step.x, cell.y + step.y))) continue;
+                const across = cellKey(cell.x + step.x, cell.y + step.y);
+
+                if (cells.has(across)) continue;
+                if (shellOnly && !onOuterShell(across, under)) continue;
 
                 addWall(buffers, cell, band,
-                    floor * FLOOR_HEIGHT, (floor + 1) * FLOOR_HEIGHT, height);
+                    floor * FLOOR_HEIGHT, (floor + 1) * FLOOR_HEIGHT, height, shellOnly);
+
+                // Nothing over this square, so the top of the wall is open sky. With no
+                // roof to close it there is a rim instead -- see addLip. A square that is
+                // enclosed above is either walled again or under an overhang, and either
+                // way there is no edge to show.
+                if (!roof && !over.has(cellKey(cell.x, cell.y))) {
+                    addLip(buffers, cell, band, (floor + 1) * FLOOR_HEIGHT, cells);
+                }
             }
         }
     }
 
-    for (let level = 0; level <= body.length; level++) {
-        const below = level > 0 ? body[level - 1].enclosed : NO_CELLS;
-        const above = level < body.length ? body[level].enclosed : NO_CELLS;
+    for (let level = 0; level <= storeys.length; level++) {
+        const below = level > 0 ? storeys[level - 1].enclosed : NO_CELLS;
+        const over = level < storeys.length ? storeys[level].enclosed : NO_CELLS;
 
-        for (const cell of sortedCells(below)) {
-            if (!above.has(cellKey(cell.x, cell.y))) addCap(buffers, cell, level * FLOOR_HEIGHT, UP);
+        if (roof) {
+            for (const cell of sortedCells(below)) {
+                if (!over.has(cellKey(cell.x, cell.y))) {
+                    addCap(buffers, cell, level * FLOOR_HEIGHT, UP);
+                }
+            }
         }
-        for (const cell of sortedCells(above)) {
+
+        // The underside of the lowest storey is the one downward face nothing can see:
+        // it is flat against the ground the building stands on. Left off, so the model
+        // is the shell of the building rather than a closed box with a floor in it.
+        // Every other level's is a soffit under an overhanging storey, which is seen
+        // from the street below it and is built.
+        if (level === 0) continue;
+
+        for (const cell of sortedCells(over)) {
             if (!below.has(cellKey(cell.x, cell.y))) {
                 addCap(buffers, cell, level * FLOOR_HEIGHT, DOWN);
             }
@@ -509,8 +623,35 @@ export function buildMesh(body) {
     return buffers;
 }
 
-/** One storey of one square's outside wall. */
-function addWall(buffers, cell, band, y0, y1, height) {
+/**
+ * Whether a rooftop storey's wall is part of the building's outer shell.
+ *
+ * A trimmed rooftop is two different things at once. Where its enclosed block reaches the
+ * edge of the building it is the building -- `CityBank_Floor2` runs penthouse right across
+ * the north of the lot, and without those walls the model stops a storey short of what the
+ * street can see. Where the same block faces its own roof deck it is a structure standing
+ * *on* the building, interior to the mass below it and not part of the silhouette; those
+ * walls are left off, along with the deck they look out over.
+ *
+ * The test is what the wall stands over: a square the storey below encloses is roof, and
+ * anything else is open air past the edge of the building.
+ *
+ * Only rooftops are read this way. A body storey that steps in is a setback and its walls
+ * face the street over the roof below them -- which is why `Eden_Rooftop` is trimmed by
+ * the majority rule in `readLayout` and the storeys under it are not.
+ */
+const onOuterShell = (across, below) => !below.has(across);
+
+/**
+ * One storey of one square's outside wall.
+ *
+ * A shell-only wall takes its UV from the roof block instead of its band. The four bands
+ * are the window rows and a rooftop storey has none, so mapping it there would print
+ * somebody else's lit windows onto a parapet; the roof block is flat masonry. Its own
+ * span is used rather than a single point, because a quad whose UVs collapse to a line
+ * has no area for a tangent to be derived from.
+ */
+function addWall(buffers, cell, band, y0, y1, height, shellOnly = false) {
     const outward = BAND_OUTWARDS[band];
     const tangent = cross(outward, UP);
     const edge = add(cellCentre(cell), scale(outward, NODE_SIZE / 2));
@@ -518,10 +659,14 @@ function addWall(buffers, cell, band, y0, y1, height) {
 
     const at = (sign, y) => add(add(edge, scale(half, sign)), scale(UP, y));
 
-    addQuad(buffers,
-        at(-1, y0), at(-1, y1), at(1, y1), at(1, y0),
-        outward,
-        (vertex) => ({ u: bandU(vertex, band, tangent), v: vertex.y / height }));
+    const uv = shellOnly
+        ? (vertex) => ({
+            u: ROOF_BLOCK_U + alongWall(vertex, tangent) * ROOF_BLOCK_U_WIDTH,
+            v: (vertex.y / y1) * ROOF_BLOCK_V_HEIGHT,
+        })
+        : (vertex) => ({ u: bandU(vertex, band, tangent), v: vertex.y / height });
+
+    addQuad(buffers, at(-1, y0), at(-1, y1), at(1, y1), at(1, y0), outward, uv);
 }
 
 /** The top or the underside of one square, mapped into the texture's roof block. */
@@ -534,17 +679,51 @@ function addCap(buffers, cell, y, normal) {
     addQuad(buffers, at(-1, -1), at(-1, 1), at(1, 1), at(1, -1), normal, roofUv);
 }
 
+/**
+ * The rim along the top of a wall that nothing stands on.
+ *
+ * What is left of a roof when the roof is off: a hand's width of masonry round the edge,
+ * so the building has a visible top rather than a wall that stops in mid air. The deck
+ * inside it is not drawn, because whatever is stacked on this building draws it.
+ *
+ * The strip is shortened by its own depth at one end where the square beyond it is not
+ * enclosed -- the outside of a corner, where this wall and the perpendicular one both
+ * reach the same 10 cm square. Coplanar quads over the same ground are what z-fights, and
+ * shortening the same end of every wall is what makes exactly one of the two own it.
+ * Which end that is follows from the tangent, so it is derived rather than tabulated.
+ */
+function addLip(buffers, cell, band, y, cells) {
+    const outward = BAND_OUTWARDS[band];
+    const tangent = cross(outward, UP);
+    const edge = add(add(cellCentre(cell), scale(outward, NODE_SIZE / 2)), scale(UP, y));
+
+    // `cellCentre` maps an increasing cell coordinate to a decreasing world one, so the
+    // square along +tangent is the one *back* along both axes.
+    const along = { x: cell.x - tangent.x, y: cell.y - tangent.z };
+    const far = NODE_SIZE / 2 - (cells.has(cellKey(along.x, along.y)) ? 0 : LIP_INSET);
+
+    const at = (offset, depth) =>
+        add(add(edge, scale(tangent, offset)), scale(outward, -depth));
+
+    addQuad(buffers,
+        at(-NODE_SIZE / 2, 0), at(-NODE_SIZE / 2, LIP_INSET),
+        at(far, LIP_INSET), at(far, 0),
+        UP, roofUv);
+}
+
 const roofUv = (position) => ({
     u: ROOF_BLOCK_U + (position.x + LOT_SIZE / 2) / LOT_SIZE * ROOF_BLOCK_U_WIDTH,
     v: (position.z + LOT_SIZE / 2) / LOT_SIZE * ROOF_BLOCK_V_HEIGHT,
 });
 
+/** How far across the lot a point is along a wall's own direction, from 0 to 1. */
+const alongWall = (position, tangent) => Math.min(1, Math.max(0,
+    (dot(position, tangent) + LOT_SIZE / 2) / LOT_SIZE));
+
 /** How far along its band a point is, inside the two-pixel gutter at each end. */
 function bandU(position, band, tangent) {
-    const alongWall = Math.min(1, Math.max(0,
-        (dot(position, tangent) + LOT_SIZE / 2) / LOT_SIZE));
-
-    return band * BAND_WIDTH + BAND_GUTTER + alongWall * (BAND_WIDTH - 2 * BAND_GUTTER);
+    return band * BAND_WIDTH + BAND_GUTTER
+        + alongWall(position, tangent) * (BAND_WIDTH - 2 * BAND_GUTTER);
 }
 
 /**
@@ -554,6 +733,10 @@ function bandU(position, band, tangent) {
  * a consistent winding, so the diagonal is swapped when the face has come out backwards.
  * A quad wound the wrong way is invisible from the side it is meant to be seen from and
  * solid from inside the building.
+ *
+ * The one place grid space becomes shell space, and it happens after the winding has been
+ * settled and the UV taken: scaling by a positive amount cannot turn a face round, and
+ * the texture is measured on the grid rather than on the shell.
  */
 function addQuad(buffers, a, b, c, d, normal, uv) {
     if (dot(cross(sub(b, a), sub(c, a)), normal) < 0) [b, d] = [d, b];
@@ -561,7 +744,7 @@ function addQuad(buffers, a, b, c, d, normal, uv) {
     const first = buffers.vertices.length;
 
     for (const vertex of [a, b, c, d]) {
-        buffers.vertices.push(vertex);
+        buffers.vertices.push(buffers.place(vertex));
         buffers.normals.push(normal);
         buffers.uvs.push(uv(vertex));
     }
@@ -728,35 +911,42 @@ function fill(pixels, rect, colour) {
  *
  * A floor with no windows still gets an entry with four empty lists, so that
  * `sortedWindows[floor - 1]` means the same thing on every building.
+ *
+ * @param place the same grid-to-shell transform the mesh was built with. It defaults to
+ *              the one a building with no rooftop gets, because `height` is then the whole
+ *              of the shell -- a building with one has to hand its own in, or the blocks
+ *              describe a model a storey shorter than the one that was written.
  */
-export function buildWindowData(windows, floorCount, height) {
+export function buildWindowData(windows, floorCount, height, place = shellSpace(height)) {
     const floors = [];
 
     for (let floor = 0; floor < floorCount; floor++) {
-        const onFloor = windows.filter((window) => window.floor === floor);
+        const on = windows.filter((window) => window.floor === floor);
+        const blocks = (band, order, descending, side) =>
+            sideBlocks(on, band, order, descending, side, height, place);
 
         floors.push({
-            front: sideBlocks(onFloor, FRONT_BAND, (w) => w.cell.x, false, { x: 0, y: 1 }, height),
-            back: sideBlocks(onFloor, BACK_BAND, (w) => w.cell.x, true, { x: 0, y: -1 }, height),
-            left: sideBlocks(onFloor, LEFT_BAND, (w) => w.cell.y, false, { x: -1, y: 0 }, height),
-            right: sideBlocks(onFloor, RIGHT_BAND, (w) => w.cell.y, true, { x: 1, y: 0 }, height),
+            front: blocks(FRONT_BAND, (w) => w.cell.x, false, { x: 0, y: 1 }),
+            back: blocks(BACK_BAND, (w) => w.cell.x, true, { x: 0, y: -1 }),
+            left: blocks(LEFT_BAND, (w) => w.cell.y, false, { x: -1, y: 0 }),
+            right: blocks(RIGHT_BAND, (w) => w.cell.y, true, { x: 1, y: 0 }),
         });
     }
 
     return floors;
 }
 
-function sideBlocks(windows, band, order, descending, side, height) {
+function sideBlocks(windows, band, order, descending, side, height, place) {
     const onSide = windows.filter((window) => window.band === band);
 
     // Stable, as LINQ's OrderBy is: two windows on one side of one storey at the same
     // sort coordinate keep the order collectWindows put them in.
     onSide.sort((a, b) => (descending ? order(b) - order(a) : order(a) - order(b)));
 
-    return onSide.map((window, index) => buildBlock(window, side, index, height));
+    return onSide.map((window, index) => buildBlock(window, side, index, height, place));
 }
 
-function buildBlock(window, side, horizonal, height) {
+function buildBlock(window, side, horizonal, height, place) {
     const origin = { x: window.pixels.x, y: window.pixels.y };
     const size = { x: window.pixels.width, y: window.pixels.height };
     const centre = {
@@ -768,8 +958,8 @@ function buildBlock(window, side, horizonal, height) {
         originPixel: origin,
         rectSize: size,
         centrePixel: centre,
-        localMeshPositionLeft: meshPointAt(window, centre.x, centre.y, height),
-        localMeshPositionRight: meshPointAt(window, centre.x + 1, centre.y, height),
+        localMeshPositionLeft: meshPointAt(window, centre.x, centre.y, height, place),
+        localMeshPositionRight: meshPointAt(window, centre.x + 1, centre.y, height, place),
         // 1-based, because the game's floor 0 is the ground floor this row sits above.
         floor: window.floor + 1,
         side,
@@ -788,18 +978,25 @@ function buildBlock(window, side, horizonal, height) {
  * the capture mesh child is scaled and offset and that transform is baked into these
  * numbers. Only a debug overlay reads them, so this has no runtime effect; it does mean
  * they are not comparable to a base game preset's.
+ *
+ * Put into shell space like the vertices, and for the same reason the UVs are not: this is
+ * a point *on* the shell, and a raycast against the shell would have found it where the
+ * shell is. The prefab's child offset is added afterwards, because it is where the model
+ * hangs rather than part of the model.
  */
-function meshPointAt(window, pixelX, pixelY, height) {
+function meshPointAt(window, pixelX, pixelY, height, place) {
     const outward = BAND_OUTWARDS[window.band];
     const tangent = cross(outward, UP);
     const face = add(cellCentre(window.cell), scale(outward, NODE_SIZE / 2));
-    const alongWall = (pixelX / TEXTURE_WIDTH - window.band * BAND_WIDTH - BAND_GUTTER)
+    const across = (pixelX / TEXTURE_WIDTH - window.band * BAND_WIDTH - BAND_GUTTER)
         / (BAND_WIDTH - 2 * BAND_GUTTER);
 
-    return add(
+    const onShell = place(add(
         add(scale(outward, dot(face, outward)),
-            scale(tangent, alongWall * LOT_SIZE - LOT_SIZE / 2)),
-        { x: 0, y: pixelY / TEXTURE_HEIGHT * height + MESH_CHILD_LOCAL_Y, z: 0 });
+            scale(tangent, across * LOT_SIZE - LOT_SIZE / 2)),
+        { x: 0, y: pixelY / TEXTURE_HEIGHT * height, z: 0 }));
+
+    return { ...onShell, y: onShell.y + MESH_CHILD_LOCAL_Y };
 }
 
 
@@ -889,6 +1086,19 @@ export function prefabDefinition(name, copyFrom) {
 export const MESH_SOURCE_FIELD = 'modMakerFloorHash';
 
 /**
+ * The field a building carries saying whether its model was built with a roof on it.
+ *
+ * Not a field the game has either, and it is stored for the same reason the hash is: it
+ * is something the author decided about *this building* rather than about the moment they
+ * pressed the button. A mesh is regenerated every time one of its floors changes, and a
+ * choice held nowhere would put the roof silently back on the first time that happened.
+ *
+ * Written positively -- true is the ordinary building -- because a field named for the
+ * exception reads backwards everywhere it is used.
+ */
+export const MESH_ROOF_FIELD = 'modMakerBuildRoof';
+
+/**
  * Fields generation writes that `withoutDefaults` would otherwise drop.
  *
  * A stub says `copyFrom`, so a field left out is not "unchanged" -- it is whatever the
@@ -898,7 +1108,7 @@ export const MESH_SOURCE_FIELD = 'modMakerFloorHash';
  */
 export const GENERATED_FIELDS = [
     'prefab', 'emissionMapUnlit', 'emissionMapLit', 'floorCount', 'sortedWindows',
-    MESH_SOURCE_FIELD,
+    MESH_SOURCE_FIELD, MESH_ROOF_FIELD,
 ];
 
 /**
@@ -986,8 +1196,12 @@ export async function isMeshStale(preset, resolveFloor) {
  * `{ ok: false }` rather than a throw for the one thing that is an authoring problem
  * rather than a fault: a building with nothing above its ground floor has no facade to
  * model, and saying so is more useful than a stack trace.
+ *
+ * `roof` is the author's, and it is written onto the preset so that the next generation
+ * -- which happens whenever one of the floors is edited -- does not have to be told
+ * again.
  */
-export async function generateBuilding(name, preset, resolve) {
+export async function generateBuilding(name, preset, resolve, { roof = true } = {}) {
     // Every blueprint is read twice -- once for its footprint and once for the hash --
     // and a storey's control room variant is usually the same file as another storey's.
     // Held for the length of one generation only, so an edit made after it is not hidden
@@ -1005,7 +1219,13 @@ export async function generateBuilding(name, preset, resolve) {
     }
 
     const height = body.length * FLOOR_HEIGHT;
-    const mesh = buildMesh(body);
+
+    // The shell is every storey; the texture is only the ones with a window row. They are
+    // the same on most buildings and differ on any with a rooftop, which is why the
+    // transform is built once here and handed to both.
+    const place = shellSpace((body.length + rooftops.length) * FLOOR_HEIGHT);
+
+    const mesh = buildMesh(body, { roof, above: rooftops });
     const windows = collectWindows(body);
     const textures = paintTextures(windows);
 
@@ -1013,7 +1233,8 @@ export async function generateBuilding(name, preset, resolve) {
     preset.emissionMapUnlit = `TEXTURE:${prefabFolder(name)}/${name}_black`;
     preset.emissionMapLit = `TEXTURE:${prefabFolder(name)}/${name}_emissive`;
     preset.floorCount = body.length;
-    preset.sortedWindows = buildWindowData(windows, body.length, height);
+    preset.sortedWindows = buildWindowData(windows, body.length, height, place);
+    preset[MESH_ROOF_FIELD] = roof;
     preset[MESH_SOURCE_FIELD] = await sourceFloorHash(preset, resolveFloor);
 
     const folder = prefabFolder(name);
@@ -1027,9 +1248,12 @@ export async function generateBuilding(name, preset, resolve) {
         triangleCount: mesh.triangles.length / 3,
         height,
         missing,
-        // What was left out of the model, so the report can say so: the ground floor is
-        // always the first of these, and any rooftop trimmed off the top follows.
-        excluded: [floors[0].blueprint, ...rooftops],
+        // The ground floor, which the street frontage in front of it draws instead.
+        excluded: [floors[0].blueprint],
+        // Built, but as shell rather than as a storey: no window row, and no walls facing
+        // their own roof deck. Worth saying separately, because "not modelled" and "in the
+        // silhouette but not lit" are different things to go looking for in game.
+        shellOnly: rooftops.map((rooftop) => rooftop.blueprint),
         files: [
             { path: `${folder}/${name}.obj`, contents: toObj(mesh, name) },
             {

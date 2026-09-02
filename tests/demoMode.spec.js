@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, gotoFlow, readFile, listDir, alerts, editField, fieldInput, openDdsDocument } from './support/harness.js';
+import { installFsHarness, gotoFlow, readFile, listDir, alerts, editField, fieldInput, openDdsDocument } from '../test-support/harness.js';
 import { DEMO_SELECTION, DEMO_TREE_GUID, DEMO_MOD_TREE_GUID } from '../core/demo/fixtures.js';
 
 /**

@@ -760,6 +760,20 @@
     }
 }
 
+/* Whether the next generation caps the top. Pico lays a checkbox out as a block with a
+   margin under it, which is a row of its own in a column this narrow. */
+.mesh-roof {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin: 0.3rem 0 0;
+    font-size: 0.7rem;
+
+    input[type="checkbox"] {
+        margin: 0;
+    }
+}
+
 /* What the last generation did, or that the last one has gone out of date. */
 .mesh-note {
     display: block;

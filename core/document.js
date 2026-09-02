@@ -9,6 +9,26 @@
  * Only the ScriptableObject flow did that restoration; the DDS flow's
  * modifyTreeElement did not, and lost your place on every keystroke. Both use this now.
  *
+ * ## Why the whole rebuild happens before the save
+ *
+ * Reopening the nodes used to come *after* `await save()`, which left the document on
+ * screen collapsed for as long as the write took. A write to a real folder is long
+ * enough to be painted, and a collapsed document is a few hundred pixels tall however
+ * long it really is -- so the browser clamped the scroll position to the top of it, and
+ * the author lost their place on every dropdown change.
+ *
+ * Which document that showed on was a matter of shape rather than of flow. A DDS tree is
+ * `messages`, `blocks` and `replacements` expanded, which is to say it is almost entirely
+ * the part that collapses; a case file is mostly top-level keys, which survive. The two
+ * behaved differently while running the same code, and a case file with an array open in
+ * it lost its place exactly as a tree did.
+ *
+ * So nothing awaits until the tree is whole again: patch, reload, decorate, reopen,
+ * `afterRebuild`, put the scroll back, and only then save. The rebuild is one synchronous
+ * run and there is no collapsed frame to paint. `afterRebuild` moving with it is a fix in
+ * its own right -- it ran outside the old try/finally, so a save that threw left the case
+ * flow's default-value marks off a tree that had just been rebuilt without them.
+ *
  * Nodes are identified by JSON Pointer. This was `item.pathToItem`, which only the
  * ScriptableObject flow assigns: in the DDS flow every node's was `undefined`, so the
  * list of open paths filled with `undefined`, matched every node in the rebuilt tree,
@@ -36,25 +56,39 @@ export function createEditLoop({ tree, getData, setData, onRebuild, save, afterR
             (item) => { openPaths.add(getJSONPointer(item)); }
         );
 
+        // Where in the document the author was. The tree is rendered into the window's
+        // container and that is what scrolls -- see core/treeWindow.js.
+        //
+        // Restoring this is belt to the braces of rebuilding before saving: the setup
+        // pass can read layout while the tree is part-built -- select2 measures the
+        // control it is initialising -- and a measurement is enough to have the scroll
+        // clamped against a document that is still collapsed.
+        const scroller = tree.wrapper.parentElement;
+        const scrollTop = scroller?.scrollTop ?? 0;
+
         setData(jsonpatch.applyPatch(getData(), patch).newDocument);
 
         tree.loadData(getData());
         onRebuild();
 
-        // Reopened whether or not the save worked. A save can fail -- a folder no longer
-        // writable, a name taken since -- and the author being thrown back to the top of
-        // a document is not a useful second thing to happen about it. The failure still
-        // travels; only the place is kept.
-        try {
-            await save();
-        } finally {
-            tree.findAndHandle(
-                (item) => openPaths.has(getJSONPointer(item)),
-                (item) => { item.expand(); }
-            );
-        }
+        tree.findAndHandle(
+            (item) => openPaths.has(getJSONPointer(item)),
+            (item) => { item.expand(); }
+        );
 
+        // Before the scroll is put back, not after: this is what marks the case flow's
+        // default values, and Hide Default Values then takes those rows off the screen.
+        // Restoring a position measured against a document that is about to lose rows
+        // would leave the author somewhere they had not been.
         if (afterRebuild) afterRebuild();
+
+        if (scroller) scroller.scrollTop = scrollTop;
+
+        // Last, and its failure travels. A save can fail -- a folder no longer writable,
+        // a name taken since -- and the author being thrown back to the top of a document
+        // is not a useful second thing to happen about it. By here there is nothing left
+        // to put back, so there is no longer anything to unwind.
+        await save();
     };
 }
 

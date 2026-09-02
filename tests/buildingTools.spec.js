@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, gotoFlow } from './support/harness.js';
+import { installFsHarness, gotoFlow } from '../test-support/harness.js';
 
 /**
  * The painting tools: turning real pointer events into targets.

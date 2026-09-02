@@ -250,7 +250,8 @@ export async function loadDocument(id, type = null, openTheseIds = null) {
  * Create a document and open it.
  *
  * @param templateData an existing document to copy; omitted for a fresh one
- * @param options      name, and the English line its block says. See createNewFile.
+ * @param options      name, the English line its block says, and -- for a tree -- which
+ *                     of the six kinds it is. See createNewFile.
  */
 export async function newFile(type, templateData, options) {
     if (window.selectedMod == null) {
@@ -262,6 +263,38 @@ export async function newFile(type, templateData, options) {
 
     await loadDocument(newGUID, type);
     await refreshPanel();
+}
+
+/** The switch that says whether the fields this kind of tree never reads are on screen. */
+const SHOW_ALL_FIELDS = '#dds-show-all-fields';
+
+/** The switch was flipped: take every open document to where it now stands. */
+export function toggleShowAllFields() {
+    applyViewVisibility();
+}
+
+/**
+ * Put every irrelevant node into the state the switch is in.
+ *
+ * Set rather than flipped, one answer for all of them, for the reason the case flow's
+ * copy of this records: a document built while the switch was already on marks its rows
+ * without hiding them, so its nodes stand opposite to every other document's, and
+ * flipping each in turn would swap the two halves over rather than agreeing them.
+ *
+ * The sense is inverted against the class name because the switch says "show". Off -- the
+ * state a page loads in -- is the filtered view, which is the point of the feature: an
+ * author meeting a document tree for the first time should not be shown the 14 fields it
+ * has no use for and left to work out which ones they are.
+ *
+ * Called from the setup pass that marks those rows, so a document opened or rebuilt under
+ * a switch that is already on arrives in the mode the author asked for.
+ */
+export function applyViewVisibility() {
+    const hidden = !document.querySelector(SHOW_ALL_FIELDS)?.checked;
+
+    document.querySelectorAll('.dds-irrelevant-node').forEach(ele => {
+        ele.classList.toggle('hidden-irrelevant-node', hidden);
+    });
 }
 
 /** Pico dialogs: open/close via the `open` property rather than a class. */

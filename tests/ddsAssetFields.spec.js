@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, alerts, readFile,
-    collectPageErrors, openDdsDocument,
-} from './support/harness.js';
-import { ddsFixture, TREE_GUID, MSG_GUID } from './support/fixtures.js';
+    collectPageErrors, openDdsDocument, showAllDdsFields,
+} from '../test-support/harness.js';
+import { ddsFixture, TREE_GUID, MSG_GUID } from '../test-support/fixtures.js';
 
 /**
  * The DDS fields that hold the name of one of the game's assets.
@@ -172,6 +172,11 @@ test('a job and an item pool are the same kind of list, of their own types',
         // Three fields, three asset types. `jobs` is a citizen's occupation rather than
         // the game's other kind of job, and `itemPool` is what the tree can hand out.
         await openTreeWithATrait(page);
+
+        // `itemPool` belongs to an interactionDialog and the fixture is a vmail, so the
+        // view has it off the screen. What is being asked here is which list a field
+        // offers, which is the same question wherever the field is shown.
+        await showAllDdsFields(page);
 
         await add(namedNode(page, 'jobs'));
         await expand(namedNode(page, 'jobs'));

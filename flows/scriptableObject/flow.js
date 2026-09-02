@@ -39,14 +39,11 @@ export default {
         await onFoldersConnected();
     },
 
-    /**
-     * A new content folder is a new case here, so this asks what kind before the
-     * shell creates it.
-     */
-    async newContent(name) {
-        const { newContent } = await import('./scripts/ui.js');
-        return newContent(name);
-    },
+    // No `newContent`: a new content folder starts empty here, as it does in the DDS
+    // flow. It used to be a case -- a manifest and the preset it revolves around, chosen
+    // from a dialog -- which decided what the folder was for before its author had, and
+    // wrote two files to say so. The manifest arrives with the first file added to the
+    // load order instead; see openManifest in index.js.
 
     /**
      * What is open, as URL parameters, and putting it back -- across a switch to

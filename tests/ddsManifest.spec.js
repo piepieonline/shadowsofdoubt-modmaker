@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, connectFolders, selectContent, readFile, listDir, alerts, collectPageErrors, gotoFlow, fieldInput, openDdsDocument, addDdsContent } from './support/harness.js';
+import { installFsHarness, seedFs, connectFolders, selectContent, readFile, listDir, alerts, collectPageErrors, gotoFlow, fieldInput, openDdsDocument, addDdsContent } from '../test-support/harness.js';
 import {
     ddsManifestFixture, ddsManifestNoBlocksFixture, ddsManifestMixedFixture,
     ddsManifestBrokenFixture, ddsBareFixture, ddsFixture,
     FLAT_MOD, TREE_GUID, BLOCK_GUID,
-} from './support/fixtures.js';
+} from '../test-support/fixtures.js';
 
 /**
  * A mod whose ddsmanifest gives its files the paths the game reads them from.

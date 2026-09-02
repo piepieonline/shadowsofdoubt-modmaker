@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, gotoFlow, connectFolders, selectContent,
-    readFile, listDir, queuePrompts, alerts,
-} from './support/harness.js';
+    readFile, listDir, queuePrompts, alerts, writeFixture,
+} from '../test-support/harness.js';
 
 /**
  * The building flow, wired into the shell.
@@ -991,6 +991,153 @@ test('nothing is written before there is anything to write', async ({ page }) =>
     const files = await listDir(page, 'Plugins/MyTower/Floors');
     expect(files).toEqual(['MyTower_Ground.json']);
     expect(await alerts(page)).toEqual([]);
+});
+
+
+/* -------------------------------------------------------------------------- */
+/* A building that is not there                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A floor is saved against the building that names it, and the building is found by name.
+ * A name with nothing behind it therefore has to stop the save reaching a preset at all --
+ * because the alternative, once, was writing one: a stub copying from its own name, with
+ * the slot being saved as its only floor, over whatever file the name landed on.
+ *
+ * Two moments to refuse at, and both are needed. The name can be wrong when the floor is
+ * opened, which is where a restored session's is checked, and the file can go bad while the
+ * floor is open, which no check at opening can see.
+ */
+
+/** Paint one wall and write, which is what puts a floor and its building on disk. */
+const paintAndSave = (page) => page.evaluate(async () => {
+    const { saveNow, openFloorModel } = await import('/flows/building/scripts/ui.js');
+    const model = await import('/flows/building/scripts/floorModel.js');
+
+    model.setWall(openFloorModel(), 9, 9, model.AXIS_X, '16');
+    await saveNow();
+});
+
+const GROUND_SLOT = { isBasement: false, isControlVariant: false, layoutIndex: 0, blueprintIndex: 0 };
+
+test('a floor opened against a building that is not there is opened on its own', async ({ page }) => {
+    await openBuildingFlow(page);
+
+    // A name nothing answers to, which is what a restored session hands over when the
+    // content folder that came back is not the one its URL named.
+    await open(page, 'GhostTower', 'MyTower_Ground', GROUND_SLOT);
+
+    expect(await alerts(page)).toContain(
+        'Could not find a building called "GhostTower", so "MyTower_Ground" has been opened '
+        + 'on its own. Saving it will not change any building.');
+
+    await paintAndSave(page);
+
+    // The floor is written. It is a file in its own right and the drawing is not lost.
+    const floor = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Ground.json'));
+    expect(floor.a_d.length).toBeGreaterThan(0);
+
+    // No building was invented for the name, and the real one is untouched by it.
+    expect(await readFile(page, 'Plugins/MyTower/GhostTower.BuildingPreset.sodso.json')).toBeNull();
+    expect(JSON.parse(await readFile(page, 'Plugins/MyTower/MyTower.sodso.json')).copyFrom).toBeNull();
+});
+
+test('a building whose preset will not parse is not opened against either', async ({ page }) => {
+    await openBuildingFlow(page, {
+        ...modWithBuilding,
+        'Plugins/MyTower/BrokenTower.sodso.json': '{ this is not json',
+    });
+
+    await open(page, 'BrokenTower', 'MyTower_Ground', GROUND_SLOT);
+    await paintAndSave(page);
+
+    // Byte for byte. The text is the author's and may be one comma away from working;
+    // replacing it with a stub is how a bad file becomes a lost building.
+    expect(await readFile(page, 'Plugins/MyTower/BrokenTower.sodso.json')).toBe('{ this is not json');
+});
+
+test('a preset that goes bad while its floor is open is not written over', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'MyTower', 'MyTower_Ground', GROUND_SLOT);
+
+    // Behind the editor's back, which is how it happens: a sync conflict or a half-written
+    // file landing in the folder while the floor it belongs to is on screen. Opening
+    // checked the name and the name was good.
+    await writeFixture(page, 'Plugins/MyTower/MyTower.sodso.json', '{ this is not json');
+
+    await paintAndSave(page);
+
+    expect(await readFile(page, 'Plugins/MyTower/MyTower.sodso.json')).toBe('{ this is not json');
+
+    // The floor reached disk before the building was reached for, so the drawing survives
+    // and the author is told which half did not.
+    const floor = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Ground.json'));
+    expect(floor.a_d.length).toBeGreaterThan(0);
+
+    expect((await alerts(page)).join('\n')).toContain('could not be pointed at MyTower');
+});
+
+test('a mod floor that will not read does not open the base game\'s copy over it', async ({ page }) => {
+    await openBuildingFlow(page);
+
+    // A floor of the mod's named after a base game one, which is exactly what editing a
+    // base game floor produces. The mod's copy is the one being worked on; the base game
+    // still ships its own under that name.
+    await writeFixture(page, 'Plugins/MyTower/Floors/Hotel_GroundFloor.json', '{ this is not json');
+
+    await open(page, 'Hotel', 'Hotel_GroundFloor', GROUND_SLOT);
+
+    // Falling through to the base game's copy would open a floor that looks right, and the
+    // first stroke would autosave it over the author's.
+    await expect(page.locator('#building-open-name')).toHaveText('No floor open');
+    expect((await alerts(page)).join('\n')).toContain('Hotel_GroundFloor');
+
+    expect(await readFile(page, 'Plugins/MyTower/Floors/Hotel_GroundFloor.json'))
+        .toBe('{ this is not json');
+});
+
+/** Redraw the Browse menu from the folder, as every write ends by doing. */
+const refreshBrowse = (page) => page.evaluate(async () => {
+    const { refreshPanel } = await import('/flows/building/scripts/ui.js');
+    await refreshPanel();
+});
+
+test('a preset repaired after a refused save takes its floor back, edits and all', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'MyTower', 'MyTower_Ground', GROUND_SLOT);
+
+    const good = await readFile(page, 'Plugins/MyTower/MyTower.sodso.json');
+    await writeFixture(page, 'Plugins/MyTower/MyTower.sodso.json', '{ this is not json');
+
+    await paintAndSave(page);
+
+    // Letting go of the building is an editor's answer to what it can reach, not an edit.
+    // While the file will not parse the building is not listed at all, so its floor shows
+    // as one no building uses -- which is what the folder says at that moment.
+    await refreshBrowse(page);
+    await expandBuilding(page, 'unused-floors');
+    await expect(page.locator('[data-category="unused-floors"] .file-panel-name'))
+        .toHaveText(['MyTower_Ground']);
+
+    // Repairing the file is the whole of the recovery. The slot was never taken out of it,
+    // because the save that could not read it never wrote to it either.
+    await writeFixture(page, 'Plugins/MyTower/MyTower.sodso.json', good);
+    await refreshBrowse(page);
+
+    // expandBuilding opens the menu on its way in, so it has to be shut first.
+    await page.click('#building-browse summary');
+    await expandBuilding(page, 'MyTower');
+    await expect(page.locator('[data-category="MyTower"] .file-panel-entry .file-panel-name'))
+        .toHaveText(['MyTower_Ground']);
+
+    // And opening it through the building gives back the context, with the stroke that was
+    // painted while the building was unreachable still in the floor.
+    await open(page, 'MyTower', 'MyTower_Ground', GROUND_SLOT);
+    await expect(page.locator('#building-open-name')).toHaveText(/MyTower_Ground.*MyTower/);
+
+    const floor = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Ground.json'));
+    const nodes = floor.a_d.flatMap((a) => a.vs).flatMap((v) => v.r_d).flatMap((r) => r.n_d);
+    expect(nodes.find((n) => n.f_c.x === 9 && n.f_c.y === 9).w_d).toHaveLength(1);
 });
 
 

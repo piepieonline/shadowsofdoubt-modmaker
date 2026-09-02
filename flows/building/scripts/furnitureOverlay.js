@@ -69,7 +69,7 @@ import soDefaults from '../../../refs/generated/soDefaults.json' with { type: 'j
 
 // Shared with `../tools/buildFurnitureChain.js`, which reads the game's own assets into
 // the same records. The two readers must not drift -- see `readClass`.
-import { wallRulesOf, stairwellOf } from './furnitureRules.js';
+import { wallRulesOf, stairwellOf } from '../../../core/furnitureRules.js';
 
 /** What the mod loader calls a file of each kind. */
 const PRESET_SUFFIX = '.sodso.json';

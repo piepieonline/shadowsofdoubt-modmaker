@@ -6,11 +6,19 @@ import {
     updateNewFileCopyFrom, newFileMode, setNewFileMode, updateNewFileSubmitState,
     updateSelectAllCopyFrom, filterFilePanel, toggleFileFilter, showHelp, closeHelp,
 } from './scripts/ui.js';
-import { cancelNewCasePopup } from './index.js';
 import {
     openRoomCreator, closeRoomCreator, roomCreatorChanged, writeRoom, openExistingRoom,
     copyDonorFurniture,
 } from './scripts/roomCreator.js';
+import {
+    openFurnitureCreator, closeFurnitureCreator, furnitureCreatorChanged,
+    toggleParentedSubObjects, resetFurnitureView, furnitureSubObjectChanged,
+    furnitureDragModeChanged, addFurnitureSubObject, removeFurnitureSubObject,
+    revertFurnitureEdits, furnitureNameChanged, writeFurniture,
+    furnitureClassChanged, placementRuleChanged, placementSizeChanged,
+    addPlacementRule, removePlacementRule, revertPlacementEdits, findWhereItAppears,
+    furnitureInteractableChanged, addFurnitureInteractable, removeFurnitureInteractable,
+} from './scripts/furnitureCreator.js';
 import {
     startFieldSummary, cancelFieldSummary, closeFieldSummary, filterFieldSummary,
 } from './scripts/fieldSummary.js';
@@ -19,8 +27,14 @@ export default {
     toggleManifestPanel, shareOpen, enableAssetOnlyMode, toggleEditMode, toggleDefaultValues,
     updateNewFileCopyFrom, newFileMode, setNewFileMode, updateNewFileSubmitState,
     updateSelectAllCopyFrom, filterFilePanel, toggleFileFilter, showHelp, closeHelp,
-    cancelNewCasePopup,
     openRoomCreator, closeRoomCreator, roomCreatorChanged, writeRoom, openExistingRoom,
     copyDonorFurniture,
+    openFurnitureCreator, closeFurnitureCreator, furnitureCreatorChanged,
+    toggleParentedSubObjects, resetFurnitureView, furnitureSubObjectChanged,
+    furnitureDragModeChanged, addFurnitureSubObject, removeFurnitureSubObject,
+    revertFurnitureEdits, furnitureNameChanged, writeFurniture,
+    furnitureClassChanged, placementRuleChanged, placementSizeChanged,
+    addPlacementRule, removePlacementRule, revertPlacementEdits, findWhereItAppears,
+    furnitureInteractableChanged, addFurnitureInteractable, removeFurnitureInteractable,
     startFieldSummary, cancelFieldSummary, closeFieldSummary, filterFieldSummary,
 };

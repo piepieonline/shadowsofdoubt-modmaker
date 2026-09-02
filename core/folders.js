@@ -9,7 +9,7 @@
  * persisted in idb-keyval so a handle survives a reload. Whether it is still *usable*
  * after a reload is a permission question -- see restoreFolders below.
  */
-import { tryGetFolder } from './fs.js';
+import { probeFolder } from './fs.js';
 import { isDemoMode } from './demo/demoMode.js';
 
 export const FOLDERS = [
@@ -27,10 +27,15 @@ export const FOLDERS = [
          */
         async resolve(handle) {
             if (handle.name === 'StreamingAssets') return handle;
+
+            // probeFolder rather than tryGetFolder: two of these three are expected to
+            // fail, nothing is written on the answer, and the folder being walked is
+            // whatever the author pointed the dialog at. `invalidMessage` below is what a
+            // handle none of them fits gets told. See core/fs.js.
             return (
-                await tryGetFolder(handle, ['Shadows of Doubt', 'Shadows of Doubt_Data', 'StreamingAssets']) ||
-                await tryGetFolder(handle, ['Shadows of Doubt_Data', 'StreamingAssets']) ||
-                await tryGetFolder(handle, ['StreamingAssets']) ||
+                await probeFolder(handle, ['Shadows of Doubt', 'Shadows of Doubt_Data', 'StreamingAssets']) ||
+                await probeFolder(handle, ['Shadows of Doubt_Data', 'StreamingAssets']) ||
+                await probeFolder(handle, ['StreamingAssets']) ||
                 null
             );
         },

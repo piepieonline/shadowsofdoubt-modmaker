@@ -7,7 +7,8 @@
             "title": "Pick a mod to build in",
             "description": "Choose a mod, and a content folder inside it. Everything this walkthrough makes goes under that folder's <code>DDSContent</code>, and nothing else in the mod is touched.<br><br>Leave <b>Autosaving</b> on: the steps ahead check your work by reading the files.",
             "side": "bottom",
-            "advanceWhen": "content-chosen"
+            "advanceWhen": "content-chosen",
+            "autoAdvance": true
         },
         {
             "element": "#new-file-button",
@@ -16,17 +17,19 @@
             "side": "right",
             "advanceWhen": {
                 "visible": "#new-dds-file-modal[open]"
-            }
+            },
+            "autoAdvance": true
         },
         {
             "element": "#new-dds-file-modal article",
             "title": "Name it, and give it its first line",
-            "description": "Choose <b>Tree</b> from the <b>Type</b> dropdown, name it <code>WizcardsChat</code>, and put <code>You still playing Wizcards?</code> in the <b>English line</b>.",
+            "description": "Choose <b>Conversation</b> from the <b>Type</b> dropdown, name it <code>WizcardsChat</code>, and put <code>You still playing Wizcards?</code> in the <b>English line</b>.<br><br>The six options under <b>Tree</b> are the six things the game does with one. Two citizens talking is a conversation; the others make a v-mail, a page of paper, a newspaper column, a library of messages, or a chain of dialog options.",
             "side": "left",
             "popoverClass": "tutorial-popover-narrow",
             "advanceWhen": {
                 "visible": "#file-window-0[path$='.tree']"
-            }
+            },
+            "autoAdvance": true
         },
         {
             "element": "#file-window-0",
@@ -36,14 +39,9 @@
         },
         {
             "element": "#file-window-0",
-            "title": "It is a v-mail until you say otherwise",
-            "description": "Find <code>treeType</code> near the bottom of the tree window and change it to <b>conversation</b>.<br><br>A new tree comes out as a <b>vmail</b> — the template's default, and the wrong thing for two people talking. This is the single most common reason a new tree never appears in game.",
-            "side": "left",
-            "advanceWhen": {
-                "field": "treeType",
-                "window": "#file-window-0",
-                "is": 0
-            }
+            "title": "It already knows what it is",
+            "description": "Find <code>treeType</code> near the bottom of the tree window. It says <b>conversation</b>, because that is what you asked for in the dialog.<br><br>It is worth knowing where this field is even though you will not touch it. It decides everything else: which of the six formats the game reads this file as, which of the fields below it are ever consulted, and — because the editor hides the ones this kind never reads — what you are looking at right now. Turn <b>Show all fields</b> on at the top if you want to see the rest.",
+            "side": "left"
         },
         {
             "element": "#file-window-0",
@@ -54,7 +52,8 @@
                 "field": "triggerPoint",
                 "window": "#file-window-0",
                 "is": 2
-            }
+            },
+            "autoAdvance": true
         },
         {
             "element": "#file-window-0",
@@ -65,7 +64,8 @@
                 "field": "treeChance",
                 "window": "#file-window-0",
                 "is": 0.25
-            }
+            },
+            "autoAdvance": true
         },
         {
             "element": "#file-window-0",
@@ -76,18 +76,20 @@
                 "field": "participantA.connection",
                 "window": "#file-window-0",
                 "is": 0
-            }
+            },
+            "autoAdvance": true
         },
         {
             "element": "#file-window-0",
             "title": "Where they have to be",
-            "description": "Click the <b>+</b> beside A's <code>triggers</code> five times, and pick each entry from the dropdown it comes with: <b>awake</b>, <b>noReactionState</b>, <b>indoors</b>, <b>publicLocation</b> and <b>sat</b>.<br><br>A new entry arrives as the first name in the list, which is <b>awake</b> — so one of the five is already done.<br><br>All of them have to hold at once, so this comes to: awake, not reacting to anything, sitting down, indoors, somewhere public. Two people in a bar.",
+            "description": "A already has two <code>triggers</code>: <b>awake</b> and <b>noReactionState</b>, which every conversation in the base game sets. Click the <b>+</b> beside them three more times and pick <b>indoors</b>, <b>publicLocation</b> and <b>sat</b>.<br><br>A new entry arrives as the first name in the list, which is <b>awake</b>, so each one has to be changed after it is added.<br><br>All five have to hold at once, so this comes to: awake, not reacting to anything, sitting down, indoors, somewhere public. Two people in a bar.",
             "side": "left",
             "advanceWhen": {
                 "rows": "participantA.triggers",
                 "window": "#file-window-0",
                 "count": 5
-            }
+            },
+            "autoAdvance": true
         },
         {
             "element": "#file-window-0",
@@ -98,7 +100,8 @@
                 "field": "participantB.connection",
                 "window": "#file-window-0",
                 "is": 18
-            }
+            },
+            "autoAdvance": true
         },
         {
             "element": "#file-window-0",
@@ -109,7 +112,8 @@
                 "rows": "participantB.triggers",
                 "window": "#file-window-0",
                 "count": 3
-            }
+            },
+            "autoAdvance": true
         },
         {
             "element": "#file-window-0",
@@ -120,23 +124,24 @@
                 "rows": "messages",
                 "window": "#file-window-0",
                 "count": 2
-            }
+            },
+            "autoAdvance": true
         },
         {
             "element": "#file-window-0",
             "title": "B answers",
-            "description": "On the new entry <code>messages.1</code>, set <code>saidBy</code> to <code>1</code>, <code>saidTo</code> to <code>0</code>, and <code>order</code> to <code>1</code>.<br><br>Those numbers are the participants: 0 is A, 1 is B. A new message arrives as A talking to B, so this one has to be turned around.",
+            "description": "On the new entry <code>messages.1</code>, set <code>saidBy</code> to <code>1</code> and <code>saidTo</code> to <code>0</code>.<br><br>Those numbers are the participants: 0 is A, 1 is B. A new message arrives as A talking to B, so this one has to be turned around.<br><br>Then click the <b>➥</b> beside <code>messages.1</code>'s <code>msgID</code>. The message opens in the middle window and its block opens on the right.",
             "side": "left",
             "advanceWhen": {
-                "field": "messages.1.order",
+                "field": "messages.1.saidTo",
                 "window": "#file-window-0",
-                "is": 1
+                "is": 0
             }
         },
         {
             "element": "#file-window-2",
             "title": "What B says",
-            "description": "Click the <b>➥</b> beside <code>messages.1</code>'s <code>msgID</code>. The message opens in the middle window and its block opens on the right.<br><br>In that block, put <code>Every night on my cruncher.</code> into <code>_ENG Localisation_</code> and click out of the box.<br><br>That row is not part of the file. It is the line looked up from the strings CSV, shown here so you can edit it in place — typing in it writes the CSV, not the block.",
+            "description": "Put <code>Every night on my cruncher.</code> into <code>_ENG Localisation_</code> and click out of the box.<br><br>That row is not part of the file. It is the line looked up from the strings CSV, shown here so you can edit it in place — typing in it writes the CSV, not the block.",
             "side": "right",
             "advanceWhen": {
                 "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
@@ -152,23 +157,19 @@
                 "rows": "messages",
                 "window": "#file-window-0",
                 "count": 3
-            }
+            },
+            "autoAdvance": true
         },
         {
             "element": "#file-window-0",
             "title": "A is already the speaker",
-            "description": "On <code>messages.2</code>, set <code>order</code> to <code>2</code> and leave <code>saidBy</code> and <code>saidTo</code> as they are.<br><br>A new message is A talking to B, which is what this one is. Only the odd-numbered ones need turning around.",
-            "side": "left",
-            "advanceWhen": {
-                "field": "messages.2.order",
-                "window": "#file-window-0",
-                "is": 2
-            }
+            "description": "Nothing to change on <code>messages.2</code>: leave <code>saidBy</code> and <code>saidTo</code> as they are.<br><br>A new message is A talking to B, which is what this one is. Only the odd-numbered ones need turning around.<br><br>Drill into <code>messages.2</code> with <b>➥</b>.",
+            "side": "left"
         },
         {
             "element": "#file-window-2",
             "title": "What A asks",
-            "description": "Drill into <code>messages.2</code> with <b>➥</b> and put <code>Any good at it?</code> in its block's <code>_ENG Localisation_</code>.",
+            "description": "Put <code>Any good at it?</code> in the block's <code>_ENG Localisation_</code>.",
             "side": "right",
             "advanceWhen": {
                 "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
@@ -184,23 +185,24 @@
                 "rows": "messages",
                 "window": "#file-window-0",
                 "count": 4
-            }
+            },
+            "autoAdvance": true
         },
         {
             "element": "#file-window-0",
             "title": "Turned around again",
-            "description": "On <code>messages.3</code>: <code>saidBy</code> <code>1</code>, <code>saidTo</code> <code>0</code>, <code>order</code> <code>3</code>.",
+            "description": "On <code>messages.3</code>: <code>saidBy</code> <code>1</code>, <code>saidTo</code> <code>0</code>.<br><br>Then drill into <code>messages.3</code>.",
             "side": "left",
             "advanceWhen": {
-                "field": "messages.3.order",
+                "field": "messages.3.saidTo",
                 "window": "#file-window-0",
-                "is": 3
+                "is": 0
             }
         },
         {
             "element": "#file-window-2",
             "title": "How good B claims to be",
-            "description": "Drill into <code>messages.3</code> and put <code>I hold my own.</code> in its block.<br><br>Deliberately flat. In a moment you will make this same line read three different ways depending on who is saying it.",
+            "description": "Put <code>I hold my own.</code> in the block.<br><br>Deliberately flat. In a moment you will make this same line read three different ways depending on who is saying it.",
             "side": "right",
             "advanceWhen": {
                 "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
@@ -221,18 +223,13 @@
         {
             "element": "#file-window-0",
             "title": "A has the last word",
-            "description": "On <code>messages.4</code>, set <code>order</code> to <code>4</code>. <code>saidBy</code> and <code>saidTo</code> are already right.",
-            "side": "left",
-            "advanceWhen": {
-                "field": "messages.4.order",
-                "window": "#file-window-0",
-                "is": 4
-            }
+            "description": "<code>messages.4</code> is A talking to B again, so <code>saidBy</code> and <code>saidTo</code> are already right.<br><br>Drill into <code>messages.4</code>.",
+            "side": "left"
         },
         {
             "element": "#file-window-2",
             "title": "How it ends",
-            "description": "Drill into <code>messages.4</code> and put <code>Ain't no talking you into it?</code> in its block.<br><br>Five messages exist now, and not one of them leads to another. Nothing about the order you made them in tells the game what follows what — that is next.",
+            "description": "Put <code>Ain't no talking you into it?</code> in the block.<br><br>Five messages exist now, and not one of them leads to another. Nothing about the order you made them in tells the game what follows what — that is next.",
             "side": "right",
             "advanceWhen": {
                 "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
@@ -252,7 +249,7 @@
         {
             "element": "#file-window-0",
             "title": "And the rest of the chain",
-            "description": "Three more, the same way: <code>messages.1</code> links to <code>messages.2</code>, <code>2</code> to <code>3</code>, and <code>3</code> to <code>4</code>.<br><br><code>from</code> fills itself in — the editor knows which message you added the link to. Leave <code>messages.4</code> with no links: that is what ends a conversation.<br><br>Check <code>startingMessage</code> at the bottom of the tree while you are here. It is the same list, and it already names <code>messages.0</code> — which is how the game knows where to begin.",
+            "description": "Three more, the same way: <code>messages.1</code> links to <code>messages.2</code>, <code>2</code> to <code>3</code>, and <code>3</code> to <code>4</code>.<br><br><code>from</code> fills itself in — the editor knows which message you added the link to. Leave <code>messages.4</code> with no links: that is what ends a conversation.<br><br>Check <code>startingMessage</code> at the bottom of the tree while you are here. It is the same list, and it already names <code>messages.0</code> — which is how the game knows where to begin.<br><br>Then drill into <code>messages.1</code> and on into its block, so <code>Every night on my cruncher.</code> is the line in the right-hand window.",
             "side": "left",
             "advanceWhen": {
                 "field": "messages.3.links.0.to",
@@ -262,7 +259,7 @@
         {
             "element": "#file-window-2",
             "title": "Back to what B said first",
-            "description": "Drill into <code>messages.1</code> and then into its block, so <code>Every night on my cruncher.</code> is the line in the right-hand window.<br><br>A flat line for a flat citizen. Rather than write a second message for the keen ones, you hang alternatives off this block.",
+            "description": "A flat line for a flat citizen. Rather than write a second message for the keen ones, you hang alternatives off this block.",
             "side": "right",
             "advanceWhen": {
                 "field": "_ENG Localisation_",
@@ -313,9 +310,21 @@
             }
         },
         {
+            "element": "#file-window-0",
+            "title": "Back to the boast",
+            "description": "Drill into <code>messages.3</code> and on into its block, so <code>I hold my own.</code> is the line in the right-hand window.",
+            "side": "left",
+            "advanceWhen": {
+                "field": "_ENG Localisation_",
+                "window": "#file-window-2",
+                "is": "I hold my own."
+            },
+            "autoAdvance": true
+        },
+        {
             "element": "#file-window-2",
             "title": "Do it again for the boast",
-            "description": "Drill into <code>messages.3</code>'s block — <code>I hold my own.</code> — and add two replacements the same way, with the lines <code>I'm unbeatable.</code> and <code>I lose every hand.</code>",
+            "description": "Add two replacements the same way, with the lines <code>I'm unbeatable.</code> and <code>I lose every hand.</code>",
             "side": "right",
             "advanceWhen": {
                 "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
@@ -334,15 +343,22 @@
             }
         },
         {
-            "element": "#file-window-2",
-            "title": "Now the ending",
-            "description": "Drill into <code>messages.4</code> and its block, so <code>Ain't no talking you into it?</code> is in the right-hand window.<br><br>This is the closing line, and it only really works if B has been sour. Next you give A something else to say — not a replacement this time, but a second block.",
-            "side": "right",
+            "element": "#file-window-0",
+            "title": "Back to the last line",
+            "description": "Drill into <code>messages.4</code> and on into its block, so <code>Ain't no talking you into it?</code> is the line in the right-hand window.",
+            "side": "left",
             "advanceWhen": {
                 "field": "_ENG Localisation_",
                 "window": "#file-window-2",
                 "is": "Ain't no talking you into it?"
-            }
+            },
+            "autoAdvance": true
+        },
+        {
+            "element": "#file-window-2",
+            "title": "Now the ending",
+            "description": "This is the closing line, and it only really works if B has been sour. Next you give A something else to say — not a replacement this time, but a second block.",
+            "side": "right"
         },
         {
             "element": "#file-window-1",

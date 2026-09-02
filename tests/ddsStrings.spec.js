@@ -2,12 +2,12 @@ import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, connectFolders, selectContent, readFile, listDir, alerts,
     collectPageErrors, gotoFlow, fieldInput, openDdsDocument,
-} from './support/harness.js';
+} from '../test-support/harness.js';
 import {
     ddsFixtureWithContent, ddsBareFixture, ddsManifestFixture, ddsManifestMissingFileFixture,
     ddsManifestBlocksDeclaredFixture, ddsQuotedStringsFixture,
     FLAT_MOD, TREE_GUID, BLOCK_GUID, BLOCK_TEXT,
-} from './support/fixtures.js';
+} from '../test-support/fixtures.js';
 
 /**
  * A mod's strings CSV, edited as the list of strings it is.
@@ -26,7 +26,14 @@ const ROOMS_CSV = 'Mods/TestMod/Content/DDSContent/Strings/English/names.rooms.c
 const section = (page, id) => page.locator(`.file-panel-category[data-category="${id}"]`);
 
 /** The editable rows, headers excluded -- those are not strings and are not listed. */
-const rows = (page) => page.locator('#strings-window tbody tr');
+const rows = (page) => page.locator('#strings-window tbody.strings-rows tr');
+
+/** The base game's rows, listed under the mod's own and never edited here. */
+const vanillaRows = (page) => page.locator('#strings-window .strings-vanilla-row');
+const vanillaHeading = (page) => page.locator('#strings-window .strings-vanilla-heading');
+
+const showVanilla = (page) =>
+    page.locator('#strings-window').getByRole('button', { name: /vanilla/ }).click();
 const row = (page, index) => rows(page).nth(index);
 const keyBox = (page, index) => row(page, index).getByLabel('Key');
 const textBox = (page, index) => row(page, index).getByLabel('Text');
@@ -259,6 +266,69 @@ test('nothing is flagged about a key that is not a GUID', async ({ page }) => {
 
     await expect(row(page, 0).locator('.strings-issue')).toBeHidden();
     await expect(keyBox(page, 0)).not.toHaveAttribute('aria-invalid');
+});
+
+test('the base game\'s rows can be read under the mod\'s own', async ({ page }) => {
+    const errors = collectPageErrors(page);
+    await openMod(page);
+    await openStrings(page, 'dds.blocks');
+
+    // Off until asked for: what an author opens this file to do is edit their own rows.
+    await expect(vanillaRows(page)).toHaveCount(0);
+
+    await showVanilla(page);
+
+    await expect(vanillaHeading(page)).toHaveText('Base game — 1 string, read only.');
+    expect(await vanillaRows(page).first().locator('td').allInnerTexts())
+        // The key, the text, and the cell the mod's rows keep their remove button in.
+        .toEqual([BLOCK_GUID, BLOCK_TEXT, '']);
+
+    // Under the mod's rows, which are still the only ones that can be typed in.
+    const modded = await row(page, 1).boundingBox();
+    const vanilla = await vanillaRows(page).first().boundingBox();
+    expect(vanilla.y).toBeGreaterThan(modded.y);
+
+    expect(await listed(page)).toEqual([
+        ['cccccccc-3333-4333-8333-333333333333', 'Text for the mod block'],
+        ['dddddddd-4444-4444-8444-444444444444', 'A replacement string'],
+    ]);
+
+    // Read only: no box to type in and no button to drop the row.
+    await expect(vanillaRows(page).locator('input')).toHaveCount(0);
+    await expect(vanillaRows(page).locator('button')).toHaveCount(0);
+
+    await page.locator('#strings-window').getByRole('button', { name: 'Hide vanilla' }).click();
+    await expect(vanillaRows(page)).toHaveCount(0);
+    await expect(vanillaHeading(page)).toHaveCount(0);
+
+    expect(errors).toEqual([]);
+});
+
+test('a file the base game has no counterpart for says so', async ({ page }) => {
+    await openMod(page);
+    await openStrings(page, 'dds.blocks');
+    await showVanilla(page);
+    await expect(vanillaRows(page)).toHaveCount(1);
+
+    // The switch is how these files are read, not something about the one that is open,
+    // so it carries to the next one -- which the base game names nothing in.
+    await openStrings(page, 'names.rooms');
+
+    await expect(vanillaHeading(page))
+        .toHaveText('The base game has no Strings/English/names.rooms.csv.');
+    await expect(vanillaRows(page)).toHaveCount(0);
+});
+
+test('the base game file is found through the manifest, not by where the mod keeps its own', async ({ page }) => {
+    await openMod(page, ddsManifestFixture, FLAT_MOD.mod, FLAT_MOD.content);
+
+    // DDSContent/dds.blocks.csv, which stands in for the game's Strings/English/DDS copy
+    // only because the manifest says that is where the loader reads it from.
+    await openStrings(page, 'dds.blocks');
+    await showVanilla(page);
+
+    await expect(vanillaHeading(page)).toHaveText('Base game — 1 string, read only.');
+    await expect(vanillaRows(page).first()).toContainText(BLOCK_TEXT);
 });
 
 test('opening a strings file leaves the drill-down alone', async ({ page }) => {

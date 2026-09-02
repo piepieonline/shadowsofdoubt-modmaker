@@ -13,8 +13,10 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:playwright": "playwright test",
+    "test:e2e": "playwright test -c playwright.e2e.config.js",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
+    "demo": "TUTORIAL_DEMO=1000 playwright test -c playwright.e2e.config.js --headed --workers=1",
     "report": "playwright show-report"
   },
   "devDependencies": {

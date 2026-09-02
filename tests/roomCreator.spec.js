@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 import {
     installFsHarness, collectPageErrors, gotoFlow, seedFs, connectFolders, selectContent,
     listDir, readFile,
-} from './support/harness.js';
-import { soFixture } from './support/fixtures.js';
+} from '../test-support/harness.js';
+import { soFixture } from '../test-support/fixtures.js';
 
 /**
  * The room creator pane, driven through the browser.
@@ -39,15 +39,17 @@ async function openPane(page) {
 
 
 /**
- * Open one of the dialog's sections.
+ * Show one of the dialog's steps, by the label in the rail.
  *
- * The `<details>` keep their state while the modal is merely hidden, so a plain click on
- * the summary closes one that a previous step left open. Set the attribute instead.
+ * Pressed through the DOM rather than with a click at a point. The rail button carries the
+ * step's label and, under it, whatever the pane last worked out about that step -- so a
+ * `getByText` would match the hint as readily as the label, and the hint is a count that
+ * changes as these tests type into the room.
  */
 const openSection = (page, label) => page.evaluate((text) => {
-    const summary = [...document.querySelectorAll('#room-creator-modal summary')]
-        .find((node) => node.textContent.trim() === text);
-    summary?.parentElement?.setAttribute('open', '');
+    const step = [...document.querySelectorAll('#room-creator-modal .creator-step')]
+        .find((node) => node.querySelector('.creator-step-label')?.textContent === text);
+    step?.click();
 }, label);
 
 test.beforeEach(async ({ page }) => {
@@ -64,33 +66,138 @@ test('opens from the flow bar with no folder connected, and counts the whole cat
     expect(errors).toEqual([]);
 });
 
+/*
+ * The rail: one step showing, the rest a click or a Next away.
+ *
+ * The panes carry `hidden` rather than a class, which takes the one that is not showing out
+ * of the tab order as well as off the screen. That matters more here than it looks: between
+ * them these four hold most of the controls in the dialog, and tabbing into a step nobody
+ * can see is worse than the long column this replaced.
+ */
+test('shows one step at a time, and walks through them from the footer', async ({ page }) => {
+    await openPane(page);
+
+    const pane = (step) => page.locator(`#room-creator-modal .creator-pane[data-step="${step}"]`);
+    const back = page.locator('#room-creator-modal .creator-back');
+    const next = page.locator('#room-creator-modal .creator-next');
+
+    await expect(pane('identity')).toBeVisible();
+    await expect(pane('write')).toBeHidden();
+    await expect(back).toBeDisabled();
+
+    await next.click();
+    await expect(pane('where')).toBeVisible();
+    await expect(pane('identity')).toBeHidden();
+    await expect(back).toBeEnabled();
+
+    // Straight to the last one, where there is nowhere further to go.
+    await openSection(page, 'What will be written');
+    await expect(pane('write')).toBeVisible();
+    await expect(next).toBeDisabled();
+
+    await back.click();
+    await expect(pane('contents')).toBeVisible();
+});
+
+/*
+ * The rail reports on the room rather than listing its parts.
+ *
+ * The hint under each label is the reason the rail is worth its width -- what has been said
+ * about this room so far, without stepping through it to find out. Drawn from the same
+ * `summarise` and `planRoom` the panes are, so it cannot disagree with them.
+ */
+test('the rail says what each step has come to, and follows the room', async ({ page }) => {
+    await openPane(page);
+
+    const hint = (step) => page.locator(
+        `#room-creator-modal .creator-step:nth-child(${step}) .creator-step-hint`);
+
+    await expect(hint(1)).toHaveText('not named yet');
+    await expect(hint(2)).toHaveText('nothing set');
+    await expect(hint(3)).toHaveText('0 clusters');
+
+    await page.locator('#room-creator-name').fill('PicnicArea');
+    await expect(hint(1)).toHaveText('PicnicArea');
+
+    await openSection(page, 'Where the room sits');
+    await page.locator('#room-creator-floor').fill('3');
+    await expect(hint(2)).toHaveText('1 of 7 stated');
+
+    // The footer carries the note for whichever step is showing, so what the author is
+    // being told sits beside the button that acts on it.
+    await expect(page.locator('#room-creator-modal .creator-foot-note'))
+        .toContainText('left open rather than guessed');
+});
+
+/*
+ * What is ticked, gathered.
+ *
+ * The picker beside these lists what the gates allow, capped at forty rows and sorted with
+ * the refused ones last, so a cluster ticked before a floor was stated can be off the
+ * bottom of it -- and then the pane showing the room could not say what is in it.
+ */
+test('gathers the admitted clusters as chips, which take them back out', async ({ page }) => {
+    await openPane(page);
+    await openSection(page, 'What goes in it');
+
+    const chosen = page.locator('#room-creator-chosen');
+    await expect(chosen).toContainText('Nothing yet');
+
+    await page.locator('#room-creator-search').fill('PicnicTable');
+    await page.locator('#room-creator-clusters > li').first()
+        .locator('> label input[type="checkbox"]').check();
+
+    await expect(chosen).toContainText('In this room · 1 cluster');
+    await expect(chosen.locator('.room-creator-chip')).toHaveText('PicnicTable✕');
+
+    // And the chip is the way back out, which is what a list of names could not be.
+    await chosen.locator('.room-creator-chip').click();
+    await expect(chosen).toContainText('Nothing yet');
+    await expect(page.locator('#room-creator-clusters > li').first()
+        .locator('> label input[type="checkbox"]')).not.toBeChecked();
+});
+
+/*
+ * What the gates did is read beside the gates, not beside the name.
+ *
+ * The two sit on different steps now, and deliberately: the headline count answers "what
+ * did copying that room get me", which is the identity step's question, and what a gate
+ * refused answers a keystroke in the field next to it. Both are drawn from one `summarise`,
+ * so these are two views of the same read rather than two reads.
+ */
 test('says which gates were left open rather than guessing them', async ({ page }) => {
     await openPane(page);
 
-    const verdict = page.locator('#room-creator-verdict');
-    await expect(verdict).toContainText('Nothing has been said about');
-    await expect(verdict).toContainText('left open rather than guessed');
+    await openSection(page, 'Where the room sits');
+
+    const gates = page.locator('#room-creator-gates');
+    await expect(gates).toContainText('Nothing has been said about');
+    await expect(gates).toContainText('left open rather than guessed');
 });
 
 test('narrows the list as the room is placed, and names the gate that refused', async ({ page }) => {
     await openPane(page);
 
-    await page.getByText('Where the room sits').click();
+    await openSection(page, 'Where the room sits');
     await page.locator('#room-creator-floor').fill('3');
 
-    const verdict = page.locator('#room-creator-verdict');
-    await expect(verdict).toContainText('refused, by 1 gate');
-    await expect(verdict).toContainText('142 refused');
+    const gates = page.locator('#room-creator-gates');
+    await expect(gates).toContainText('refused, by 1 gate');
+    await expect(gates).toContainText('142 refused');
+
+    // The bars beside the fields move with them. This is the reading the gates step exists
+    // for -- a sentence one step back cannot be watched while a floor is typed.
+    await expect(page.locator('#room-creator-reach')).toContainText('257 / 399');
 
     // One worked reason per gate, not 142 near-identical sentences. Which cluster stands
     // as the example is alphabetical rather than chosen, so this asserts the sentence
     // rather than the name -- what a gate's reason reads like is the thing worth pinning.
-    await verdict.getByText('refused, by 1 gate').click();
-    await expect(verdict).toContainText('It is limited to floor 0, and this room is on 3.');
-    await expect(verdict).toContainText('and 141 more');
+    await gates.getByText('refused, by 1 gate').click();
+    await expect(gates).toContainText('It is limited to floor 0, and this room is on 3.');
+    await expect(gates).toContainText('and 141 more');
 
     // And the floor is no longer among the gates it says nothing about.
-    await expect(verdict).not.toContainText('Nothing has been said about floor');
+    await expect(gates).not.toContainText('Nothing has been said about floor');
 });
 
 test('warns that a donor no lighting preset names leaves the room dark', async ({ page }) => {
@@ -104,16 +211,18 @@ test('warns that a donor no lighting preset names leaves the room dark', async (
     const ticked = () => page.evaluate(() =>
         [...document.querySelectorAll('#room-creator-lights input')].filter((box) => box.checked).length);
 
-    await page.getByText('What goes in it').click();
+    await openSection(page, 'What goes in it');
     expect(await ticked()).toBe(0);
 
     // A lit donor brings its own lights with it, ticked. Nothing lights a brand new
     // configuration, so an empty list is never the useful default.
+    await openSection(page, 'Identity');
     await page.locator('#room-creator-donor').selectOption('Atrium');
     await expect(page.locator('#room-creator-verdict')).not.toContainText('gets no ceiling light');
     expect(await ticked()).toBe(7);
 
     // And they can be taken off again, which is what a note listing them could not do.
+    await openSection(page, 'What goes in it');
     await page.locator('#room-creator-lights').getByText('AtriumLight').click();
     expect(await ticked()).toBe(6);
 });
@@ -134,7 +243,6 @@ test('copies the donor’s furniture in one press, and says how much it took', a
     await expect(button).toHaveText('Copy 10 clusters');
     await expect(button).toHaveAttribute('title', 'Tick the 10 furniture clusters CorporateCorridoor holds');
 
-    await openSection(page, 'What goes in it');
     const ticked = () => page.evaluate(() => document.querySelectorAll(
         '#room-creator-clusters > li > label input[type="checkbox"]:checked').length);
     expect(await ticked()).toBe(0);
@@ -145,6 +253,7 @@ test('copies the donor’s furniture in one press, and says how much it took', a
         .toContainText('Copied 10 of CorporateCorridoor’s furniture clusters');
 
     // The copied ones sort to the top, with the furniture each brought.
+    await openSection(page, 'What goes in it');
     const row = page.locator('#room-creator-clusters > li').first();
     await expect(row).toContainText('AlarmSiren');
     await expect(row.locator('.room-creator-contents input[type="checkbox"]')).not.toHaveCount(0);
@@ -161,7 +270,8 @@ test('a copy is a one-off, so what it ticked survives the donor moving', async (
     await page.locator('#room-creator-donor').selectOption('CorporateCorridoor');
     await page.locator('#room-creator-copy-furniture').click();
 
-    await openSection(page, 'What goes in it');
+    // Counted through the DOM rather than by looking, so the donor and the copy button --
+    // which are on the identity step -- stay pressable throughout.
     const ticked = () => page.evaluate(() => document.querySelectorAll(
         '#room-creator-clusters > li > label input[type="checkbox"]:checked').length);
     expect(await ticked()).toBe(10);
@@ -198,10 +308,10 @@ test('a donor no cluster names disables the copy, and says why rather than doing
 test('furniture the room’s place refuses is copied as a clone, and can be taken back out', async ({ page }) => {
     await openPane(page);
 
-    await page.getByText('Where the room sits').click();
-    await page.locator('#room-creator-floor').fill('3');
     await page.locator('#room-creator-donor').selectOption('StreetFrontage');
-    await openSection(page, 'What goes in it');
+    await openSection(page, 'Where the room sits');
+    await page.locator('#room-creator-floor').fill('3');
+    await openSection(page, 'Identity');
 
     // 14 of StreetFrontage's 19 are refused three floors up. They come across anyway --
     // a copy minus what this floor rules out would quietly not be a copy -- each as a
@@ -210,6 +320,7 @@ test('furniture the room’s place refuses is copied as a clone, and can be take
     await expect(page.locator('#room-creator-copied'))
         .toContainText('Copied 19 of StreetFrontage’s furniture clusters, 14 of which are refused');
 
+    await openSection(page, 'What goes in it');
     await page.locator('#room-creator-search').fill('2_ShantyShack');
     const row = page.locator('#room-creator-clusters > li').first();
 
@@ -250,13 +361,16 @@ async function openPaneWithMod(page) {
 async function fillPicnicArea(page, { floor = '0' } = {}) {
     await page.locator('#room-creator-name').fill('PicnicArea');
     await page.locator('#room-creator-donor').selectOption('Atrium');
-    await page.getByText('Where the room sits').click();
+    await openSection(page, 'Where the room sits');
     await page.locator('#room-creator-floor').fill(floor);
 
-    await page.getByText('What goes in it').click();
+    await openSection(page, 'What goes in it');
     await page.locator('#room-creator-search').fill('PicnicTable');
     await page.locator('#room-creator-clusters input[type="checkbox"]').first().check();
 
+    // The materials are on the write step: a brand new room class is in no material filter
+    // at all, and leaving all three alone is a perfectly ordinary answer.
+    await openSection(page, 'What will be written');
     await page.locator('#room-creator-surface-walls').selectOption('PlainWall');
     await page.locator('#room-creator-surface-floor').selectOption('WoodenFlooring');
     await page.locator('#room-creator-surface-ceiling').selectOption('PlasterCeiling');
@@ -268,9 +382,9 @@ async function fillPicnicArea(page, { floor = '0' } = {}) {
 test('offers only the clusters the room can take, and says which would be cloned', async ({ page }) => {
     await openPane(page);
 
-    await page.getByText('Where the room sits').click();
+    await openSection(page, 'Where the room sits');
     await page.locator('#room-creator-floor').fill('3');
-    await page.getByText('What goes in it').click();
+    await openSection(page, 'What goes in it');
     await page.locator('#room-creator-search').fill('PicnicTable');
 
     // Refused at floor 3 -- still listed, but not something that can be ticked. Hiding it
@@ -287,14 +401,16 @@ test('offers only the clusters the room can take, and says which would be cloned
         .toHaveText('It is limited to floors -1 to 0, and this room is on 3.');
 
     // On the ground floor it can be ticked, with its closure of one bench.
+    await openSection(page, 'Where the room sits');
     await page.locator('#room-creator-floor').fill('0');
+    await openSection(page, 'What goes in it');
     await expect(row).toContainText('PicnicTable — 1 preset');
     await expect(row.locator('input[type="checkbox"]')).toBeEnabled();
 });
 
 test('admitting a cluster shows its furniture, and lets some of it be left out', async ({ page }) => {
     await openPane(page);
-    await page.getByText('What goes in it').click();
+    await openSection(page, 'What goes in it');
     await page.locator('#room-creator-search').fill('4_LoungeSetSmall_A');
 
     const row = page.locator('#room-creator-clusters > li').first();
@@ -310,11 +426,14 @@ test('admitting a cluster shows its furniture, and lets some of it be left out',
     // marked -- a marker on all nine would say nothing.
     await expect(row).not.toContainText('the only one filling');
 
-    await page.getByText('What will be written').click();
+    await openSection(page, 'What will be written');
     const plan = page.locator('#room-creator-plan');
     await expect(plan).toContainText('LivingRoomRug.sodso_patch.json');
 
-    // Leaving one out drops its patch, and the count on the cluster row says so.
+    // Leaving one out drops its patch, and the count on the cluster row says so. The plan
+    // is read after stepping back to the list, which is where the unticking happens -- it
+    // is redrawn on every change whichever step is showing.
+    await openSection(page, 'What goes in it');
     await row.locator('.room-creator-contents input[type="checkbox"]').first().uncheck();
     await expect(row).toContainText(`${count - 1} of ${count}`);
     await expect(plan).not.toContainText('70sSofa.sodso_patch.json');
@@ -322,7 +441,7 @@ test('admitting a cluster shows its furniture, and lets some of it be left out',
 
 test('warns when the furniture left out would abandon the cluster', async ({ page }) => {
     await openPane(page);
-    await page.getByText('What goes in it').click();
+    await openSection(page, 'What goes in it');
     await page.locator('#room-creator-search').fill('PicnicTable');
 
     const row = page.locator('#room-creator-clusters > li').first();
@@ -335,14 +454,14 @@ test('warns when the furniture left out would abandon the cluster', async ({ pag
     await expect(row).toContainText('Nothing admitted fills 1x1PicnicBench');
     await expect(row).toContainText('abandoned whole');
 
-    await page.getByText('What will be written').click();
+    await openSection(page, 'What will be written');
     await expect(page.locator('#room-creator-plan'))
         .toContainText('Admit one of PicnicBench');
 });
 
 test('a material filter that would also bring its furniture is shown, and cannot be picked', async ({ page }) => {
     await openPane(page);
-    await page.getByText('What goes in it').click();
+    await openSection(page, 'What will be written');
 
     const option = page.locator('#room-creator-surface-walls option', { hasText: 'CorporateLobby' });
     await expect(option).toHaveAttribute('disabled', '');
@@ -353,7 +472,7 @@ test('lists the files before writing them, and will not write without a mod', as
     await openPane(page);
     await fillPicnicArea(page);
 
-    await page.getByText('What will be written').click();
+    await openSection(page, 'What will be written');
     const plan = page.locator('#room-creator-plan');
 
     await expect(plan).toContainText('16 new files, plus the manifest');
@@ -370,7 +489,7 @@ test('names what would leave the room empty, without refusing to write it', asyn
 
     await page.locator('#room-creator-name').fill('Bare');
     await page.locator('#room-creator-donor').selectOption('Ballroom');
-    await page.getByText('What will be written').click();
+    await openSection(page, 'What will be written');
 
     const plan = page.locator('#room-creator-plan');
     await expect(plan).toContainText('Nothing furnishes this room, so it will be empty.');
@@ -385,7 +504,7 @@ test('writes the room into the mod, in dependency order', async ({ page }) => {
     await openPaneWithMod(page);
     await fillPicnicArea(page);
 
-    await page.getByText('What will be written').click();
+    await openSection(page, 'What will be written');
     await page.locator('#room-creator-write').click();
     await expect(page.locator('#room-creator-plan')).toContainText('16 files written');
 
@@ -524,6 +643,7 @@ test('a room with a shared-name cluster reopens, and unticking it takes both fil
     // the name changes nothing about what comes back.
     await page.locator('#room-creator-modal button[rel="prev"]').click();
     await page.getByRole('link', { name: 'Room Creator' }).click();
+    await openSection(page, 'Identity');
     await page.locator('#room-creator-open').selectOption('CorridorRC');
     await expect(page.locator('#room-creator-write')).toContainText('Save Corridor');
 
@@ -566,13 +686,14 @@ test('a copied cluster that can never resolve furniture is named before it is wr
 test('adds a second room to a patch the first already wrote', async ({ page }) => {
     await openPaneWithMod(page);
     await fillPicnicArea(page);
-    await page.getByText('What will be written').click();
+    await openSection(page, 'What will be written');
     await page.locator('#room-creator-write').click();
     await expect(page.locator('#room-creator-plan')).toContainText('16 files written');
 
     // A second room admitting the same cluster wants the same patch files. Replacing them
     // would silently un-admit the first room's furniture.
     // One cluster, one closure preset, three surfaces and seven lights are all shared.
+    await openSection(page, 'Identity');
     await page.locator('#room-creator-name').fill('PicnicAreaTwo');
     await expect(page.locator('#room-creator-plan')).toContainText('added to');
     await expect(page.locator('#room-creator-write')).toContainText('add to 12');
@@ -596,11 +717,12 @@ test('adds a second room to a patch the first already wrote', async ({ page }) =
 test('will not overwrite another room’s assets, and says which name to change', async ({ page }) => {
     await openPaneWithMod(page);
     await fillPicnicArea(page);
-    await page.getByText('What will be written').click();
+    await openSection(page, 'What will be written');
     await page.locator('#room-creator-write').click();
     await expect(page.locator('#room-creator-plan')).toContainText('16 files written');
 
     // The same name again: the four assets are that room's identity, not a shared list.
+    await openSection(page, 'Identity');
     await page.locator('#room-creator-name').fill('PicnicAreaX');
     await page.locator('#room-creator-name').fill('PicnicArea');
 
@@ -612,7 +734,7 @@ test('will not overwrite another room’s assets, and says which name to change'
 test('a written room reads back as already here, and its patches carry one entry each', async ({ page }) => {
     await openPaneWithMod(page);
     await fillPicnicArea(page);
-    await page.getByText('What will be written').click();
+    await openSection(page, 'What will be written');
     await page.locator('#room-creator-write').click();
     await expect(page.locator('#room-creator-plan')).toContainText('16 files written');
 
@@ -627,13 +749,14 @@ test('a written room reads back as already here, and its patches carry one entry
 test('finds a room it wrote, and loads its choices back', async ({ page }) => {
     await openPaneWithMod(page);
     await fillPicnicArea(page);
-    await page.getByText('What will be written').click();
+    await openSection(page, 'What will be written');
     await page.locator('#room-creator-write').click();
     await expect(page.locator('#room-creator-plan')).toContainText('16 files written');
 
     // Reopen the pane so the folder is scanned again.
     await page.locator('#room-creator-modal button[rel="prev"]').click();
     await page.getByRole('link', { name: 'Room Creator' }).click();
+    await openSection(page, 'Identity');
 
     const picker = page.locator('#room-creator-open');
     await expect(picker).toContainText('1 room in this mod');
@@ -670,6 +793,7 @@ test('reopening a room, changing its furniture and saving updates it in place', 
     // Reopen it, and the button offers to save rather than to write a second room.
     await page.locator('#room-creator-modal button[rel="prev"]').click();
     await page.getByRole('link', { name: 'Room Creator' }).click();
+    await openSection(page, 'Identity');
     await page.locator('#room-creator-open').selectOption('DenRC');
     await expect(page.locator('#room-creator-write')).toContainText('Save Den');
 
@@ -704,6 +828,7 @@ test('taking a room back out of a patch leaves another room’s changes alone', 
     await expect(page.locator('#room-creator-plan')).toContainText('files written');
 
     // A second room admitting the same bench, so the patch carries two entries.
+    await openSection(page, 'Identity');
     await page.locator('#room-creator-name').fill('PicnicAreaTwo');
     await page.locator('#room-creator-write').click();
     await expect(page.locator('#room-creator-plan')).toContainText('added to');
@@ -711,6 +836,7 @@ test('taking a room back out of a patch leaves another room’s changes alone', 
     // Reopen the first and drop the bench.
     await page.locator('#room-creator-modal button[rel="prev"]').click();
     await page.getByRole('link', { name: 'Room Creator' }).click();
+    await openSection(page, 'Identity');
     await page.locator('#room-creator-open').selectOption('PicnicAreaRC');
 
     await openSection(page, 'What goes in it');
@@ -810,7 +936,7 @@ test('closes, and reopens holding what was typed', async ({ page }) => {
     await openPane(page);
 
     await page.locator('#room-creator-name').fill('PicnicArea');
-    await page.getByText('Where the room sits').click();
+    await openSection(page, 'Where the room sits');
     await page.locator('#room-creator-floor').fill('3');
 
     await page.locator('#room-creator-modal button[rel="prev"]').click();
@@ -819,6 +945,7 @@ test('closes, and reopens holding what was typed', async ({ page }) => {
     await page.getByRole('link', { name: 'Room Creator' }).click();
     await expectDialogOpen(page, '#room-creator-modal', true);
 
+    // And on the step it was left on, holding what was typed into it.
     await expect(page.locator('#room-creator-name')).toHaveValue('PicnicArea');
-    await expect(page.locator('#room-creator-verdict')).toContainText('refused, by 1 gate');
+    await expect(page.locator('#room-creator-gates')).toContainText('refused, by 1 gate');
 });

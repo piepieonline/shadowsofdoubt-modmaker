@@ -104,15 +104,369 @@ ul li {
     color: var(--pico-muted-color);
 }
 
+/* ========================================================================== */
+/* The creator modals' chrome                                                 */
+/* ========================================================================== */
+
+/*
+ * The room and furniture creators share one shape: a rail of steps, one step's worth of
+ * pane, and a footer carrying the note for what is being read and the button that writes.
+ *
+ * They used to be tall columns of `<details>` -- a dozen controls, three lists and a file
+ * plan, stacked -- and the two things worth reading, what does this admit and what is about
+ * to be written, were the two furthest from the top. Opening a section pushed the rest
+ * down, so the pane never held still. Everything below turns that column on its side: the
+ * dialog is as wide and as tall as the window sensibly allows, nothing inside it scrolls
+ * except the one column that has to, and which step is showing is stated in the rail rather
+ * than inferred from where the scrollbar happens to be.
+ *
+ * Sized against the viewport rather than fixed. The design this follows is drawn at
+ * 1180x640, which is the size to aim at and not a size to insist on -- a laptop at 1280x720
+ * has room for it, and anything smaller should get the same layout smaller rather than a
+ * dialog with its footer off the bottom of the screen.
+ *
+ * 1180x640 was also a ceiling, and on a large monitor that is most of the screen left empty
+ * beside a dialog holding a 399-row list and a canvas. So the design size is a floor now and
+ * the dialog takes four fifths of the window past it: `max(1180px, 80vw)` is 1180 until the
+ * window is about 1475 wide and 80vw after, and the same for the height at 800. The outer
+ * `min` is what stops a small window: below the design size the old caps bind again, and
+ * nothing about a 1280x720 laptop changes.
+ */
+.creator-modal > article {
+    width: 100%;
+    max-width: min(96vw, max(1180px, 80vw));
+
+    /* A height rather than a ceiling. Pico centres a dialog, so a box that shrank to its
+       contents would sit somewhere different on every step -- the rail and the footer would
+       move under the pointer as the author read down them, which is the jumping this
+       redesign is meant to stop. */
+    height: min(88vh, max(640px, 80vh));
+    display: flex;
+    flex-direction: column;
+
+    /* The three bands own their own padding. Pico's belongs to a dialog holding prose,
+       and here it would inset the rail and the footer away from the edges they are. */
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.creator-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0.45rem 0.6rem 0.45rem 0.9rem;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+    background: var(--pico-card-sectioning-background-color);
+}
+
+.creator-head h5 {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* What is open, beside what the modal is: the preset being read, or the room being
+   written. Quiet -- it is a reminder rather than a heading. */
+.creator-subtitle {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.78rem;
+    color: var(--pico-muted-color);
+}
+
+.creator-head button[rel="prev"] {
+    flex: none;
+    margin: 0;
+}
+
+.creator-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+}
+
+/*
+ * The rail. Every step at once, with the one being read marked and the rest a click away:
+ * the whole shape of the job, which a stack of collapsed disclosures never showed.
+ */
+.creator-rail {
+    flex: none;
+    width: 13rem;
+    display: flex;
+    flex-direction: column;
+
+    /* Stated, because this is a `nav` and Pico gives every one of those
+       `justify-content: space-between` -- which put the whole of the rail's spare height
+       between the heading and the first step. */
+    justify-content: flex-start;
+    gap: 0.1rem;
+    padding: 0.6rem 0.5rem;
+    border-right: 1px solid var(--pico-muted-border-color);
+    background: var(--pico-card-sectioning-background-color);
+    overflow-y: auto;
+}
+
+.creator-rail-heading,
+.creator-card-title {
+    margin: 0 0 0.35rem;
+    padding: 0 0.4rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--pico-muted-color);
+}
+
+.creator-card-title {
+    padding: 0;
+}
+
+.creator-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+/* What is true of the whole job rather than of one step, under the rail where it is read
+   last. Gone rather than an empty bordered strip when there is nothing to say. */
+.creator-rail-note {
+    margin: auto 0 0;
+    padding: 0.55rem 0.4rem 0;
+    border-top: 1px solid var(--pico-muted-border-color);
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: var(--pico-muted-color);
+}
+
+.creator-rail-note:empty {
+    display: none;
+}
+
+/*
+ * One step. The label and, under it, whatever the flow last worked out about it -- nine
+ * sub-objects, three files, not read yet. The hint is the reason the rail is worth its
+ * width: it turns a table of contents into a report on the room being built.
+ */
+.creator-step {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 0.45rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.3rem 0.45rem;
+    text-align: left;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--pico-border-radius);
+    color: var(--pico-muted-color);
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+/*
+ * Answering the pointer, quietly. The same fill the current step carries, without its
+ * border or its dot -- the loud secondary this used to be read as a second selection, on a
+ * rail where exactly one thing is selected.
+ *
+ * A step darker than muted rather than --pico-color: this is marked up as a button, and
+ * Pico sets --pico-color to --pico-primary-inverse on every one of those. Same trap as the
+ * funnel's summary in core/chrome.css.
+ */
+.creator-step:is(:hover, :focus-visible) {
+    background: var(--pico-card-background-color);
+    color: var(--pico-secondary-hover);
+}
+
+.creator-step[aria-current="step"] {
+    background: var(--pico-card-background-color);
+    border-color: var(--pico-muted-border-color);
+    color: var(--pico-secondary-hover);
+}
+
+/* Ahead, here, or behind -- the one thing the rail says that the labels do not. */
+.creator-step-dot {
+    align-self: center;
+    width: 6px;
+    height: 6px;
+    border-radius: 1px;
+    background: var(--pico-muted-border-color);
+}
+
+.creator-step-dot[data-at="here"] {
+    background: var(--pico-primary);
+}
+
+.creator-step-dot[data-at="behind"] {
+    background: var(--pico-secondary);
+}
+
+.creator-step-label {
+    font-weight: 500;
+}
+
+.creator-step-hint {
+    grid-column: 2;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    color: var(--pico-muted-color);
+}
+
+/*
+ * The panes. One is showing and the rest carry `hidden`, which takes them out of the tab
+ * order as well as off the screen -- the panes hold most of the controls in the dialog, and
+ * tabbing into a step nobody can see is worse than a long column ever was.
+ */
+.creator-panes {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+}
+
+.creator-pane {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0.7rem 0.8rem;
+    overflow: hidden;
+}
+
+/* Pico gives `[hidden]` no display rule of its own and `.creator-pane` sets flex, which
+   outweighs the browser default. Without this every step would be showing at once. */
+.creator-pane[hidden] {
+    display: none;
+}
+
+/*
+ * A column within a pane. Only these scroll: the dialog itself never does, so the rail and
+ * the footer stay put while a list of 399 clusters is read.
+ */
+.creator-col {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    overflow-y: auto;
+}
+
+/* The half carrying the list or the diagram, rather than the half describing it. */
+.creator-col-wide {
+    flex: 2 1 0;
+}
+
+/* Two columns inside one, where a step wants its controls full width and the readings
+   about them side by side underneath. */
+.creator-row {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 0.6rem;
+}
+
+.creator-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-sectioning-background-color);
+}
+
+/* The one card in a column that should take the room left over -- the list, rather than
+   the note about it. */
+.creator-card-fill {
+    flex: 1;
+}
+
+.creator-card > :last-child {
+    margin-bottom: 0;
+}
+
+.creator-scroll {
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/*
+ * The gates. Four across while there is room, because every one of them is a word and a
+ * small control and stacking them made the step that is least often answered the tallest
+ * one in the dialog.
+ */
+.creator-fields {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0 0.5rem;
+}
+
+.creator-field-wide {
+    grid-column: span 2;
+}
+
+@media (max-width: 62rem) {
+    .creator-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/*
+ * The footer. The note is the current step's, so what the author is being told sits beside
+ * the button that acts on it -- and the write button is reachable from every step rather
+ * than from the bottom of the last one.
+ */
+.creator-foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.5rem 0.9rem;
+    border-top: 1px solid var(--pico-muted-border-color);
+    background: var(--pico-card-sectioning-background-color);
+}
+
+.creator-foot-note {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--pico-muted-color);
+}
+
+.creator-foot button {
+    flex: none;
+    width: auto;
+    margin: 0;
+    font-size: 0.82rem;
+    --pico-form-element-spacing-vertical: 0.35rem;
+    --pico-form-element-spacing-horizontal: 0.75rem;
+}
+
+/*
+ * The captions, which carry most of the explanation in both dialogs.
+ *
+ * Classless ones only. The notes these panes draw are `<small>` too and colour themselves
+ * -- a warning is red because it says the room will build cleanly and do nothing -- and a
+ * rule matching every `small` in the dialog would outweigh the class that does that.
+ */
+.creator-modal small:not([class]) {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--pico-muted-color);
+}
+
 /*
  * The room creator packs a dozen controls, three lists and a file plan into one dialog,
  * and Pico's form sizing is built for a page rather than for that. Everything here pulls
  * the controls in so the verdict -- which is the reason the pane exists -- is on screen at
  * the same time as the things that change it.
  */
-#room-creator-modal article {
-    max-width: 46rem;
-}
 
 /*
  * 0.5rem rather than tighter: Pico draws a focus ring outside the border box, and at
@@ -145,31 +499,18 @@ ul li {
     font-size: 0.85rem;
 }
 
-/* The captions under each control carry most of the explanation, so they stay readable
-   while the controls shrink -- but they should not add a blank line each. */
-#room-creator-modal > article > small,
-#room-creator-modal form > small,
-#room-creator-modal details > small {
-    display: block;
-    margin-bottom: 0.6rem;
-    color: var(--pico-muted-color);
-}
-
 #room-creator-modal .grid {
     gap: 0.5rem;
 }
 
-#room-creator-modal details {
-    margin-bottom: 0.6rem;
-}
-
 /*
- * The verdict. It is read while the controls above it are being changed, so it scrolls on
- * its own rather than pushing them off the top of the dialog.
+ * The verdict, and the room read back out of the folder. Both are beside the controls that
+ * change them rather than under, so neither has a height of its own -- the column they sit
+ * in is what scrolls.
  */
-#room-creator-verdict {
-    overflow-y: auto;
-    max-height: 30vh;
+#room-creator-verdict > :last-child,
+#room-creator-reach > :last-child {
+    margin-bottom: 0;
 }
 
 /*
@@ -197,8 +538,80 @@ ul li {
  * notes above would lose the only thing those are there to say, which is that the room
  * will build cleanly and do nothing.
  */
-#room-creator-modal summary {
+#room-creator-gates summary {
+    font-size: 0.85rem;
     color: var(--pico-color);
+}
+
+/*
+ * How far the room reaches, as two bars.
+ *
+ * The same two numbers the headline states in prose, drawn where the gates are typed: a
+ * sentence an inch away on the previous step is not something anyone reads while turning a
+ * floor from blank to 3, and watching the bar move is exactly what that turn is for.
+ */
+.room-creator-bar {
+    margin-bottom: 0.55rem;
+}
+
+.room-creator-bar-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.2rem;
+    font-size: 0.75rem;
+    color: var(--pico-muted-color);
+}
+
+.room-creator-bar-value {
+    color: var(--pico-primary);
+}
+
+.room-creator-bar-track {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--pico-background-color);
+    overflow: hidden;
+}
+
+.room-creator-bar-fill {
+    height: 100%;
+    background: var(--pico-primary);
+}
+
+/*
+ * What is ticked, gathered as chips.
+ *
+ * The picker beside these is capped at what fits and sorted by what the gates say, so a
+ * cluster admitted before the floor was stated can be off the bottom of it. Without this,
+ * "what is actually in this room" is a question the pane showing the room cannot answer.
+ */
+.room-creator-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.room-creator-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    width: auto;
+    margin: 0;
+    padding: 0.15rem 0.4rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-background-color);
+    font-size: 0.72rem;
+    color: var(--pico-secondary-hover);
+}
+
+.room-creator-chip:is(:hover, :focus-visible) {
+    border-color: var(--pico-primary);
+    color: var(--pico-primary);
 }
 
 /*
@@ -248,9 +661,14 @@ ul li {
 .room-creator-picker {
     list-style: none;
     padding-left: 0;
-    margin-bottom: var(--pico-spacing);
+
+    /* Takes the room its card has left rather than a height of its own. In the column
+       this used to be, 14rem was as much as could be spared without pushing the verdict
+       off the screen; on a step of its own the list is the whole point of the step. */
+    flex: 1;
+    min-height: 4rem;
+    margin: 0.35rem 0 0;
     overflow-y: auto;
-    max-height: 14rem;
 }
 
 /* The row itself wraps: the checkbox and its "why not" button share the first line, and
@@ -548,4 +966,482 @@ ul li {
    How wide one is stays here, because this flow's fields fill their row. */
 #trees .select2 {
     width: 90% !important;
+}
+
+/*
+ * The furniture creator.
+ *
+ * Wider than the room creator's dialog, because it has a canvas in it and a canvas in a
+ * 46rem column is a thumbnail. The picker and the view sit side by side: what is being
+ * chosen and what it looks like are read together, and a list above a view puts one of
+ * them off screen at every scroll position.
+ *
+ * Everything else -- the notes, the pickers, the muted captions -- is the room creator's
+ * and is reused by class rather than restated here. The two panes are siblings and should
+ * not drift apart in the way two copies of one rule always do.
+ */
+#furniture-creator-modal input,
+#furniture-creator-modal select {
+    margin-bottom: 0.5rem;
+    height: auto;
+    font-size: 0.85rem;
+    --pico-form-element-spacing-vertical: 0.3rem;
+    --pico-form-element-spacing-horizontal: 0.5rem;
+}
+
+#furniture-creator-modal input[type="checkbox"] {
+    margin-bottom: 0;
+}
+
+#furniture-creator-modal label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--pico-muted-color);
+}
+
+/*
+ * The 3D pane, and the slot it is standing in.
+ *
+ * There is one of these and there can only be one: a WebGL context is not free to make and
+ * browsers cap how many a page may hold, so the view is built once and never disposed.
+ * Three steps want it -- what the model is, what sits on it, what is built into it -- so
+ * the stepper moves this element into whichever of them is showing rather than each pane
+ * owning a view of its own. See placeView in scripts/furnitureCreator.js.
+ */
+.creator-viewport {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.creator-viewport[hidden] {
+    display: none;
+}
+
+.creator-viewport-reset {
+    flex: none;
+    align-self: flex-end;
+    width: auto;
+    margin: 0;
+    font-size: 0.78rem;
+    --pico-form-element-spacing-vertical: 0.25rem;
+    --pico-form-element-spacing-horizontal: 0.6rem;
+}
+
+/*
+ * Where the view stands on the two steps that are not about the model itself. A height of
+ * its own, because on those the list beside it is the subject and the view is the thing
+ * being glanced at -- and because a flex box that only wraps its contents measures zero,
+ * and a renderer asked to fill zero draws one pixel and keeps doing so.
+ */
+.creator-view-slot {
+    flex: none;
+    height: 15rem;
+    display: flex;
+}
+
+/* The canvas's box. Sized from this element, for the reason above. */
+.furniture-creator-view {
+    flex: 1;
+    min-height: 10rem;
+    border-radius: var(--pico-border-radius);
+    overflow: hidden;
+    background: #14161a;
+}
+
+/* A row in the preset list, and in the cluster list. A button rather than a link: it
+   changes what the pane shows rather than going anywhere. */
+.furniture-creator-pick {
+    width: 100%;
+    text-align: left;
+    margin: 0 0 0.15rem;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.85rem;
+    background: none;
+    border: none;
+    color: var(--pico-color);
+}
+
+.furniture-creator-pick:hover {
+    background: var(--pico-secondary-background);
+}
+
+/* What is open. Marked with aria-current rather than a class, so the styling and the
+   thing a screen reader is told cannot disagree. */
+.furniture-creator-pick[aria-current="true"],
+.furniture-creator-subobject[aria-current="true"] {
+    background: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
+    border-radius: var(--pico-border-radius);
+}
+
+/*
+ * A sub-object row: what it is, then where it is, on one line. The position is quieter
+ * than the name -- it is read once the row has been found rather than to find it.
+ */
+.furniture-creator-subobject {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    width: 100%;
+    text-align: left;
+    margin: 0;
+    padding: 0.2rem 0.45rem;
+    font-size: 0.85rem;
+    background: none;
+    border: none;
+    color: var(--pico-color);
+}
+
+.furniture-creator-subobject:hover {
+    background: var(--pico-secondary-background);
+}
+
+.furniture-creator-subobject-where,
+.furniture-creator-subobject-detail {
+    color: var(--pico-muted-color);
+    font-size: 0.78rem;
+}
+
+.furniture-creator-subobject-detail {
+    flex-basis: 100%;
+    padding: 0 0.45rem 0.25rem 1.2rem;
+}
+
+/*
+ * One arrangement, as a plan. Indented under the cluster it belongs to, in the same way
+ * the room creator indents a cluster's contents, because it is a detail of a row rather
+ * than a list of its own.
+ */
+.furniture-creator-plan {
+    flex-basis: 100%;
+    list-style: none;
+    padding-left: 1.25rem;
+    margin: 0.2rem 0 0.5rem;
+    font-size: 0.8rem;
+    color: var(--pico-muted-color);
+}
+
+/* The slots this preset could fill, which is why the author is reading the plan. */
+.furniture-creator-plan-mine {
+    color: var(--pico-color);
+}
+
+/*
+ * The editor for one sub-object. Set apart from the list above it with a rule and a tint,
+ * because it is about one row of that list rather than about all of them -- and six number
+ * fields flowing straight on from a list read as more list.
+ */
+.furniture-creator-editor {
+    margin: 0.35rem 0 0.6rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-sectioning-background-color);
+}
+
+.furniture-creator-editor form {
+    margin: 0.35rem 0 0;
+}
+
+/* The live read-out beside the name: what the numbers say, as they say it, so a drag has
+   somewhere to be read off without watching six fields at once. */
+#furniture-creator-live {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: var(--pico-muted-color);
+    font-size: 0.78rem;
+}
+
+.furniture-creator-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.furniture-creator-buttons button {
+    width: auto;
+    margin: 0;
+    font-size: 0.8rem;
+    --pico-form-element-spacing-vertical: 0.25rem;
+    --pico-form-element-spacing-horizontal: 0.6rem;
+}
+
+/*
+ * The placement diagram.
+ *
+ * A grid of tiles with rules on their edges, which is the shape a FurnitureClass is
+ * actually written in. DOM rather than canvas because the useful part is the words: 17
+ * wall tags and a direction each, which is what a canvas is worst at.
+ */
+.furniture-creator-placement {
+    min-height: 12rem;
+    overflow-y: auto;
+}
+
+.furniture-creator-class-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/*
+ * How big the piece is. One row above the grid rather than a field in the rule editor: it
+ * is what the diagram is drawn from, and it has to be reachable when no rule is marked.
+ */
+.furniture-creator-footprint {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 0 0.6rem;
+    font-size: 0.85rem;
+}
+
+.furniture-creator-footprint label,
+.furniture-creator-footprint span {
+    margin: 0;
+    color: var(--pico-muted-color);
+}
+
+.furniture-creator-footprint input {
+    width: 4.5rem;
+    margin: 0;
+    --pico-form-element-spacing-vertical: 0.25rem;
+    --pico-form-element-spacing-horizontal: 0.4rem;
+}
+
+/* The ways out a block closes. Several at once, so checkboxes rather than one direction. */
+.furniture-creator-block-dirs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.7rem;
+    margin: 0 0 0.4rem;
+    border: none;
+    padding: 0;
+}
+
+.furniture-creator-block-dirs label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin: 0;
+    font-size: 0.78rem;
+}
+
+.furniture-creator-block-dirs input {
+    margin: 0;
+}
+
+.placement-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--placement-columns, 3), 1fr);
+    gap: 2px;
+    margin-bottom: 0.6rem;
+}
+
+/*
+ * A tile. Square, so the diagram is a plan rather than a stretched one -- a rule on the
+ * front edge and a rule on the left edge are the same kind of thing and should be the same
+ * distance from the middle.
+ */
+.placement-tile {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    padding: 0.55rem;
+    border: 1px dashed var(--pico-muted-border-color);
+    border-radius: 2px;
+    font-size: 0.7rem;
+    min-height: 4.5rem;
+}
+
+/* The tiles the piece itself stands on, and the one its rules are measured from. */
+.placement-tile-covered {
+    background: var(--pico-card-sectioning-background-color);
+    border-style: solid;
+}
+
+.placement-tile-anchor {
+    border-color: var(--pico-primary);
+}
+
+/*
+ * A tile the model reaches into and the class does not declare. Hatched rather than filled:
+ * it is not a tile the piece owns, and colouring it like the footprint would say the game
+ * knows about it. The game reads `objectSize` and never the mesh — this is the author's
+ * problem to see, not a rule being broken.
+ */
+.placement-tile-overhang {
+    background: repeating-linear-gradient(
+        45deg,
+        transparent 0 4px,
+        var(--pico-del-color, #b3261e) 4px 5px);
+    border-style: dashed;
+    border-color: var(--pico-del-color, #b3261e);
+}
+
+/* The tile the editor is pointed at, which is where a new rule will land. */
+.placement-tile-selected {
+    outline: 2px solid var(--pico-primary);
+    outline-offset: -2px;
+}
+
+/*
+ * The tile's name, and the keyboard's way of marking it. A button rather than a span, but
+ * stripped back to reading as the label it replaced — the affordance is the whole tile.
+ */
+.placement-tile-label {
+    margin: 0;
+    padding: 0;
+    width: auto;
+    border: none;
+    background: none;
+    color: var(--pico-muted-color);
+    font-size: 0.65rem;
+    line-height: 1.2;
+    --pico-form-element-spacing-vertical: 0;
+    --pico-form-element-spacing-horizontal: 0;
+}
+
+button.placement-tile-label:hover,
+button.placement-tile-label[aria-current="true"] {
+    background: none;
+    color: var(--pico-primary);
+}
+
+/*
+ * The + that puts a rule on this tile. Hidden until the tile is pointed at or marked, so a
+ * grid of 25 tiles is a diagram rather than 25 buttons — but never hidden from the keyboard,
+ * which is what :focus-within is for.
+ */
+.placement-add {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    margin: 0;
+    padding: 0 0.25rem;
+    width: auto;
+    border: none;
+    border-radius: 2px;
+    background: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
+    font-size: 0.7rem;
+    line-height: 1.3;
+    opacity: 0;
+    --pico-form-element-spacing-vertical: 0;
+    --pico-form-element-spacing-horizontal: 0.25rem;
+}
+
+.placement-tile:hover .placement-add,
+.placement-tile:focus-within .placement-add,
+.placement-tile-selected .placement-add,
+.placement-add:focus-visible {
+    opacity: 1;
+}
+
+/* Touch has no hover, so the + would never appear. Always on, at the cost of a busier grid. */
+@media (hover: none) {
+    .placement-add { opacity: 1; }
+}
+
+/*
+ * An edge rule, drawn on the boundary it is about rather than inside the tile. Four
+ * elements rather than borders: an edge carries a rule that has to be clickable, and two
+ * tiles naming the boundary between them are naming one wall from two sides.
+ */
+.placement-edge {
+    position: absolute;
+    margin: 0;
+    padding: 0 0.2rem;
+    width: auto;
+    border: none;
+    border-radius: 2px;
+    font-size: 0.62rem;
+    line-height: 1.25;
+    background: var(--pico-secondary-background);
+    color: var(--pico-secondary-inverse);
+    --pico-form-element-spacing-vertical: 0;
+    --pico-form-element-spacing-horizontal: 0.2rem;
+}
+
+.placement-edge-front { top: -1px; left: 50%; transform: translateX(-50%); }
+.placement-edge-behind { bottom: -1px; left: 50%; transform: translateX(-50%); }
+.placement-edge-left { left: -1px; top: 50%; transform: translateY(-50%); }
+.placement-edge-right { right: -1px; top: 50%; transform: translateY(-50%); }
+
+/* A rule naming a diagonal is about a corner, so it is drawn in the corner it names. */
+.placement-corner {
+    position: absolute;
+    left: var(--corner-x, 0%);
+    top: var(--corner-y, 0%);
+    transform: translate(-50%, -50%);
+    margin: 0;
+    padding: 0 0.2rem;
+    width: auto;
+    border: none;
+    border-radius: 2px;
+    font-size: 0.62rem;
+    --pico-form-element-spacing-vertical: 0;
+    --pico-form-element-spacing-horizontal: 0.2rem;
+}
+
+/* What is already standing on a tile, as opposed to what is on its edges. */
+.placement-node-rule {
+    margin: 0;
+    padding: 0 0.25rem;
+    width: auto;
+    border: none;
+    border-radius: 2px;
+    font-size: 0.62rem;
+    --pico-form-element-spacing-vertical: 0;
+    --pico-form-element-spacing-horizontal: 0.25rem;
+}
+
+/*
+ * The three things a rule can be, coloured apart: something that must be there, something
+ * that must not, and something that is merely preferred. The third never refuses a
+ * placement, so it should not read as loudly as the two that do.
+ */
+.placement-must {
+    background: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
+}
+
+.placement-cant {
+    background: var(--pico-del-color, #b3261e);
+    color: #fff;
+}
+
+.placement-score {
+    background: transparent;
+    color: var(--pico-muted-color);
+    border: 1px dotted var(--pico-muted-border-color);
+}
+
+/* A gate the app cannot check, marked so it does not read as one it checked and passed. */
+.placement-unreadable {
+    outline: 1px dashed var(--pico-muted-color);
+}
+
+/* A way out of the tile this piece closes once it is there. Not a placement rule. */
+.placement-blocked {
+    box-shadow: inset 0 0 0 2px var(--pico-muted-color);
+}
+
+.placement-weight {
+    color: var(--pico-muted-color);
+    font-size: 0.6rem;
+}
+
+.placement-edge[aria-current="true"],
+.placement-corner[aria-current="true"],
+.placement-node-rule[aria-current="true"] {
+    outline: 2px solid var(--pico-primary);
 }

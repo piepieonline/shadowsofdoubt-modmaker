@@ -49,13 +49,14 @@ describe('isInstanceReference', () => {
 });
 
 describe('instanceOptions', () => {
-    const tree = {
-        messages: [
-            { msgID: 'a-document', instanceID: 'instance-one', order: 0 },
-            { msgID: 'a-document', instanceID: 'instance-two', order: 3 },
-            { elementName: 'Heading', instanceID: 'instance-three', order: 1 },
-        ],
-    };
+    /** treeType 2. A page, which is the one kind of tree that draws in `order`. */
+    const pageOf = (messages) => ({ treeType: 2, messages });
+
+    const tree = pageOf([
+        { msgID: 'a-document', instanceID: 'instance-one', order: 0 },
+        { msgID: 'a-document', instanceID: 'instance-two', order: 3 },
+        { elementName: 'Heading', instanceID: 'instance-three', order: 1 },
+    ]);
 
     test('offers each message by where it sits, and stores its instanceID', () => {
         // The same document twice is the case the two IDs exist for: both entries point at
@@ -67,10 +68,24 @@ describe('instanceOptions', () => {
         ]);
     });
 
+    test('names the draw order only where something draws', () => {
+        // A conversation does not read `order`, and the view takes it off the screen -- so
+        // naming it here would put a field back in front of the author, once per entry,
+        // reading `(order 0)` all the way down and telling them nothing.
+        const conversation = { treeType: 0, messages: tree.messages };
+
+        expect(instanceOptions(conversation).map((option) => option.text))
+            .toEqual(['messages.0', 'messages.1', 'messages.2 — Heading']);
+
+        // Nor on a message opened by itself, which has no kind to be a page of.
+        expect(instanceOptions({ messages: tree.messages }).map((option) => option.text))
+            .toEqual(['messages.0', 'messages.1', 'messages.2 — Heading']);
+    });
+
     test('numbers by position in the document, not by position in the list', () => {
         // A message with no instance yet is not offered -- there is nothing to point at --
         // but it still occupies its place, and the ones after it keep their own.
-        const withAGap = { messages: [{ instanceID: 'first', order: 0 }, {}, { instanceID: 'third', order: 2 }] };
+        const withAGap = pageOf([{ instanceID: 'first', order: 0 }, {}, { instanceID: 'third', order: 2 }]);
 
         expect(instanceOptions(withAGap).map((option) => option.text))
             .toEqual(['messages.0 (order 0)', 'messages.2 (order 2)']);

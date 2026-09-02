@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 import {
     installFsHarness, seedFs, connectFolders, selectContent, gotoFlow, alerts, prompts,
-    readFile, listDir,
-} from './support/harness.js';
-import { ddsBareFixture } from './support/fixtures.js';
+    readFile, listDir, reveal,
+} from '../test-support/harness.js';
+import { ddsBareFixture } from '../test-support/fixtures.js';
 
 /**
  * The Wizcards walkthrough, played rather than parsed.
@@ -14,7 +14,7 @@ import { ddsBareFixture } from './support/fixtures.js';
  * nothing said about why. Playing it is the only way to find that out.
  *
  * The static check that each step's shape is one the runner understands lives in
- * tutorials.spec.js, which runs it over every shipped tutorial.
+ * caseTutorial.spec.js, which runs it over every shipped tutorial.
  */
 
 const POPOVER = '.driver-popover';
@@ -29,8 +29,28 @@ const BLOCKS_CSV = 'Mods/BareMod/Content/DDSContent/Strings/English/DDS/dds.bloc
 /** The step on screen now. */
 const heading = (page) => page.locator(`${POPOVER} .driver-popover-title`);
 
-/** Wait for a step by its title, which is how each assertion below names its place. */
+/**
+ * Wait for a step by its title, which is how each assertion below names its place.
+ *
+ * Used where the step before it carries itself -- `autoAdvance` in the tutorial file --
+ * so nothing has to be pressed to arrive. That is most of the tree chapter: a run of
+ * one-field edits where the doing is the whole of the step.
+ */
 const onStep = (page, title) => expect(heading(page)).toHaveText(title);
+
+/**
+ * Take the step just finished, and arrive at the one named.
+ *
+ * For the rest: a step that explains what just happened or asks for several things at
+ * once opens its way forward and waits to be left, so playing it means pressing the
+ * button like a player would. The press is its own wait -- Playwright will not click a
+ * disabled button -- so a step that never opened up fails here, naming the step it
+ * failed on its way to.
+ */
+async function nextStep(page, title) {
+    await page.locator(FORWARD).click();
+    await onStep(page, title);
+}
 
 /**
  * The row at a dotted path inside a document window.
@@ -61,28 +81,50 @@ function rowAt(page, scope, path) {
 const valueAt = (page, scope, path) =>
     rowAt(page, scope, path).locator(':scope > .jsontree_value-wrapper > .jsontree_value');
 
-/** Type into a field and leave it, which is what commits an edit. */
+/**
+ * Type into a field and leave it, which is what commits an edit.
+ *
+ * Each of these brings what it is about to use into view first. That is nothing under an
+ * ordinary run and the whole point under a paced one: the rows these steps are about are
+ * mostly below the fold of a document window, so without it the value changes off screen
+ * and the walkthrough looks like it is doing nothing. See reveal.
+ */
 async function setText(page, scope, path, value) {
     const input = valueAt(page, scope, path).locator(':scope > input');
+    await reveal(input);
     await input.fill(String(value));
     await input.blur();
 }
 
 /** Choose from a field's dropdown. Enums and booleans both store the option's index. */
-const setEnum = (page, scope, path, value) =>
-    valueAt(page, scope, path).locator(':scope > select').selectOption(String(value));
+async function setEnum(page, scope, path, value) {
+    const select = valueAt(page, scope, path).locator(':scope > select');
+    await reveal(select);
+    await select.selectOption(String(value));
+}
 
 /** Open a collapsed node, the way a player does: a click on its label. */
-const expandAt = (page, scope, path) =>
-    rowAt(page, scope, path).locator(':scope > .jsontree_label-wrapper > .jsontree_label').click();
+async function expandAt(page, scope, path) {
+    const label = rowAt(page, scope, path)
+        .locator(':scope > .jsontree_label-wrapper > .jsontree_label');
+    await reveal(label);
+    await label.click();
+}
 
 /** The + on an array. */
-const addTo = (page, scope, path) =>
-    valueAt(page, scope, path).locator(':scope > .array-controls > button[data-action="add"]').click();
+async function addTo(page, scope, path) {
+    const add = valueAt(page, scope, path)
+        .locator(':scope > .array-controls > button[data-action="add"]');
+    await reveal(add);
+    await add.click();
+}
 
 /** The ➥ beside a GUID, which opens the document it names at the level below. */
-const drillInto = (page, scope, path) =>
-    valueAt(page, scope, path).locator(':scope > .open-target').click();
+async function drillInto(page, scope, path) {
+    const open = valueAt(page, scope, path).locator(':scope > .open-target');
+    await reveal(open);
+    await open.click();
+}
 
 /**
  * What a field holds right now, as the editor shows it.
@@ -186,7 +228,9 @@ async function addNames(page, scope, path, names) {
  * stores the term, which for a message means the label where the instanceID should be.
  */
 async function pickName(page, scope, path, name) {
-    await valueAt(page, scope, path).locator('.select2-selection').click();
+    const list = valueAt(page, scope, path).locator('.select2-selection');
+    await reveal(list);
+    await list.click();
     await page.locator('.select2-search__field').fill(name);
     await page.locator(`.select2-results__option:text-is("${name}")`).first().click();
 }
@@ -195,15 +239,19 @@ async function pickName(page, scope, path, name) {
  * Fill a list of enum values the same way, through the dropdown each row carries.
  *
  * A new entry is the first name in the enum, which is what the walkthrough tells the
- * player -- so the ones set here are the four that are not `awake`, and the assertion at
- * the end is that all five landed as the numbers the game reads.
+ * player -- so the ones set here are those that are not `awake`, and the assertion at the
+ * end is that they all landed as the numbers the game reads.
+ *
+ * @param from how many entries the list already holds. A new conversation arrives with
+ *             `awake` and `noReactionState` on A, so the walkthrough asks for three more
+ *             rather than five, and they are set at the end of what is there.
  */
-async function addChoices(page, scope, path, values) {
+async function addChoices(page, scope, path, values, from = 0) {
     for (const _ of values) await addTo(page, scope, path);
 
     await expandAt(page, scope, path);
     for (const [index, value] of values.entries()) {
-        await setEnum(page, scope, `${path}.${index}`, value);
+        await setEnum(page, scope, `${path}.${from + index}`, value);
     }
 }
 
@@ -223,14 +271,22 @@ async function openFrom(page, scope, path, window) {
 }
 
 /**
- * Give a message's block its line.
+ * Open a message from the tree, which cascades into its block on the right.
  *
- * Drilling into the message opens it in the middle window and cascades into its block on
- * the right, which is where the text is typed -- the row is the line looked up from the
- * strings CSV, so typing in it writes the CSV.
+ * Asked for at the end of the step that finished with the tree, rather than at the start
+ * of the one that wants the block: the ➥ is a row of the tree, so the instruction has to
+ * be given while the tree is the window being pointed at.
  */
-async function writeLine(page, index, line) {
-    await openFrom(page, TREE, `messages.${index}.msgID`, MESSAGE);
+const openMessage = (page, index) =>
+    openFrom(page, TREE, `messages.${index}.msgID`, MESSAGE);
+
+/**
+ * Give the open block its line.
+ *
+ * The row is the line looked up from the strings CSV rather than a field of the block, so
+ * typing in it writes the CSV.
+ */
+async function setLine(page, line) {
     await expect(page.locator(BLOCK)).toBeVisible();
     await setText(page, BLOCK, '_ENG Localisation_', line);
 }
@@ -242,17 +298,18 @@ async function writeLine(page, index, line) {
  * `to` is chosen from the messages this tree holds, by where each one sits in it. It was a
  * GUID copied out of the message being linked to and pasted in.
  *
- * The list names a message by where it sits and the order it plays in, which is what the
- * player reads off the screen; the walkthrough gives message N the order N.
+ * The list names a message by where it sits, which is what the player reads off the screen.
+ * On a page it also names the draw order; a conversation has nothing to draw, so it does
+ * not -- see flows/dds/scripts/instances.js.
  */
 async function linkMessages(page, from, to) {
     await addAndOpen(page, TREE, `messages.${from}.links`, 0);
-    await pickName(page, TREE, `messages.${from}.links.0.to`, `messages.${to} (order ${to})`);
+    await pickName(page, TREE, `messages.${from}.links.0.to`, `messages.${to}`);
 }
 
 
 test('it walks from an empty mod to a conversation the game can play', async ({ page }) => {
-    // Thirty-eight steps, most of which rebuild a document and write it to disk.
+    // Thirty-nine steps, most of which rebuild a document and write it to disk.
     test.slow();
 
     await gotoFlow(page, '?flow=dds');
@@ -282,7 +339,7 @@ test('it walks from an empty mod to a conversation the game can play', async ({ 
         return Math.max(Math.abs(cutout.x - card.x), Math.abs(cutout.y - card.y));
     }).toBeLessThan(20);
 
-    await page.selectOption('#new-dds-file-type', 'tree');
+    await page.selectOption('#new-dds-file-type', 'tree:0');
     await page.fill('#new-dds-file-name', 'WizcardsChat');
     await page.fill('#new-dds-file-line', 'You still playing Wizcards?');
     await expectPopoverClearOf(page, '#new-dds-file-submit', 'Create');
@@ -292,15 +349,15 @@ test('it walks from an empty mod to a conversation the game can play', async ({ 
     await expect(page.locator(TREE)).toHaveAttribute('path', /\.tree$/);
     await expect(page.locator(MESSAGE)).toHaveAttribute('path', /\.msg$/);
     await expect(page.locator(BLOCK)).toHaveAttribute('path', /\.block$/);
-    await page.locator(FORWARD).click();
 
-    // A new tree is a v-mail. Not changing this is the commonest reason one never fires,
-    // which is why the walkthrough spends a step on it.
-    await onStep(page, 'It is a v-mail until you say otherwise');
-    await expect(valueAt(page, TREE, 'treeType').locator('select')).toHaveValue('1');
-    await setEnum(page, TREE, 'treeType', 0);
+    // What kind of tree it is was the first thing the walkthrough had to fix, because
+    // every new one came out a v-mail. It is answered in the dialog now, so the step that
+    // is left only points at the field -- and this is the assertion that the answer
+    // travelled from there to the document.
+    await nextStep(page, 'It already knows what it is');
+    await expect(valueAt(page, TREE, 'treeType').locator('select')).toHaveValue('0');
 
-    await onStep(page, 'When the game goes looking for it');
+    await nextStep(page, 'When the game goes looking for it');
     await setEnum(page, TREE, 'triggerPoint', 2);
 
     await onStep(page, 'And how often');
@@ -312,8 +369,10 @@ test('it walks from an empty mod to a conversation the game can play', async ({ 
     await expandAt(page, TREE, 'participantA');
     await setEnum(page, TREE, 'participantA.connection', 0);
 
+    // awake(0) and noReactionState(4) come with a new conversation, so the three added
+    // here go on the end of them.
     await onStep(page, 'Where they have to be');
-    await addChoices(page, TREE, 'participantA.triggers', ['0', '4', '29', '21', '15']);
+    await addChoices(page, TREE, 'participantA.triggers', ['29', '21', '15'], 2);
 
     await onStep(page, 'And who they are talking to');
     await expandAt(page, TREE, 'participantB');
@@ -327,49 +386,52 @@ test('it walks from an empty mod to a conversation the game can play', async ({ 
     await onStep(page, 'The second thing said');
     await addMessage(page, 1);
 
+    // Each of these ends by drilling into the message it just described. The step asks
+    // for it last, while the tree is still the window being pointed at, because that is
+    // where the ➥ is.
     await onStep(page, 'B answers');
     await setText(page, TREE, 'messages.1.saidBy', '1');
     await setText(page, TREE, 'messages.1.saidTo', '0');
-    await setText(page, TREE, 'messages.1.order', '1');
+    await openMessage(page, 1);
 
-    await onStep(page, 'What B says');
-    await writeLine(page, 1, 'Every night on my cruncher.');
+    await nextStep(page, 'What B says');
+    await setLine(page, 'Every night on my cruncher.');
 
-    await onStep(page, 'A comes back');
+    await nextStep(page, 'A comes back');
     await addMessage(page, 2);
 
     await onStep(page, 'A is already the speaker');
-    await setText(page, TREE, 'messages.2.order', '2');
+    await openMessage(page, 2);
 
-    await onStep(page, 'What A asks');
-    await writeLine(page, 2, 'Any good at it?');
+    await nextStep(page, 'What A asks');
+    await setLine(page, 'Any good at it?');
 
-    await onStep(page, 'B again');
+    await nextStep(page, 'B again');
     await addMessage(page, 3);
 
     await onStep(page, 'Turned around again');
     await setText(page, TREE, 'messages.3.saidBy', '1');
     await setText(page, TREE, 'messages.3.saidTo', '0');
-    await setText(page, TREE, 'messages.3.order', '3');
+    await openMessage(page, 3);
 
-    await onStep(page, 'How good B claims to be');
-    await writeLine(page, 3, 'I hold my own.');
+    await nextStep(page, 'How good B claims to be');
+    await setLine(page, 'I hold my own.');
 
-    await onStep(page, 'The last one');
+    await nextStep(page, 'The last one');
     await addMessage(page, 4);
 
-    await onStep(page, 'A has the last word');
-    await setText(page, TREE, 'messages.4.order', '4');
+    await nextStep(page, 'A has the last word');
+    await openMessage(page, 4);
 
-    await onStep(page, 'How it ends');
-    await writeLine(page, 4, "Ain't no talking you into it?");
+    await nextStep(page, 'How it ends');
+    await setLine(page, "Ain't no talking you into it?");
 
     // --- the links ------------------------------------------------------------------
 
-    await onStep(page, 'Chain the first two');
+    await nextStep(page, 'Chain the first two');
     await linkMessages(page, 0, 1);
 
-    await onStep(page, 'And the rest of the chain');
+    await nextStep(page, 'And the rest of the chain');
     await linkMessages(page, 1, 2);
     await linkMessages(page, 2, 3);
     await linkMessages(page, 3, 4);
@@ -380,36 +442,44 @@ test('it walks from an empty mod to a conversation the game can play', async ({ 
 
     // --- the replacements -----------------------------------------------------------
 
-    await onStep(page, 'Back to what B said first');
-    await drillInto(page, TREE, 'messages.1.msgID');
+    await openMessage(page, 1);
 
-    await onStep(page, 'The same line, from someone keen');
+    // Nothing to do on this one: the drill above is what it was asking for, and the step
+    // itself is what the replacements are for.
+    await nextStep(page, 'Back to what B said first');
+
+    await nextStep(page, 'The same line, from someone keen');
     await addAndOpen(page, BLOCK, 'replacements', 0);
     await setText(page, BLOCK, 'replacements.0._ENG Localisation_',
         "Every night! I'm on a streak.");
 
-    await onStep(page, 'Say who gets it');
+    await nextStep(page, 'Say who gets it');
     await setEnum(page, BLOCK, 'replacements.0.useTraits', 1);
     await addNames(page, BLOCK, 'replacements.0.traits',
         ['Char-Enthusiastic', 'Char-Cheerful']);
 
-    await onStep(page, 'And from someone who has had enough');
+    await nextStep(page, 'And from someone who has had enough');
     await addAndOpen(page, BLOCK, 'replacements', 1);
     await setText(page, BLOCK, 'replacements.1._ENG Localisation_', 'I quit. Rigged deck.');
 
-    await onStep(page, 'For the sour ones');
+    await nextStep(page, 'For the sour ones');
     await setEnum(page, BLOCK, 'replacements.1.useTraits', 1);
     await addNames(page, BLOCK, 'replacements.1.traits',
         ['Char-Pessimistic', 'Char-Spiteful']);
 
+    // Its own step, because the step before it points at the block window: there is no
+    // tree highlighted to hang "drill into messages.3" off the end of. Drilling in is all
+    // it asks, so it carries itself.
+    await nextStep(page, 'Back to the boast');
+    await openMessage(page, 3);
+
     await onStep(page, 'Do it again for the boast');
-    await drillInto(page, TREE, 'messages.3.msgID');
     await addAndOpen(page, BLOCK, 'replacements', 0);
     await setText(page, BLOCK, 'replacements.0._ENG Localisation_', "I'm unbeatable.");
     await addAndOpen(page, BLOCK, 'replacements', 1);
     await setText(page, BLOCK, 'replacements.1._ENG Localisation_', 'I lose every hand.');
 
-    await onStep(page, 'And who they belong to');
+    await nextStep(page, 'And who they belong to');
     await setEnum(page, BLOCK, 'replacements.0.useTraits', 1);
     await addNames(page, BLOCK, 'replacements.0.traits',
         ['Char-Enthusiastic', 'Char-Cheerful']);
@@ -419,27 +489,32 @@ test('it walks from an empty mod to a conversation the game can play', async ({ 
 
     // --- the ending -----------------------------------------------------------------
 
-    await onStep(page, 'Now the ending');
-    await drillInto(page, TREE, 'messages.4.msgID');
+    // Split for the same reason as the boast, and carries itself for the same reason.
+    await nextStep(page, 'Back to the last line');
+    await openMessage(page, 4);
 
-    await onStep(page, 'A second thing A might say');
+    // What is left of that step is what the ending is for, so there is nothing to do on
+    // it and nothing for it to wait on.
+    await onStep(page, 'Now the ending');
+
+    await nextStep(page, 'A second thing A might say');
     await addAndOpen(page, MESSAGE, 'blocks', 1);
     await openFrom(page, MESSAGE, 'blocks.1.blockID', BLOCK);
     await setText(page, BLOCK, '_ENG Localisation_', 'Deal me in next time.');
 
-    await onStep(page, 'Let the game pick one');
+    await nextStep(page, 'Let the game pick one');
     await setEnum(page, MESSAGE, 'blocks.0.alwaysDisplay', 0);
     await setText(page, MESSAGE, 'blocks.0.group', '1');
     await setEnum(page, MESSAGE, 'blocks.1.alwaysDisplay', 0);
     await setText(page, MESSAGE, 'blocks.1.group', '1');
 
-    await onStep(page, 'And spare the cheerful ones');
+    await nextStep(page, 'And spare the cheerful ones');
     await setEnum(page, TREE, 'messages.3.links.0.useTraits', 1);
     await addNames(page, TREE, 'messages.3.links.0.traits',
         ['Char-Cheerful', 'Char-Enthusiastic']);
     await setEnum(page, TREE, 'messages.3.links.0.traitConditions', 2);
 
-    await onStep(page, 'That is a conversation');
+    await nextStep(page, 'That is a conversation');
 
     // --- and it really is in the mod ------------------------------------------------
 
@@ -483,7 +558,10 @@ test('it walks from an empty mod to a conversation the game can play', async ({ 
     expect(tree.messages).toHaveLength(5);
     expect(tree.startingMessage).toBe(tree.messages[0].instanceID);
     for (const [index, message] of tree.messages.entries()) {
-        expect(message.order, `messages.${index}.order`).toBe(index);
+        // What follows what is the links, and only the links. `order` used to be set
+        // alongside them here, on a kind of tree that never reads it -- five numbers that
+        // looked like the answer to that question and were not.
+        expect(message.order, `messages.${index}.order`).toBe(0);
         expect(message.saidBy, `messages.${index}.saidBy`).toBe(index % 2);
 
         if (index === tree.messages.length - 1) {
@@ -499,7 +577,7 @@ test('it walks from an empty mod to a conversation the game can play', async ({ 
     expect(tree.messages[3].links[0].traits)
         .toEqual(['Char-Cheerful', 'Char-Enthusiastic']);
 
-    // Thirty-eight steps of editing, and not one dialog in the way of any of it. Every
+    // Thirty-nine steps of editing, and not one dialog in the way of any of it. Every
     // value above went into the control the row it lives in already had.
     expect(await prompts(page)).toEqual([]);
     expect(await alerts(page)).toEqual([]);

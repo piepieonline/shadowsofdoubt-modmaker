@@ -725,7 +725,7 @@ at the top of the status column, present only when there is something to say.
 |---|---|---|
 | `chanceOfPlacementAttempt: 0` on an element | fails the cluster if the element is `importantToCluster`, else thins it | `GenerationController.cs:4314` rolls `random > chance` and drops the element; `:4380` returns null for the whole cluster |
 | `localScale: {0,0,0}` on an element | fails | placed correctly, counts against every limit, rendered at no size (`FurnitureLocation.cs:217`) |
-| A cluster gated only by `allowedRoomFilters` | degrades | room filters are city-wide, so it reaches every room of that class in the city rather than this mod's building |
+| A cluster gated only by `allowedRoomFilters`, reaching a base game room class | degrades | room filters are city-wide, so it reaches every room of that class in the city rather than this mod's building |
 
 Three decisions worth keeping:
 
@@ -742,10 +742,28 @@ establish, and reading it as 0 would report every hand-written minimal element a
 warning that fires on correct files teaches the reader to ignore the section, so only a
 stated `0` counts. This is the one known gap in the check.
 
-The city-wide warning is scoped to the mod's own presets. A cluster whose slots are filled
-entirely by shipped furniture is city-wide too, but the remedy — `onlyAllowInFollowing` with
+**The city-wide warning is narrower than the other two**, and every part of that is about
+not firing on the correct case. The remedy — `onlyAllowInFollowing` with
 `allowedInAddressesOfType`, or `OnlyAllowInBuildings` with `allowedInBuildings` — goes on the
-preset, and telling an author to gate the base game's presets is not advice worth giving.
+**preset**, so it is only advice worth giving where the preset is the author's to gate and
+the cluster really does leave their building.
+
+- **It counts base game room classes only.** A cluster whose filters reach nothing but the
+  mod's own `RoomClassPreset`s reaches nothing but the mod's own rooms: the class exists in
+  no other building, so there is nowhere else for it to turn up. That is what every custom
+  room in a mod looks like — a class, a filter naming it, a cluster gated on that filter —
+  and warning about it fired on the right answer more often than on the defect. A cluster
+  reaching both is still reported, and the sentence names only the base game's classes.
+- **It skips clusters the mod merely patched.** Widening a shipped cluster onto a new room
+  filter is how a mod puts existing furniture in a custom room. The cluster was city-wide
+  before the patch, and the fix on offer would take a shipped preset out of the rest of the
+  city rather than keep the mod's own furniture in.
+- **It skips presets the mod merely patched, and shipped furniture entirely.** Same reason
+  from the other end: a cluster whose slots are filled only by the base game's presets is
+  city-wide too, and gating those is not something an author should be told to do.
+
+The element checks go the other way and *do* run over patched clusters — see
+`clusterWarnings` for that trade-off.
 
 The block is deliberately **not** a `.status-block`. The two blocks under it keep the same
 five rows in the same order, and both test suites read them positionally.
@@ -936,7 +954,7 @@ scripts/
   loadRefs.js         wall preset tables, room/layout/building name lists
   floorModel.js       load, save, validate, backfill, variation handling, painting
   buildingLibrary.js  buildings, floor slots, stub presets, blueprint resolution
-  scene.js            three.js grid, walls, camera, hit-testing, tile labels
+  scene.js            the floor drawn: grid, walls, hit-testing, tile labels
   tools.js            the five painters, plus pick and erase
   panels.js           address/room/floor type/wall/tile panels and the tool bar
   keptSelects.js      the panels' searchable selects, kept across a full redraw
@@ -946,14 +964,26 @@ scripts/
   meshExport.js       footprints, mesh, textures, window data
   pngWriter.js        PNG files, written a chunk at a time
 tools/
-  buildFurnitureChain.js   writes refs/derived/furnitureChain.json from a game dump
+  buildFurnitureChain.js   writes the three refs/derived/ files from a game dump
 ```
 
+The camera is not in this flow. `core/viewer3d.js` builds the renderer, the camera, the
+orbit controls, the keyboard steering, the resize observer and the frame scheduling, and
+`scene.js` asks it for those and then draws a floor into the scene it gets back. The
+furniture creator in the ScriptableObject flow uses the same module, which is why it is
+shared: a second copy would be two answers to "which button orbits".
+
+What stays here is what the floor needs the camera to do differently. The left button is
+withheld from it — `reserveLeftButton` — because a drag paints, and alt lends it back for
+the length of one drag. Everything else is the viewer's default, and the defaults are this
+view's own numbers because this is where they were written.
+
 three.js loads through an import map declared in `index.html` before `main.js`, so bare
-specifiers resolve. Declaring a map fetches nothing, so the other two flows pay no cost;
-this flow dynamic-imports `three`, `OrbitControls` and `troika-three-text` when its scene
-is first built. The version is pinned rather than floating — a minor release changing
-`InstancedMesh` raycast behaviour would break painting with no local change to point at.
+specifiers resolve. Declaring a map fetches nothing, so a flow that opens no 3D view pays
+no cost; the viewer dynamic-imports `three` and `OrbitControls` when it is first built, and
+this flow imports `troika-three-text` beside it for the tile labels. The version is pinned
+rather than floating — a minor release changing `InstancedMesh` raycast behaviour would
+break painting with no local change to point at.
 
 troika's own four dependencies are mapped beside it rather than using jsDelivr's bundling
 `/+esm`, which resolves `three` to a second copy of the same version at a different URL —
@@ -990,6 +1020,7 @@ preset to point at them:
 | `emissionMapLit` / `emissionMapUnlit` | the emissive and black textures |
 | `floorCount` | the number of window rows |
 | `sortedWindows` | four lists of `WindowUVBlock` per floor |
+| `modMakerBuildRoof` | whether the **Roof** box was ticked — not a field the game has |
 
 At runtime `NewRoom.UpdateEmission` blits the emissive map at a block's `originPixel` and
 `rectSize` into the building's own emission texture when a room's lights come on, and the
@@ -1002,15 +1033,83 @@ generated prefab and window data are what stop the stub deferring to the origina
 ### What is modelled
 
 The ground floor is left out, because the street frontage the game puts in front of it is
-what draws it, and so is any open rooftop on the top — both would otherwise take a row of
-the texture and shift every floor above them. The panel says which floors were dropped.
-Basements are not modelled at all.
+what draws it. Basements are not modelled at all.
+
+A **rooftop** storey — one `readLayout` finds is more open air than enclosed — takes no row
+of the texture either, and would shift every floor above it if it did. It is still part of
+the model. `CityBank_Floor2` is three rows of penthouse right across the north of the lot
+with an open deck beside it, and dropping it outright left the building a storey short of
+what the street can see:
+
+```
+CityBank_Floor1        CityBank_Floor2        # enclosed   o open deck
+###############        ###############
+###############        ###############
+###############        oooo#######oooo
+###############        ooooooooooooooo
+.....#####.....        .....ooooo.....
+```
+
+So a rooftop is built as **shell only**: its walls go in where the block reaches the edge
+of the building, and are left off where the same block faces its own deck — there it is a
+structure standing on the roof, interior to the mass below and not part of the silhouette.
+The test is what a wall stands over: a square the storey below encloses is roof, anything
+else is past the edge. On `CityBank_Floor2` that keeps 21 of the block's 50 walls. The deck
+itself is not drawn; whatever the game stacks on the building draws that.
+
+Shell walls take their UV from the texture's roof block, which is flat masonry — the four
+side bands are window rows, and mapping a parapet there would print somebody else's lit
+windows onto it.
+
+The rule is only applied to rooftops. A *body* storey that steps in is a setback, and its
+walls face the street over the roof below them. The majority-vote test that sorts one from
+the other reproduces the base game's own `floorCount` on all 15 shipped buildings —
+`Eden_Rooftop` is 49 enclosed squares against 176 open and the game gives it no window row,
+so loosening it to "has anything enclosed" would make EdenTower 19 rows instead of 18.
+
+The panel reports both: *Not modelled* for the ground floor, *Shell only* for rooftops.
 
 A square is inside the building's shell if its floor tile is `floorAndCeiling`,
 `CeilingOnly` or `noneButIndoors`. A wall goes wherever an enclosed square meets one that
 is not, and a cap wherever a square appears or disappears between one storey and the next.
 An atrium or lightwell with no way out to the street is filled in first, so the model has
 no holes through which the inside of the building can be seen.
+
+What is *not* built is the base: the underside of the lowest modelled storey faces the
+ground it stands on, where nothing can see it. Every other downward face is a soffit under
+an overhanging storey, which is seen from the street below and is built.
+
+The **Roof** checkbox beside the button leaves off every upward-facing surface — the top
+and the terrace of any storey that steps in. Untick it for a building something else is
+stacked on: what would be its roof is the underside of somebody else's mesh, and two
+surfaces in one place shimmer against each other as the camera moves. The answer is stored
+on the preset as `modMakerBuildRoof`, because a mesh is regenerated every time one of its
+floors changes and a choice held nowhere would put the roof silently back.
+
+In their place goes a **10 cm rim**, on top of every wall with open sky over it — the top
+of the building and the edge of every terrace under it — so the building has a visible top
+rather than walls that stop in mid air. At the outside of a corner both walls reach the
+same 10 cm square, so each strip is shortened by its own depth at one end and exactly one
+of the two owns it; coplanar faces over the same ground are what z-fights. Which end is
+derived from the wall's tangent, not tabulated.
+
+The shell is built 1.008 across the grid it measures, which pushes each side out by about
+11 cm at the edge of the lot — a scale that used to be applied to the building in Unity,
+baked in so the OBJ is right on its own. Across only: storey heights are the game's 5.4 m
+and are not stretched.
+
+It is also lifted off the baseline by that same 10.8 cm, so the shell stands as far above
+the ground as it is proud of the grid on all four sides, and the top rises by it again — so
+the shell is that much taller than the storeys it models rather than merely shifted up
+them. The extra height is spread over the whole building rather than added to the last
+storey: a tenth of a percent on each of five, where putting it all in the top one would be
+two percent on that one alone and show as one window row taller than the rest.
+
+Only the geometry moves. UVs, texture columns and window rectangles are all measured on
+the grid before any of it, or the texture would slide towards the corners of each side and
+start partway up the wall, taking the painted windows with it. The vertical part is affine,
+which is what lets that work: the top of the shell and the top of the texture stay the same
+place, and every seam between them still falls at the same fraction of the way up.
 
 ### Which window lights up
 
@@ -1069,8 +1168,13 @@ section says *built from floors that have changed since* when they no longer mat
 field is not one the game has; the mod loader is expected to ignore a property it does not
 recognise, which is what both of the common .NET JSON readers do by default — an
 expectation rather than something verified against the loader, and the reason it is one
-short string rather than anything larger. Only a building that has actually had a mesh
-generated is checked, so nothing else pays for reading its floors again.
+short string rather than anything larger — `modMakerBuildRoof` is the only other one, and
+it is a boolean. Only a building that has actually had a mesh generated is checked, so
+nothing else pays for reading its floors again.
+
+The roof is deliberately not part of the hash. It is not something that can go out of date
+behind the author's back: nothing changes it but the checkbox, and the checkbox is right
+beside the button that acts on it.
 
 ### Known limitations
 

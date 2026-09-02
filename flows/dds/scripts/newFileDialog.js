@@ -16,6 +16,12 @@
  *   strings file           a CSV the game reads from a path it decides. Not named:
  *                          picked from the files the game ships, or -- for text the
  *                          base game has no file for -- typed as a path of its own.
+ *
+ * A tree is asked about more closely than the other three, because "tree" is not a thing
+ * the game has: a conversation, a v-mail, a document, a newspaper article, a message
+ * library and a dialog chain are six formats sharing one struct, and one of them was
+ * being made for all six. So the type list offers the six by name and the answer carries
+ * the kind. See treeKinds.js, which is also where the values that kind needs come from.
  */
 import { writeFile } from '../../../core/fs.js';
 import {
@@ -24,6 +30,7 @@ import {
 import { searchSelect } from '../../../core/components/searchSelect/searchSelect.js';
 import { refreshManifestPanel } from './manifestPanel.js';
 import { openStringsFile } from './stringsEditor.js';
+import { parseNewFileType, TREE_KINDS, treeKindValue } from './treeKinds.js';
 import { closeModal, newFile, openModal, refreshPanel } from './ui.js';
 
 const MODAL = '#new-dds-file-modal';
@@ -51,10 +58,29 @@ export function showNewDdsFile() {
         return;
     }
 
+    buildTreeKinds();
     field('new-dds-file-form').reset();
     buildStringsPicker();
     updateNewDdsFileForm();
     openModal(MODAL);
+}
+
+/**
+ * Fill the six kinds of tree into the type dropdown.
+ *
+ * Built from the table rather than written into the markup, so the value the submit
+ * handler splits and the values the table answers to cannot drift apart -- an option
+ * naming a seventh kind would create a tree the game has no code for.
+ *
+ * Before the `reset()` above, which is what puts the selection back on the first of them.
+ */
+function buildTreeKinds() {
+    field('new-dds-file-tree-kinds').replaceChildren(...TREE_KINDS.map((kind) => {
+        const option = document.createElement('option');
+        option.value = treeKindValue(kind);
+        option.textContent = kind.label;
+        return option;
+    }));
 }
 
 /**
@@ -132,16 +158,23 @@ export function closeNewDdsFile() {
  * that will not submit and does not say why.
  */
 export function updateNewDdsFileForm() {
-    const strings = field('new-dds-file-type').value === 'strings';
+    const { type, treeType } = parseNewFileType(field('new-dds-file-type').value);
+    const strings = type === 'strings';
 
     field('new-dds-file-name-field').hidden = strings;
     field('new-dds-file-name').required = !strings;
     field('new-dds-file-line-field').hidden = strings;
     field('new-dds-file-strings-field').hidden = !strings;
+
+    // What the chosen kind of tree is for. Nothing for the other three: "Message" and
+    // "Block" are the names of the things themselves, and a strings file is described by
+    // the field below it.
+    field('new-dds-file-type-blurb').textContent =
+        TREE_KINDS.find((kind) => kind.treeType === treeType)?.blurb ?? '';
 }
 
 export async function submitNewDdsFile() {
-    const type = field('new-dds-file-type').value;
+    const { type, treeType } = parseNewFileType(field('new-dds-file-type').value);
     const strings = type === 'strings';
 
     // Read before anything is closed, so a path that cannot be created leaves the
@@ -163,6 +196,7 @@ export async function submitNewDdsFile() {
     await newFile(type, undefined, {
         name: field('new-dds-file-name').value.trim(),
         line: field('new-dds-file-line').value,
+        treeType,
     });
 }
 

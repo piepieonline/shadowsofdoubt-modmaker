@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { installFsHarness, seedFs, queuePicks, connectFolders, selectContent, queuePrompts, prompts, confirms, queueConfirms, listDir, alerts, collectPageErrors, topLevelLabels, readFile, writeFixture, gotoFlow } from './support/harness.js';
-import { soFixture, soFixtureWithAssets, soFolderContent, caseWithCustomReference } from './support/fixtures.js';
+import { installFsHarness, seedFs, queuePicks, connectFolders, selectContent, queuePrompts, prompts, confirms, queueConfirms, listDir, alerts, collectPageErrors, topLevelLabels, readFile, writeFixture, gotoFlow } from '../test-support/harness.js';
+import { soFixture, soFixtureWithAssets, soFolderContent, caseWithCustomReference } from '../test-support/fixtures.js';
 
 const CASE_FILE = 'Mods/TestCase/testcase.sodso.json';
 
@@ -296,7 +296,7 @@ test('every search box starts after the icon painted on it', async ({ page }) =>
     // Then the room creator's, and the file panel's, which is always there.
     await page.locator('#field-summary-modal .close-button').click();
     await page.getByRole('link', { name: 'Room Creator' }).click();
-    await page.locator('#room-creator-modal summary', { hasText: 'What goes in it' }).click();
+    await page.locator('#room-creator-modal .creator-step-label', { hasText: 'What goes in it' }).click();
 
     for (const selector of ['#so-file-search', '#field-summary-search', '#room-creator-search']) {
         const box = await iconClearance(page, selector);
@@ -1271,20 +1271,146 @@ test('an override in the older format is converted on save, and its author is to
         });
 });
 
-test('an override has no field selector, because it holds every field already', async ({ page }) => {
+/**
+ * The field selector, which asks a different question of each kind of file the mod owns.
+ *
+ * On one of the mod's own files it is which fields the file states, the rest being taken
+ * from whatever it copies from. On an override it is which fields the file changes about
+ * the base game's asset -- and since an override is nothing but those changes, turning one
+ * off is how a change is taken back out.
+ */
+
+/** Open the field selector on the document that is showing. */
+async function openFieldSelector(page, within = '#trees .file-window') {
+    await page.locator(within).getByRole('button', { name: 'Select Override Fields' }).click();
+    await expectDialogOpen(page, '#select-fields-modal', true);
+}
+
+/** The list's checkbox for one field. */
+const fieldSelectorBox = (page, field) =>
+    page.locator(`#select-fields-modal-field-list input[type="checkbox"][value="${field}"]`);
+
+/** Every field the selector is currently listing. */
+const listedFields = (page) =>
+    page.locator('#select-fields-modal-field-list input[type="checkbox"]')
+        .evaluateAll((boxes) => boxes.map((box) => box.value));
+
+test('an override and one of the mod\'s own files both offer a field selector', async ({ page }) => {
     await skipSpoilerWarning(page);
     await gotoFlow(page, '?flow=scriptableObject');
     await openFolderWithOverrides(page);
 
     await openOverride(page, 'ExCopSniper');
     await expect(page.locator('#trees .file-window').getByRole('button', { name: 'Select Override Fields' }))
-        .toHaveCount(0);
+        .toHaveCount(1);
 
-    // One of the mod's own files still has it: what it states is what it overrides of
-    // whatever it copies from, so which fields it carries is a real choice.
+    // What it states is what it overrides of whatever it copies from, so which fields it
+    // carries is a choice of the same kind.
     await page.locator('#so-file-list .file-panel-entry[data-id="IP_Note"] .file-panel-open').click();
     await expect(page.locator('#trees .file-window[path="IP_Note.sodso.json"]')
         .getByRole('button', { name: 'Select Override Fields' })).toHaveCount(1);
+});
+
+test('an override lists the fields it changes, and only those', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openModHolding(page, OVERRIDE_FILE, {
+        ...EMPTY_OVERRIDE,
+        patches: [{ op: 'replace', path: '/notes', value: 'Rewritten by the mod' }],
+    });
+    await openOverride(page, 'Hitman');
+
+    await openFieldSelector(page);
+
+    // One field, selected -- not the forty-odd a MurderMO has. The document on screen is
+    // the whole asset; the file is this.
+    expect(await listedFields(page)).toEqual(['notes']);
+    await expect(fieldSelectorBox(page, 'notes')).toBeChecked();
+});
+
+test('unselecting a field in an override takes its change back out', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openModHolding(page, OVERRIDE_FILE, EMPTY_OVERRIDE);
+    await openOverride(page, 'Hitman');
+
+    // What the game ships, which is what the field is about to go back to.
+    const shipped = await fieldInput(page, 'notes').inputValue();
+    expect(shipped).not.toBe('');
+
+    await fieldInput(page, 'notes').fill('Rewritten by the mod');
+    await fieldInput(page, 'notes').blur();
+
+    await expect
+        .poll(async () => JSON.parse(await readFile(page, OVERRIDE_FILE)).patches)
+        .toEqual([{ op: 'replace', path: '/notes', value: 'Rewritten by the mod' }]);
+
+    await openFieldSelector(page);
+    await fieldSelectorBox(page, 'notes').uncheck();
+    await page.locator('#select-fields-submit-button').click();
+    await expectDialogOpen(page, '#select-fields-modal', false);
+
+    // The file overrides nothing again -- not a change back to the base game's value,
+    // which would still be a change -- and the document says what the asset says.
+    await expect
+        .poll(async () => JSON.parse(await readFile(page, OVERRIDE_FILE)).patches)
+        .toEqual([]);
+    await expect(fieldInput(page, 'notes')).toHaveValue(shipped);
+
+    // And the selector agrees, rather than still listing what was just dropped.
+    await openFieldSelector(page);
+    expect(await listedFields(page)).toEqual([]);
+    await expect(page.locator('#select-fields-modal-empty')).toHaveText(/does not change anything/);
+});
+
+test('a field an override adds is dropped by removing it, not by writing a value back', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+
+    // A key the base game's MurderMO does not carry at all, which the loader would add to
+    // the asset. There is no shipped value to restore, so unselecting it has to take the
+    // key away -- and what is written is then an override with nothing in it.
+    await openModHolding(page, OVERRIDE_FILE, {
+        ...EMPTY_OVERRIDE,
+        patches: [{ op: 'add', path: '/modOnlyField', value: 'x' }],
+    });
+    await openOverride(page, 'Hitman');
+
+    await openFieldSelector(page);
+    expect(await listedFields(page)).toEqual(['modOnlyField']);
+
+    await fieldSelectorBox(page, 'modOnlyField').uncheck();
+    await page.locator('#select-fields-submit-button').click();
+
+    await expect
+        .poll(async () => JSON.parse(await readFile(page, OVERRIDE_FILE)).patches)
+        .toEqual([]);
+    await expect(fieldRow(page, 'modOnlyField')).toHaveCount(0);
+});
+
+test('(De)Select all empties an override in one go', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await openModHolding(page, OVERRIDE_FILE, {
+        ...EMPTY_OVERRIDE,
+        patches: [
+            { op: 'replace', path: '/notes', value: 'Rewritten by the mod' },
+            { op: 'replace', path: '/baseDifficulty', value: 9 },
+        ],
+    });
+    await openOverride(page, 'Hitman');
+
+    await openFieldSelector(page);
+    expect((await listedFields(page)).sort()).toEqual(['baseDifficulty', 'notes']);
+
+    // Every box starts selected, so the control starts checked and one click clears it.
+    await expect(page.locator('#select-fields-modal-select-all')).toBeChecked();
+    await page.locator('#select-fields-modal-select-all').uncheck();
+    await page.locator('#select-fields-submit-button').click();
+
+    await expect
+        .poll(async () => JSON.parse(await readFile(page, OVERRIDE_FILE)).patches)
+        .toEqual([]);
 });
 
 test('a type with no readable asset cannot be overridden from the new file dialog', async ({ page }) => {
@@ -1487,14 +1613,13 @@ test('manifest file references are shown but not editable', async ({ page }) => 
 });
 
 /**
- * Create a case the way a user does: the shell's New content button asks for the name,
- * then this flow asks what kind of case goes in it.
+ * Create a case folder the way a user does: the shell's New content button asks for the
+ * name, and that is the whole of it. This editor is asked for nothing to put inside --
+ * see the note on `newContent` in flows/scriptableObject/flow.js.
  */
-async function newCase(page, name, type) {
+async function newCase(page, name) {
     await queuePrompts(page, [name]);
     await page.getByRole('button', { name: 'New content' }).click();
-    await page.selectOption('#new-case-modal-case-type', type);
-    await page.getByRole('button', { name: 'Create Case' }).click();
 }
 
 test('creating a case refuses to clobber an existing content folder', async ({ page }) => {
@@ -1513,7 +1638,7 @@ test('creating a case refuses to clobber an existing content folder', async ({ p
     await connectFolders(page, { modDir: 'Mods' });
     await selectContent(page, 'OtherMod', 'Existing');
 
-    await newCase(page, 'Existing', 'MurderMO');
+    await newCase(page, 'Existing');
 
     // Refused rather than silently written over.
     await expect.poll(() => alerts(page)).toContainEqual(expect.stringContaining('already exists'));
@@ -1535,26 +1660,23 @@ test('creating a case puts it beside the mod\'s existing content', async ({ page
     await connectFolders(page, { modDir: 'Mods' });
     await selectContent(page, 'ConventionMod', 'plugins/FirstCase');
 
-    await newCase(page, 'SecondCase', 'MurderMO');
+    await newCase(page, 'SecondCase');
 
     // Beside the existing one, not at the mod root where the loader would miss it.
-    await expect
-        .poll(() => readFile(page, 'Mods/ConventionMod/plugins/SecondCase/murdermanifest.sodso.json'))
-        .not.toBeNull();
-    expect(await readFile(page, 'Mods/ConventionMod/SecondCase/murdermanifest.sodso.json')).toBeNull();
+    await expect.poll(() => listDir(page, 'Mods/ConventionMod/plugins')).toContain('SecondCase');
+    expect(await listDir(page, 'Mods/ConventionMod/SecondCase')).toBeNull();
 
     // And it becomes the selection.
     await expect.poll(() => page.evaluate(() => window.selectedMod?.contentPath))
         .toBe('plugins/SecondCase');
 
-    // A case is a manifest and its preset. Empty DDS directories used to come with
-    // it whether or not the case ever gained dialogue; the DDS flow makes them when
-    // it has something to write.
-    expect(await listDir(page, 'Mods/ConventionMod/plugins/SecondCase'))
-        .toEqual(['SecondCase.MurderMO.sodso.json', 'murdermanifest.sodso.json']);
+    // Empty. A new folder used to arrive as a case -- a manifest and the preset it
+    // revolves around, from a dialog asking which kind of case it was -- which decided
+    // what the folder held before its author had.
+    expect(await listDir(page, 'Mods/ConventionMod/plugins/SecondCase')).toEqual([]);
 });
 
-test('dismissing the new case dialog leaves no folder behind', async ({ page }) => {
+test('a new case folder is empty, and nothing is asked about it', async ({ page }) => {
     await skipSpoilerWarning(page);
     await gotoFlow(page, '?flow=scriptableObject');
     await seedFs(page, {
@@ -1564,15 +1686,85 @@ test('dismissing the new case dialog leaves no folder behind', async ({ page }) 
     await connectFolders(page, { modDir: 'Mods' });
     await selectContent(page, 'OtherMod', 'Existing');
 
-    await queuePrompts(page, ['Abandoned']);
-    await page.getByRole('button', { name: 'New content' }).click();
-    await page.locator('#new-case-modal').getByLabel('Close').click();
+    await newCase(page, 'Fresh');
 
-    // The flow is asked what it needs before anything is written, so backing out of
-    // its dialog does not litter the mod with an empty folder.
-    await expectDialogOpen(page, '#new-case-modal', false);
-    expect(await listDir(page, 'Mods/OtherMod/Abandoned')).toBeNull();
-    expect(await page.evaluate(() => window.selectedMod?.contentPath)).toBe('Existing');
+    await expect.poll(() => page.evaluate(() => window.selectedMod?.contentPath)).toBe('Fresh');
+    expect(await listDir(page, 'Mods/OtherMod/Fresh')).toEqual([]);
+
+    // Nothing on screen and nothing said about it: an empty folder is an empty file
+    // panel, and the editor is ready for the first file to be added to it.
+    await expect(page.locator('#so-file-list .file-panel-entry')).toHaveCount(0);
+    await expect(page.locator('#manifest_add_item_button')).toBeEnabled();
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('the first file added to an empty folder writes the manifest with it', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, {
+        'Mods/OtherMod/Existing/murdermanifest.sodso.json':
+            JSON.stringify({ enabled: true, fileOrder: [], loadBefore: '', version: 1 }),
+    });
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'OtherMod', 'Existing');
+
+    await newCase(page, 'Fresh');
+    await expect.poll(() => page.evaluate(() => window.selectedMod?.contentPath)).toBe('Fresh');
+
+    // The folder holds no manifest, so the load order the button adds to is the blank
+    // one held in memory until there is something to write.
+    await openNewFileDialog(page);
+    await page.selectOption('#new-file-modal-file-type', 'MurderMO');
+    await page.locator('#new-file-modal-file-name').fill('FreshCase');
+    await page.locator('#new-file-modal-submit').click();
+
+    await expect
+        .poll(() => readFile(page, 'Mods/OtherMod/Fresh/FreshCase.MurderMO.sodso.json'))
+        .not.toBeNull();
+
+    // And the manifest arrives with it, naming it -- a file no manifest lists is a file
+    // the game never reads.
+    await expect
+        .poll(async () => JSON.parse((await readFile(page, 'Mods/OtherMod/Fresh/murdermanifest.sodso.json')) || '{}'))
+        .toMatchObject({ enabled: true, fileOrder: ['REF:FreshCase.MurderMO'], loadBefore: '', version: 1 });
+
+    // The folder it was created beside is untouched: the blank manifest belongs to the
+    // folder that is open, not to the last one that had one.
+    expect(JSON.parse(await readFile(page, 'Mods/OtherMod/Existing/murdermanifest.sodso.json')).fileOrder)
+        .toEqual([]);
+    expect(await alerts(page)).toEqual([]);
+});
+
+test('the manifest is written with the file even when autosaving is off', async ({ page }) => {
+    await skipSpoilerWarning(page);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, {
+        'Mods/OtherMod/Existing/murdermanifest.sodso.json':
+            JSON.stringify({ enabled: true, fileOrder: [], loadBefore: '', version: 1 }),
+    });
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'OtherMod', 'Existing');
+    await page.locator('#autosave-switch').uncheck();
+
+    await newCase(page, 'Fresh');
+    await expect.poll(() => page.evaluate(() => window.selectedMod?.contentPath)).toBe('Fresh');
+
+    await openNewFileDialog(page);
+    await page.selectOption('#new-file-modal-file-type', 'MurderMO');
+    await page.locator('#new-file-modal-file-name').fill('FreshCase');
+    await page.locator('#new-file-modal-submit').click();
+
+    // Both files, though nothing has been saved. The manifest is the one document with no
+    // Save button of its own -- it is a navigation panel -- so a load order left to the
+    // autosave that is switched off is one that never reaches disk, and a file the manifest
+    // does not name is a file the game never reads.
+    await expect
+        .poll(() => readFile(page, 'Mods/OtherMod/Fresh/FreshCase.MurderMO.sodso.json'))
+        .not.toBeNull();
+    await expect
+        .poll(async () => JSON.parse((await readFile(page, 'Mods/OtherMod/Fresh/murdermanifest.sodso.json')) || '{}'))
+        .toMatchObject({ fileOrder: ['REF:FreshCase.MurderMO'] });
+    expect(await alerts(page)).toEqual([]);
 });
 
 test('a document longer than the window scrolls inside its own panel', async ({ page }) => {
@@ -1797,9 +1989,11 @@ test('a base game asset is titled by its type and offers Use as...', async ({ pa
     await expect(window_.locator('.doc-title h5')).toHaveText('MurderMO/Hitman');
 
     // Nothing else can be done with it: it is the game's file, not the mod's, so there
-    // is no Save either.
+    // is no Save either -- and no field selector, since every field it holds is the
+    // game's and none of them is anything this mod has decided.
     await expect(window_.getByRole('button', { name: 'Use as...' })).toBeVisible();
     await expect(window_.getByRole('button', { name: 'Save' })).toHaveCount(0);
+    await expect(window_.getByRole('button', { name: 'Select Override Fields' })).toHaveCount(0);
 });
 
 test('a file the mod owns is edited rather than copied', async ({ page }) => {

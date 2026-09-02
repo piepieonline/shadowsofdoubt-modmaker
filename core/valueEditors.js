@@ -166,12 +166,25 @@ export function renderedValue(item) {
  *
  * @param selectedValue the option value to preselect; compared loosely, since the
  *                      rendered value arrives as a string and indices are numbers
+ * @param include       optional (index) => boolean, to offer part of the list. A field
+ *                      can be an enum without every value of that enum being valid in it:
+ *                      a vmail's `triggerPoint` is one of two of the eight `TriggerPoint`
+ *                      values, and the other six are trees that never fire. Options keep
+ *                      their index as their value, so leaving some out changes nothing
+ *                      about what is stored.
+ *
+ *                      What the document already holds is always offered, whatever the
+ *                      predicate says. A control that could not show its own file's value
+ *                      would sit there displaying a different one, and the next edit
+ *                      anywhere in the document would make that reading look deliberate.
  * @param onChange      (value) => void, called with the raw value of the chosen option
  * @returns `{ list, leading }` -- the element, and the leading options by value, so a
  *          caller can relabel one after the fact
  */
 export function createSelectEditor(
-    domNode, { options, selectedValue, readOnly = false, leadingOptions = [] }, onChange
+    domNode,
+    { options, selectedValue, readOnly = false, leadingOptions = [], include = null },
+    onChange
 ) {
     const list = document.createElement('select');
     list.disabled = readOnly;
@@ -188,6 +201,8 @@ export function createSelectEditor(
     }
 
     for (let i = 0; i < options.length; i++) {
+        if (include && !include(i) && i != selectedValue) continue;
+
         const option = document.createElement('option');
         option.value = i;
         option.text = options[i];
