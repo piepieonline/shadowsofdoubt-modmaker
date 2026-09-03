@@ -18,10 +18,14 @@ import { onSelectionChanged, currentModName } from './modSelection.js';
 import { switchFlow } from './navigation.js';
 import { probeFile, readFileContent } from './fs.js';
 
-// Fetched only once a tutorial starts. Nobody pays for it just by loading the app,
-// which is why this is a dynamic import rather than a tag in index.html.
-const DRIVER_ESM = 'https://cdn.jsdelivr.net/npm/driver.js@1.3.6/+esm';
-const DRIVER_CSS = 'https://cdn.jsdelivr.net/npm/driver.js@1.3.6/dist/driver.css';
+// Loaded only once a tutorial starts. Nobody pays for it just by loading the app, which
+// is why the module is a dynamic import rather than a static one -- the bundler splits it
+// into a chunk of its own and fetches it on first use.
+//
+// The stylesheet is asked for by URL rather than imported, because it is added and removed
+// with the walkthrough rather than living for the life of the page. `?url` gives the
+// hashed path the build emits.
+import DRIVER_CSS from 'driver.js/dist/driver.css?url';
 
 let driverModule = null;
 
@@ -33,7 +37,7 @@ async function loadDriver() {
         document.head.appendChild(link);
     }
 
-    driverModule ??= await import(DRIVER_ESM);
+    driverModule ??= await import('driver.js');
     return driverModule.driver;
 }
 

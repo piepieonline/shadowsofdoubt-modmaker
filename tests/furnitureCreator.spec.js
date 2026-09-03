@@ -169,7 +169,9 @@ test('marks a sub-object when its row is clicked, and unmarks it when clicked ag
     await choose(page, 'HotelDesk');
 
     await openSection(page, 'What sits on it');
-    const row = page.locator('#furniture-creator-subobjects li').first().getByRole('button');
+    // The row's own button, not the cross beside it: a row carries both now.
+    const row = page.locator('#furniture-creator-subobjects li').first()
+        .locator('.furniture-creator-subobject');
 
     await row.click();
     await expect(row).toHaveAttribute('aria-current', 'true');

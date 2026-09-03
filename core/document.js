@@ -34,7 +34,7 @@
  * list of open paths filled with `undefined`, matched every node in the rebuilt tree,
  * and opened the document in full on every edit.
  *
- * `jsonpatch` is a global from libs/JSON-Patch, loaded as a classic script.
+ * `jsonpatch` is a global published by core/vendorGlobals.js.
  */
 import { getJSONPointer } from './jsonPointer.js';
 

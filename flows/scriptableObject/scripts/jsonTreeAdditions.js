@@ -7,6 +7,7 @@ import { GUID_PATTERN } from '../../../core/guid.js';
 import { assetOfPath, stemFor, titleFor } from '../../../core/soFileName.js';
 import { openInFlow } from '../../../core/navigation.js';
 import { modFileOfAsset } from './contentList.js';
+import { parseJSON } from '../../../core/jsonNumbers.js';
 // Cyclic -- index.js imports this module -- but only called from a click handler, long
 // after both have evaluated. scripts/ui.js reaches these the same way.
 import { loadFile, openBaseGameAsset, useAsNewFile } from '../index.js';
@@ -287,7 +288,7 @@ export function createSOSelectElement(domNode, options, selectedSO, readOnly, on
                     res = makeCSVSafe(res);
                 }
 
-                newCustomValue = JSON.parse(res);
+                newCustomValue = parseJSON(res);
             }
             onUpdateCallback(value, newCustomValue);
         },
@@ -329,7 +330,7 @@ export function createEnumSelectElement(domNode, options, selectedIndex, soFileT
                     res = makeCSVSafe(res);
                 }
 
-                newCustomValue = JSON.parse(res);
+                newCustomValue = parseJSON(res);
             }
             onUpdateCallback(value, newCustomValue);
         }

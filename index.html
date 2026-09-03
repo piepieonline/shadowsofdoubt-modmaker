@@ -1,68 +1,48 @@
 <!DOCTYPE html>
-<html lang="eng">
+<html lang="en">
 
 <head>
+    <!-- First, and before anything with a character in it.
+         The prose here is full of em dashes, curly quotes, `·` and `×`, and without this
+         a browser decodes the file as windows-1252 and draws every one of them as two or
+         three Latin-1 characters -- "Positions Â· metres from origin". The scripts were
+         never affected, because a module is UTF-8 by spec whatever the server says, so the
+         damage was confined to text written in the markup and looked like a handful of
+         unrelated typos rather than one missing line. flows/dds/index.html and
+         flows/scriptableObject/index.html have always declared it; this file, which is the
+         shell all three flows now run in, never did. -->
+    <meta charset="utf-8" />
     <title>SoD Mod Maker</title>
-    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
 
     <script>
         if (localStorage.getItem('favs') == null) localStorage.setItem('favs', '[]');
     </script>
 
-    <!-- Searching in select. Used by the ScriptableObject flow's reference picker;
-         loaded for every flow because they are classic scripts and cheap from cache.
-         Dropping select2 removes this. -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- jQuery, select2, idb-keyval, fast-json-patch and jsonTree used to be script tags
+         here. They are imported by core/vendorGlobals.js now, which publishes the same
+         globals the markup and the core modules expect. Their stylesheets come with
+         them, so Pico and select2's CSS are no longer linked here either. -->
 
-    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
+    <!-- three.js and troika-three-text, for the building flow's floorplan view, used to
+         need an import map here so their bare specifiers resolved. The bundler resolves
+         them now, and the flow still dynamic-imports them on activation, so a flow that
+         opens no 3D view downloads none of it.
 
-    <script src="./libs/jsonTree/jsonTree.js"></script>
-    <script src="./libs/JSON-Patch/fast-json-patch.min.js"></script>
+         Versions are pinned exactly in package.json rather than floating: a minor three
+         release changing InstancedMesh raycast behaviour would break painting with no
+         local change to point at. Bundling also settles what the map was really for --
+         troika's `three` and the scene's `three` resolve to one module, rather than two
+         copies with two sets of class identities and a Text that is not the Mesh the rest
+         of the scene is made of. -->
 
-    <!-- three.js, for the building flow's floorplan view. Declaring an import map
-         fetches nothing, so the other flows pay no cost for it; the building flow
-         dynamic-imports these once it is activated. It has to be declared before
-         main.js, because a module graph resolves its bare specifiers against whatever
-         map exists when it loads.
-
-         Pinned rather than floating on ^0.185: a minor release changing InstancedMesh
-         raycast behaviour would break painting with no local change to point at.
-
-         troika-three-text draws the tile labels. Its own four dependencies are mapped
-         beside it rather than using jsDelivr's bundling `/+esm`, which resolves `three`
-         to a second copy of the same version at a different URL -- two module instances,
-         two sets of class identities, and a Text that is not the Mesh the rest of the
-         scene is made of. Mapping the bare specifiers is what makes troika's `three` and
-         the scene's `three` the one module. All four are leaves: only troika-three-utils
-         imports anything, and what it imports is three. -->
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/",
-            "troika-three-text": "https://cdn.jsdelivr.net/npm/troika-three-text@0.53.0/dist/troika-three-text.esm.js",
-            "troika-three-utils": "https://cdn.jsdelivr.net/npm/troika-three-utils@0.53.0/dist/troika-three-utils.esm.js",
-            "troika-worker-utils": "https://cdn.jsdelivr.net/npm/troika-worker-utils@0.53.0/dist/troika-worker-utils.esm.js",
-            "webgl-sdf-generator": "https://cdn.jsdelivr.net/npm/webgl-sdf-generator@1.1.1/dist/webgl-sdf-generator.mjs",
-            "bidi-js": "https://cdn.jsdelivr.net/npm/bidi-js@1.0.3/dist/bidi.mjs"
-        }
-    }
-    </script>
+    <!-- The stylesheets are imported by main.js rather than linked here, and their order
+         is set there. It has to be one list: a <link> is applied when the markup is
+         parsed and an imported sheet when its module runs, so splitting them across the
+         two puts every imported sheet after every linked one regardless of intent. That
+         reversed the cascade this app depends on -- Pico beating core/chrome.css instead
+         of losing to it. See the ordered block in main.js. -->
 
     <script type="module" src="./main.js"></script>
-
-    <link href="./libs/jsonTree/jsonTree.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.red.min.css" />
-    <link href="./core/chrome.css" rel="stylesheet" />
-    <!-- The frame the two document editors share. Loaded here rather than per flow: both
-         of them want it, and a flow's own stylesheet is appended after this, which is
-         what lets it override a rule without needing to outweigh one. -->
-    <link href="./core/documentFlow.css" rel="stylesheet" />
-    <!-- After Pico, which is where the search field's icon inset comes from, and after
-         select2's own stylesheet above. Both are what this corrects. -->
-    <link href="./core/components/searchSelect/searchSelect.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -1135,9 +1115,9 @@
                                 </div>
 
                                 <div class="creator-col">
-                                    <div id="room-creator-verdict" class="creator-card" role="region"
+                                    <div id="room-creator-verdict" class="creator-card creator-prose" role="region"
                                         aria-live="polite" aria-label="What this room admits"></div>
-                                    <div id="room-creator-opened" class="creator-scroll" role="region"
+                                    <div id="room-creator-opened" class="creator-scroll creator-prose" role="region"
                                         aria-live="polite" aria-label="What was read back"></div>
                                 </div>
                             </form>
@@ -1196,7 +1176,7 @@
                                          than a step away: these are the only readings in
                                          the pane that answer a keystroke. -->
                                     <div class="creator-row">
-                                        <div id="room-creator-gates" class="creator-col creator-col-wide"
+                                        <div id="room-creator-gates" class="creator-col creator-col-wide creator-prose"
                                             role="region" aria-live="polite"
                                             aria-label="What these gates refuse"></div>
                                         <div class="creator-col">
@@ -1264,7 +1244,7 @@
                                 </div>
 
                                 <div class="creator-col creator-col-wide">
-                                    <div id="room-creator-plan" class="creator-scroll" role="region"
+                                    <div id="room-creator-plan" class="creator-scroll creator-prose creator-plan" role="region"
                                         aria-live="polite" aria-label="Files this room comes to"></div>
                                 </div>
                             </section>
@@ -1343,7 +1323,7 @@
                                 <div class="creator-col creator-col-wide" data-view-slot></div>
 
                                 <div class="creator-col">
-                                    <div id="furniture-creator-summary" class="creator-scroll" role="region"
+                                    <div id="furniture-creator-summary" class="creator-scroll creator-prose" role="region"
                                         aria-live="polite" aria-label="What this furniture is"></div>
                                 </div>
                             </section>
@@ -1381,13 +1361,12 @@
                                         <div id="furniture-creator-placement" class="furniture-creator-placement"></div>
                                     </div>
 
-                                    <!-- Adding is per tile, on the grid. These two act on what
-                                         is already marked, so they stay outside the editor —
-                                         Revert has to be reachable when nothing is. -->
+                                    <!-- Adding is per tile, on the grid, and removing is a
+                                         cross on the rule in the editor. Revert is what is
+                                         left: it acts on the whole class rather than on one
+                                         rule, and has to be reachable when nothing is
+                                         marked, so it stays out here. -->
                                     <div class="furniture-creator-buttons">
-                                        <button type="button" class="secondary outline"
-                                            id="furniture-creator-rule-remove"
-                                            onclick="removePlacementRule()" disabled>Remove this one</button>
                                         <button type="button" class="secondary outline"
                                             id="furniture-creator-rule-revert"
                                             onclick="revertPlacementEdits()" disabled>Revert rules</button>
@@ -1402,7 +1381,19 @@
                                          at all, since a class with none of either has none to
                                          mark. -->
                                     <div id="furniture-creator-rule-editor" class="furniture-creator-editor" hidden>
-                                        <small id="furniture-creator-rule-meaning"></small>
+                                        <!-- The grid is a diagram, not a list, so there is
+                                             no row to hang a cross off. What stands in for
+                                             one is this: the sentence saying what the marked
+                                             rule does, with the cross that takes it away
+                                             beside it. The label is written in
+                                             drawRuleEditor, because which rule it removes
+                                             changes with every press on the grid. -->
+                                        <div class="furniture-creator-editor-head">
+                                            <small id="furniture-creator-rule-meaning"></small>
+                                            <button type="button" class="furniture-creator-row-remove"
+                                                id="furniture-creator-rule-remove"
+                                                onclick="removePlacementRule()">✕</button>
+                                        </div>
 
                                         <form oninput="placementRuleChanged()" onsubmit="event.preventDefault()">
                                             <label for="furniture-creator-rule-kind">This one is about</label>
@@ -1457,7 +1448,7 @@
                                         </form>
                                     </div>
 
-                                    <div id="furniture-creator-placement-notes" class="creator-scroll"></div>
+                                    <div id="furniture-creator-placement-notes" class="creator-scroll creator-prose"></div>
 
                                     <small>Front is up. Everything here is written in the
                                         furniture's own frame, and the generator tries all four
@@ -1535,11 +1526,15 @@
                                             Drag to turn rather than to move
                                         </label>
 
+                                        <!-- No Remove here. Taking one off is a per-row act
+                                             and it is on the row, next to the thing it acts
+                                             on: a button down here removed whichever was
+                                             marked, so removing the third of five meant
+                                             marking it first and reading two places at once
+                                             to be sure of what would go. -->
                                         <div class="furniture-creator-buttons">
                                             <button type="button" class="secondary outline"
                                                 onclick="addFurnitureSubObject()">Add another</button>
-                                            <button type="button" class="secondary outline"
-                                                onclick="removeFurnitureSubObject()">Remove this one</button>
                                             <button type="button" class="secondary outline"
                                                 onclick="revertFurnitureEdits()">Revert all</button>
                                         </div>
@@ -1603,11 +1598,8 @@
                                             </div>
                                         </form>
 
-                                        <div class="furniture-creator-buttons">
-                                            <button type="button" class="secondary outline"
-                                                id="furniture-creator-interactable-remove"
-                                                onclick="removeFurnitureInteractable()">Remove this one</button>
-                                        </div>
+                                        <!-- No Remove here either. It is a cross on the row
+                                             it acts on, the way the sub-object list's is. -->
                                     </div>
                                 </div>
                             </section>
@@ -1641,7 +1633,7 @@
                                 </div>
 
                                 <div class="creator-col creator-col-wide">
-                                    <div id="furniture-creator-plan" class="creator-scroll" role="region"
+                                    <div id="furniture-creator-plan" class="creator-scroll creator-prose creator-plan" role="region"
                                         aria-live="polite" aria-label="Files this furniture comes to"></div>
                                 </div>
                             </section>

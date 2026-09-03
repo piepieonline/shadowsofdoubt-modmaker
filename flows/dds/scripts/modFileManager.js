@@ -5,6 +5,7 @@ import { DDS_BLOCKS_VIRTUAL, DDS_CONTENT_ROOT } from '../../../core/ddsManifest.
 import { writeStringsRow } from '../../../core/modStrings.js';
 import { applyTreeKind } from './treeKinds.js';
 import { loadI18n } from '../index.js';
+import { stringifyJSON } from '../../../core/jsonNumbers.js';
 
 /**
  * This flow's files live under <content folder>/DDSContent, but `baseFolder` is the
@@ -96,7 +97,7 @@ export async function createNewFile(type, templateData, { name, line, rung, tree
 
         await callback(newContent);
 
-        await writeFile(newHandle, JSON.stringify(newContent));
+        await writeFile(newHandle, stringifyJSON(newContent));
 
         return guid;
     }

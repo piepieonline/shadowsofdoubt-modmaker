@@ -19,6 +19,7 @@ import { applyDefaultValueVisibility, setNewFileMode, setNewFileSource } from '.
 import { NEW_SUFFIX, PATCH_SUFFIX, moddedNamesOfType, modFileOfAsset, modFileOfStem } from './scripts/contentList.js';
 import { applyPatches, diffToPatches, ENVELOPE_KEYS, isPatchFormat, mergeOldFormat, patchFile } from '../../core/patchFormat.js';
 import { resolveReferences } from '../../core/soReferences.js';
+import { parseJSON, stringifyJSON } from '../../core/jsonNumbers.js';
 import { ASSET_DATA, readBaseAsset } from '../../core/baseAssets.js';
 
 export const DUMMY_KEYS = {
@@ -78,7 +79,7 @@ export async function openContentFolder() {
 async function openManifest() {
     const folder = window.selectedMod?.baseFolder;
     const handle = folder ? await tryGetFile(folder, [MANIFEST_FILE]) : null;
-    const contents = handle ? await readFileContent(handle) : JSON.stringify(blankManifest(), null, 2);
+    const contents = handle ? await readFileContent(handle) : stringifyJSON(blankManifest(), null, 2);
 
     await loadFileContent(MANIFEST_FILE, contents, false);
 }
@@ -161,7 +162,7 @@ export async function loadFileFromFolder(path, folderHandle, readOnly, type, sou
  *              owed an explanation.
  */
 export async function loadFileFromOnlineRepo(path, type, { quiet = false } = {}) {
-    const response = await fetch(new URL(path, ASSET_DATA));
+    const response = await fetch(`${ASSET_DATA}${path}`);
 
     if (!response.ok) {
         if (!quiet) alert(`${path} is not among the base game assets included with this tool`);
@@ -319,7 +320,7 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
     try {
         // Unity's references named, which is the shape everything downstream deals in --
         // and the shape a patch is diffed in, so the base goes through the same door.
-        data = resolveReferences(JSON.parse(loadedFile), window.pathIdMap);
+        data = resolveReferences(parseJSON(loadedFile), window.pathIdMap);
     } catch {
         alert(`${path} is not valid JSON, so there is nothing here to open.`);
         return;
@@ -471,7 +472,7 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
             if (!handle) return null;
 
             try {
-                target = refTarget(JSON.parse(await readFileContent(handle))?.[COPY_FROM_FIELD]);
+                target = refTarget(parseJSON(await readFileContent(handle))?.[COPY_FROM_FIELD]);
             } catch {
                 // A file that will not parse states no baseline.
                 return null;
@@ -979,7 +980,7 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
         if (!handle) return null;
 
         try {
-            return JSON.parse(await readFileContent(handle))?.fileType === fileType ? bare : null;
+            return parseJSON(await readFileContent(handle))?.fileType === fileType ? bare : null;
         } catch {
             // A file that will not parse claims no type, so it is not this asset's twin.
             return null;
@@ -1042,7 +1043,7 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
      */
     const overriddenFields = () =>
         [...new Set([...Object.keys(baseDocument ?? {}), ...Object.keys(data)])]
-            .filter((key) => JSON.stringify(data[key]) !== JSON.stringify(baseDocument?.[key]));
+            .filter((key) => stringifyJSON(data[key]) !== stringifyJSON(baseDocument?.[key]));
 
     /**
      * Choose what this document overrides, which is a different question for each kind of
@@ -1232,7 +1233,7 @@ export async function loadFileContent(path, loadedFile, readOnly, type, source =
             return item.parent.isRoot;
         }, item => {
             let itemLabel = item.label;
-            if(itemLabel in unchanged && JSON.stringify(data[itemLabel]) === JSON.stringify(unchanged[itemLabel]))
+            if(itemLabel in unchanged && stringifyJSON(data[itemLabel]) === stringifyJSON(unchanged[itemLabel]))
             {
                 item.el.classList.add('default-value-node');
             }

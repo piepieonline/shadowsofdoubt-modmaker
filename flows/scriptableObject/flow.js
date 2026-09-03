@@ -1,5 +1,8 @@
 import { WindowPolicy } from '../../core/treeWindow.js';
 
+// See the note in flows/dds/flow.js: hashed by the bundler, swapped in by applyStyles.
+import styleUrl from './new_style.css?url';
+
 /**
  * ScriptableObject case files: murder cases and the presets they reference,
  * described by the game's own type layout.
@@ -22,7 +25,7 @@ export default {
     requiredFolders: ['modDir'],
 
     template: '#flow-template-scriptableObject',
-    styles: ['./flows/scriptableObject/new_style.css'],
+    styles: [styleUrl],
 
     /**
      * Loaded on activation, not at page load. Importing either flow's UI eagerly

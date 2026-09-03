@@ -48,6 +48,7 @@ import { ensureListed } from '../../../core/murderManifest.js';
 import { assetNameOf, fileNameFor, PRESET_SUFFIX } from '../../../core/soFileName.js';
 import { pathIdMap } from '../../../core/baseAssets.js';
 import { refName } from './furnitureOverlay.js';
+import { parseJSON, stringifyJSON } from '../../../core/jsonNumbers.js';
 
 /**
  * The game's own default for every BuildingPreset field, which is what "default-valued"
@@ -105,8 +106,17 @@ export function blueprintName(entry) {
     return path.slice(path.lastIndexOf('/') + 1);
 }
 
-/** Where the base game's copies live, shipped with the app. */
-const REF_ROOT = '/refs/floors';
+/**
+ * Where the base game's copies live, shipped with the app.
+ *
+ * Built from the base the app was compiled for, not from a page-absolute path and not
+ * from this module's own URL. A page-absolute `/refs/floors` assumes the app is mounted
+ * at the server root, which a GitHub Pages project site is not. Resolving against
+ * `import.meta.url` is worse in a way that hides: the bundler leaves the expression alone,
+ * so it resolves against the built chunk in `assets/` and every floor 404s -- and only in
+ * the build, never in dev.
+ */
+const REF_ROOT = `${import.meta.env.BASE_URL}refs/floors/`;
 
 /**
  * Fields a stub always states, however ordinary their values.
@@ -125,19 +135,19 @@ let indexPromise = null;
 
 /** Which blueprints and buildings ship with the app. Fetched once per page. */
 export function loadFloorIndex() {
-    indexPromise ??= fetch(`${REF_ROOT}/index.json`).then((response) => response.json());
+    indexPromise ??= fetch(`${REF_ROOT}index.json`).then((response) => response.json());
     return indexPromise;
 }
 
 /** A base game building preset, in the game's dumped shape. */
 export async function loadVanillaPreset(name) {
-    const response = await fetch(`${REF_ROOT}/buildings/${encodeURIComponent(name)}.json`);
+    const response = await fetch(`${REF_ROOT}buildings/${encodeURIComponent(name)}.json`);
     return response.ok ? response.json() : null;
 }
 
 /** A base game floor blueprint. */
 export async function loadVanillaBlueprint(name) {
-    const response = await fetch(`${REF_ROOT}/blueprints/${encodeURIComponent(name)}.json`);
+    const response = await fetch(`${REF_ROOT}blueprints/${encodeURIComponent(name)}.json`);
     return response.ok ? response.json() : null;
 }
 
@@ -819,7 +829,7 @@ export async function writeCustomPreset(contentFolder, name, preset, { alsoWritt
     const fileName = existing?.fileName ?? fileNameFor(name, BUILDING_TYPE);
 
     const handle = existing?.handle ?? await getFile(contentFolder, [fileName], true);
-    await writeFile(handle, `${JSON.stringify(written, null, 2)}\n`);
+    await writeFile(handle, `${stringifyJSON(written, null, 2)}\n`);
 
     // The manifest lists files, so it is the file's name that goes in it.
     await ensureListed(contentFolder, fileName.slice(0, -PRESET_SUFFIX.length));
@@ -886,7 +896,7 @@ function pointAtModFloors(preset, held) {
 export async function writeCustomBlueprint(contentFolder, name, floorData) {
     const floors = await getFolder(contentFolder, [FLOORS_DIR], true);
     const handle = await getFile(floors, [`${name}.json`], true);
-    await writeFile(handle, `${JSON.stringify(floorData)}\n`);
+    await writeFile(handle, `${stringifyJSON(floorData)}\n`);
     return handle;
 }
 
@@ -995,13 +1005,13 @@ async function readJson(handle) {
     const text = await readFileContent(handle);
 
     try {
-        return JSON.parse(text);
+        return parseJSON(text);
     } catch {
         return null;
     }
 }
 
-const clone = (value) => JSON.parse(JSON.stringify(value));
+const clone = (value) => structuredClone(value);
 
 /** Deep equality by value, which is all that comparing against a default needs. */
-const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const same = (a, b) => stringifyJSON(a) === stringifyJSON(b);

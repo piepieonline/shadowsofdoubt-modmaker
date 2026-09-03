@@ -23,6 +23,7 @@
  * the link: the documents whose lines were in it. Those are what get listed.
  */
 import { readFileContent, removeFile, tryGetFolder } from '../../../core/fs.js';
+import { parseJSON } from '../../../core/jsonNumbers.js';
 import { confirmDelete } from '../../../core/deletion.js';
 import {
     DDS_CONTENT_ROOT, ddsContentFolder, isActive, readManifest, stringsFileHandle,
@@ -64,7 +65,7 @@ const vanillaName = (id) => window.ddsMap?.idNameMap?.[id] ?? null;
 function labelFor(fileName, text) {
     let named = null;
     try {
-        named = JSON.parse(text)?.name ?? null;
+        named = parseJSON(text)?.name ?? null;
     } catch {
         named = null;
     }

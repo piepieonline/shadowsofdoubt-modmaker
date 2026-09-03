@@ -80,10 +80,10 @@ disk will not work — it must be served.
 
 ```sh
 npm install
-npm run serve      # http://127.0.0.1:8080, localhost only
+npm run dev        # https://127.0.0.1:8123, localhost only
 ```
 
-Then open `http://127.0.0.1:8080/`. The old per-flow URLs still work and redirect.
+Then open `http://127.0.0.1:8123/`. The old per-flow URLs still work and redirect.
 
 `http://127.0.0.1` and `http://localhost` are secure contexts, so plain HTTP is sufficient when testing on
 the same machine. **To reach the app from another device** (e.g. a Windows box with the game installed) you
@@ -91,11 +91,23 @@ need HTTPS — a LAN IP over plain HTTP is *not* a secure context, so `showDirec
 and every flow would die at the first folder prompt:
 
 ```sh
-openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365 -subj "/CN=localhost"
-npm run serve:lan   # binds all interfaces over HTTPS
+npm run dev:lan    # binds all interfaces over HTTPS, making a cert first if there is none
 ```
 
+It prints the LAN URL to open. The certificate is self-signed, so the browser will warn once.
+
 Requires a Chromium-based browser — Firefox and Safari do not implement the File System Access API.
+
+### Building
+
+```sh
+npm run build           # dist/,         for GitHub Pages under /shadowsofdoubt-modmaker/
+npm run build:desktop   # dist-desktop/, document-relative, for the Electron shell
+npm run preview         # serve dist/ exactly as Pages will
+```
+
+The tests run against the dev server rather than a build, so `preview` is worth a look after changing
+anything about how assets are resolved — that is the one gap the suites do not cover.
 
 ## Demo mode
 
@@ -103,8 +115,8 @@ Requires a Chromium-based browser — Firefox and Safari do not implement the Fi
 folder, no folder prompt. It exists for trying the UI out, so there is no button for it.
 
 ```sh
-http://127.0.0.1:8080/?demo                    # the default editor
-http://127.0.0.1:8080/?flow=building&demo      # composes with ?flow=
+http://127.0.0.1:8123/?demo                    # the default editor
+http://127.0.0.1:8123/?flow=building&demo      # composes with ?flow=
 ```
 
 It seeds the Origin Private File System and hands the shell genuine browser-native
@@ -150,8 +162,8 @@ tool does to a node.
 > a `document`. If a test needs one of the three, it belongs in the Playwright suite. `environment: 'node'`
 > makes the third of those a hard failure rather than a matter of discipline.
 
-The single exception is `fetch` for `/refs/**` (`test-support/refs.js`), which serves the same files
-`http-server` does from the same paths. It is not a mock of anything, and nothing else is stubbed.
+The single exception is `fetch` for `/refs/**` (`test-support/refs.js`), which serves the same files the
+dev server does from the same paths. It is not a mock of anything, and nothing else is stubbed.
 
 **Playwright specs live in `tests/`**, named `*.spec.js`, and drive the real app in a real page. This is the
 app's own coverage, a feature at a time, and it is what `npm test` runs.
@@ -166,10 +178,19 @@ than about the app, so they have a config of their own (`playwright.e2e.config.j
 | | Tests | Wall clock |
 |---|---:|---:|
 | Unit (Vitest) | 1065 | ~3s |
-| Playwright (`tests/`) | 685 | ~3min |
+| Playwright (`tests/`) | 688 | ~4min |
 | Walkthroughs (`e2e/`) | 2 | ~25s |
+| Build (`tests-build/`) | 7 | ~5s |
 
-The app stays zero-build: npm is only needed for tests and the dev server, never to use or deploy the site.
+`tests/` and `e2e/` run against the Vite dev server, which serves source at the paths the specs use --
+several reach into a module directly with `import('/flows/...')`. That is what keeps a failure pointing at a
+file, and it is also why those suites cannot see anything the *build* gets wrong.
+
+**`tests-build/` is the check for that.** It builds, serves `dist/` under the project base the way Pages
+does, and asserts the seam between source and artifact: that asset URLs resolve, that the side-effect-only
+vendor imports survived, that the stylesheets are still concatenated in cascade order, that `refs/` is
+served and a missing asset 404s, and that nothing reaches another origin. Each of those broke at least once
+while the build was being put in, with every spec in `tests/` still passing. Run with `npm run test:build`.
 
 Playwright tests never touch your real filesystem. `showDirectoryPicker` cannot be driven by Playwright, so the harness
 (`test-support/harness.js`) seeds the Origin Private File System and hands the app genuine browser-native

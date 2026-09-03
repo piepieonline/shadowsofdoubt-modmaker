@@ -22,12 +22,33 @@ test('a clone is a copy all the way down, not a second reference', () => {
     expect(template.nested.deep.value).toBe(1);
 });
 
-test('a clone goes through JSON, so what JSON drops is dropped', () => {
-    // Worth stating rather than discovering: templates are JSON files, so nothing here
-    // ever carries a function or an undefined -- but a caller reaching for this to copy
-    // a live object would lose both silently.
-    const copy = deepClone({ kept: 1, gone: undefined, alsoGone: () => {} });
+/**
+ * This used to go through JSON and pinned what JSON dropped -- an `undefined` property and
+ * a function, both silently. It is `structuredClone` now, because the JSON round trip also
+ * wrote `null` for Unity's `Infinity` and this is what `applyPatches` and `diffToPatches`
+ * copy a base document with. See core/jsonNumbers.js.
+ *
+ * The old comment here called the silent loss out as the hazard, and that is what changes:
+ * `undefined` survives, and a function throws where it used to vanish.
+ */
+test('a clone keeps what JSON would have dropped', () => {
+    const copy = deepClone({ kept: 1, held: undefined });
 
-    expect(copy).toEqual({ kept: 1 });
-    expect(Object.keys(copy)).toEqual(['kept']);
+    expect(Object.keys(copy)).toEqual(['kept', 'held']);
+    expect(copy.held).toBeUndefined();
+});
+
+test('a clone of something JSON cannot hold fails loudly rather than silently', () => {
+    // Templates are parsed from JSON files, so nothing here carries a function. If that
+    // stops being true, this is the failure that says so -- where the JSON round trip
+    // would have dropped it and left a template quietly missing a field.
+    expect(() => deepClone({ alsoGone: () => {} })).toThrow();
+});
+
+test('a clone carries an infinite number, which is why it is not a JSON round trip', () => {
+    // The five JobPreset assets hold one in an AnimationCurve. Cloned to null, a patch
+    // made against one of them replaced the game's value with nothing.
+    expect(deepClone({ outSlope: Infinity })).toEqual({ outSlope: Infinity });
+    expect(deepClone({ outSlope: -Infinity }).outSlope).toBe(-Infinity);
+    expect(JSON.parse(JSON.stringify({ outSlope: Infinity }))).toEqual({ outSlope: null });
 });

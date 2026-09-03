@@ -9,6 +9,7 @@
  * silently overwrote its manifest and preset.
  */
 import { getFile, tryGetFile, writeFile } from './fs.js';
+import { stringifyJSON } from './jsonNumbers.js';
 
 /**
  * Create a file only if it does not already exist. Returns the handle either way,
@@ -24,7 +25,7 @@ export async function createFileIfMissing(folder, pathSegments, buildContent) {
     if (existing) return existing;
 
     const handle = await getFile(folder, [...pathSegments], true);
-    await writeFile(handle, JSON.stringify(await buildContent()));
+    await writeFile(handle, stringifyJSON(await buildContent()));
     return handle;
 }
 
@@ -51,7 +52,21 @@ export async function renameFile(folder, fromName, toName, contents) {
     return true;
 }
 
-/** Structural copy, used wherever a template is instantiated. */
+/**
+ * Structural copy, used wherever a template is instantiated.
+ *
+ * `structuredClone` rather than a JSON round trip, because the round trip writes `null`
+ * for a non-finite number and this is what `applyPatches`, `diffToPatches` and
+ * `overwriteWith` clone a base document with -- so an asset holding Unity's bare
+ * `Infinity` lost it here, after core/jsonNumbers.js had just read it correctly.
+ *
+ * The two differ on values JSON cannot hold: the round trip drops an `undefined` property
+ * and a function, where this keeps the first and throws on the second. That only reaches
+ * a clone whose source is authored in JS rather than parsed from a file, which is
+ * `basicTypeTemplates` in core/refs.js and `TREE_KINDS` in the DDS flow's treeKinds.js.
+ * Both hold plain data. Throwing is also the better failure if that stops being true --
+ * the round trip would drop a computed entry silently.
+ */
 export function deepClone(value) {
-    return JSON.parse(JSON.stringify(value));
+    return structuredClone(value);
 }

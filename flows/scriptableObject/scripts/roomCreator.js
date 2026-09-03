@@ -46,6 +46,7 @@ import {
 } from './roomPlan.js';
 import { scanRooms, choicesFrom } from './roomScan.js';
 import { createStepper } from './creatorSteps.js';
+import { parseJSON, stringifyJSON } from '../../../core/jsonNumbers.js';
 
 const CHAIN_PATH = '/refs/derived/furnitureChain.json';
 const ROOMS_PATH = '/refs/derived/roomCreator.json';
@@ -988,7 +989,12 @@ function drawPlan() {
             clash: ' — already here, and another room’s',
         }[entry.landing];
 
-        row.textContent = `${entry.file}${how}`;
+        // The name as a name, and what happens to it as a reading of that -- a file name is
+        // a thing the author will go looking for in the folder, and it reads as one rather
+        // than as the first few words of a sentence about it.
+        row.append(asFile(entry.file));
+        if (how) row.append(said(how));
+
         list.append(row);
     }
     parts.push(list);
@@ -1066,7 +1072,7 @@ export async function readRoomFiles(folder) {
 
             let raw = null;
             try {
-                raw = JSON.parse(await readFileContent(entry));
+                raw = parseJSON(await readFileContent(entry));
             } catch {
                 // A file being edited, or one that is not JSON at all. Neither is a
                 // reason to show no rooms.
@@ -1249,7 +1255,7 @@ export async function writeRoom() {
         if (!handle) continue;
 
         try {
-            onDisk.set(entry.file, JSON.parse(await readFileContent(handle)));
+            onDisk.set(entry.file, parseJSON(await readFileContent(handle)));
         } catch {
             onDisk.set(entry.file, null);
         }
@@ -1327,7 +1333,7 @@ export async function writeRoom() {
 
         let existing = null;
         try {
-            existing = JSON.parse(await readFileContent(handle));
+            existing = parseJSON(await readFileContent(handle));
         } catch {
             refused.push(`${file} still admits this room but will not parse`);
             continue;
@@ -1344,7 +1350,7 @@ export async function writeRoom() {
 
     for (const item of staged) {
         const handle = await getFile(folder, [item.entry.file], true);
-        await writeFile(handle, `${JSON.stringify(item.content, null, 2)}\n`);
+        await writeFile(handle, `${stringifyJSON(item.content, null, 2)}\n`);
     }
 
     // A patch left with no operations is a file saying nothing, so it goes rather than
@@ -1353,7 +1359,7 @@ export async function writeRoom() {
         if (item.empty) await removeFile(folder, [item.file]);
         else {
             const handle = await getFile(folder, [item.file], true);
-            await writeFile(handle, `${JSON.stringify(item.content, null, 2)}\n`);
+            await writeFile(handle, `${stringifyJSON(item.content, null, 2)}\n`);
         }
     }
 
@@ -1379,7 +1385,7 @@ export async function writeRoom() {
     }
 
     const handle = await getFile(folder, [MANIFEST_FILE], true);
-    await writeFile(handle, `${JSON.stringify(manifest, null, 2)}\n`);
+    await writeFile(handle, `${stringifyJSON(manifest, null, 2)}\n`);
 
     const written = staged.length - appended.length;
     const parts = [`${written} files written`];
@@ -1450,6 +1456,21 @@ function note(text, kind = 'plain') {
     const element = document.createElement('small');
     element.className = `room-creator-note room-creator-note-${kind}`;
     element.setAttribute('role', 'status');
+    element.textContent = text;
+    return element;
+}
+
+/** A file name in the plan, set apart from the prose around it. */
+function asFile(text) {
+    const element = document.createElement('code');
+    element.textContent = text;
+    return element;
+}
+
+/** What the plan says about the file beside it. */
+function said(text) {
+    const element = document.createElement('span');
+    element.className = 'creator-plan-how';
     element.textContent = text;
     return element;
 }

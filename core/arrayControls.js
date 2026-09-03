@@ -15,11 +15,12 @@
  * a prompt for a GUID in the DDS flow, a template built from the game's type layout in
  * the case flow.
  *
- * `jsonpatch` is a global from libs/JSON-Patch, loaded as a classic script.
+ * `jsonpatch` is a global published by core/vendorGlobals.js.
  */
 import { fastElement } from './dom.js';
 import { getJSONPointer } from './jsonPointer.js';
 import { requireModSelected } from './persistence.js';
+import { parseJSON, stringifyJSON } from './jsonNumbers.js';
 
 /** The class the button row carries, so a re-decorated node can find its own. */
 export const CONTROLS_CLASS = 'array-controls';
@@ -95,7 +96,7 @@ export function interpretPaste(text, { intoArray }) {
 
     let value;
     try {
-        value = JSON.parse(text);
+        value = parseJSON(text);
     } catch (error) {
         return {
             ok: false,
@@ -170,7 +171,7 @@ async function readClipboard(what) {
 export function decorateArrayNodes(tree, {
     applyPatch,
     getDocument,
-    serialize = (value) => JSON.stringify(value, null, 2),
+    serialize = (value) => stringifyJSON(value, null, 2),
     addElement = null,
     canAdd = () => true,
     readOnly = false,

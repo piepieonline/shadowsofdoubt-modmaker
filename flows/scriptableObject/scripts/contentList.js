@@ -24,6 +24,7 @@ import { readFileContent } from '../../../core/fs.js';
 import { readManifest, isListed } from '../../../core/murderManifest.js';
 import { assetNameOf, PATCH_SUFFIX, PRESET_SUFFIX } from '../../../core/soFileName.js';
 import { permissionOnly } from './roomPermissions.js';
+import { parseJSON } from '../../../core/jsonNumbers.js';
 
 export const NEW_SUFFIX = PRESET_SUFFIX;
 export { PATCH_SUFFIX };
@@ -74,7 +75,7 @@ function buildAssetTypeIndex() {
 async function identify(entry, name, isPatch, assetTypes) {
     let parsed = null;
     try {
-        parsed = JSON.parse(await readFileContent(entry));
+        parsed = parseJSON(await readFileContent(entry));
     } catch {
         parsed = null;
     }

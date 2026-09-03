@@ -21,6 +21,7 @@ import { moddedNamesOfType } from '../scriptableObject/scripts/contentList.js';
 import { createNewFile, createFileIfNotExisting, addOrModifyStrings, modPath } from './scripts/modFileManager.js';
 import { DDS_BLOCKS_VIRTUAL, ddsContentFolder, readManifest, stringsFileHandle, toReal } from '../../core/ddsManifest.js';
 import { applyViewVisibility, newFile, refreshPanel } from './scripts/ui.js';
+import { parseJSON } from '../../core/jsonNumbers.js';
 
 export const DUMMY_KEYS = {
     'LOCALISATION_DUMMY_KEY': '_ENG Localisation_',
@@ -140,12 +141,12 @@ export async function loadFile(path, thisTreeCount, parentData = null, openThese
     var patchDataFile = window.selectedMod != null ? (await (await (await tryGetFile(window.selectedMod.baseFolder, modPath(path + '_patch')))?.getFile())?.text()) : null;
     
     if (vanillaDataFile != null) {
-        data = JSON.parse(vanillaDataFile);
+        data = parseJSON(vanillaDataFile);
         if (patchDataFile != null) {
-            data = jsonpatch.applyPatch(data, JSON.parse(patchDataFile)).newDocument;
+            data = jsonpatch.applyPatch(data, parseJSON(patchDataFile)).newDocument;
         }
     } else {
-        data = JSON.parse(await (await (await tryGetFile(window.selectedMod.baseFolder, modPath(path)))?.getFile())?.text());
+        data = parseJSON(await (await (await tryGetFile(window.selectedMod.baseFolder, modPath(path)))?.getFile())?.text());
     }
     
     // Show actual text

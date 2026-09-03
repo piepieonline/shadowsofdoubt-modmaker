@@ -18,6 +18,7 @@ import { readFileContent, removeFile } from '../../../core/fs.js';
 import { confirmDelete } from '../../../core/deletion.js';
 import { MANIFEST_FILE, removeListing } from '../../../core/murderManifest.js';
 import { PATCH_SUFFIX, PRESET_SUFFIX } from '../../../core/soFileName.js';
+import { parseJSON } from '../../../core/jsonNumbers.js';
 
 /**
  * A `REF:`, split into the type it names and the asset.

@@ -10,10 +10,12 @@
  *                 '<path>_patch', which the DDS Loader applies at runtime. Files the
  *                 mod itself created have no vanilla counterpart and are written whole.
  *
- * `jsonpatch` is a global from libs/JSON-Patch, loaded as a classic script.
+ * `jsonpatch` is a global published by core/vendorGlobals.js.
  */
 import { autosaveEnabled } from './autosave.js';
 import { tryGetFile, writeFile } from './fs.js';
+import { parseJSON, stringifyJSON } from './jsonNumbers.js';
+import { compareWithValues } from './patchFormat.js';
 
 /**
  * Saving needs somewhere to write. Says so if there is nowhere.
@@ -47,10 +49,14 @@ export function shouldSave(force) {
  * `dummyKeys` maps NAME -> actual key, so the keys to strip are its *values*. Using
  * Object.keys here meant nothing was ever stripped, and the DDS flow's resolved
  * English text leaked into every block it saved.
+ *
+ * Serialised through core/jsonNumbers.js, which composes this replacer with its own: a
+ * document carrying Unity's bare `Infinity` was written back with a null in its place,
+ * and in a patch that is an operation replacing the game's value with nothing.
  */
 export function toSaveSafeJSON(data, dummyKeys) {
     const displayOnly = Object.values(dummyKeys);
-    return JSON.stringify(data, (key, value) => (displayOnly.includes(key) ? undefined : value), 2);
+    return stringifyJSON(data, (key, value) => (displayOnly.includes(key) ? undefined : value), 2);
 }
 
 /** Write the document as-is. */
@@ -58,8 +64,14 @@ export async function writeWholeFile(folder, pathSegments, contents) {
     await writeFile(await tryGetFile(folder, pathSegments, true), contents, false);
 }
 
-/** Write a JSON Patch describing how the document differs from the vanilla file. */
+/**
+ * Write a JSON Patch describing how the document differs from the vanilla file.
+ *
+ * Compared through `compareWithValues` rather than `jsonpatch.compare`, which builds every
+ * object-valued operation with a JSON round trip of its own and so writes `null` where the
+ * document holds one of Unity's infinities. See core/patchFormat.js.
+ */
 export async function writePatchAgainstVanilla(folder, pathSegments, vanillaText, contents) {
-    const patch = jsonpatch.compare(JSON.parse(vanillaText), JSON.parse(contents));
-    await writeFile(await tryGetFile(folder, pathSegments, true), JSON.stringify(patch), false);
+    const patch = compareWithValues(parseJSON(vanillaText), parseJSON(contents));
+    await writeFile(await tryGetFile(folder, pathSegments, true), stringifyJSON(patch), false);
 }

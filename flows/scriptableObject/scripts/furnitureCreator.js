@@ -44,6 +44,7 @@ import {
     readManifest, blankManifest, withListing, MANIFEST_FILE,
 } from '../../../core/murderManifest.js';
 import { createStepper } from './creatorSteps.js';
+import { parseJSON, stringifyJSON } from '../../../core/jsonNumbers.js';
 
 /**
  * What each step is for, said in the footer while it is being read.
@@ -842,19 +843,31 @@ export function furnitureSubObjectChanged() {
 }
 
 /**
- * Take the marked sub-object off.
+ * Take one sub-object off, named rather than inferred from what is marked.
  *
- * The selection goes with it rather than moving to a neighbour: the index the pane held
- * now points at something else, and a marker that jumps to a different object under a
- * button labelled "remove" is worse than one that goes.
+ * It used to remove whatever the editor was showing, from a button under the editor. Which
+ * meant marking a row before it could go -- and marking is what moves the 3D view, so
+ * taking three of five off walked the camera around the model on the way. The row carries
+ * its own now, and this takes the index it was drawn with.
+ *
+ * The marker follows the object rather than the index. Removing the one that is marked
+ * clears it -- the index would point at a different object, and a marker that jumps under
+ * a press meaning "remove" is worse than one that goes -- but removing anything else leaves
+ * the marked object marked, which is what shifting the index down does.
  */
-export function removeFurnitureSubObject() {
+export function removeFurnitureSubObject(index, parented) {
     const edits = editable();
-    if (!edits || !state.selected) return;
+    if (!edits) return;
 
-    const list = state.selected.parented ? edits.parented : edits.placed;
-    list.splice(state.selected.index, 1);
-    state.selected = null;
+    const list = parented ? edits.parented : edits.placed;
+    if (!list[index]) return;
+
+    list.splice(index, 1);
+
+    if (state.selected?.parented === parented) {
+        if (state.selected.index === index) state.selected = null;
+        else if (state.selected.index > index) state.selected.index -= 1;
+    }
 
     redrawEdits();
 }
@@ -1019,19 +1032,22 @@ export function addFurnitureInteractable() {
 }
 
 /**
- * Take the marked one off.
+ * Take one off, named rather than inferred from what is marked.
  *
- * The mark goes with it rather than moving to a neighbour, for the reason
- * `removeFurnitureSubObject` gives: the index now points at something else.
+ * The row carries its own cross, for the reason the sub-object rows do -- and the mark
+ * follows the entry rather than the index, so removing the first of three leaves the third
+ * one open in the editor instead of quietly swapping it for the second.
  */
-export function removeFurnitureInteractable() {
+export function removeFurnitureInteractable(index) {
     if (!canEditInteractables()) return;
 
     const edits = editable();
-    if (!edits || state.interactable === null) return;
+    if (!edits || !edits.interactables[index]) return;
 
-    edits.interactables.splice(state.interactable, 1);
-    state.interactable = null;
+    edits.interactables.splice(index, 1);
+
+    if (state.interactable === index) state.interactable = null;
+    else if (state.interactable > index) state.interactable -= 1;
 
     redrawEdits();
 }
@@ -1297,7 +1313,11 @@ function subObjectRow(sub, index, parented) {
         : `${vector(sub.pos)}${turned(sub.rot) ? `, turned ${turned(sub.rot)}` : ''}`;
 
     button.append(name, where);
-    row.append(button);
+    row.append(button, removeRowButton(
+        `Remove ${sub.class}`,
+        `Take this ${sub.class} off the model`,
+        () => removeFurnitureSubObject(index, parented),
+    ));
 
     const detail = [];
     if (sub.owner !== 'nobody') detail.push(sub.owner === 'everybody' ? 'anyone’s' : `${sub.owner}’s`);
@@ -1377,6 +1397,23 @@ function interactableRow(entry, index) {
 
     button.append(name, where);
     row.append(button);
+
+    // Only where the prefab was read. Without it the list is a reading of a shipped asset
+    // rather than something to change, and a cross on a row nothing can edit is a control
+    // that refuses every press. See `canEditInteractables`.
+    if (canEditInteractables()) {
+        // Named by its pairing as well as its preset. Two entries creating the same thing
+        // at two controllers is the ordinary case -- `HotelDesk` ships exactly that -- so
+        // the preset name alone would give a list of identically labelled crosses.
+        const what = `${entry.preset ?? 'this interactable'}`
+            + `${entry.controller === 'none' ? '' : ` at ${entry.controller}`}`;
+
+        row.append(removeRowButton(
+            `Remove ${what}`,
+            `Take ${what} out of this piece of furniture`,
+            () => removeFurnitureInteractable(index),
+        ));
+    }
 
     const detail = [];
     if (entry.owner !== 'nobody') {
@@ -1573,7 +1610,9 @@ function drawInteractableEditor(fill = true) {
     const meaning = $('#furniture-creator-interactable-meaning');
     if (meaning) meaning.textContent = explainInteractable(entry);
 
-    for (const id of ['preset', 'controller', 'owner', 'remove']) {
+    // No `remove` in this list any more: taking one off is a cross on its row, and a row
+    // that cannot be edited is not given one -- see `interactableRow`.
+    for (const id of ['preset', 'controller', 'owner']) {
         const control = $(`#furniture-creator-interactable-${id}`);
         if (control) control.disabled = !changeable;
     }
@@ -1918,10 +1957,13 @@ function drawPlan() {
         const here = entry.landing === 'clash';
         const row = document.createElement('li');
 
-        row.textContent = `${entry.file}${!here ? ' — new'
+        // The name as a name, and what happens to it as a reading of that -- a file name is
+        // a thing the author will go looking for in the folder, and it reads as one rather
+        // than as the first few words of a sentence about it.
+        row.append(asFile(entry.file), said(!here ? ' — new'
             : !own.has(entry.file) ? ' — already here, and something else’s'
                 : entry.createOnly ? ' — already here, and left alone'
-                    : ' — already here, and the fields this pane owns updated in it'}`;
+                    : ' — already here, and the fields this pane owns updated in it'));
 
         list.append(row);
     }
@@ -2142,7 +2184,7 @@ export async function writeFurniture() {
         onDisk.add(entry.file);
 
         try {
-            held.set(entry.file, JSON.parse(await readFileContent(handle)));
+            held.set(entry.file, parseJSON(await readFileContent(handle)));
         } catch {
             unreadable.push(entry.file);
         }
@@ -2184,7 +2226,7 @@ export async function writeFurniture() {
         const handle = await getFile(folder, [entry.file], true);
         const content = mergeFile(entry, held.get(entry.file) ?? null);
 
-        await writeFile(handle, `${JSON.stringify(content, null, 2)}\n`);
+        await writeFile(handle, `${stringifyJSON(content, null, 2)}\n`);
         written.push(entry.file);
     }
 
@@ -2203,7 +2245,7 @@ export async function writeFurniture() {
     for (const entry of plan.order) manifest = withListing(manifest, entry);
 
     const handle = await getFile(folder, [MANIFEST_FILE], true);
-    await writeFile(handle, `${JSON.stringify(manifest, null, 2)}\n`);
+    await writeFile(handle, `${stringifyJSON(manifest, null, 2)}\n`);
 
     // Re-read and redraw before saying anything: `drawPlan` replaces this pane wholesale,
     // so a note put up before it runs is one the author never sees.
@@ -2375,11 +2417,9 @@ function drawRuleEditor(rule) {
     const panel = $('#furniture-creator-rule-editor');
     if (!panel) return;
 
-    // The two that need something to act on. Adding no longer needs one -- it is on the
-    // tiles -- but Revert has to be reachable when nothing at all is marked.
-    const remove = $('#furniture-creator-rule-remove');
-    if (remove) remove.disabled = !rule;
-
+    // Revert acts on the whole class rather than on one rule, so it is outside this panel
+    // and has to be reachable when nothing at all is marked. Remove is inside, where the
+    // rule it takes away is described.
     const revert = $('#furniture-creator-rule-revert');
     if (revert) revert.disabled = !state.placement;
 
@@ -2392,8 +2432,18 @@ function drawRuleEditor(rule) {
     $('#furniture-creator-rule-node').hidden = kind !== 'node';
     $('#furniture-creator-rule-block').hidden = kind !== 'block';
 
+    const said = kind === 'block' ? explainBlock(rule) : explainRule(rule);
+
     const meaning = $('#furniture-creator-rule-meaning');
-    if (meaning) meaning.textContent = kind === 'block' ? explainBlock(rule) : explainRule(rule);
+    if (meaning) meaning.textContent = said;
+
+    // Named after the rule rather than "remove": a cross whose whole label is a cross says
+    // nothing to a screen reader about which of a grid's rules it would take off.
+    const remove = $('#furniture-creator-rule-remove');
+    if (remove) {
+        remove.title = `Take this rule off: ${said}`;
+        remove.setAttribute('aria-label', remove.title);
+    }
 
     const kinds = $('#furniture-creator-rule-kind');
     if (kinds && !kinds.options.length) {
@@ -2493,6 +2543,48 @@ function note(text, kind = 'plain', tag = 'small') {
     const element = document.createElement(tag);
     element.className = `room-creator-note room-creator-note-${kind}`;
     if (tag === 'small') element.setAttribute('role', 'status');
+    element.textContent = text;
+    return element;
+}
+
+/**
+ * The cross that takes a row off, drawn at the end of the row it acts on.
+ *
+ * A sibling of the row's own button rather than inside it: the row is a button already --
+ * pressing it marks the sub-object -- and a button within a button is not a thing the
+ * parser will build. The cross is what the building flow's address rows use for the same
+ * act, and the label says which row it is so that a screen reader hears five different
+ * buttons rather than five called "remove".
+ */
+function removeRowButton(label, why, onPress) {
+    const button = document.createElement('button');
+
+    button.type = 'button';
+    button.className = 'furniture-creator-row-remove';
+    button.textContent = '✕';
+    button.title = why;
+    button.setAttribute('aria-label', label);
+
+    button.addEventListener('click', (event) => {
+        // The row behind it marks the sub-object, and this press is not that.
+        event.stopPropagation();
+        onPress();
+    });
+
+    return button;
+}
+
+/** A file name in the plan, set apart from the prose around it. */
+function asFile(text) {
+    const element = document.createElement('code');
+    element.textContent = text;
+    return element;
+}
+
+/** What the plan says about the file beside it. */
+function said(text) {
+    const element = document.createElement('span');
+    element.className = 'creator-plan-how';
     element.textContent = text;
     return element;
 }

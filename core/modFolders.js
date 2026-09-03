@@ -19,6 +19,7 @@
 import { readFileContent } from './fs.js';
 import { MANIFEST_FILE, isListed, readManifest } from './murderManifest.js';
 import { PRESET_SUFFIX } from './soFileName.js';
+import { parseJSON } from './jsonNumbers.js';
 
 export { MANIFEST_FILE };
 export const DDS_CONTENT_DIR = 'DDSContent';
@@ -110,7 +111,7 @@ async function namesABuilding(handle, presets) {
         if (!isListed(data, name)) continue;
 
         try {
-            const preset = JSON.parse(await readFileContent(file));
+            const preset = parseJSON(await readFileContent(file));
             if (preset?.fileType === BUILDING_TYPE) return true;
         } catch {
             // A file that will not parse is not a building. One bad file does not stop

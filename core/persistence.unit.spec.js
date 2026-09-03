@@ -42,6 +42,32 @@ test('display keys are dropped wherever they are nested', () => {
     expect(written).toEqual({ messages: [{ msgID: 'A' }, { msgID: 'B' }] });
 });
 
+/**
+ * Unity writes an infinite float as a bare `Infinity`, and `JSON.stringify` writes `null`
+ * for one -- so this wrote a patch operation replacing the game's value with nothing. The
+ * text is asserted rather than the parsed result, because the token is the whole point and
+ * a parse would hide whether it was ever written.
+ */
+test('an infinite number is written as the token the game reads, not as null', () => {
+    const written = toSaveSafeJSON({ outSlope: Infinity, inSlope: -Infinity }, DUMMY_KEYS);
+
+    expect(written).toContain('"outSlope": Infinity');
+    expect(written).toContain('"inSlope": -Infinity');
+    expect(written).not.toContain('null');
+});
+
+test('display keys are still stripped from a document holding one', () => {
+    // The codec composes with this replacer rather than replacing it, and the two had to
+    // be checked together: dropping either job silently is what this file exists about.
+    const written = toSaveSafeJSON({
+        outSlope: Infinity,
+        dummy_englishText: 'Hello there',
+    }, DUMMY_KEYS);
+
+    expect(written).toContain('Infinity');
+    expect(written).not.toContain('dummy_englishText');
+});
+
 test('autosave is opt-out, and an explicit Save always writes', () => {
     // `enabled` starts true in core/autosave.js and is only ever changed through the
     // header switch, which is a page concern -- so the off branch is checked in

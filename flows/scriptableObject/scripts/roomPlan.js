@@ -31,6 +31,7 @@
  */
 import { PATCH_SUFFIX, PRESET_SUFFIX, stemFor, patchFileNameFor } from '../../../core/soFileName.js';
 import { admits, closures, importantElements } from '../../../core/spawnRules.js';
+import { stringifyJSON } from '../../../core/jsonNumbers.js';
 
 /**
  * The four types a room patches, and where the reference data lists each one's names.
@@ -439,7 +440,7 @@ export function mergePatch(existing, planned) {
 
     const has = (operation) => existing.patches.some((each) => each?.op === operation.op
         && each?.path === operation.path
-        && JSON.stringify(each?.value) === JSON.stringify(operation.value));
+        && stringifyJSON(each?.value) === stringifyJSON(operation.value));
 
     // Idempotent on purpose: writing the same room twice should be a no-op on its patches
     // rather than a file with the same operation in it twice.

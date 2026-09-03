@@ -90,10 +90,28 @@ export async function refreshMods({ keepSelection = true } = {}) {
 /** Rebuild the content list for whichever mod is selected. */
 export async function refreshContentFolders({ keepSelection = true } = {}) {
     const modName = document.querySelector(MOD_SELECT).value;
-    const previous = keepSelection ? window.selectedMod?.contentPath : null;
     const mod = mods.find((m) => m.name === modName);
 
     const found = mod ? await findContentFolders(mod) : [];
+
+    // Both selects can be chosen from while this call is on disk, and one of them usually
+    // is: connecting a folder starts a refresh that nothing waits for, and choosing a mod
+    // is the next thing that happens. A call that read the mod before any of that would
+    // come back and rewrite the content list from a page that no longer exists -- filling
+    // it with "Choose a mod first" over the folder just picked, and clearing
+    // `window.selectedMod` with it. Nothing puts either back, so the mod silently unchose
+    // itself. This is the same staleness `refreshMods` guards above, one select along.
+    //
+    // Given up rather than finished with corrected values: the choice that overtook this
+    // one started a refresh of its own, and that one is reading the folder this was asked
+    // about anyway.
+    if (document.querySelector(MOD_SELECT).value !== modName) return;
+
+    // Read here rather than at entry for the same reason. Keeping the selection means the
+    // one there is now -- a content folder chosen while this was waiting is exactly what
+    // there is to keep, and at entry there was nothing to read.
+    const previous = keepSelection ? window.selectedMod?.contentPath : null;
+
     const onDisk = (entry) => entry.modName === modName && found.some((f) => f.path === entry.path);
 
     pending = pending.filter((entry) => !onDisk(entry));

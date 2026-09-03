@@ -650,6 +650,12 @@ export function renderFloorPanel(container, floor, { onOpen, onGenerateMesh, onM
     const { storeys = [], storeyIndex = -1 } = floor;
     const storey = storeys[storeyIndex] ?? null;
 
+    // Both arrows are dead while a floor asked for from here is still arriving. Until it
+    // does, everything this panel was drawn from is the floor being replaced -- including
+    // the index `step` counts from, which is why a second press stepped from the same
+    // place as the first. See `opening` in ui.js.
+    const ready = !floor.opening;
+
     // A floor reached without its building -- one no building refers to -- has nowhere
     // to go up or down to, and neither has one whose slot the building no longer has.
     // The name is still worth showing: it is what says which of the mod's files is being
@@ -663,7 +669,7 @@ export function renderFloorPanel(container, floor, { onOpen, onGenerateMesh, onM
         el('button', {
             type: 'button', class: 'secondary', text: '▲',
             title: 'Open the floor above',
-            ...unless(!!storey && !!storeys[storeyIndex + 1]),
+            ...unless(ready && !!storey && !!storeys[storeyIndex + 1]),
             onclick: () => step(1),
         }),
         el('span', {
@@ -673,7 +679,7 @@ export function renderFloorPanel(container, floor, { onOpen, onGenerateMesh, onM
         el('button', {
             type: 'button', class: 'secondary', text: '▼',
             title: 'Open the floor below',
-            ...unless(!!storey && storeyIndex > 0),
+            ...unless(ready && !!storey && storeyIndex > 0),
             onclick: () => step(-1),
         }),
     ]));
@@ -1123,16 +1129,36 @@ export function renderFloorTypePanel(container, state, { onChange } = {}) {
  */
 export function renderStatusPanel(container, model, state, hovered = null) {
     // The checker's control is kept across this redraw the same way the pickers are, and
-    // is detached by the clear below just as they are -- so it has to be shut for the same
-    // reason, or an open dropdown here costs the *left* column its scrolling. See closeAll
-    // in keptSelects.js. This one is worth knowing about: the column is redrawn on every
-    // pointer move that crosses a square, so the window in which it can happen is wide.
-    checker?.control.close();
+    // is detached by the clear below just as they are. Open *and* detached is the state
+    // that must not happen: select2 unbinds the scroll handler it holds on every
+    // scrollable ancestor by walking them again at close, so a control closed out of the
+    // document never unbinds and the left column stops scrolling for the life of the
+    // page. See closeAll in keptSelects.js and `close` in searchSelect.js.
+    //
+    // Shutting it was how that used to be avoided, and it cost the author their list. The
+    // window is wide and it is not only the pointer: the column is redrawn on every move
+    // that crosses a square, and again by work that lands long after the floor opened --
+    // `loadFurnitureChain` in openFloor is deferred precisely so the floor appears first,
+    // so its redraw arrives whenever the fetch and the mod read happen to finish. Asking
+    // about a preset while one was in flight lost the dropdown mid-question.
+    //
+    // So an open list is parked on the column instead of being shut. That is out of the
+    // way of the clear and still in the document, which is all the unbind walk needs --
+    // `#building-status` is a plain child of `#building-left`, so the scrollable ancestor
+    // it was opened against is the one it is parked in. `settleChecker` below puts the
+    // question beyond doubt: either the redraw took the box back, or it is shut where it
+    // stands rather than left hanging off the column.
+    // Only where there is somewhere to park it. A container already out of the document is
+    // not a column anything is being read off, and shutting the list is what this did before.
+    const held = checker?.control.isOpen() && container.parentElement ? checker : null;
+    if (held) container.parentElement.appendChild(held.box);
+    else checker?.control.close();
 
     clear(container);
 
     if (!model) {
         container.appendChild(el('p', { class: 'empty', text: 'No floor open.' }));
+        settleChecker(held, container);
         return;
     }
 
@@ -1182,6 +1208,30 @@ export function renderStatusPanel(container, model, state, hovered = null) {
     }
 
     container.appendChild(under);
+
+    settleChecker(held, container);
+}
+
+/**
+ * Account for a checker whose list was parked through the redraw.
+ *
+ * Two ways it can end. The redraw had a square to answer for, `appendFurniture` asked for
+ * the checker again, and moving it into the new section took it off the column -- there is
+ * nothing to do, and the list the author is reading never flickered.
+ *
+ * Or the redraw had nothing to put it in: no floor, no selection, or the furniture chain
+ * has not arrived. Then the list is answering for a square that is no longer shown, so it
+ * is shut -- while it is still on the column, because closing it after taking it off is
+ * the detached close the parking exists to avoid.
+ *
+ * Safe to call for a control `furnitureChecker` replaced meanwhile: that path closes and
+ * destroys the old one itself, and both calls below tolerate having already happened.
+ */
+function settleChecker(held, container) {
+    if (!held || container.contains(held.box)) return;
+
+    held.control.close();
+    held.box.remove();
 }
 
 /*
@@ -1449,7 +1499,16 @@ function furnitureChecker(model, at) {
     const parent = dropdownParent();
 
     if (checker?.sections !== sections || checker?.parent !== parent) {
+        // Shut before destroyed, because select2's destroy does not close on the caller's
+        // behalf and the unbind it skips is the one that keeps the left column scrolling
+        // -- see `close` in searchSelect.js. Reachable with the list open now that
+        // renderStatusPanel parks an open one rather than shutting it: a mod changed
+        // while the checker is open replaces the control under it. The box goes too,
+        // since the parked one is no longer the clear's to take away.
+        checker?.control.close();
         checker?.control.destroy();
+        checker?.box.remove();
+
         checker = buildFurnitureChecker(sections, parent);
     }
 

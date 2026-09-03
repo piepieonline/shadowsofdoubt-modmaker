@@ -70,6 +70,7 @@ import soDefaults from '../../../refs/generated/soDefaults.json' with { type: 'j
 // Shared with `../tools/buildFurnitureChain.js`, which reads the game's own assets into
 // the same records. The two readers must not drift -- see `readClass`.
 import { wallRulesOf, stairwellOf } from '../../../core/furnitureRules.js';
+import { parseJSON, stringifyJSON } from '../../../core/jsonNumbers.js';
 
 /** What the mod loader calls a file of each kind. */
 const PRESET_SUFFIX = '.sodso.json';
@@ -182,7 +183,7 @@ export async function readModAssets(contentFolder) {
 
 async function readJson(handle) {
     try {
-        return JSON.parse(await readFileContent(handle));
+        return parseJSON(await readFileContent(handle));
     } catch {
         // A file half-written, or one that is not JSON at all. A mod being edited is
         // full of those, and one of them is not a reason to read none of the others.
@@ -283,7 +284,7 @@ function statedByPatch(base, document) {
     const stated = {};
 
     for (const [field, value] of Object.entries(document)) {
-        if (JSON.stringify(base[field]) !== JSON.stringify(value)) stated[field] = value;
+        if (stringifyJSON(base[field]) !== stringifyJSON(value)) stated[field] = value;
     }
 
     return stated;

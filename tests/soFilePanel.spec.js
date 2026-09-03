@@ -517,6 +517,12 @@ test('deleting a patch removes only the patch', async ({ page }) => {
     // remove the one the entry stands for.
     await deleteButton(page, 'MurderMO', 'ExCopSniper').click();
 
+    // Waited for before the folder is read, as the test above does: a click returns once
+    // the event is dispatched, and the handler behind it reads every file in the folder
+    // before it removes anything. Reading the directory straight after the click races it.
+    await expect(section(page, 'MurderMO').locator('.file-panel-entry[data-id="ExCopSniper"]'))
+        .toHaveCount(0);
+
     const held = await listDir(page, 'Mods/TestCase');
     expect(held).not.toContain('ExCopSniper.sodso_patch.json');
     expect(held).toContain('AnotherMurder.sodso.json');

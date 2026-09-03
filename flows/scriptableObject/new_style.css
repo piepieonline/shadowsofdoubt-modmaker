@@ -393,6 +393,71 @@ ul li {
 }
 
 /*
+ * The regions a pane writes prose and lists into: the file plan in both creators, what a
+ * furniture preset is, and what its placement rules come to.
+ *
+ * Sized here rather than left to inherit. Everything else in the dialog is set in the
+ * 0.78-0.85rem band, but these carried no size of their own, so they came out at Pico's
+ * root size -- which scales *up* with the viewport, to 1.25rem on a wide screen. So the
+ * one column that is only ever read was the one set largest, and the wider the window the
+ * worse it got: a file name is around forty characters and the column is half the pane, so
+ * the rows wrapped while the space beside them stayed empty.
+ */
+.creator-prose {
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+/* The notes are `<small>`, which would take another 0.875 off the size above and read as
+   fine print. A warning about a name clash is not fine print. */
+.creator-prose small {
+    font-size: 1em;
+}
+
+.creator-prose ol,
+.creator-prose ul {
+    margin: 0 0 0.5rem;
+    padding-left: 1.5rem;
+}
+
+.creator-prose li {
+    margin-bottom: 0.1rem;
+}
+
+/* Pico's paragraph spacing is set for a page of prose, and these are short paragraphs in
+   a narrow column where it read as gaps rather than as separation. */
+.creator-prose p {
+    margin-bottom: 0.5rem;
+}
+
+.creator-prose > :last-child {
+    margin-bottom: 0;
+}
+
+/*
+ * A file name, as the thing it is. Pico draws `code` as an inline-block with 0.375rem of
+ * padding all round, which at one per row is a list of buttons rather than of names -- so
+ * the padding comes back to something a name can sit in without setting the rows apart.
+ *
+ * Under .creator-plan rather than .creator-prose: only the plan lists file names, and the
+ * summary beside it writes `sodprefab.json` into a sentence, where a chip would be a word
+ * boxed off from the ones either side of it.
+ */
+.creator-plan code {
+    padding: 0.05rem 0.3rem;
+    font-size: 0.95em;
+    line-height: 1.4;
+    color: var(--pico-color);
+    overflow-wrap: anywhere;
+}
+
+/* What is about to happen to the file, which is a reading of the name rather than part
+   of it. */
+.creator-plan-how {
+    color: var(--pico-muted-color);
+}
+
+/*
  * The gates. Four across while there is room, because every one of them is a word and a
  * small control and stacking them made the step that is least often answered the tallest
  * one in the dialog.
@@ -1052,8 +1117,18 @@ ul li {
     background: #14161a;
 }
 
-/* A row in the preset list, and in the cluster list. A button rather than a link: it
-   changes what the pane shows rather than going anywhere. */
+/*
+ * A row in the preset list, and in the cluster list. A button rather than a link: it
+ * changes what the pane shows rather than going anywhere.
+ *
+ * `inherit` rather than `var(--pico-color)`, which is what this said and why the whole
+ * list was invisible: Pico sets that variable *on the button itself*, to the inverse it
+ * paints button text in, so reading it back here gave white on white. Every row of the
+ * furniture picker was blank until it was hovered or picked. The building flow's tool bar
+ * hit the same trap and answered it with a named colour; inherit is the answer here,
+ * because what these rows want is the ordinary text colour of the card they are in, and it
+ * follows the colour scheme without naming either side of it.
+ */
 .furniture-creator-pick {
     width: 100%;
     text-align: left;
@@ -1062,7 +1137,7 @@ ul li {
     font-size: 0.85rem;
     background: none;
     border: none;
-    color: var(--pico-color);
+    color: inherit;
 }
 
 .furniture-creator-pick:hover {
@@ -1083,28 +1158,72 @@ ul li {
  * than the name -- it is read once the row has been found rather than to find it.
  */
 .furniture-creator-subobject {
+    /* Was `width: 100%`, which left no room on the line for anything beside it. The
+       sub-object rows carry a remove cross now; the interactable rows, which use this
+       class too, have nothing next to them and still fill their row. */
+    flex: 1 1 auto;
+    min-width: 0;
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0.5rem;
-    width: 100%;
     text-align: left;
     margin: 0;
     padding: 0.2rem 0.45rem;
     font-size: 0.85rem;
     background: none;
     border: none;
-    color: var(--pico-color);
+
+    /* Not `var(--pico-color)`, for the reason .furniture-creator-pick above is not. */
+    color: inherit;
 }
 
 .furniture-creator-subobject:hover {
     background: var(--pico-secondary-background);
 }
 
+/*
+ * The cross that takes a row off, at the end of the row it acts on.
+ *
+ * On the page rather than revealed on hover. The control it replaces was a labelled button
+ * under the editor, and a delete that only exists while the pointer is over the right row
+ * is less findable than that, not more -- so it is always there and muted, and only turns
+ * red under the pointer. The building flow's address rows are the same cross for the same
+ * act; see .address-remove in flows/building/style.css.
+ */
+.furniture-creator-row-remove {
+    flex: none;
+    width: auto;
+    margin: 0;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    background: none;
+    border: none;
+    color: var(--pico-muted-color);
+}
+
+.furniture-creator-row-remove:is(:hover, :focus-visible) {
+    background: none;
+    color: var(--pico-del-color, #b3261e);
+}
+
 .furniture-creator-subobject-where,
 .furniture-creator-subobject-detail {
     color: var(--pico-muted-color);
     font-size: 0.78rem;
+}
+
+/*
+ * The position on the marked row. The muted colour above is picked to be quiet against the
+ * card, and the marked row is not the card -- muted grey on the primary fill came out
+ * almost unreadable, which is the one row where the numbers are being read. Quieter than
+ * the name still, but by transparency against whatever is behind it rather than by a
+ * colour chosen for a different background.
+ */
+.furniture-creator-subobject[aria-current="true"] .furniture-creator-subobject-where {
+    color: inherit;
+    opacity: 0.75;
 }
 
 .furniture-creator-subobject-detail {
@@ -1145,6 +1264,25 @@ ul li {
 
 .furniture-creator-editor form {
     margin: 0.35rem 0 0;
+}
+
+/*
+ * What is being edited, and the cross that takes it away.
+ *
+ * The placement grid is a diagram rather than a list, so a rule has no row of its own to
+ * carry a cross the way a sub-object does -- the marks on the grid are a few characters
+ * pinned to the edge of a tile, and nothing else fits beside them. This heading is where
+ * the marked rule is written out in full, so it is where the cross belongs.
+ */
+.furniture-creator-editor-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+}
+
+.furniture-creator-editor-head > small {
+    flex: 1;
+    min-width: 0;
 }
 
 /* The live read-out beside the name: what the numbers say, as they say it, so a drag has

@@ -15,6 +15,7 @@
  */
 import { fastElement } from './dom.js';
 import { makeCSVSafe } from './strings.js';
+import { parseJSON } from './jsonNumbers.js';
 
 /** Below this an empty or one-character value renders too small to click into. */
 const MIN_INPUT_SIZE = 5;
@@ -28,6 +29,11 @@ const MIN_INPUT_SIZE = 5;
  * nothing said why, and the control went on showing a value the document did not have.
  *
  * So the text comes back, prefilled, until it parses or the caller's user gives up.
+ *
+ * Parsed through core/jsonNumbers.js, so `Infinity` and `-Infinity` are accepted where the
+ * game writes them -- an AnimationCurve's `outSlope` is editable rather than being a field
+ * that shows a value and rejects it the moment it is tabbed through. A string field is
+ * unaffected: `makeCSVSafe` quotes the text first, so the word is read as the word.
  *
  * @param raw      what was typed
  * @param isString whether the field holds a string, which is quoted on the way in
@@ -43,7 +49,7 @@ export function parseEditedValue(raw, { isString }) {
         const encoded = isString && text != 'null' ? makeCSVSafe(text) : text;
 
         try {
-            return { ok: true, value: JSON.parse(encoded), raw: text };
+            return { ok: true, value: parseJSON(encoded), raw: text };
         } catch (error) {
             const corrected = prompt(
                 `This can't be stored as it is:\n\n${error.message}\n\n` +

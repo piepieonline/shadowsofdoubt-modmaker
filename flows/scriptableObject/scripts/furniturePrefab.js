@@ -33,6 +33,7 @@
  * mirrored desk is still a desk.
  */
 import { tryGetFile, tryGetFolder, readFileContent } from '../../../core/fs.js';
+import { parseJSON } from '../../../core/jsonNumbers.js';
 
 /** What a `prefab` field looks like when it points into the mod: `PREFAB:<folder>/<name>`. */
 const PREFAB_PREFIX = /^PREFAB:/i;
@@ -279,7 +280,7 @@ export async function readModel(folder, reference) {
 
     let prefab = null;
     try {
-        prefab = JSON.parse(await readFileContent(handle));
+        prefab = parseJSON(await readFileContent(handle));
     } catch {
         return { missing: `${path.file}, which is there but will not parse` };
     }

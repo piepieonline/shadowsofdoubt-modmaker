@@ -98,7 +98,7 @@ export const tileOf = (x, y) => ({
     y: Math.floor(y / NODES_PER_TILE),
 });
 
-const clone = (value) => (value === undefined ? undefined : JSON.parse(JSON.stringify(value)));
+const clone = (value) => structuredClone(value);
 
 
 /* -------------------------------------------------------------------------- */

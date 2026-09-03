@@ -30,7 +30,7 @@
  * None of this is the author's to think about. They edit the asset; what comes out is the
  * difference between it and the base.
  *
- * `jsonpatch` is a global from libs/JSON-Patch, loaded as a classic script.
+ * `jsonpatch` is a global published by core/vendorGlobals.js.
  */
 import { deepClone } from './files.js';
 
@@ -86,7 +86,7 @@ export function diffToPatches(base, working) {
     const evolving = deepClone(base);
     const durable = [];
 
-    for (const op of jsonpatch.compare(base, working)) {
+    for (const op of compareWithValues(base, working)) {
         durable.push({ ...op, path: durablePath(evolving, op) });
 
         // The index form, which is what `compare` produced against this exact state.
@@ -97,6 +97,40 @@ export function diffToPatches(base, working) {
     }
 
     return durable;
+}
+
+/**
+ * `jsonpatch.compare`, with each operation carrying the value the document actually holds
+ * rather than the library's copy of it.
+ *
+ * `fast-json-patch` builds every object-valued operation with its own `_deepClone`, which is
+ * `JSON.parse(JSON.stringify(value))` -- so a keyframe appended to an AnimationCurve came out
+ * with `"outSlope": null` where the game had `Infinity`, and the patch replaced the game's
+ * value with nothing. Reading the value back out of `working` by the pointer `compare` just
+ * produced is what undoes that; the path is still in index form at this point, which is the
+ * form that resolves against a document.
+ *
+ * A scalar was never affected -- `_deepClone` returns a primitive untouched -- which is why
+ * this only shows up when a whole element or object is added or replaced. That is exactly the
+ * case where the value lands in the mod file, so it is the case worth being right about.
+ *
+ * Only `add` and `replace`, which are the operations whose value is the *new* one. `remove`
+ * carries none, and an invertible `test` carries the old value, which is not at this path.
+ *
+ * A value the pointer cannot produce is left as the library made it. That means an `undefined`
+ * in the document, which is not JSON and not something a document read from a file holds.
+ *
+ * Exported for core/persistence.js, whose DDS patches are built by the same `compare` and lost
+ * the same values. Two copies of this would be two answers to what a patch is allowed to say.
+ */
+export function compareWithValues(base, working) {
+    return jsonpatch.compare(base, working).map((op) => {
+        if (op.op !== 'add' && op.op !== 'replace') return op;
+
+        const live = jsonpatch.getValueByPointer(working, op.path);
+
+        return live === undefined ? op : { ...op, value: deepClone(live) };
+    });
 }
 
 /**

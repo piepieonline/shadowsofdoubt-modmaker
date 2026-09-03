@@ -13,11 +13,11 @@ import {
 import {
     openFurnitureCreator, closeFurnitureCreator, furnitureCreatorChanged,
     toggleParentedSubObjects, resetFurnitureView, furnitureSubObjectChanged,
-    furnitureDragModeChanged, addFurnitureSubObject, removeFurnitureSubObject,
+    furnitureDragModeChanged, addFurnitureSubObject,
     revertFurnitureEdits, furnitureNameChanged, writeFurniture,
     furnitureClassChanged, placementRuleChanged, placementSizeChanged,
     addPlacementRule, removePlacementRule, revertPlacementEdits, findWhereItAppears,
-    furnitureInteractableChanged, addFurnitureInteractable, removeFurnitureInteractable,
+    furnitureInteractableChanged, addFurnitureInteractable,
 } from './scripts/furnitureCreator.js';
 import {
     startFieldSummary, cancelFieldSummary, closeFieldSummary, filterFieldSummary,
@@ -31,10 +31,10 @@ export default {
     copyDonorFurniture,
     openFurnitureCreator, closeFurnitureCreator, furnitureCreatorChanged,
     toggleParentedSubObjects, resetFurnitureView, furnitureSubObjectChanged,
-    furnitureDragModeChanged, addFurnitureSubObject, removeFurnitureSubObject,
+    furnitureDragModeChanged, addFurnitureSubObject,
     revertFurnitureEdits, furnitureNameChanged, writeFurniture,
     furnitureClassChanged, placementRuleChanged, placementSizeChanged,
     addPlacementRule, removePlacementRule, revertPlacementEdits, findWhereItAppears,
-    furnitureInteractableChanged, addFurnitureInteractable, removeFurnitureInteractable,
+    furnitureInteractableChanged, addFurnitureInteractable,
     startFieldSummary, cancelFieldSummary, closeFieldSummary, filterFieldSummary,
 };

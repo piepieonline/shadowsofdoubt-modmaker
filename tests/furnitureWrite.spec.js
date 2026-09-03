@@ -154,7 +154,8 @@ async function openWriteSection(page) {
 /** Mark the first sub-object, which opens the editor for it. */
 async function markFirst(page) {
     await openSection(page, 'What sits on it');
-    await page.locator('#furniture-creator-subobjects li').first().getByRole('button').click();
+    await page.locator('#furniture-creator-subobjects li').first()
+        .locator('.furniture-creator-subobject').click();
     await expect(page.locator('#furniture-creator-editor')).toBeVisible();
 }
 
@@ -198,7 +199,10 @@ test('adds and removes a sub-object, and can put the lot back', async ({ page })
     await page.getByRole('button', { name: 'Add another' }).click();
     await expect(rows).toHaveCount(3);
 
-    await page.getByRole('button', { name: 'Remove this one' }).click();
+    // The cross on the row itself, rather than a button under the editor acting on
+    // whatever is marked. Adding put the copy last and marked it, so the last row's cross
+    // is the one that takes the copy back off.
+    await rows.last().getByRole('button', { name: /^Remove / }).click();
     await expect(rows).toHaveCount(2);
 
     // Removing takes the selection with it rather than moving it to a neighbour.
@@ -209,6 +213,76 @@ test('adds and removes a sub-object, and can put the lot back', async ({ page })
     await page.getByRole('button', { name: 'Revert all' }).click();
 
     await expect(rows.first()).toContainText('-1.02, 1.00, 0.27');
+});
+
+/**
+ * The row's own cross, and what it does to the marker.
+ *
+ * The thing a button under the editor could not do: take a row off without marking it
+ * first. Marking is what moves the 3D view, so the old control made removing three of five
+ * a tour of the model -- and it acted on whatever was marked, which is not what the author
+ * is pointing at when they press a cross on the second row.
+ */
+test('a row’s cross takes that row off, and leaves the marked one marked', async ({ page }) => {
+    await openPane(page);
+    await choose(page, 'HotelDesk');
+    await openSection(page, 'What sits on it');
+
+    const rows = page.locator('#furniture-creator-subobjects li');
+    await expect(rows).toHaveCount(2);
+
+    // Mark the second, then remove the first: the marker has to follow the object rather
+    // than the index it happened to be at, or the editor silently swaps to the other one.
+    await page.locator('#furniture-creator-subobjects li').nth(1)
+        .locator('.furniture-creator-subobject').click();
+    await expect(page.locator('#furniture-creator-editing')).toContainText('DeskItemOffice');
+
+    await rows.first().getByRole('button', { name: 'Remove Computer' }).click();
+
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first()).toContainText('DeskItemOffice');
+    await expect(page.locator('#furniture-creator-editing')).toContainText('DeskItemOffice');
+
+    // Named per row, so a screen reader hears which one each cross is for rather than one
+    // list of identical buttons.
+    await expect(rows.first().getByRole('button', { name: 'Remove DeskItemOffice' })).toBeVisible();
+
+    // The plan follows: one sub-object fewer is a change, so the files are the edits.
+    await openWriteSection(page);
+    await page.locator('#furniture-creator-name').fill('MyDesk');
+    await page.locator('#furniture-creator-write').click();
+    await expect(page.locator('#furniture-creator-plan')).toContainText('3 files written');
+
+    const preset = JSON.parse(await readFile(page, 'Mods/DeskMod/MyDesk.FurniturePreset.sodso.json'));
+    const written = preset.subObjects.map((sub) => sub.preset);
+
+    expect(written).not.toContain('REF:SubObjectClassPreset|Computer');
+    expect(written).toContain('REF:SubObjectClassPreset|DeskItemOffice');
+});
+
+/**
+ * The one line the shell was missing.
+ *
+ * Without `<meta charset>` a browser decodes index.html as windows-1252, and every em
+ * dash, curly quote and middle dot written into the markup comes out as two or three
+ * Latin-1 characters. The scripts were never affected -- a module is UTF-8 by spec -- so
+ * the damage was confined to text written in the markup and read as scattered typos.
+ */
+test('text written into the markup is decoded as UTF-8', async ({ page }) => {
+    await openPane(page);
+    await choose(page, 'HotelDesk');
+    await openSection(page, 'What sits on it');
+
+    await expect(page.locator('#furniture-creator-modal .creator-card-title').first())
+        .toHaveText('Positions · metres from origin');
+
+    const mojibake = await page.evaluate(() => [...document.querySelectorAll('body *')]
+        .flatMap((el) => [...el.childNodes].filter((node) => node.nodeType === 3))
+        .map((node) => node.textContent)
+        .filter((text) => /[ÂÃ�]/.test(text))
+        .map((text) => text.trim().slice(0, 60)));
+
+    expect(mojibake).toEqual([]);
 });
 
 /**

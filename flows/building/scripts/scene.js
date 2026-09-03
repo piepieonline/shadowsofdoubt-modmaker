@@ -47,6 +47,12 @@ import {
 import { dividerPostAtLowEnd } from './dividerEnds.js';
 import { createViewer } from '../../../core/viewer3d.js';
 
+// The tile labels' font. `?url` because troika wants a URL to fetch, not the bytes; the
+// bundler hashes it and copies it out. See configureTextBuilder below for why it is pinned
+// at all. Not an npm package -- it is the exact subset troika's own resolver was serving,
+// so it lives beside jsonTree in libs/ rather than being installed.
+import labelFontUrl from '../../../libs/fonts/noto-sans-latin-400.woff?url';
+
 /** View units. A node is 1 wide, so the grid is 21 x 21 and the origin is a corner. */
 const CELL = 1;
 const CELL_HEIGHT = 0.08;
@@ -432,7 +438,20 @@ export async function createScene(container) {
     const { THREE, scene, camera, controls, renderer } = viewer;
     const { draw, invalidate, resize, project: projectPoint, resetView } = viewer;
 
-    const { Text } = await import('troika-three-text');
+    const { Text, configureTextBuilder } = await import('troika-three-text');
+
+    // Point troika at the font the app ships, once, before the first Text is built.
+    //
+    // Left alone, `defaultFontURL` is null and troika resolves a font per codepoint range
+    // over the network, from unicode-font-resolver on a CDN. That is a remote fetch the
+    // app has no other need for: it fails offline, and the desktop build's CSP has no
+    // remote origin at all, so the labels would simply never appear.
+    //
+    // The file shipped is the very subset that resolver serves for Latin at weight 400 --
+    // Noto Sans Regular -- so pinning it changes no glyph and no metric. The sizes and
+    // outline widths below were tuned against these shapes and stay correct. The labels
+    // only ever say what tileParts() emits, which is ASCII plus the degree sign.
+    configureTextBuilder({ defaultFontURL: labelFontUrl });
 
     scene.add(new THREE.AmbientLight(0xffffff, 1.9));
     const sun = new THREE.DirectionalLight(0xffffff, 1.1);

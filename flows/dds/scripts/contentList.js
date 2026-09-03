@@ -19,6 +19,7 @@
  * One of these opens as a list of its strings; see stringsEditor.js.
  */
 import { readFileContent, tryGetFolder } from '../../../core/fs.js';
+import { parseJSON } from '../../../core/jsonNumbers.js';
 import {
     DDS_CONTENT_ROOT, ddsContentFolder, readManifest, toVirtual,
 } from '../../../core/ddsManifest.js';
@@ -75,7 +76,7 @@ async function readEntries(contentFolder, category) {
 /** A mod's own files carry their display name inside; patches only hold a diff. */
 async function nameInside(fileHandle) {
     try {
-        return JSON.parse(await readFileContent(fileHandle))?.name ?? null;
+        return parseJSON(await readFileContent(fileHandle))?.name ?? null;
     } catch {
         return null;
     }

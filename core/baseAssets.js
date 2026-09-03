@@ -16,17 +16,21 @@
  * folder or it is one of those nine, and `reason` says which of the two failed.
  */
 import { readFileContent, tryGetFile, tryGetFolder } from './fs.js';
+import { parseJSON } from './jsonNumbers.js';
 import { resolveReferences } from './soReferences.js';
 
 /**
  * The base game assets shipped with this tool.
  *
- * Resolved against this module rather than the page: these are served from the repo root
- * alongside the rest of the reference data, and a page-absolute path would depend on
- * where the app is mounted. Fetched rather than imported -- 12 MB across 1500 files, and
- * one is read at a time.
+ * Fetched rather than imported -- 12 MB across 1500 files, and one is read at a time.
+ *
+ * Built from the base the app was compiled for. A page-absolute path would assume the app
+ * is mounted at the server root, which a GitHub Pages project site is not; resolving
+ * against `import.meta.url` reads correctly and breaks anyway, because the bundler leaves
+ * the expression alone and it then resolves against the built chunk in `assets/` rather
+ * than against this file. That failure appears only in the build, never in dev.
  */
-export const ASSET_DATA = new URL('../refs/assets/', import.meta.url);
+export const ASSET_DATA = `${import.meta.env.BASE_URL}refs/assets/`;
 
 /**
  * The base game's asset, with Unity's references named.
@@ -54,7 +58,7 @@ export async function readBaseAsset(type, name) {
     }
 
     if (text == null) {
-        const response = await fetch(new URL(path, ASSET_DATA));
+        const response = await fetch(`${ASSET_DATA}${path}`);
         if (response.ok) text = await response.text();
     }
 
@@ -68,10 +72,12 @@ export async function readBaseAsset(type, name) {
     }
 
     try {
-        return { document: resolveReferences(JSON.parse(text), await pathIdMap()) };
+        // Through core/jsonNumbers.js, which reads Unity's bare `Infinity`. Five shipped
+        // assets hold one and were unpatchable for exactly this reason; `NaN` is the
+        // remaining token no reader here accepts, and it is what this now catches.
+        return { document: resolveReferences(parseJSON(text), await pathIdMap()) };
     } catch {
-        // Five of the shipped assets hold `Infinity`, which is not JSON and which no
-        // browser will parse. An unreadable base is an unpatchable asset.
+        // An unreadable base is an unpatchable asset.
         return { reason: `${path} is not valid JSON, so there is nothing to compare against` };
     }
 }

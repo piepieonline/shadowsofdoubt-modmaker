@@ -76,6 +76,21 @@ const selectSquare = (page, x, y) => page.evaluate(async ([cellX, cellY]) => {
     send('pointerup', 0);
 }, [x, y]);
 
+/**
+ * And a move over one with nothing held, which redraws the column without changing what
+ * is selected. That is the commonest redraw there is -- the status column follows the
+ * pointer -- and the one anything kept in the column has to survive.
+ */
+const hoverSquare = (page, x, y) => page.evaluate(async ([cellX, cellY]) => {
+    const { projectCell } = await import('/flows/building/scripts/ui.js');
+    const canvas = document.querySelector('#building-canvas canvas');
+    const at = projectCell(cellX, cellY);
+
+    canvas.dispatchEvent(new PointerEvent('pointermove', {
+        pointerId: 1, button: 0, buttons: 0, bubbles: true, clientX: at.left, clientY: at.top,
+    }));
+}, [x, y]);
+
 /** Open a floor by calling the flow directly, rather than hunting for its button. */
 const open = (page, building, blueprint, slot = null) => page.evaluate(async (request) => {
     const { openFloor } = await import('/flows/building/scripts/ui.js');
@@ -618,6 +633,97 @@ test('a save under an open dropdown leaves it open', async ({ page }) => {
     // The held redraw ran once and left the panel usable rather than half-built.
     await expect(page.locator('#building-rooms .select2-selection')).toHaveCount(
         await page.locator('#building-rooms .room-row').count());
+});
+
+/**
+ * A redraw of the status column does not take the checker's list away.
+ *
+ * The column opposite is held back while a dropdown in it is open -- see the test above --
+ * and the status column deliberately is not: it says what the pointer is over, so freezing
+ * it would stop it answering. Its one control still has to survive that, and shutting it
+ * was how the redraw used to make it safe to detach.
+ *
+ * What that cost was a question asked while anything was in flight. The column is redrawn
+ * on every pointer move that crosses a square, and again whenever deferred work lands --
+ * `loadFurnitureChain` in openFloor is not awaited, so its redraw arrives whenever the
+ * fetch and the mod read finish, which under load is long after the floor is on screen.
+ * Either one closed the dropdown mid-question, and nothing reopens it.
+ *
+ * Driven by a pointer move rather than by reaching for the redraw directly, because the
+ * move is the trigger an author actually has: the answer is read with the pointer still
+ * over the floor.
+ */
+test('a redraw under the open checker leaves the question standing', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'EdenTower', 'Eden_OfficeFloor01');
+    await selectSquare(page, 4, 12);
+
+    await expect(page.locator('.furniture-check .select2-selection')).toBeVisible();
+    await page.locator('.furniture-check .select2-selection').click();
+
+    // Half-typed, which is the state with something to lose: the search box lives in the
+    // dropdown, so what was typed goes with it.
+    await page.locator('.select2-search__field').pressSequentially('Large');
+    await expect(page.locator('.furniture-check-dropdown .select2-results__option').first())
+        .toBeVisible();
+
+    // The pointer crosses onto another square, which rebuilds the whole column.
+    await hoverSquare(page, 6, 12);
+    await expect(page.locator('#building-status .status-block').nth(1))
+        .toContainText('Node 6, 12');
+
+    // Still open, still filtered, and still holding the keystrokes.
+    await expect(page.locator('.furniture-check .select2-container--open')).toHaveCount(1);
+    await expect(page.locator('.select2-search__field')).toHaveValue('Large');
+    await expect(page.locator('.furniture-check-dropdown .select2-results__option').first())
+        .toBeVisible();
+
+    // And the question can still be finished, which is what the list is for.
+    await page.locator('.select2-results__option--highlighted').click();
+    await expect(page.locator('#building-status .verdict').first()).toBeVisible();
+
+    // The column still scrolls afterwards. This is what the old close protected and what
+    // parking the box on the column keeps: select2 unbinds its scroll handlers by walking
+    // the control's ancestors, so one closed while detached leaves them bound for the life
+    // of the page. See settleChecker in panels.js.
+    const column = page.locator('#building-left');
+    await column.evaluate((el) => { el.scrollTop = 40; });
+    expect(await column.evaluate((el) => el.scrollTop)).toBe(40);
+});
+
+/**
+ * And a redraw with nowhere to put it back shuts it rather than leaving it hanging.
+ *
+ * The parked box is off the panel and on the column while the redraw runs. A redraw that
+ * asks for the checker again takes it back; one that does not -- nothing selected, so no
+ * furniture section at all -- would otherwise leave an open list answering for a square
+ * that is no longer shown, anchored to a box hanging off the bottom of the column.
+ *
+ * Opening a floor is that redraw: it clears the selection, so the column comes back with
+ * the square's block empty and no checker under it.
+ */
+test('a redraw with no square to answer for shuts the checker', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'EdenTower', 'Eden_OfficeFloor01');
+    await selectSquare(page, 4, 12);
+
+    await expect(page.locator('.furniture-check .select2-selection')).toBeVisible();
+    await page.locator('.furniture-check .select2-selection').click();
+    await expect(page.locator('.select2-search__field')).toBeVisible();
+
+    await open(page, 'EdenTower', 'Eden_OfficeFloor01');
+
+    await expect(page.locator('#building-status .status-block').first())
+        .toContainText('Click a square to select it');
+    await expect(page.locator('.furniture-check')).toHaveCount(0);
+
+    // Shut rather than left standing over a square nothing is showing.
+    await expect(page.locator('.select2-search__field')).toHaveCount(0);
+
+    // And shut while it was still on the column, so the unbind ran and this still moves.
+    const column = page.locator('#building-left');
+    await column.evaluate((el) => { el.scrollTop = 40; });
+    expect(await column.evaluate((el) => el.scrollTop)).toBe(40);
 });
 
 /**
@@ -1681,6 +1787,16 @@ test('a floor added straight after a stroke is laid out like what was just drawn
     await open(page, 'MyTower', 'MyTower_Ground', {
         isBasement: false, isControlVariant: false, layoutIndex: 0, blueprintIndex: 0,
     });
+
+    // The mod's own panel is filled in after the floor opens, and nothing above waits for
+    // it. Waited for here rather than inside the block below, because the block has to
+    // run without pausing and a `querySelector` that finds nothing there is a null
+    // dereference rather than a retry.
+    //
+    // This does not soften the race the test is about: that one is between the paint and
+    // the press, both of which happen after this and in the same evaluate.
+    await expect(page.locator(
+        '[data-category="MyTower"] > .file-panel-footer [data-action="add-floor"]')).toBeAttached();
 
     // Painted through the canvas, so the save behind it is the debounced one -- which is
     // the point of the test. Address 0 is Outside, so this takes a square off the

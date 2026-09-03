@@ -1,5 +1,10 @@
 import { WindowPolicy } from '../../core/treeWindow.js';
 
+// Imported for its URL rather than linked by path: the bundler hashes the filename, and
+// applyStyles matches on the data-flow-style attribute, so the add-and-remove cycle that
+// keeps one flow's rules off another's markup is unaffected by what the file is called.
+import styleUrl from './style.css?url';
+
 /**
  * DDS text content: conversation trees, messages, blocks, and the English strings
  * CSV they resolve against.
@@ -22,7 +27,7 @@ export default {
     requiredFolders: ['streamingAssets', 'modDir'],
 
     template: '#flow-template-dds',
-    styles: ['./flows/dds/style.css'],
+    styles: [styleUrl],
 
     /** Loaded on activation, not at page load. See the note in the other flow. */
     async loadRefs() {

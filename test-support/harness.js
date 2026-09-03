@@ -15,6 +15,7 @@
  * So the re-grant shortcut a remembered folder takes is exercised here rather than
  * skipped, which is what lets a test tell it apart from opening the picker.
  */
+import { BASE_URL } from '../playwright.shared.js';
 
 /** Whether this is a paced run being watched rather than an ordinary one. See `npm run demo`. */
 const demoRun = () => Boolean(Number(process.env.TUTORIAL_DEMO ?? 0));
@@ -385,6 +386,42 @@ export async function topLevelLabels(page, windowSelector) {
             .filter(Boolean)
             .map((el) => el.textContent.replace(/"/g, '').trim());
     }, windowSelector);
+}
+
+/**
+ * Cut the page off from every origin but its own, and record what it tried to reach.
+ *
+ * The app is vendored so it depends on nothing remote: that is what lets the desktop
+ * build run under a CSP with no remote origin, which in turn is what bounds the
+ * filesystem access Electron hands the renderer. A dependency that quietly went back to
+ * a CDN would still pass every other test here, on a developer machine with a network.
+ *
+ * Aborting rather than only counting, so a test fails on the consequence -- a view that
+ * never renders -- and not merely on the bookkeeping.
+ *
+ * `blob:` is allowed through: troika builds its font-parsing worker from one, which is
+ * local by construction. Playwright does not route `data:` at all.
+ *
+ * @returns the URLs that were blocked. Assert it is empty *after* exercising the page.
+ */
+export function blockExternalRequests(page) {
+    const attempts = [];
+    const origin = new URL(BASE_URL).origin;
+
+    page.route('**/*', (route) => {
+        const url = route.request().url();
+
+        // `fallback` rather than `continue`: routes are matched newest first, so a
+        // catch-all installed after a spec's own route would otherwise swallow it. This
+        // hands the request on instead, and reaches the network only if nothing else
+        // wanted it.
+        if (url.startsWith(origin) || url.startsWith('blob:')) return route.fallback();
+
+        attempts.push(url);
+        return route.abort();
+    });
+
+    return attempts;
 }
 
 /** Collect page console errors and uncaught exceptions for assertion. */

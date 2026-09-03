@@ -1,3 +1,6 @@
+// See the note in flows/dds/flow.js: hashed by the bundler, swapped in by applyStyles.
+import styleUrl from './style.css?url';
+
 /**
  * Building floorplans: the 3D grid you paint addresses, rooms, floor types, walls and
  * tile features onto, saved as the game's floor blueprint JSON and attached to a
@@ -21,7 +24,7 @@ export default {
     requiredFolders: ['modDir'],
 
     template: '#flow-template-building',
-    styles: ['./flows/building/style.css'],
+    styles: [styleUrl],
 
     /** Loaded on activation, not at page load. See the note in the other flows. */
     async loadRefs() {

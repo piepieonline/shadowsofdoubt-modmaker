@@ -1,9 +1,10 @@
 # Publish the app to GitHub Pages.
 #
-# The site is zero-build, so there is nothing to compile -- the deploy step is a copy of
-# the files the browser asks for, minus the ones only the tests and the dev server need.
+# Vite builds the site, so the deploy step uploads `dist/` rather than copying the repo.
+# The build's `base` is the project path this is served under -- see vite.config.js -- and
+# every asset URL is written against it, so the output is not servable from anywhere else.
 #
-# It is still gated on the unit suite, which is what makes the difference here: the tests
+# It is gated on the unit suite, which is what makes the difference here: the tests
 # run on Linux and the site is served from Linux, while the app is developed on a
 # case-insensitive filesystem. A `refs/` path whose case does not match the file on disk
 # works locally and 404s once published, and nothing notices until something reads it.
@@ -56,34 +57,22 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # What ships is the shell, the flows, the vendored libs and the reference data the
-      # flows fetch at runtime. Everything else in the repo is tooling: the specs live
-      # beside the modules they cover, so they are excluded by name rather than by
-      # directory.
-      - name: Stage the site
-        run: |
-          mkdir _site
-          rsync -a \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='.local' \
-            --exclude='node_modules' \
-            --exclude='tests' \
-            --exclude='e2e' \
-            --exclude='test-support' \
-            --exclude='test-results' \
-            --exclude='playwright-report' \
-            --exclude='*.spec.js' \
-            --exclude='playwright*.js' \
-            --exclude='vitest.config.js' \
-            --exclude='package.json' \
-            --exclude='package-lock.json' \
-            --exclude='*.pem' \
-            ./ _site/
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # What ships is whatever the build emits: the bundled shell and flows, the CSS and
+      # fonts it references, and the reference data the flows fetch at runtime, which
+      # vite.config.js copies in. There is no exclude list any more -- a build output
+      # contains what it contains, which is the point of having one.
+      - run: npm run build
 
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: _site
+          path: dist
 
       - id: deployment
         uses: actions/deploy-pages@v4

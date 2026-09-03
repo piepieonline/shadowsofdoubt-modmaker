@@ -33,10 +33,18 @@ export const shared = {
 
     // Shared by both configs, and by both at once: whichever suite starts first raises the
     // server, and the other finds it already up.
+    //
+    // The dev server, not the build. It serves source at the paths the specs already use
+    // -- several reach into a module directly with `import('/flows/building/scripts/ui.js')`
+    // -- so those keep working, and a failure points at a file rather than at a chunk.
+    //
+    // The cost is that nothing here exercises the bundle. Asset URLs, tree-shaking and CSS
+    // order are all things the build can get wrong on its own; `npm run build && npm run
+    // preview` is the check for those, and it is a manual one.
     webServer: {
-        command: `npx http-server -a 127.0.0.1 -p ${PORT} -c-1 --silent`,
+        command: `npx vite --port ${PORT} --strictPort`,
         url: BASE_URL,
         reuseExistingServer: !process.env.CI,
-        timeout: 30_000,
+        timeout: 60_000,
     },
 };

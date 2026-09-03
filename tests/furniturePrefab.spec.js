@@ -305,7 +305,7 @@ test('offers the controllers the prefab declares, and says which are not in it',
     await expect(page.locator('#furniture-creator-summary'))
         .toContainText('Drawn from this mod’s own model');
 
-    await page.locator('#furniture-creator-interactables li').first().getByRole('button').click();
+    await page.locator('#furniture-creator-interactables li').first().locator('.furniture-creator-subobject').click();
 
     const options = page.locator('#furniture-creator-interactable-controller option');
     await expect(options).toHaveText([
@@ -316,7 +316,7 @@ test('offers the controllers the prefab declares, and says which are not in it',
 
     // The second entry's own id is kept on the list even though the prefab has not got it,
     // so opening a broken pairing shows what it is paired to rather than rewriting it.
-    await page.locator('#furniture-creator-interactables li').nth(1).getByRole('button').click();
+    await page.locator('#furniture-creator-interactables li').nth(1).locator('.furniture-creator-subobject').click();
     await expect(options).toHaveText([
         'none — skip this entry',
         'A',
@@ -341,7 +341,7 @@ test('writes the edited interactables into the preset file', async ({ page }) =>
         .toContainText('Drawn from this mod’s own model');
 
     // Repair the pairing the donor left broken: B is not in this prefab, hidingPlace is.
-    await page.locator('#furniture-creator-interactables li').nth(1).getByRole('button').click();
+    await page.locator('#furniture-creator-interactables li').nth(1).locator('.furniture-creator-subobject').click();
     await page.locator('#furniture-creator-interactable-preset').fill('HidingPlace');
     await page.locator('#furniture-creator-interactable-controller').selectOption('hidingPlace');
     await page.locator('#furniture-creator-interactable-owner').selectOption('nobody');
@@ -436,12 +436,42 @@ test('leaves a shipped preset’s interactables read-only, and says why', async 
     await expect(page.locator('#furniture-creator-interactable-notes'))
         .toContainText('asset bundle this app cannot open');
 
-    // No way in: neither the Add button nor the fields on a marked row.
+    // No way in: not the Add button, not a cross on a row, not the fields on a marked one.
     await expect(page.getByRole('button', { name: 'Add another' })).toBeHidden();
+    await expect(page.locator('#furniture-creator-interactables .furniture-creator-row-remove'))
+        .toHaveCount(0);
 
-    await page.locator('#furniture-creator-interactables li').first().getByRole('button').click();
+    await page.locator('#furniture-creator-interactables li').first().locator('.furniture-creator-subobject').click();
     await expect(page.locator('#furniture-creator-interactable-controller')).toBeDisabled();
     await expect(page.locator('#furniture-creator-interactable-preset')).toBeDisabled();
+});
+
+/**
+ * The row's cross, in the second list that has one.
+ *
+ * Same reasoning as the sub-objects': it removes the row it is on rather than whatever the
+ * editor happens to be showing, and the mark follows the entry rather than the index.
+ */
+test('a cross on an interactable row takes that row off', async ({ page }) => {
+    await openWith(page, modWithModel);
+    await openInteractables(page);
+
+    const rows = page.locator('#furniture-creator-interactables li');
+    await expect(rows).toHaveCount(2);
+
+    // Both entries create HotelDesk, at A and at B, so the crosses are told apart by the
+    // pairing rather than by the preset -- which is the case the label is written for.
+    await expect(rows.first().getByRole('button', { name: 'Remove HotelDesk at A' })).toBeVisible();
+
+    // Mark the second, remove the first: the editor has to still be showing the second.
+    await rows.nth(1).locator('.furniture-creator-subobject').click();
+    await expect(page.locator('#furniture-creator-interactable-controller')).toHaveValue('B');
+
+    await rows.first().getByRole('button', { name: 'Remove HotelDesk at A' }).click();
+
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first()).toContainText('at B');
+    await expect(page.locator('#furniture-creator-interactable-controller')).toHaveValue('B');
 });
 
 /**
@@ -501,7 +531,7 @@ test('can still edit the interactables when the mesh is missing', async ({ page 
 
     await expect(page.getByRole('button', { name: 'Add another' })).toBeVisible();
 
-    await page.locator('#furniture-creator-interactables li').first().getByRole('button').click();
+    await page.locator('#furniture-creator-interactables li').first().locator('.furniture-creator-subobject').click();
     await expect(page.locator('#furniture-creator-interactable-controller')).toBeEnabled();
 });
 

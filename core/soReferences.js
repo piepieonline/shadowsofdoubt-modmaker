@@ -20,6 +20,7 @@
  * nothing. The object is left exactly as it was found instead, so it round-trips byte for
  * byte and reads on screen as the opaque thing it is.
  */
+import { parseJSON, stringifyJSON } from './jsonNumbers.js';
 
 /**
  * The one shape these take. Every reference in the 1,532 assets shipped here is written
@@ -31,16 +32,21 @@ const REFERENCE = /\{"m_FileID":(-?\d+),"m_PathID":-?\d+\}/g;
 /**
  * A parsed document with its references named.
  *
+ * Serialised through core/jsonNumbers.js rather than the built-in, because every document
+ * the editor opens passes through here: an asset holding a bare `Infinity` would arrive
+ * with the number intact and leave with a null in its place. The intermediate text simply
+ * carries the token, which `REFERENCE` does not match and so does not have to allow for.
+ *
  * @param document parsed JSON, which is not mutated
  * @param pathIdMap file id -> `Type|Name`, as loadRefs.js builds it
  */
 export function resolveReferences(document, pathIdMap = {}) {
-    const named = JSON.stringify(document).replaceAll(REFERENCE, (raw, id) => {
+    const named = stringifyJSON(document).replaceAll(REFERENCE, (raw, id) => {
         const asset = pathIdMap[id];
         if (asset) return `"REF:${asset}"`;
 
         return Number(id) === 0 ? 'null' : raw;
     });
 
-    return JSON.parse(named);
+    return parseJSON(named);
 }

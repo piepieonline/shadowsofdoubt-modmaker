@@ -45,6 +45,7 @@ import {
 import soDefaults from '../../../refs/generated/soDefaults.json' with { type: 'json' };
 
 import { listContent, PATCH_SUFFIX } from './contentList.js';
+import { parseJSON } from '../../../core/jsonNumbers.js';
 
 /** How many assets are read at once. */
 const AT_ONCE = 8;
@@ -248,7 +249,7 @@ async function readModAsset(type, entry, scan) {
 
     let stated = null;
     try {
-        stated = resolveReferences(JSON.parse(await readFileContent(handle)), await pathIdMap());
+        stated = resolveReferences(parseJSON(await readFileContent(handle)), await pathIdMap());
     } catch {
         return { reason: `${file} is not valid JSON` };
     }

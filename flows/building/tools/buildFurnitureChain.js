@@ -69,6 +69,7 @@ const TYPES = [
 // mod's `FurnitureClass` files into the same shape. See that module on why the enums are
 // not taken from `soEnums.json`.
 import { WALL_SECTION_CLASS, wallRulesOf, stairwellOf } from '../../../core/furnitureRules.js';
+import { parseJSON, stringifyJSON } from '../../../core/jsonNumbers.js';
 
 
 /* -------------------------------------------------------------------------- */
@@ -116,7 +117,7 @@ async function readType(source, type) {
             ? await (await fetch(`${source}/${type}/${at}`)).text()
             : await readFile(join(source, type, at), 'utf8');
 
-        assets[name.replace(/\.json$/, '')] = JSON.parse(body);
+        assets[name.replace(/\.json$/, '')] = parseJSON(body);
     }
 
     return assets;
@@ -469,18 +470,18 @@ function rooms(data, name, names) {
     const commonest = (assets, field) => {
         const counts = new Map();
         for (const asset of assets) {
-            const key = JSON.stringify(asset[field]);
+            const key = stringifyJSON(asset[field]);
             if (key !== undefined) counts.set(key, (counts.get(key) ?? 0) + 1);
         }
         const best = [...counts].sort((a, b) => b[1] - a[1])[0];
-        return best ? JSON.parse(best[0]) : null;
+        return best ? parseJSON(best[0]) : null;
     };
 
     /** Only the fields whose value differs from the table. */
     const differing = (asset, fields, defaults) => {
         const out = {};
         for (const field of fields) {
-            if (JSON.stringify(asset[field]) !== JSON.stringify(defaults[field])) {
+            if (stringifyJSON(asset[field]) !== stringifyJSON(defaults[field])) {
                 out[field] = asset[field];
             }
         }
@@ -642,8 +643,8 @@ const chain = trim(data, name, names);
 const roomCreator = rooms(data, name, names);
 
 await mkdir(dirname(OUT), { recursive: true });
-await writeFile(OUT, `${JSON.stringify(chain)}\n`);
-await writeFile(OUT_ROOMS, `${JSON.stringify(roomCreator)}\n`);
+await writeFile(OUT, `${stringifyJSON(chain)}\n`);
+await writeFile(OUT_ROOMS, `${stringifyJSON(roomCreator)}\n`);
 
 console.log(`\nWrote ${OUT}`);
 const classes = Object.values(chain.classes);

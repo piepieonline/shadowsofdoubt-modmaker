@@ -2,8 +2,9 @@ import { test, expect } from 'vitest';
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { applyPatches, diffToPatches, isPatchFormat, mergeOldFormat } from './patchFormat.js';
+import { applyPatches, compareWithValues, diffToPatches, isPatchFormat, mergeOldFormat } from './patchFormat.js';
 import { resolveReferences } from './soReferences.js';
+import { parseJSON, stringifyJSON } from './jsonNumbers.js';
 
 /**
  * The patch format, both ways round.
@@ -15,7 +16,7 @@ import { resolveReferences } from './soReferences.js';
  * put back together from the difference alone.
  */
 
-const clone = (value) => JSON.parse(JSON.stringify(value));
+const clone = (value) => structuredClone(value);
 
 test('a document nobody edited produces no operations', () => {
     const base = { presetName: 'Bar', list: [{ name: 'a' }, { name: 'b' }], nested: { x: 1 } };
@@ -138,6 +139,28 @@ test('a list nested inside an identified element is reached through the selector
     ]);
 });
 
+/**
+ * `fast-json-patch` builds an object-valued operation with its own `_deepClone`, which is a
+ * JSON round trip -- so the value it hands back has had every infinity turned into a null
+ * before this module ever sees it. Pinned against the library rather than against our own
+ * wrapper, because it is the library's behaviour that makes the wrapper necessary and an
+ * upgrade that fixed it should show up here as a test to delete.
+ */
+test('an operation carries the value the document holds, not the library\'s copy of it', () => {
+    const base = { curve: [] };
+    const edited = { curve: [{ outSlope: Infinity, time: 0 }] };
+
+    expect(jsonpatch.compare(base, edited)[0].value).toEqual({ outSlope: null, time: 0 });
+    expect(compareWithValues(base, edited)[0].value).toEqual({ outSlope: Infinity, time: 0 });
+});
+
+test('a scalar operation value was never affected, and still is not', () => {
+    // `_deepClone` returns a primitive untouched, so this already worked and must keep working.
+    expect(compareWithValues({ a: 1 }, { a: Infinity })).toEqual([
+        { op: 'replace', path: '/a', value: Infinity },
+    ]);
+});
+
 test('a removed field is a remove', () => {
     const base = { presetName: 'Bar', notes: 'gone' };
 
@@ -246,7 +269,15 @@ test('converting an old format patch produces only the operations it meant', () 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ASSETS = join(ROOT, 'refs', 'assets');
 
-/** Every shipped asset that parses, which is all but five holding `Infinity`. */
+/**
+ * Every shipped asset that parses -- which is all of them.
+ *
+ * Five `JobPreset` files hold Unity's bare `Infinity` in an AnimationCurve and used to fall
+ * into the catch below, so the assets this test made its claim about were the ones that
+ * happened to be readable. They are read through core/jsonNumbers.js now, and
+ * `theFiveHoldingInfinity` pins that they are actually here rather than leaving the count to
+ * imply it.
+ */
 async function shippedAssets() {
     const types = (await readdir(ASSETS, { withFileTypes: true })).filter((e) => e.isDirectory());
 
@@ -259,11 +290,12 @@ async function shippedAssets() {
     for (const type of types) {
         for (const file of await readdir(join(ASSETS, type.name))) {
             try {
-                const parsed = JSON.parse(await readFile(join(ASSETS, type.name, file), 'utf8'));
+                const parsed = parseJSON(await readFile(join(ASSETS, type.name, file), 'utf8'));
                 loaded.push({ where: `${type.name}/${file}`, document: resolveReferences(parsed, pathIdMap) });
             } catch {
                 // Not this test's subject: an asset the browser cannot parse either is one
                 // the editor refuses to open, and is covered where that decision is made.
+                // Nothing shipped lands here today -- see theFiveHoldingInfinity.
             }
         }
     }
@@ -303,6 +335,22 @@ function scriptedEdit(document) {
 const isObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 /**
+ * The five assets holding Unity's bare `Infinity`, which `JSON.parse` refuses.
+ *
+ * Named rather than counted. They were silently absent from this suite while the loader
+ * could not read them, so a raised total would be the same shape of evidence that missed
+ * them in the first place -- and if a regeneration ever drops the token from these files,
+ * this should fail and be looked at rather than quietly cover nothing.
+ */
+const theFiveHoldingInfinity = (assets) => assets.filter(({ where }) => [
+    'JobPreset/Arrest_D6.json',
+    'JobPreset/Photograph_D6.json',
+    'JobPreset/Theft_D6.json',
+    'JobPreset/ThrowFood_D6.json',
+    'JobPreset/VandalismHome_D6.json',
+].includes(where));
+
+/**
  * Given room rather than left on vitest's five second default, which this is close enough
  * to to fail on a busy machine: it reads all 1,500 shipped assets off disk and diffs every
  * one of them, which is 600ms on an idle run and several times that with the rest of the
@@ -311,6 +359,7 @@ const isObject = (value) => Boolean(value) && typeof value === 'object' && !Arra
 test('every shipped asset survives being edited, diffed and put back together', { timeout: 30_000 }, async () => {
     const assets = await shippedAssets();
     expect(assets.length).toBeGreaterThan(1400);
+    expect(theFiveHoldingInfinity(assets)).toHaveLength(5);
 
     const broken = [];
 
@@ -330,8 +379,72 @@ test('every shipped asset survives being edited, diffed and put back together', 
         const { document: rebuilt, failed } = applyPatches(document, patches);
 
         if (failed) broken.push(`${where}: ${failed.reason}`);
-        else if (JSON.stringify(rebuilt) !== JSON.stringify(edited)) broken.push(`${where}: rebuilt differently`);
+        else if (stringifyJSON(rebuilt) !== stringifyJSON(edited)) broken.push(`${where}: rebuilt differently`);
     }
 
     expect(broken).toEqual([]);
+});
+
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The whole path, on the asset that motivated it.
+ *
+ * The sweep above proves no shipped asset is corrupted in general; this proves the one
+ * thing an author actually does with `Theft_D6` -- edit its curve and save -- comes out
+ * carrying the token rather than a null. Worth its own test because the sweep's
+ * `scriptedEdit` adds 1 to a number, and `Infinity + 1` is `Infinity`, so the sweep never
+ * makes an operation whose value contains one.
+ */
+const CURVE = 'socialCreditLevelMinSpawnFrequency';
+
+async function theftD6() {
+    return resolveReferences(
+        parseJSON(await readFile(join(ASSETS, 'JobPreset', 'Theft_D6.json'), 'utf8')),
+        {},
+    );
+}
+
+test('an asset holding Infinity opens with the number, not a null', async () => {
+    const base = await theftD6();
+
+    expect(base[CURVE].m_Curve[0].outSlope).toBe(Infinity);
+});
+
+test('opening an asset holding Infinity and saving it untouched writes nothing', async () => {
+    // The regression that matters most: any infidelity anywhere in the load path shows up
+    // here as an operation the author never made, written over the game's own value.
+    const base = await theftD6();
+
+    expect(diffToPatches(base, clone(base))).toEqual([]);
+});
+
+test('editing beside an Infinity writes an operation that still carries it', async () => {
+    const base = await theftD6();
+    const edited = clone(base);
+    edited[CURVE].m_Curve[0].time = 0.5;
+
+    const patches = diffToPatches(base, edited);
+    const { document: rebuilt, failed } = applyPatches(base, patches);
+
+    expect(failed).toBeUndefined();
+    expect(rebuilt[CURVE].m_Curve[0].outSlope).toBe(Infinity);
+    expect(rebuilt[CURVE].m_Curve[0].time).toBe(0.5);
+});
+
+test('appending a keyframe writes the token into the operation value', async () => {
+    // A whole element appended is how the value itself ends up in the patch file, and it
+    // is the case where `JSON.stringify` wrote a null into the mod. Editing one field of a
+    // keyframe does not reach it: `compare` reduces that to a replace of that field alone.
+    const base = await theftD6();
+    const edited = clone(base);
+    edited[CURVE].m_Curve.push(clone(edited[CURVE].m_Curve[0]));
+
+    const patches = diffToPatches(base, edited);
+    const written = stringifyJSON(patches);
+
+    expect(patches).toHaveLength(1);
+    expect(patches[0].path).toBe(`/${CURVE}/m_Curve/-`);
+    expect(written).toContain('"outSlope":Infinity');
+    expect(written).not.toContain('"outSlope":null');
 });

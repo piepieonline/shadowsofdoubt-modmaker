@@ -44,6 +44,7 @@ import {
 } from './panels.js';
 import { loadFurnitureChain, applyModOverlay, baseFurnitureChain } from './furnitureChain.js';
 import { readModAssets } from './furnitureOverlay.js';
+import { stringifyJSON } from '../../../core/jsonNumbers.js';
 
 const CANVAS = '#building-canvas';
 const LABELS = '#building-labels';
@@ -613,6 +614,9 @@ function openFloorContext() {
         storeys,
         storeyIndex: storeys.findIndex(
             (storey) => storey.options.some((option) => sameSlot(option.slot, open.slot))),
+
+        // See `opening`: everything above still describes the floor being replaced.
+        opening,
         // A floor no building refers to has no building to generate a model for.
         mesh: {
             canGenerate: canEdit() && !!open.building,
@@ -624,10 +628,39 @@ function openFloorContext() {
     };
 }
 
+/**
+ * Whether a floor asked for from the Floor panel is still on its way in.
+ *
+ * `openFloor` reads the blueprint and then the building's stairwells before it can say
+ * which storey is open, and until it has, `open` still describes the last one. The panel
+ * has not been redrawn either, so its arrows are still the ones drawn for that floor --
+ * and they step from the storey index they were built with, not from wherever the app has
+ * got to. A second press inside that window stepped off the old floor a second time and
+ * opened what the first press had already opened: two presses of Down moved one storey.
+ *
+ * Disabled rather than queued, because that is also the honest thing to show. There is no
+ * floor to step from until this one lands, and an arrow that looks ready but answers for
+ * the floor being replaced is the thing that misled.
+ */
+let opening = false;
+
 /** Open another slot of the building already open. */
-const openSlot = (option) => openFloor({
-    building: open?.building ?? null, blueprint: option.blueprint, slot: option.slot,
-});
+const openSlot = async (option) => {
+    opening = true;
+    updateFloorPanel();
+
+    try {
+        await openFloor({
+            building: open?.building ?? null, blueprint: option.blueprint, slot: option.slot,
+        });
+    } finally {
+        // In a `finally` so a floor that fails to open gives the arrows back. Whatever
+        // went wrong, the floor still on screen is one its building can be stepped
+        // through, and leaving them dead would need a reload to undo.
+        opening = false;
+        updateFloorPanel();
+    }
+};
 
 /**
  * The Floor section on its own.
@@ -1927,7 +1960,7 @@ export function scaffoldBuildingFolder(name) {
         const stem = stemFor(name, BUILDING_TYPE);
 
         const handle = await getFile(folder, [`${stem}${PRESET_SUFFIX}`], true);
-        await writeFile(handle, `${JSON.stringify({
+        await writeFile(handle, `${stringifyJSON({
             name: preset.name,
             presetName: preset.presetName,
             type: BUILDING_TYPE,

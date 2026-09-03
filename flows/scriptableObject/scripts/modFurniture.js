@@ -34,6 +34,7 @@ import soDefaults from '../../../refs/generated/soDefaults.json' with { type: 'j
 import { readAsset, refName, setModAssets } from './furnitureAssets.js';
 import { describeAsset } from './furnitureModel.js';
 import { placementFromAsset } from './furnitureClass.js';
+import { parseJSON } from '../../../core/jsonNumbers.js';
 
 const PRESET = 'FurniturePreset';
 const CLASS = 'FurnitureClass';
@@ -59,7 +60,7 @@ export async function readTypeFiles(folder, type) {
 
             let raw = null;
             try {
-                raw = JSON.parse(await readFileContent(entry));
+                raw = parseJSON(await readFileContent(entry));
             } catch {
                 // A file being edited, or one that is not JSON at all. Neither is a reason
                 // to show none of the others.

@@ -197,9 +197,18 @@ test('adds a rule and takes one away', async ({ page }) => {
     await expect(page.locator('#furniture-creator-rule-editor')).toBeVisible();
     await expect(page.locator('#furniture-creator-rule-at-x')).toHaveValue('-2');
 
-    await page.getByRole('button', { name: 'Remove this one' }).click();
+    // The cross in the editor's heading, beside the sentence saying what the marked rule
+    // does. Named after that sentence rather than "remove", so which rule would go is
+    // readable without looking at the grid.
+    const remove = page.locator('#furniture-creator-rule-remove');
+    await expect(remove).toHaveAttribute('aria-label', /^Take this rule off: .+/);
+
+    await remove.click();
     await expect(page.locator('.placement-edge, .placement-corner, .placement-node-rule'))
         .toHaveCount(before);
+
+    // The editor goes with the rule: there is nothing marked to edit any more.
+    await expect(page.locator('#furniture-creator-rule-editor')).toBeHidden();
 });
 
 /**

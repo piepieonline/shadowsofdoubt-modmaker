@@ -836,3 +836,5 @@ var jsonTree = (function() {
         }
     };
 })();
+
+export default jsonTree;

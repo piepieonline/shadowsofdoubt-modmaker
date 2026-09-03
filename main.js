@@ -17,6 +17,34 @@
  * The markup still uses inline `onclick` attributes, which resolve against the global
  * scope, so each flow publishes what it needs onto `window` when it loads.
  */
+// First, and for its side effects: publishes jQuery, select2, idbKeyval, jsonpatch and
+// jsonTree as globals, which is what the markup and several core modules still expect.
+// See the file for why they are still globals.
+import './core/vendorGlobals.js';
+
+/*
+ * Every stylesheet the shell loads, in cascade order. This order is load-bearing and is
+ * the order the markup used to declare -- the app's own rules come after the libraries'
+ * so they can correct them by position rather than by specificity.
+ *
+ * Kept as one list rather than split between here and <link> tags in index.html. A linked
+ * sheet applies when the markup is parsed and an imported one when its module runs, so any
+ * split puts all of the imports after all of the links whatever the intended order. Doing
+ * that by accident put Pico after core/chrome.css and changed the size of every button.
+ *
+ * A flow's own stylesheet is added on activation, after all of these. See applyStyles.
+ */
+import 'select2/dist/css/select2.min.css';
+import './libs/jsonTree/jsonTree.css';
+import '@picocss/pico/css/pico.red.min.css';
+import './core/chrome.css';
+// The frame the two document editors share. Loaded here rather than per flow: both of
+// them want it, and a flow's own stylesheet comes after it.
+import './core/documentFlow.css';
+// After Pico, which is where the search field's icon inset comes from, and after select2's
+// own stylesheet. Both are what this corrects.
+import './core/components/searchSelect/searchSelect.css';
+
 import { registerFlow, activateFlow, listFlows, getFlow } from './core/flowRegistry.js';
 import { folderHandle, restoreFolders, useFolder } from './core/folders.js';
 import { initFoldersModal, activateFoldersFor, onFoldersChanged } from './core/foldersModal.js';
