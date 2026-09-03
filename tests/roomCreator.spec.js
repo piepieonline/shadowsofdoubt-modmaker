@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import {
     installFsHarness, collectPageErrors, gotoFlow, seedFs, connectFolders, selectContent,
-    listDir, readFile,
+    listDir, readFile, writeFixture,
 } from '../test-support/harness.js';
 import { soFixture } from '../test-support/fixtures.js';
 
@@ -305,7 +305,7 @@ test('a donor no cluster names disables the copy, and says why rather than doing
         .toContainText('Atrium has no furniture to copy: no cluster in the game names its room class');
 });
 
-test('furniture the room’s place refuses is copied as a clone, and can be taken back out', async ({ page }) => {
+test('furniture the room’s place refuses is copied, patched and said out loud', async ({ page }) => {
     await openPane(page);
 
     await page.locator('#room-creator-donor').selectOption('StreetFrontage');
@@ -313,9 +313,9 @@ test('furniture the room’s place refuses is copied as a clone, and can be take
     await page.locator('#room-creator-floor').fill('3');
     await openSection(page, 'Identity');
 
-    // 14 of StreetFrontage's 19 are refused three floors up. They come across anyway --
-    // a copy minus what this floor rules out would quietly not be a copy -- each as a
-    // clone with the one gate that refused it relaxed.
+    // 14 of StreetFrontage's 19 are refused three floors up. They come across anyway -- a
+    // copy minus what this floor rules out would quietly not be a copy -- each as the same
+    // additive patch as any other, which does nothing until the gate is relaxed.
     await page.locator('#room-creator-copy-furniture').click();
     await expect(page.locator('#room-creator-copied'))
         .toContainText('Copied 19 of StreetFrontage’s furniture clusters, 14 of which are refused');
@@ -324,25 +324,27 @@ test('furniture the room’s place refuses is copied as a clone, and can be take
     await page.locator('#room-creator-search').fill('2_ShantyShack');
     const row = page.locator('#room-creator-clusters > li').first();
 
-    // Ticked, enabled and marked as a clone -- not the greyed, disabled row it is while
-    // it is out. The reason stays, because it is what the clone relaxes.
     await expect(row).toContainText('2_ShantyShack');
-    await expect(row).toContainText(', cloned');
+    await expect(row).toContainText(', refused here');
     await expect(row.locator('> label input[type="checkbox"]')).toBeChecked();
-    await expect(row.locator('> label input[type="checkbox"]')).toBeEnabled();
+
+    // The reason stays on an admitted row, because it is what the author has to relax --
+    // in a copy of their own, which is the one thing this tool will not do for them.
     await row.locator('.room-creator-why').click();
     await expect(row.locator('.room-creator-reason')).toContainText('this room is on 3');
+    await expect(row.locator('.room-creator-reason'))
+        .toContainText('To place 2_ShantyShack in this room, copy it into your mod');
 
+    // A patch of the shipped cluster, and no file of the mod's own anywhere in the plan.
     await openSection(page, 'What will be written');
-    await expect(page.locator('#room-creator-plan'))
-        .toContainText('_2_ShantyShack.FurnitureCluster.sodso.json');
+    const written = page.locator('#room-creator-plan');
+    await expect(written).toContainText('2_ShantyShack.sodso_patch.json');
+    await expect(written).not.toContainText('_2_ShantyShack.FurnitureCluster.sodso.json');
+    await expect(written).toContainText('2_ShantyShack is admitted, but where this room sits it is refused');
 
-    // Untickable again, which is the half a disabled box could not do.
     await openSection(page, 'What goes in it');
     await row.locator('> label input[type="checkbox"]').uncheck();
-    await expect(row.locator('> label input[type="checkbox"]')).toBeDisabled();
-    await expect(page.locator('#room-creator-plan'))
-        .not.toContainText('_2_ShantyShack.FurnitureCluster.sodso.json');
+    await expect(written).not.toContainText('2_ShantyShack.sodso_patch.json');
 });
 
 /** The same pane, but with a mod to write into. */
@@ -379,7 +381,7 @@ async function fillPicnicArea(page, { floor = '0' } = {}) {
     // so the donor's own is the only useful default. Left as they are.
 }
 
-test('offers only the clusters the room can take, and says which would be cloned', async ({ page }) => {
+test('says which clusters the room’s place refuses, and lets them be admitted anyway', async ({ page }) => {
     await openPane(page);
 
     await openSection(page, 'Where the room sits');
@@ -387,25 +389,27 @@ test('offers only the clusters the room can take, and says which would be cloned
     await openSection(page, 'What goes in it');
     await page.locator('#room-creator-search').fill('PicnicTable');
 
-    // Refused at floor 3 -- still listed, but not something that can be ticked. Hiding it
-    // would answer "why can I not put a picnic table here" with silence.
+    // Refused at floor 3, listed and marked as such. Hiding it would answer "why can I not
+    // put a picnic table here" with silence; disabling it would refuse on the strength of a
+    // floor the author is free to change and which no file records.
     const row = page.locator('#room-creator-clusters > li').first();
-    await expect(row).toContainText('PicnicTable');
-    await expect(row.locator('input[type="checkbox"]')).toBeDisabled();
+    await expect(row).toContainText('PicnicTable — 1 preset, refused here');
+    await expect(row.locator('input[type="checkbox"]')).toBeEnabled();
 
     // The reason is one click away rather than on the row, where at this floor it would be
     // the same sentence a hundred and forty times.
     await expect(row.locator('.room-creator-reason')).toBeHidden();
     await row.locator('.room-creator-why').click();
     await expect(row.locator('.room-creator-reason'))
-        .toHaveText('It is limited to floors -1 to 0, and this room is on 3.');
+        .toContainText('It is limited to floors -1 to 0, and this room is on 3.');
 
-    // On the ground floor it can be ticked, with its closure of one bench.
+    // On the ground floor nothing refuses it and the marking goes.
     await openSection(page, 'Where the room sits');
     await page.locator('#room-creator-floor').fill('0');
     await openSection(page, 'What goes in it');
     await expect(row).toContainText('PicnicTable — 1 preset');
-    await expect(row.locator('input[type="checkbox"]')).toBeEnabled();
+    await expect(row).not.toContainText('refused here');
+    await expect(row.locator('.room-creator-why')).toHaveCount(0);
 });
 
 test('admitting a cluster shows its furniture, and lets some of it be left out', async ({ page }) => {
@@ -852,6 +856,135 @@ test('taking a room back out of a patch leaves another room’s changes alone', 
     const patch = JSON.parse(await readFile(page, 'Mods/TestCase/PicnicBench.sodso_patch.json'));
     expect(patch.patches.map((operation) => operation.value))
         .toEqual(['REF:RoomTypeFilter|PicnicAreaTwoRTF']);
+});
+
+/**
+ * A file this tool wrote once is not a file it owns for ever.
+ *
+ * The pane's own note tells the author to go and edit what it wrote, and a save used to
+ * rebuild each of the four assets from the plan -- throwing away every field the pane has no
+ * control for, which on a `RoomConfiguration` is most of them.
+ */
+test('saving a room again keeps what was hand-added to its own assets', async ({ page }) => {
+    await openPaneWithMod(page);
+    await fillPicnicArea(page);
+    await openSection(page, 'What will be written');
+    await page.locator('#room-creator-write').click();
+    await expect(page.locator('#room-creator-plan')).toContainText('16 files written');
+
+    // Edited by hand, the way the pane invites: a field it writes, one it does not, and one
+    // nothing in this app has heard of.
+    const written = JSON.parse(await readFile(page, 'Mods/TestCase/PicnicAreaRC.RoomConfiguration.sodso.json'));
+    await writeFixture(page, 'Mods/TestCase/PicnicAreaRC.RoomConfiguration.sodso.json', JSON.stringify({
+        ...written, securityDoors: 2, useOwnership: true, somethingThisToolHasNeverHeardOf: 42,
+    }));
+
+    await page.locator('#room-creator-modal button[rel="prev"]').click();
+    await page.getByRole('link', { name: 'Room Creator' }).click();
+    await openSection(page, 'Identity');
+    await page.locator('#room-creator-open').selectOption('PicnicAreaRC');
+
+    await openSection(page, 'What will be written');
+    await expect(page.locator('#room-creator-plan')).toContainText('rewritten');
+    await page.locator('#room-creator-write').click();
+    await expect(page.locator('#room-creator-plan')).toContainText('listed in murdermanifest');
+
+    const after = JSON.parse(await readFile(page, 'Mods/TestCase/PicnicAreaRC.RoomConfiguration.sodso.json'));
+
+    expect(after.securityDoors).toBe(2);
+    expect(after.useOwnership).toBe(true);
+    expect(after.somethingThisToolHasNeverHeardOf).toBe(42);
+
+    // And it still states what it does own.
+    expect(after.roomClass).toBe('REF:RoomClassPreset|PicnicAreaRCP');
+    expect(after.roomType).toBe('REF:RoomTypePreset|PicnicArea');
+});
+
+/**
+ * A cluster of the author's own, which is what they are told to make when a gate refuses a
+ * shipped one.
+ *
+ * Two things must not happen to it, and both used to. It must not be patched -- whether a
+ * patch over a file the mod declares applies at all is a question of load order -- and the
+ * furniture it places must not be withdrawn because nothing here can say what that is.
+ */
+test('a cluster of the mod’s own is left alone, and keeps the furniture it admits', async ({ page }) => {
+    const mine = {
+        'Mods/Mine/murdermanifest.sodso.json': JSON.stringify({
+            enabled: true,
+            fileOrder: [
+                'REF:Alcove.RoomClassPreset', 'REF:AlcoveThings.RoomTypeFilter',
+                'REF:NookRoom.RoomTypePreset', 'REF:Nook.RoomConfiguration',
+                'REF:MyPicnicTable.FurnitureCluster', 'REF:PicnicBench',
+            ],
+            loadBefore: '',
+            version: 1,
+        }),
+        'Mods/Mine/Nook.RoomConfiguration.sodso.json': JSON.stringify({
+            presetName: 'Nook', name: 'Nook', fileType: 'RoomConfiguration',
+            copyFrom: 'REF:RoomConfiguration|Atrium',
+            roomType: 'REF:RoomTypePreset|NookRoom',
+            roomClass: 'REF:RoomClassPreset|Alcove',
+        }),
+        'Mods/Mine/Alcove.RoomClassPreset.sodso.json': JSON.stringify({
+            presetName: 'Alcove', name: 'Alcove', fileType: 'RoomClassPreset',
+        }),
+        'Mods/Mine/NookRoom.RoomTypePreset.sodso.json': JSON.stringify({
+            presetName: 'NookRoom', name: 'NookRoom', fileType: 'RoomTypePreset',
+            copyFrom: 'REF:RoomTypePreset|Atrium',
+        }),
+        'Mods/Mine/AlcoveThings.RoomTypeFilter.sodso.json': JSON.stringify({
+            presetName: 'AlcoveThings', name: 'AlcoveThings', fileType: 'RoomTypeFilter',
+            roomClasses: ['REF:RoomClassPreset|Alcove'],
+        }),
+
+        // The author's own copy of PicnicTable, with the floor gate relaxed on the copy.
+        'Mods/Mine/MyPicnicTable.FurnitureCluster.sodso.json': JSON.stringify({
+            presetName: 'MyPicnicTable', name: 'MyPicnicTable', fileType: 'FurnitureCluster',
+            copyFrom: 'REF:FurnitureCluster|PicnicTable',
+            allowedRoomFilters: ['REF:RoomTypeFilter|AlcoveThings'],
+            limitToFloorRange: false,
+        }),
+
+        // Which puts down a bench, admitted to the room the ordinary way.
+        'Mods/Mine/PicnicBench.sodso_patch.json': JSON.stringify({
+            name: 'PicnicBench', fileType: 'FurniturePreset',
+            patches: [{ op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|AlcoveThings' }],
+        }),
+    };
+
+    await page.addInitScript((k) => window.localStorage.setItem(k, 'true'), SPOILER_KEY);
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, mine);
+    await connectFolders(page, { modDir: 'Mods' });
+    await selectContent(page, 'Mine', '');
+
+    await page.getByRole('link', { name: 'Room Creator' }).click();
+    await expect(page.locator('#room-creator-verdict')).toContainText('furniture clusters suit this room');
+
+    await page.locator('#room-creator-open').selectOption('Nook');
+    await expect(page.locator('#room-creator-opened'))
+        .toContainText('MyPicnicTable is a cluster of your own naming this room’s filter');
+
+    await openSection(page, 'What will be written');
+    await page.locator('#room-creator-write').click();
+    await expect(page.locator('#room-creator-plan')).toContainText('listed in murdermanifest');
+
+    // No patch aimed at the mod's own file, and the file itself untouched.
+    const after = await listDir(page, 'Mods/Mine');
+    expect(after).not.toContain('MyPicnicTable.sodso_patch.json');
+    expect(after).not.toContain('MyPicnicTable.FurnitureCluster.sodso_patch.json');
+
+    const cluster = JSON.parse(await readFile(page, 'Mods/Mine/MyPicnicTable.FurnitureCluster.sodso.json'));
+    expect(cluster.limitToFloorRange).toBe(false);
+    expect(cluster.allowedRoomFilters).toEqual(['REF:RoomTypeFilter|AlcoveThings']);
+
+    // And the bench it places is still admitted. Saving used to withdraw it, because no
+    // cluster this tool can read accounts for it.
+    expect(after).toContain('PicnicBench.sodso_patch.json');
+    const bench = JSON.parse(await readFile(page, 'Mods/Mine/PicnicBench.sodso_patch.json'));
+    expect(bench.patches.map((operation) => operation.value))
+        .toContain('REF:RoomTypeFilter|AlcoveThings');
 });
 
 test('finds a room assembled by hand, whose files follow no naming convention', async ({ page }) => {

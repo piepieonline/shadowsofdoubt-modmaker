@@ -24,9 +24,7 @@
  * So a preset that states `subObjects` at all states all of them, and one that states an
  * empty list states that there are none.
  */
-import { readFileContent } from '../../../core/fs.js';
-import { PRESET_SUFFIX, PATCH_SUFFIX } from '../../../core/soFileName.js';
-import { MANIFEST_FILE } from '../../../core/murderManifest.js';
+import { readModFiles } from '../../../core/soBuilder.js';
 import { readBaseAsset } from '../../../core/baseAssets.js';
 import { applyPatches, isPatchFormat, mergeOldFormat, overwriteWith } from '../../../core/patchFormat.js';
 import soDefaults from '../../../refs/generated/soDefaults.json' with { type: 'json' };
@@ -34,7 +32,6 @@ import soDefaults from '../../../refs/generated/soDefaults.json' with { type: 'j
 import { readAsset, refName, setModAssets } from './furnitureAssets.js';
 import { describeAsset } from './furnitureModel.js';
 import { placementFromAsset } from './furnitureClass.js';
-import { parseJSON } from '../../../core/jsonNumbers.js';
 
 const PRESET = 'FurniturePreset';
 const CLASS = 'FurnitureClass';
@@ -44,45 +41,13 @@ const CLASS = 'FurnitureClass';
  *
  * The folder rather than the manifest's list, for the reason the room creator reads rooms
  * the same way: a file the author has not got round to listing yet is still one worth
- * showing, and one the loader would ignore is better reported than hidden.
+ * showing, and one the loader would ignore is better reported than hidden. The reading
+ * itself is `readModFiles`, which both creators share so that "what is in this folder" has
+ * one answer rather than one per pane.
  */
 export async function readTypeFiles(folder, type) {
-    if (!folder) return [];
-
-    const files = [];
-
-    try {
-        for await (const entry of folder.values()) {
-            if (entry.kind !== 'file' || entry.name === MANIFEST_FILE) continue;
-
-            const patch = entry.name.endsWith(PATCH_SUFFIX);
-            if (!patch && !entry.name.endsWith(PRESET_SUFFIX)) continue;
-
-            let raw = null;
-            try {
-                raw = parseJSON(await readFileContent(entry));
-            } catch {
-                // A file being edited, or one that is not JSON at all. Neither is a reason
-                // to show none of the others.
-                continue;
-            }
-
-            if ((raw?.fileType ?? raw?.type) !== type) continue;
-
-            files.push({
-                fileName: entry.name,
-                name: raw.name ?? raw.presetName
-                    ?? entry.name.slice(0, -(patch ? PATCH_SUFFIX : PRESET_SUFFIX).length)
-                        .replace(new RegExp(`\\.${type}$`), ''),
-                patch,
-                raw,
-            });
-        }
-    } catch {
-        return [];
-    }
-
-    return files;
+    const { files } = await readModFiles(folder);
+    return files.filter((entry) => entry.type === type);
 }
 
 /** The mod's own furniture presets, keyed by name. */

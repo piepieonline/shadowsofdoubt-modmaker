@@ -29,9 +29,7 @@ import {
 } from './furnitureAssets.js';
 import { readFurnitureFiles, modPreset, readModClasses } from './modFurniture.js';
 import { readModel } from './furniturePrefab.js';
-import {
-    planFurniture, against, collisions, mergeFile, CLASS_SUFFIX,
-} from './furniturePlan.js';
+import { planFurniture, CLASS_SUFFIX } from './furniturePlan.js';
 import {
     describePlacement, explainRule, explainBlock, explainExtent, overhangTiles, boundsOf,
     TAG_MEANING,
@@ -39,12 +37,11 @@ import {
 import { drawPlacement, blockNotes } from './furnitureClassView.js';
 import { WALL_RULE, BLOCKING_DIRECTION } from '../../../core/furnitureRules.js';
 import { INTERACTABLE_ID } from './furnitureEnums.js';
-import { getFile, writeFile, readFileContent, tryGetFile } from '../../../core/fs.js';
 import {
-    readManifest, blankManifest, withListing, MANIFEST_FILE,
-} from '../../../core/murderManifest.js';
+    readModFiles, indexMod, emptyIndex, landAll, commit,
+} from '../../../core/soBuilder.js';
+import { MANIFEST_FILE } from '../../../core/murderManifest.js';
 import { createStepper } from './creatorSteps.js';
-import { parseJSON, stringifyJSON } from '../../../core/jsonNumbers.js';
 
 /**
  * What each step is for, said in the footer while it is being read.
@@ -112,9 +109,9 @@ const state = {
     edits: null,
     name: '',
 
-    // The file names the folder held when it was last read, for the plan's preview. A
-    // preview only: `writeFurniture` reads the folder again rather than trusting it.
-    existing: new Set(),
+    // The folder as it was when it was last read, for the plan's preview. A preview only:
+    // `writeFurniture` reads the folder again rather than trusting it.
+    index: emptyIndex(),
 
     // Why the chosen preset could not be read, where it could not. `readBaseAsset`'s own
     // reason, which distinguishes "your export does not hold this" from "connect one".
@@ -316,7 +313,7 @@ async function refreshModFurniture() {
 
     state.mod = new Map();
     state.modClasses = new Map();
-    state.existing = new Set();
+    state.index = emptyIndex();
     if (!folder) return;
 
     state.modClasses = await readModClasses(folder);
@@ -337,14 +334,10 @@ async function refreshModFurniture() {
     // should find this before the export's.
     setModAssets('FurniturePreset', documents);
 
-    try {
-        for await (const entry of folder.values()) {
-            if (entry.kind === 'file') state.existing.add(entry.name);
-        }
-    } catch {
-        // A folder that cannot be listed is one the plan cannot check names against. The
-        // write reads it again anyway, so this costs a preview rather than a safeguard.
-    }
+    // A folder that cannot be listed comes back empty, which is one the plan cannot check
+    // names against. The write reads it again anyway, so this costs a preview rather than a
+    // safeguard.
+    state.index = indexMod(await readModFiles(folder));
 }
 
 /**
@@ -1933,15 +1926,8 @@ function drawPlan() {
         return;
     }
 
-    const plan = planFurniture(choices());
-
-    // A patch of this name is not "this furniture's own files" -- it is a different file
-    // doing a different thing, and treating it as ours would call an overwrite a save.
-    const named = state.mod.get(state.name);
-    const own = new Set(named && named.source !== 'patch'
-        ? plan.files.map((entry) => entry.file) : []);
-    const landing = against(plan.files, state.existing);
-    const clashes = landing.filter((entry) => entry.landing === 'clash' && !own.has(entry.file));
+    const { plan, landed } = landing(state.index);
+    const clashes = landed.filter((item) => item.action === 'clash' || item.action === 'refuse');
 
     const parts = [];
 
@@ -1953,24 +1939,25 @@ function drawPlan() {
      * pane does not own, and it does not touch an existing cluster at all.
      */
     const list = document.createElement('ol');
-    for (const entry of landing) {
-        const here = entry.landing === 'clash';
+    for (const item of landed) {
         const row = document.createElement('li');
 
         // The name as a name, and what happens to it as a reading of that -- a file name is
         // a thing the author will go looking for in the folder, and it reads as one rather
         // than as the first few words of a sentence about it.
-        row.append(asFile(entry.file), said(!here ? ' — new'
-            : !own.has(entry.file) ? ' — already here, and something else’s'
-                : entry.createOnly ? ' — already here, and left alone'
-                    : ' — already here, and the fields this pane owns updated in it'));
+        row.append(asFile(item.file), said({
+            create: ' — new',
+            merge: ' — already here, and the fields this pane owns updated in it',
+            leave: ' — already here, and left alone',
+            clash: ' — already here, and something else’s',
+        }[item.action] ?? ` — cannot be written: ${item.reason}`));
 
         list.append(row);
     }
     parts.push(list);
 
     if (clashes.length) {
-        parts.push(note(`${clashes.map((entry) => entry.file).join(', ')} `
+        parts.push(note(`${clashes.map((item) => item.file).join(', ')} `
             + `${clashes.length === 1 ? 'is' : 'are'} already in this folder and not this `
             + 'furniture’s. Change the name before writing.', 'warning'));
     }
@@ -1979,24 +1966,43 @@ function drawPlan() {
 
     out.replaceChildren(...parts);
 
-    planned = { count: landing.length, problems: plan.problems };
+    planned = { count: landed.length, problems: plan.problems };
     drawSteps();
 
     if (!button) return;
 
-    // No files is the plan saying the name is not settled -- see `planFurniture`. Read
+    // No changes is the plan saying the name is not settled -- see `planFurniture`. Read
     // structurally rather than by recognising a problem's wording, so a new reason to
     // refuse a name cannot leave the button enabled by being phrased unexpectedly.
     const blocked = !window.selectedMod?.baseFolder;
-    const unnamed = !plan.files.length;
+    const unnamed = !plan.changes.length;
 
     button.disabled = blocked || unnamed || clashes.length > 0;
 
     button.textContent = blocked ? 'Choose a mod to write into'
         : unnamed ? 'Name it to write'
             : clashes.length ? 'Change the name to write'
-                : own.size ? `Save ${state.name}`
-                    : `Write ${plan.files.length} files`;
+                : landed.some((item) => item.action !== 'create') ? `Save ${state.name}`
+                    : `Write ${plan.changes.length} files`;
+}
+
+/**
+ * The whole write, landed against a folder.
+ *
+ * One function for the preview and for the write, called with the folder as it was last
+ * read and with the folder as it is -- see the same note in `roomCreator.js`.
+ *
+ * A patch of this name is not "this furniture's own files": it is a different file doing a
+ * different thing, and treating it as ours would call an overwrite a save.
+ */
+function landing(index) {
+    const plan = planFurniture(choices());
+    const named = state.mod.get(state.name);
+
+    const own = new Set(named && named.source !== 'patch'
+        ? plan.changes.map((change) => change.file) : []);
+
+    return { plan, landed: landAll(plan.changes, index, { own }) };
 }
 
 /**
@@ -2158,94 +2164,39 @@ export async function writeFurniture() {
     const out = $('#furniture-creator-plan');
     if (!folder || !out || !state.preset) return;
 
-    const plan = planFurniture(choices());
-
     /*
      * Read before deciding anything, and read the *contents* rather than only the names.
      *
-     * The list the preview was drawn from is whatever the folder held when the pane opened,
+     * The index the preview was drawn from is whatever the folder held when the pane opened,
      * and a write has to answer to it as it is now. The contents matter because a save is a
      * merge: this pane owns a named handful of fields in each file and must leave the rest
      * alone -- an arrangement built by hand, a `minimumRoomSize` typed in, a field of the
      * game's that nothing here has heard of.
      *
-     * A file that will not parse is treated as absent for merging and reported below. It is
-     * the one case where the honest thing is to refuse: merging into a file this cannot read
-     * would silently drop all of it, which is exactly what this change exists to stop.
+     * A file that will not parse stops the write. It is the one case where the honest thing
+     * is to refuse: merging into a file this cannot read would silently drop all of it,
+     * which is exactly what the owned merge exists to stop.
      */
-    const onDisk = new Set();
-    const held = new Map();
-    const unreadable = [];
+    const { landed } = landing(indexMod(await readModFiles(folder)));
+    const result = await commit(folder, landed);
 
-    for (const entry of plan.files) {
-        const handle = await tryGetFile(folder, [entry.file]);
-        if (!handle) continue;
-
-        onDisk.add(entry.file);
-
-        try {
-            held.set(entry.file, parseJSON(await readFileContent(handle)));
-        } catch {
-            unreadable.push(entry.file);
-        }
-    }
-
-    const named = state.mod.get(state.name);
-    const own = new Set(named && named.source !== 'patch'
-        ? plan.files.map((entry) => entry.file) : []);
-
-    const clash = collisions(plan.files, onDisk, own);
-
-    if (clash.length) {
-        out.prepend(note(`${clash.join(', ')} ${clash.length === 1 ? 'is' : 'are'} already in `
-            + 'this folder and belong to something else. Nothing has been written — change '
-            + 'this furniture’s name.', 'warning'));
+    if (result.refused.length) {
+        out.prepend(note(`Nothing has been written. ${result.refused.map((item) => item.reason).join('. ')}. `
+            + 'Change this furniture’s name, or fix the file.', 'warning'));
         return;
     }
 
-    if (unreadable.length) {
-        out.prepend(note(`${unreadable.join(', ')} ${unreadable.length === 1 ? 'is' : 'are'} `
-            + 'already here and will not parse as JSON. Nothing has been written: saving over '
-            + 'a file this cannot read would throw away whatever is in it, and a file being '
-            + 'half-edited elsewhere is the likeliest reason for this. Fix the JSON, or move '
-            + 'the file out of the folder.', 'warning'));
+    if (result.malformed) {
+        out.prepend(note(`${MANIFEST_FILE} could not be read, so it has been left alone. The `
+            + `${result.written.length} files are written but none of them will load until they `
+            + 'are listed there by hand.', 'warning'));
         return;
     }
 
     // What was written, and what was deliberately not. The cluster is the second kind: once
     // it exists the pane owns nothing in it, so a save leaves it alone entirely.
-    const written = [];
-    const untouched = [];
-
-    for (const entry of plan.files) {
-        if (entry.createOnly && onDisk.has(entry.file)) {
-            untouched.push(entry.file);
-            continue;
-        }
-
-        const handle = await getFile(folder, [entry.file], true);
-        const content = mergeFile(entry, held.get(entry.file) ?? null);
-
-        await writeFile(handle, `${stringifyJSON(content, null, 2)}\n`);
-        written.push(entry.file);
-    }
-
-    // One read and one write rather than a pass per file: three re-reads of the same
-    // manifest is three chances for it to be half-updated.
-    const { present, malformed, data } = await readManifest(folder);
-
-    if (malformed) {
-        out.prepend(note(`${MANIFEST_FILE} could not be read, so it has been left alone. The `
-            + `${written.length} files are written but none of them will load until they `
-            + 'are listed there by hand.', 'warning'));
-        return;
-    }
-
-    let manifest = present ? data : blankManifest();
-    for (const entry of plan.order) manifest = withListing(manifest, entry);
-
-    const handle = await getFile(folder, [MANIFEST_FILE], true);
-    await writeFile(handle, `${stringifyJSON(manifest, null, 2)}\n`);
+    const written = result.written.map((item) => item.file);
+    const untouched = result.left.map((item) => item.file);
 
     // Re-read and redraw before saying anything: `drawPlan` replaces this pane wholesale,
     // so a note put up before it runs is one the author never sees.

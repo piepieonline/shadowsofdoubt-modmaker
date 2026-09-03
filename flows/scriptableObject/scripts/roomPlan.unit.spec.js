@@ -1,37 +1,62 @@
 /**
- * The file set a room comes to, against the game's own reference data.
+ * The change set a room comes to, against the game's own reference data.
  *
  * Everything here is decided before a folder is touched, which is the point of the split:
  * what the author is about to write is checkable without writing it.
  *
  * The worked example is the export server's own -- an indoor picnic area admitting one
- * bench -- because it is awkward in the two ways that matter. `PicnicTable` conflicts on a
- * gate, so it exercises the clone path, and its closure is a single preset that must be
- * patched separately or the cluster resolves to nothing.
+ * bench -- because its closure is a single preset that must be patched separately or the
+ * cluster resolves to nothing. Upstairs it is awkward in a second way: `PicnicTable` is
+ * limited to floors -1 to 0, so a room three storeys up admits a cluster that will never be
+ * placed in it, which the plan has to say rather than quietly work around.
  */
 import { describe, test, expect } from 'vitest';
 
 import {
-    planRoom, decideCluster, assetNames, collisions, mergePatch, against, fullClosure, abandoned,
-    roomRefs, withoutRoom, sharedNames,
+    planRoom, refusedBy, assetNames, fullClosure, abandoned, roomRefs, roomOperations,
+    sharedNames, OWNED_FIELDS,
 } from './roomPlan.js';
+
+import {
+    indexMod, landAll, stemOf, withdrawOps,
+} from '../../../core/soBuilder.js';
 
 import rooms from '../../../refs/derived/roomCreator.json' with { type: 'json' };
 import chain from '../../../refs/derived/furnitureChain.json' with { type: 'json' };
 
-/** The worked example: a picnic area three storeys up, which is what forces the clone. */
+/** The worked example, on the ground floor, where nothing about the room is awkward. */
 const picnicArea = {
     name: 'PicnicArea',
     donor: 'Atrium',
     donorRoomType: 'Atrium',
-    context: { floor: 3 },
+    context: { floor: 0 },
     clusters: ['PicnicTable'],
     surfaces: { walls: 'PlainWall', floor: 'WoodenFlooring', ceiling: 'PlasterCeiling' },
     lighting: ['AtriumLight'],
 };
 
+/** The same room three storeys up, which is where the floor gate refuses its furniture. */
+const upstairs = { ...picnicArea, context: { floor: 3 } };
+
 const plan = () => planRoom(picnicArea, rooms, chain);
-const byFile = (result) => Object.fromEntries(result.files.map((entry) => [entry.file, entry]));
+const byFile = (result) => Object.fromEntries(result.changes.map((entry) => [entry.file, entry]));
+
+/** A content folder holding exactly these files, in the shape `indexMod` reads. */
+const folder = (...held) => indexMod({
+    files: held.map((raw) => {
+        const patch = Array.isArray(raw.patches);
+        const name = raw.presetName ?? raw.name;
+
+        return {
+            fileName: patch ? `${name}.sodso_patch.json` : `${name}.${raw.fileType}.sodso.json`,
+            file: patch ? name : `${name}.${raw.fileType}`,
+            name,
+            type: raw.fileType,
+            patch,
+            raw,
+        };
+    }),
+});
 
 
 describe('naming', () => {
@@ -53,9 +78,9 @@ describe('naming', () => {
 
 describe('the four assets', () => {
     test('are written first, in the order they reference each other', () => {
-        const { order } = plan();
+        const { changes } = plan();
 
-        expect(order.slice(0, 4)).toEqual([
+        expect(changes.slice(0, 4).map((change) => stemOf(change.file))).toEqual([
             'PicnicAreaRCP.RoomClassPreset',
             'PicnicAreaRTF.RoomTypeFilter',
             'PicnicArea.RoomTypePreset',
@@ -63,6 +88,11 @@ describe('the four assets', () => {
         ]);
     });
 
+    /**
+     * `fileType` and nothing else. Files this tool wrote before carried a `type` beside it,
+     * which every reader ignores in favour of `fileType` -- so it said nothing, and it is
+     * owned rather than written so that a save clears it back out.
+     */
     test('the room class is empty, which is what makes the room admit nothing', () => {
         const file = byFile(plan())['PicnicAreaRCP.RoomClassPreset.sodso.json'];
 
@@ -70,7 +100,6 @@ describe('the four assets', () => {
             presetName: 'PicnicAreaRCP',
             fileType: 'RoomClassPreset',
             name: 'PicnicAreaRCP',
-            type: 'RoomClassPreset',
             copyFrom: null,
         });
     });
@@ -103,53 +132,134 @@ describe('the four assets', () => {
 });
 
 
-describe('patch or clone', () => {
-    test('a cluster whose gates all pass is patched where it stands', () => {
-        // On the ground floor PicnicTable's floor range -1..0 admits the room.
-        expect(decideCluster(rooms, 'PicnicTable', { floor: 0 })).toEqual({
-            name: 'PicnicTable', action: 'patch', relax: {},
-        });
+/**
+ * A file this tool wrote once is not a file it owns for ever. The pane's own note tells the
+ * author to go and edit what it wrote, and a save that rebuilt each file from the plan threw
+ * all of that away.
+ */
+describe('saving a room over itself', () => {
+    const held = {
+        fileType: 'RoomConfiguration',
+        presetName: 'PicnicAreaRC',
+        name: 'PicnicAreaRC',
+        copyFrom: 'REF:RoomConfiguration|Atrium',
+        roomType: 'REF:RoomTypePreset|PicnicArea',
+        roomClass: 'REF:RoomClassPreset|PicnicAreaRCP',
+
+        // Hand-typed, and nothing in the pane has a control for any of it.
+        securityDoors: 2,
+        useOwnership: true,
+        somethingThisToolHasNeverHeardOf: 42,
+    };
+
+    const saved = () => {
+        const change = plan().changes
+            .find((entry) => entry.file === 'PicnicAreaRC.RoomConfiguration.sodso.json');
+
+        return landAll([change], folder(held), { own: new Set([change.file]) })[0];
+    };
+
+    test('keeps every field the pane does not own', () => {
+        const { action, content } = saved();
+
+        expect(action).toBe('merge');
+        expect(content.securityDoors).toBe(2);
+        expect(content.useOwnership).toBe(true);
+        expect(content.somethingThisToolHasNeverHeardOf).toBe(42);
     });
 
-    test('a cluster refused by a gate is cloned, relaxing only that gate', () => {
-        const decision = decideCluster(rooms, 'PicnicTable', { floor: 3 });
-
-        expect(decision.action).toBe('clone');
-        expect(decision.relax).toEqual({ limitToFloor: false, limitToFloorRange: false });
-
-        // Nothing else is touched: relaxing every gate would admit it to rooms its author
-        // never meant it for.
-        expect(decision.relax.minimumWealth).toBeUndefined();
-        expect(decision.relax.allowedInOpenPlan).toBeUndefined();
+    test('still states the ones it does', () => {
+        expect(saved().content.roomClass).toBe('REF:RoomClassPreset|PicnicAreaRCP');
     });
 
-    test('the clone is the room’s own, and admits only the room’s filter', () => {
-        const file = byFile(plan())['PicnicArea_PicnicTable.FurnitureCluster.sodso.json'];
+    /** The stray `type` a file written before this carries, cleared rather than left. */
+    test('clears a key it owns and no longer writes', () => {
+        const change = plan().changes
+            .find((entry) => entry.file === 'PicnicAreaRCP.RoomClassPreset.sodso.json');
 
-        expect(file.content.copyFrom).toBe('REF:FurnitureCluster|PicnicTable');
-        expect(file.content.allowedRoomFilters).toEqual(['REF:RoomTypeFilter|PicnicAreaRTF']);
-        expect(file.content.limitToFloorRange).toBe(false);
+        const [landed] = landAll(
+            [change],
+            folder({
+                fileType: 'RoomClassPreset', presetName: 'PicnicAreaRCP', name: 'PicnicAreaRCP', type: 'RoomClassPreset',
+            }),
+            { own: new Set([change.file]) },
+        );
+
+        expect(landed.content).not.toHaveProperty('type');
     });
 
-    /**
-     * Not restated, because the reference data holds a trimmed element -- its class and
-     * whether it matters, not its placement, facing or offsets. Writing one from that
-     * would be inventing the cluster's contents. An unstated list is the donor's.
-     */
-    test('the clone does not restate cluster elements it cannot know', () => {
-        const file = byFile(plan())['PicnicArea_PicnicTable.FurnitureCluster.sodso.json'];
-        expect(file.content.clusterElements).toBeUndefined();
+    /** Somebody else's file of that name is not this room's to merge into. */
+    test('is a clash when the room is not the one being edited', () => {
+        const change = plan().changes
+            .find((entry) => entry.file === 'PicnicAreaRC.RoomConfiguration.sodso.json');
+
+        expect(landAll([change], folder(held), { own: new Set() })[0].action).toBe('clash');
     });
 
-    test('a patched cluster only ever adds, so vanilla rooms are untouched', () => {
-        const ground = planRoom({ ...picnicArea, context: { floor: 0 } }, rooms, chain);
-        const file = byFile(ground)['PicnicTable.sodso_patch.json'];
+    test('owns the identity of every one of the four, and nothing else of the game’s', () => {
+        for (const owned of Object.values(OWNED_FIELDS)) {
+            expect(owned).toContain('fileType');
+            expect(owned).toContain('copyFrom');
+            expect(owned).not.toContain('securityDoors');
+        }
+    });
+});
+
+
+/**
+ * The room admits by patching `allowedRoomFilters` and by nothing else.
+ *
+ * It used to clone a cluster whose gates refused the room, into a file of the mod's own with
+ * the gate relaxed. That file came back out of the folder under its own name, which the
+ * reference data has never heard of, and the next save wrote a patch aimed at it.
+ */
+describe('a cluster the gates refuse', () => {
+    test('is patched exactly like any other', () => {
+        const file = byFile(planRoom(upstairs, rooms, chain))['PicnicTable.sodso_patch.json'];
 
         expect(file.content).toEqual({
             name: 'PicnicTable',
             fileType: 'FurnitureCluster',
             patches: [{ op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|PicnicAreaRTF' }],
         });
+    });
+
+    test('writes no file of the mod’s own', () => {
+        const { changes } = planRoom(upstairs, rooms, chain);
+
+        expect(changes.filter((entry) => entry.type === 'FurnitureCluster')
+            .every((entry) => entry.kind === 'add')).toBe(true);
+        expect(byFile(planRoom(upstairs, rooms, chain))['PicnicArea_PicnicTable.FurnitureCluster.sodso.json'])
+            .toBeUndefined();
+    });
+
+    /**
+     * Loud, because the failure is silent: the gate is checked before the room class, so the
+     * cluster is simply never placed and nothing is logged.
+     */
+    test('is reported, with what to do about it', () => {
+        const { problems } = planRoom(upstairs, rooms, chain);
+        const said = problems.find((text) => text.startsWith('PicnicTable is admitted'));
+
+        expect(said).toContain('limited to floors -1 to 0');
+        expect(said).toContain('copy PicnicTable into your mod by hand');
+    });
+
+    test('says nothing where the gates pass', () => {
+        expect(refusedBy(rooms, 'PicnicTable', { floor: 0 })).toEqual([]);
+        expect(plan().problems).toEqual([]);
+    });
+
+    /** Every failing gate, not the first: they are independent conditions on the room. */
+    test('names the gate that refused it', () => {
+        const failures = refusedBy(rooms, 'PicnicTable', { floor: 3 });
+
+        expect(failures.map((failure) => failure.gate)).toEqual(['floor']);
+    });
+
+    /** Nothing is decided on a blank: an unstated floor answers "unknown", not "no". */
+    test('is not refused when nothing has been said about where the room sits', () => {
+        expect(refusedBy(rooms, 'PicnicTable', {})).toEqual([]);
     });
 });
 
@@ -176,7 +286,7 @@ describe('the closure', () => {
             clusters: ['1_ArmchairFacingTV', '3_FacingArmchairs'],
         }, rooms, chain);
 
-        const patched = result.files.filter((entry) => entry.type === 'FurniturePreset').map((entry) => entry.asset);
+        const patched = result.changes.filter((entry) => entry.type === 'FurniturePreset').map((entry) => entry.asset);
         expect(patched.length).toBe(new Set(patched).size);
         expect(patched).toContain('BrownArmchair');
     });
@@ -205,7 +315,7 @@ describe('surfaces and lighting', () => {
             surfaces: { walls: 'Lino', floor: 'Lino', ceiling: 'PlasterCeiling' },
         }, rooms, chain);
 
-        expect(result.files.filter((entry) => entry.asset === 'Lino')).toHaveLength(1);
+        expect(result.changes.filter((entry) => entry.asset === 'Lino')).toHaveLength(1);
     });
 });
 
@@ -217,14 +327,14 @@ describe('the whole set', () => {
      * without it the room builds cleanly and has no ceiling light.
      */
     test('is the worked example plus the light it forgot', () => {
-        const { files } = plan();
+        const { changes } = plan();
 
-        expect(files.map((entry) => entry.file)).toEqual([
+        expect(changes.map((entry) => entry.file)).toEqual([
             'PicnicAreaRCP.RoomClassPreset.sodso.json',
             'PicnicAreaRTF.RoomTypeFilter.sodso.json',
             'PicnicArea.RoomTypePreset.sodso.json',
             'PicnicAreaRC.RoomConfiguration.sodso.json',
-            'PicnicArea_PicnicTable.FurnitureCluster.sodso.json',
+            'PicnicTable.sodso_patch.json',
             'PicnicBench.sodso_patch.json',
             'PlainWall.sodso_patch.json',
             'WoodenFlooring.sodso_patch.json',
@@ -233,28 +343,31 @@ describe('the whole set', () => {
         ]);
     });
 
+    /** What `commit` lists in the manifest, which names files rather than assets. */
     test('names every file in the manifest, in the same order', () => {
-        const { files, order } = plan();
-        expect(order).toHaveLength(files.length);
+        const stems = plan().changes.map((entry) => stemOf(entry.file));
+
+        expect(stems).toHaveLength(plan().changes.length);
 
         // A patch is named by the asset it patches and carries no type; one of the mod's
         // own is named by asset and type. The manifest names the file either way.
-        expect(order).toContain('PicnicBench');
-        expect(order).toContain('PicnicArea_PicnicTable.FurnitureCluster');
+        expect(stems).toContain('PicnicBench');
+        expect(stems).toContain('PicnicAreaRC.RoomConfiguration');
     });
 
     test('every reference points at something already loaded, or at the base game', () => {
-        const { files } = plan();
+        const { changes } = plan();
         const loaded = new Set();
 
-        for (const entry of files) {
-            const refs = JSON.stringify(entry.content).match(/REF:[A-Za-z]+\|[A-Za-z0-9_ ]+/g) ?? [];
+        for (const entry of changes) {
+            const stated = entry.kind === 'own' ? entry.content : { patches: entry.ops };
+            const refs = JSON.stringify(stated).match(/REF:[A-Za-z]+\|[A-Za-z0-9_ ]+/g) ?? [];
 
             for (const ref of refs) {
                 const [type, target] = ref.slice(4).split('|');
 
                 // A reference to one of this room's own assets must already be written.
-                const own = files.some((other) => other.asset === target && other.kind === 'asset');
+                const own = changes.some((other) => other.asset === target && other.kind === 'own');
                 if (own) expect(loaded.has(target), `${entry.file} -> ${ref}`).toBe(true);
                 else {
                     // Otherwise it must be a shipped asset of that type.
@@ -263,7 +376,7 @@ describe('the whole set', () => {
                 }
             }
 
-            if (entry.kind === 'asset') loaded.add(entry.asset);
+            if (entry.kind === 'own') loaded.add(entry.asset);
         }
     });
 });
@@ -331,9 +444,11 @@ describe('one name belonging to two of the patched types', () => {
             ...picnicArea, context: {}, clusters: ['SecurityDoorDouble'],
         }, rooms, chain);
 
-        expect(result.order).toContain('SecurityDoorDouble.FurnitureCluster');
-        expect(result.order).toContain('SecurityDoorDouble.FurniturePreset');
-        expect(result.order).not.toContain('SecurityDoorDouble');
+        const stems = result.changes.map((entry) => stemOf(entry.file));
+
+        expect(stems).toContain('SecurityDoorDouble.FurnitureCluster');
+        expect(stems).toContain('SecurityDoorDouble.FurniturePreset');
+        expect(stems).not.toContain('SecurityDoorDouble');
     });
 
     /**
@@ -346,7 +461,7 @@ describe('one name belonging to two of the patched types', () => {
 
         expect(files['PicnicBench.sodso_patch.json']).toBeTruthy();
         expect(files['PicnicBench.FurniturePreset.sodso_patch.json']).toBeUndefined();
-        expect(plan().order).toContain('PicnicBench');
+        expect(plan().changes.map((entry) => stemOf(entry.file))).toContain('PicnicBench');
     });
 
     /**
@@ -380,7 +495,7 @@ describe('one name belonging to two of the patched types', () => {
     test('no cluster in the game produces two files of one name', () => {
         for (const name of Object.keys(chain.clusters)) {
             const result = planRoom({ ...picnicArea, context: {}, clusters: [name] }, rooms, chain);
-            const files = result.files.map((entry) => entry.file);
+            const files = result.changes.map((entry) => entry.file);
 
             expect(result.collided, name).toEqual([]);
             expect(new Set(files).size, name).toBe(files.length);
@@ -397,82 +512,43 @@ describe('landing on a folder that is not empty', () => {
      * admitting one cluster genuinely both want to change it.
      */
     test('an asset already there is a clash; a patch is something to add to', () => {
-        const { files } = plan();
-        const existing = new Set([
-            'PicnicAreaRCP.RoomClassPreset.sodso.json',
-            'PicnicBench.sodso_patch.json',
-        ]);
+        const index = folder(
+            { fileType: 'RoomClassPreset', presetName: 'PicnicAreaRCP', name: 'PicnicAreaRCP' },
+            {
+                fileType: 'FurniturePreset',
+                name: 'PicnicBench',
+                patches: [{ op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|VaultRTF' }],
+            },
+        );
 
-        const landed = Object.fromEntries(against(files, existing).map((entry) => [entry.file, entry.landing]));
+        const landed = Object.fromEntries(landAll(plan().changes, index)
+            .map((item) => [item.file, item.action]));
 
         expect(landed['PicnicAreaRCP.RoomClassPreset.sodso.json']).toBe('clash');
         expect(landed['PicnicBench.sodso_patch.json']).toBe('append');
-        expect(landed['PlainWall.sodso_patch.json']).toBe('write');
-    });
-
-    test('only the assets block the write', () => {
-        const { files } = plan();
-
-        expect(collisions(files, ['PicnicBench.sodso_patch.json'])).toEqual([]);
-        expect(collisions(files, ['PicnicAreaRCP.RoomClassPreset.sodso.json']))
-            .toEqual(['PicnicAreaRCP.RoomClassPreset.sodso.json']);
-    });
-});
-
-
-describe('adding this room to a patch another room wrote', () => {
-    const theirs = {
-        name: 'PicnicBench',
-        fileType: 'FurniturePreset',
-        patches: [{ op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|VaultRTF' }],
-    };
-
-    const ours = {
-        name: 'PicnicBench',
-        fileType: 'FurniturePreset',
-        patches: [{ op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|PicnicAreaRTF' }],
-    };
-
-    test('keeps theirs and appends ours', () => {
-        const merged = mergePatch(theirs, ours);
-
-        expect(merged.added).toBe(1);
-        expect(merged.content.patches).toEqual([
-            { op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|VaultRTF' },
-            { op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|PicnicAreaRTF' },
-        ]);
-    });
-
-    test('carries every other key of theirs through untouched', () => {
-        const merged = mergePatch({ ...theirs, note: 'do not lose me' }, ours);
-        expect(merged.content.note).toBe('do not lose me');
-    });
-
-    test('writing the same room twice changes nothing', () => {
-        const once = mergePatch(theirs, ours);
-        const twice = mergePatch(once.content, ours);
-
-        expect(twice.added).toBe(0);
-        expect(twice.content.patches).toEqual(once.content.patches);
+        expect(landed['PlainWall.sodso_patch.json']).toBe('create');
     });
 
     /**
-     * The older format states fields rather than operations. Appending one would leave a
-     * file that is half each, and converting needs the base asset, which is not always
-     * readable. Refused with a sentence rather than merged badly.
+     * The bug this whole split exists for: a cluster the mod declares as a file of its own
+     * is not something to patch. Which of the two a patch would land on is a question of
+     * load order, and the author is the one who can answer it -- in that file.
      */
-    test('refuses a patch written in the format this app replaced', () => {
-        const older = { name: 'PicnicBench', fileType: 'FurniturePreset', allowedRoomFilters: [] };
+    test('a cluster of the mod’s own is left alone rather than patched', () => {
+        const index = folder({
+            fileType: 'FurnitureCluster',
+            presetName: 'PicnicTable',
+            name: 'PicnicTable',
+            copyFrom: 'REF:FurnitureCluster|PicnicTable',
+            allowedRoomFilters: ['REF:RoomTypeFilter|PicnicAreaRTF'],
+        });
 
-        expect(mergePatch(older, ours).reason).toContain('older whole-field format');
-        expect(mergePatch(older, ours).content).toBeUndefined();
-    });
+        const landed = landAll(plan().changes, index)
+            .find((item) => item.change.asset === 'PicnicTable');
 
-    test('refuses a patch of a different type under the same name', () => {
-        const other = { name: 'PicnicBench', fileType: 'FurnitureCluster', patches: [] };
-
-        expect(mergePatch(other, ours).reason)
-            .toBe('PicnicBench patches a FurnitureCluster and this room needs it to patch a FurniturePreset');
+        expect(landed.action).toBe('leave');
+        expect(landed.file).toBe('PicnicTable.FurnitureCluster.sodso.json');
+        expect(landed.reason).toContain('yours to make in that file');
     });
 });
 
@@ -486,33 +562,63 @@ describe('admitting some of a cluster’s furniture but not all', () => {
         lighting: ['AtriumLight'],
     };
 
+    const patchedPresets = (result) => result.changes
+        .filter((entry) => entry.type === 'FurniturePreset').map((entry) => entry.asset);
+
     test('patches only what was chosen', () => {
         const all = fullClosure(chain, ['4_LoungeSetSmall_A']);
         expect(all.length).toBeGreaterThan(3);
 
         const some = all.slice(0, 2);
         const result = planRoom({ ...booth, furniture: some }, rooms, chain);
-        const patched = result.files.filter((f) => f.type === 'FurniturePreset').map((f) => f.asset);
 
-        expect(patched).toEqual(some.slice().sort());
+        expect(patchedPresets(result)).toEqual(some.slice().sort());
     });
 
     test('patches the whole closure when nothing was said', () => {
-        const result = planRoom(booth, rooms, chain);
-        const patched = result.files.filter((f) => f.type === 'FurniturePreset').map((f) => f.asset);
-
-        expect(patched).toEqual(fullClosure(chain, ['4_LoungeSetSmall_A']));
+        expect(patchedPresets(planRoom(booth, rooms, chain)))
+            .toEqual(fullClosure(chain, ['4_LoungeSetSmall_A']));
     });
 
     /**
      * A preset left over from a cluster since unticked must not reach the room: the set
-     * the pane holds is intersected with what the chosen clusters can actually resolve.
+     * the pane holds is narrowed to what the chosen clusters can actually resolve.
      */
     test('ignores furniture no chosen cluster resolves', () => {
-        const result = planRoom({ ...booth, furniture: ['PicnicBench', ...fullClosure(chain, ['4_LoungeSetSmall_A'])] }, rooms, chain);
-        const patched = result.files.filter((f) => f.type === 'FurniturePreset').map((f) => f.asset);
+        const result = planRoom({
+            ...booth,
+            furniture: ['PicnicBench', ...fullClosure(chain, ['4_LoungeSetSmall_A'])],
+        }, rooms, chain);
 
-        expect(patched).not.toContain('PicnicBench');
+        expect(patchedPresets(result)).not.toContain('PicnicBench');
+    });
+
+    /**
+     * Unless the room already admits it. A cluster the author copied into their own mod is
+     * not in the reference data, nothing here can say what it places, and a closure that has
+     * never heard of it is not grounds for withdrawing the furniture it puts down. Saving a
+     * room used to do exactly that, silently.
+     */
+    test('keeps furniture the room already admits that nothing here resolves', () => {
+        const result = planRoom({
+            ...booth,
+            furniture: ['PicnicBench', ...fullClosure(chain, ['4_LoungeSetSmall_A'])],
+            admitted: ['PicnicBench'],
+        }, rooms, chain);
+
+        expect(patchedPresets(result)).toContain('PicnicBench');
+        expect(result.problems.join(' ')).toContain('PicnicBench is already admitted');
+    });
+
+    /** An untick is still an untick: the tick is what `furniture` is. */
+    test('drops one the author has taken back out, whatever the folder says', () => {
+        const result = planRoom({
+            ...booth,
+            furniture: fullClosure(chain, ['4_LoungeSetSmall_A']),
+            admitted: ['PicnicBench'],
+        }, rooms, chain);
+
+        expect(patchedPresets(result)).not.toContain('PicnicBench');
     });
 });
 
@@ -561,6 +667,7 @@ describe('narrowing that would break a cluster', () => {
 
 describe('taking a room back out of a patch', () => {
     const refs = roomRefs('PicnicArea');
+    const ours = roomOperations('PicnicArea');
 
     test('knows which operations are this room’s', () => {
         expect(refs).toEqual({
@@ -568,6 +675,9 @@ describe('taking a room back out of a patch', () => {
             roomClass: 'REF:RoomClassPreset|PicnicAreaRCP',
             configuration: 'REF:RoomConfiguration|PicnicAreaRC',
         });
+
+        expect(ours({ op: 'add', path: '/allowedRoomFilters/-', value: refs.filter })).toBe(true);
+        expect(ours({ op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|VaultRTF' })).toBe(false);
     });
 
     /**
@@ -585,7 +695,7 @@ describe('taking a room back out of a patch', () => {
             ],
         };
 
-        const stripped = withoutRoom(shared, refs);
+        const stripped = withdrawOps(shared, ours);
 
         expect(stripped.removed).toBe(1);
         expect(stripped.empty).toBe(false);
@@ -595,13 +705,13 @@ describe('taking a room back out of a patch', () => {
     });
 
     test('says when nothing is left, so the file and its listing can go', () => {
-        const ours = {
+        const mine = {
             name: 'PicnicBench',
             fileType: 'FurniturePreset',
             patches: [{ op: 'add', path: '/allowedRoomFilters/-', value: 'REF:RoomTypeFilter|PicnicAreaRTF' }],
         };
 
-        const stripped = withoutRoom(ours, refs);
+        const stripped = withdrawOps(mine, ours);
 
         expect(stripped.removed).toBe(1);
         expect(stripped.empty).toBe(true);
@@ -609,13 +719,19 @@ describe('taking a room back out of a patch', () => {
     });
 
     test('takes the room out of a surface and a light as well as a cluster', () => {
-        const surface = { name: 'PlainWall', fileType: 'RoomTypeFilter',
-            patches: [{ op: 'add', path: '/roomClasses/-', value: refs.roomClass }] };
-        const light = { name: 'AtriumLight', fileType: 'RoomLightingPreset',
-            patches: [{ op: 'add', path: '/roomCompatibility/-', value: refs.configuration }] };
+        const surface = {
+            name: 'PlainWall',
+            fileType: 'RoomTypeFilter',
+            patches: [{ op: 'add', path: '/roomClasses/-', value: refs.roomClass }],
+        };
+        const light = {
+            name: 'AtriumLight',
+            fileType: 'RoomLightingPreset',
+            patches: [{ op: 'add', path: '/roomCompatibility/-', value: refs.configuration }],
+        };
 
-        expect(withoutRoom(surface, refs).empty).toBe(true);
-        expect(withoutRoom(light, refs).empty).toBe(true);
+        expect(withdrawOps(surface, ours).empty).toBe(true);
+        expect(withdrawOps(light, ours).empty).toBe(true);
     });
 
     test('leaves a hand-written change alone, and keeps the file', () => {
@@ -628,18 +744,9 @@ describe('taking a room back out of a patch', () => {
             ],
         };
 
-        const stripped = withoutRoom(mixed, refs);
+        const stripped = withdrawOps(mixed, ours);
 
         expect(stripped.empty).toBe(false);
         expect(stripped.content.patches).toEqual([{ op: 'replace', path: '/minimumRoomSize', value: 2 }]);
-    });
-
-    /** Saving a room over itself is not a clash -- its own assets are what is being saved. */
-    test('a room’s own assets stop being collisions while it is the one being saved', () => {
-        const { files } = plan();
-        const existing = files.filter((f) => f.kind === 'asset').map((f) => f.file);
-
-        expect(collisions(files, existing)).toEqual(existing);
-        expect(collisions(files, existing, new Set(existing))).toEqual([]);
     });
 });

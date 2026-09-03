@@ -11,11 +11,22 @@
  */
 import { describe, test, expect } from 'vitest';
 
-import {
-    planFurniture, against, collisions, mergeFile, CLASS_SUFFIX, CLUSTER_SUFFIX,
-} from './furniturePlan.js';
+import { planFurniture, CLASS_SUFFIX, CLUSTER_SUFFIX } from './furniturePlan.js';
+import { indexMod, landAll, stemOf } from '../../../core/soBuilder.js';
 
 const data = { chain: {}, furniture: {} };
+
+/** A content folder holding exactly these assets, in the shape `indexMod` reads. */
+const folder = (...held) => indexMod({
+    files: held.map((raw) => ({
+        fileName: `${raw.name}.${raw.fileType}.sodso.json`,
+        file: `${raw.name}.${raw.fileType}`,
+        name: raw.name,
+        type: raw.fileType,
+        patch: false,
+        raw,
+    })),
+});
 
 const choices = (fields = {}) => ({
     name: 'MyDesk',
@@ -26,14 +37,14 @@ const choices = (fields = {}) => ({
     ...fields,
 });
 
-const assetOf = (plan, type) => plan.files.find((entry) => entry.type === type).content;
+const assetOf = (plan, type) => plan.changes.find((entry) => entry.type === type).content;
 
 
 describe('the three assets', () => {
     test('names the preset plainly and suffixes the machinery', () => {
         const plan = planFurniture(choices(), data);
 
-        expect(plan.files.map((entry) => entry.file)).toEqual([
+        expect(plan.changes.map((entry) => entry.file)).toEqual([
             `MyDesk${CLASS_SUFFIX}.FurnitureClass.sodso.json`,
             'MyDesk.FurniturePreset.sodso.json',
             `MyDesk${CLUSTER_SUFFIX}.FurnitureCluster.sodso.json`,
@@ -45,7 +56,9 @@ describe('the three assets', () => {
      * before the preset that names it and the cluster last.
      */
     test('lists them in the order the loader can resolve', () => {
-        expect(planFurniture(choices(), data).order).toEqual([
+        // What `commit` puts in `fileOrder`, which is the changes in the order they are
+        // planned with their suffix taken off.
+        expect(planFurniture(choices(), data).changes.map((change) => stemOf(change.file))).toEqual([
             'MyDeskFC.FurnitureClass',
             'MyDesk.FurniturePreset',
             'MyDeskFCL.FurnitureCluster',
@@ -479,18 +492,29 @@ describe('a class asked to copy itself', () => {
  * read and has no editor for, and any field of the game's nothing here has heard of.
  */
 describe('landing a planned file on one that is already there', () => {
-    const fileOf = (type) => planFurniture(choices({
+    const changeFor = (type, fields = {}) => planFurniture(choices({
         placement: { size: [3, 1], rules: [], blocks: [] },
-    }), data).files.find((entry) => entry.type === type);
+        ...fields,
+    }), data).changes.find((entry) => entry.type === type);
+
+    /** One of the pane's files saved over a file of that name it already wrote. */
+    const saveOver = (type, held, fields = {}) => {
+        const change = changeFor(type, fields);
+        const index = held ? folder(held) : indexMod();
+
+        return landAll([change], index, { own: new Set([change.file]) })[0];
+    };
 
     test('is the plan itself where there is nothing to land on', () => {
-        const entry = fileOf('FurniturePreset');
-        expect(mergeFile(entry, null)).toBe(entry.content);
+        const landed = saveOver('FurniturePreset', null);
+
+        expect(landed.action).toBe('create');
+        expect(landed.content).toEqual(changeFor('FurniturePreset').content);
     });
 
     /** The whole point: a field with no control in this pane is one it cannot have meant. */
     test('keeps fields the pane does not own', () => {
-        const merged = mergeFile(fileOf('FurniturePreset'), {
+        const { content, action } = saveOver('FurniturePreset', {
             fileType: 'FurniturePreset',
             name: 'MyDesk',
             minimumRoomSize: 6,
@@ -498,21 +522,22 @@ describe('landing a planned file on one that is already there', () => {
             somethingThisToolHasNeverHeardOf: 42,
         });
 
-        expect(merged.minimumRoomSize).toBe(6);
-        expect(merged.lightsOnAtNight).toBe(true);
-        expect(merged.somethingThisToolHasNeverHeardOf).toBe(42);
+        expect(action).toBe('merge');
+        expect(content.minimumRoomSize).toBe(6);
+        expect(content.lightsOnAtNight).toBe(true);
+        expect(content.somethingThisToolHasNeverHeardOf).toBe(42);
     });
 
     test('replaces the ones it does', () => {
-        const merged = mergeFile(fileOf('FurniturePreset'), {
+        const { content } = saveOver('FurniturePreset', {
             fileType: 'FurniturePreset',
             name: 'MyDesk',
             classes: ['REF:FurnitureClass|SomethingElse'],
             subObjects: [{ preset: 'REF:SubObjectClassPreset|Old' }],
         });
 
-        expect(merged.classes).toEqual(['REF:FurnitureClass|MyDeskFC']);
-        expect(merged.subObjects).toEqual(fileOf('FurniturePreset').content.subObjects);
+        expect(content.classes).toEqual(['REF:FurnitureClass|MyDeskFC']);
+        expect(content.subObjects).toEqual(changeFor('FurniturePreset').content.subObjects);
     });
 
     /**
@@ -521,21 +546,16 @@ describe('landing a planned file on one that is already there', () => {
      * save, which is the removal quietly not happening.
      */
     test('replaces the interactables rather than leaving the file’s underneath', () => {
-        const entry = planFurniture(choices({
-            interactables: [{ preset: 'HotelDesk', controller: 'A', owner: 'nobody' }],
-            placement: { size: [3, 1], rules: [], blocks: [] },
-        }), data).files.find((file) => file.type === 'FurniturePreset');
-
-        const merged = mergeFile(entry, {
+        const { content } = saveOver('FurniturePreset', {
             fileType: 'FurniturePreset',
             name: 'MyDesk',
             integratedInteractables: [
                 { preset: 'REF:InteractablePreset|Gone', pairToController: 1, belongsTo: 0 },
                 { preset: 'REF:InteractablePreset|AlsoGone', pairToController: 2, belongsTo: 0 },
             ],
-        });
+        }, { interactables: [{ preset: 'HotelDesk', controller: 'A', owner: 'nobody' }] });
 
-        expect(merged.integratedInteractables).toEqual([
+        expect(content.integratedInteractables).toEqual([
             { preset: 'REF:InteractablePreset|HotelDesk', pairToController: 0, belongsTo: 0 },
         ]);
     });
@@ -547,23 +567,18 @@ describe('landing a planned file on one that is already there', () => {
      * how the self-referencing `copyFrom` this pane refuses to write would come back.
      */
     test('removes an owned field the plan no longer states', () => {
-        const entry = planFurniture(choices({
-            classDonor: 'MyDeskFC',
-            placement: { size: [3, 1], rules: [], blocks: [] },
-        }), data).files.find((file) => file.type === 'FurnitureClass');
-
-        const merged = mergeFile(entry, {
+        const { content } = saveOver('FurnitureClass', {
             fileType: 'FurnitureClass',
             name: 'MyDeskFC',
             copyFrom: 'REF:FurnitureClass|MyDeskFC',
-        });
+        }, { classDonor: 'MyDeskFC' });
 
-        expect(merged).not.toHaveProperty('copyFrom');
+        expect(content).not.toHaveProperty('copyFrom');
     });
 
     /** The class keeps what the placement editor reads and has no control for. */
     test('keeps the class fields the placement editor cannot edit', () => {
-        const merged = mergeFile(fileOf('FurnitureClass'), {
+        const { content } = saveOver('FurnitureClass', {
             fileType: 'FurnitureClass',
             name: 'MyDeskFC',
             customNodeWeights: [{ nodeOffset: { x: 1, y: 0 }, nodeWeightModifier: -5 }],
@@ -573,15 +588,15 @@ describe('landing a planned file on one that is already there', () => {
             maximumZeroNodeWallCount: 3,
         });
 
-        expect(merged.customNodeWeights).toHaveLength(1);
-        expect(merged.awayFromClasses).toEqual(['REF:FurnitureClass|1x1KitchenSink']);
-        expect(merged.minimumNodeDistance).toBe(2);
-        expect(merged.tall).toBe(true);
-        expect(merged.maximumZeroNodeWallCount).toBe(3);
+        expect(content.customNodeWeights).toHaveLength(1);
+        expect(content.awayFromClasses).toEqual(['REF:FurnitureClass|1x1KitchenSink']);
+        expect(content.minimumNodeDistance).toBe(2);
+        expect(content.tall).toBe(true);
+        expect(content.maximumZeroNodeWallCount).toBe(3);
 
         // And still states what it does own.
-        expect(merged.objectSize).toEqual({ x: 3, y: 1 });
-        expect(merged.wallRules).toEqual([]);
+        expect(content.objectSize).toEqual({ x: 3, y: 1 });
+        expect(content.wallRules).toEqual([]);
     });
 
     /**
@@ -590,34 +605,47 @@ describe('landing a planned file on one that is already there', () => {
      * contribute and everything to lose.
      */
     test('marks the cluster as one to create and then leave alone', () => {
-        expect(fileOf('FurnitureCluster').createOnly).toBe(true);
-        expect(fileOf('FurnitureClass').createOnly).toBeUndefined();
-        expect(fileOf('FurniturePreset').createOnly).toBeUndefined();
+        expect(changeFor('FurnitureCluster').createOnly).toBe(true);
+        expect(changeFor('FurnitureClass').createOnly).toBe(false);
+        expect(changeFor('FurniturePreset').createOnly).toBe(false);
+    });
+
+    test('leaves an existing cluster exactly as it is', () => {
+        const held = {
+            fileType: 'FurnitureCluster',
+            name: 'MyDeskFCL',
+            clusterElements: [{ furnitureClass: 'REF:FurnitureClass|MyDeskFC' }, { furnitureClass: 'REF:FurnitureClass|Chair' }],
+        };
+
+        expect(saveOver('FurnitureCluster', held).action).toBe('leave');
     });
 });
 
 
 describe('landing against a folder', () => {
     const plan = planFurniture(choices(), data);
+    const asset = (name, fileType) => ({ name, fileType });
+
+    const landing = (held, own = new Set()) => landAll(plan.changes, folder(...held), { own });
 
     test('marks a name something else already has', () => {
-        const existing = new Set(['MyDesk.FurniturePreset.sodso.json']);
-        const landing = against(plan.files, existing);
+        const landed = landing([asset('MyDesk', 'FurniturePreset')]);
 
-        expect(landing.filter((entry) => entry.landing === 'clash').map((entry) => entry.file))
+        expect(landed.filter((item) => item.action === 'clash').map((item) => item.file))
             .toEqual(['MyDesk.FurniturePreset.sodso.json']);
     });
 
     test('does not call saving over your own files a clash', () => {
-        const existing = new Set(plan.files.map((entry) => entry.file));
-        const own = new Set(plan.files.map((entry) => entry.file));
+        const held = [asset('MyDesk', 'FurniturePreset'), asset('MyDeskFC', 'FurnitureClass')];
+        const own = new Set(plan.changes.map((change) => change.file));
 
-        expect(collisions(plan.files, existing, own)).toEqual([]);
+        expect(landing(held, own).filter((item) => item.action === 'clash')).toEqual([]);
     });
 
     test('is a clash when the files belong to something else', () => {
-        const existing = new Set(['MyDeskFC.FurnitureClass.sodso.json']);
+        const landed = landing([asset('MyDeskFC', 'FurnitureClass')]);
 
-        expect(collisions(plan.files, existing)).toEqual(['MyDeskFC.FurnitureClass.sodso.json']);
+        expect(landed.filter((item) => item.action === 'clash').map((item) => item.file))
+            .toEqual(['MyDeskFC.FurnitureClass.sodso.json']);
     });
 });

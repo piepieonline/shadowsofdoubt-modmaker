@@ -2,9 +2,10 @@
  * What writing a piece of furniture comes to: three assets, and a manifest entry each.
  *
  * The room creator's `roomPlan.js`, one level down the chain and with the same shape --
- * choices in, a set of files and a list of problems out, nothing touched. Which is what
- * lets the pane show the plan before it runs it, and what lets this be tested without a
- * folder or a browser.
+ * choices in, a set of changes and a list of problems out, nothing touched. Where each
+ * change lands, and the writing of it, is `core/soBuilder.js`'s. That is what lets the pane
+ * show the plan before it runs it, and what lets this be tested without a folder or a
+ * browser.
  *
  * ## Why three files and not one
  *
@@ -29,7 +30,7 @@
  *     MyDeskFC      FurnitureClass
  *     MyDeskFCL     FurnitureCluster
  */
-import { fileNameFor } from '../../../core/soFileName.js';
+import { ownAsset } from '../../../core/soBuilder.js';
 import { isNameFieldSafe } from '../../../core/strings.js';
 import { WALL_RULE, BLOCKING_DIRECTION, RULE_OPTION } from '../../../core/furnitureRules.js';
 import { ownerIndex, controllerIndex } from './furnitureEnums.js';
@@ -55,6 +56,10 @@ export const CLUSTER_SUFFIX = 'FCL';
  *
  * `fileType` is in each list because it is what the loader dispatches on; it never changes,
  * and stating it keeps a hand-written file that omitted it working after a save.
+ *
+ * The merging itself is `mergeOwned` in `core/soBuilder.js`, which the room creator's four
+ * assets go through as well. What each pane owns is knowledge about that pane's files and
+ * stays here; how an owned merge works is one rule and lives in one place.
  */
 export const OWNED_FIELDS = {
     /*
@@ -86,24 +91,6 @@ export const OWNED_FIELDS = {
     // one, and the arrangement is the author's. See `createOnly` on the planned file.
     FurnitureCluster: null,
 };
-
-/**
- * One planned file as it should land on top of whatever is already there.
- *
- * `onDisk` is the parsed file or null. The owned keys are cleared before the new ones go on,
- * so a field this save means to *remove* is removed rather than surviving underneath.
- */
-export function mergeFile(entry, onDisk) {
-    if (!onDisk || entry.createOnly) return entry.content;
-
-    const owned = OWNED_FIELDS[entry.type];
-    if (!owned) return entry.content;
-
-    const merged = { ...onDisk };
-    for (const field of owned) delete merged[field];
-
-    return { ...merged, ...entry.content };
-}
 
 /**
  * What a cluster element has to state, and why every field is here.
@@ -236,7 +223,7 @@ function statedRules(placement, className, classDonor) {
  * `choices` is what the pane holds: a name, the preset being copied, the class it is
  * mimicking, the sub-objects as edited, and the prefab if the author has one.
  *
- * Nothing here reads the folder. What is already on disk is `against`'s business, the way
+ * Nothing here reads the folder. What is already on disk is `landAll`'s business, the way
  * it is in the room creator, so that the same plan can be shown before a folder is chosen
  * and checked again at the moment of writing.
  */
@@ -279,11 +266,11 @@ export function planFurniture(choices) {
      * wording to know that.
      *
      * The empty case is the ordinary one rather than an edge: the pane draws this on every
-     * keystroke and a name starts empty. `fileNameFor` refuses an empty name by throwing,
-     * which is right of it -- `.FurniturePreset.sodso.json` is not a lesser version of a
-     * named file.
+     * keystroke and a name starts empty. `stemFor` refuses an empty name by throwing, which
+     * is right of it -- `.FurniturePreset.sodso.json` is not a lesser version of a named
+     * file.
      */
-    if (problems.length) return { files: [], order: [], problems };
+    if (problems.length) return { changes: [], problems };
 
     const donor = choices.donor ?? null;
     const classDonor = choices.classDonor ?? null;
@@ -464,9 +451,24 @@ export function planFurniture(choices) {
             + `${unnamed === 1 ? 'it' : 'them'} or remove ${unnamed === 1 ? 'it' : 'them'}.`);
     }
 
-    const files = [
-        { file: fileNameFor(className, 'FurnitureClass'), asset: className, type: 'FurnitureClass', content: furnitureClass },
-        { file: fileNameFor(name, 'FurniturePreset'), asset: name, type: 'FurniturePreset', content: preset },
+    /*
+     * The three, in dependency order: every `REF:` has to resolve to something already
+     * loaded, so the class goes before the preset that names it, and the cluster last
+     * because it names the class too. `core/soBuilder.js` lists them in that order.
+     */
+    const changes = [
+        ownAsset({
+            asset: className,
+            type: 'FurnitureClass',
+            content: furnitureClass,
+            owns: OWNED_FIELDS.FurnitureClass,
+        }),
+        ownAsset({
+            asset: name,
+            type: 'FurniturePreset',
+            content: preset,
+            owns: OWNED_FIELDS.FurniturePreset,
+        }),
 
         /*
          * The cluster, written when it is created and never again.
@@ -481,48 +483,14 @@ export function planFurniture(choices) {
          * name: `MyDeskFCL` becoming `NewNameFCL` is a cluster that does not exist yet, and
          * so is one this creates.
          */
-        {
-            file: fileNameFor(clusterName, 'FurnitureCluster'),
+        ownAsset({
             asset: clusterName,
             type: 'FurnitureCluster',
             content: cluster,
+            owns: OWNED_FIELDS.FurnitureCluster,
             createOnly: true,
-        },
+        }),
     ];
 
-    return {
-        files,
-
-        // The load order, which is dependency order: every `REF:` has to resolve to
-        // something already loaded. The class before the preset that names it, and the
-        // cluster last because it names the class too.
-        order: files.map((entry) => entry.file.replace(/\.sodso\.json$/, '')),
-        problems,
-    };
-}
-
-/**
- * How each file lands against what the folder already holds.
- *
- * `write` for a name nothing has, `clash` for one something else does. There is no
- * `append` here, unlike the room creator: a room adds itself to other people's patches,
- * and a piece of furniture writes three files of its own and touches nothing else.
- */
-export function against(files, existing) {
-    return files.map((entry) => ({
-        ...entry,
-        landing: existing.has(entry.file) ? 'clash' : 'write',
-    }));
-}
-
-/**
- * The names this plan would write over, less the ones that are this furniture's own.
- *
- * Saving over yourself is not a clash. `own` is the set of file names the thing being
- * edited already occupies, which the pane knows because it read them.
- */
-export function collisions(files, existing, own = new Set()) {
-    return files
-        .map((entry) => entry.file)
-        .filter((file) => existing.has(file) && !own.has(file));
+    return { changes, problems };
 }

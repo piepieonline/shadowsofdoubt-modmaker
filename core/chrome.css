@@ -583,16 +583,60 @@ body.driver-active .driver-popover-next-btn {
 }
 
 /*
- * Forward, while the step it belongs to has not been done yet.
+ * Locked and unlocked, told apart at a glance.
  *
- * driver.css fades a disabled button and stops it taking the pointer, and the second
- * half of that is undone by the rule above handing the app its clicks back -- so the
- * cursor is said again here. Wanted anyway: the button is hovered to read the title
- * saying what the walkthrough is waiting for.
+ * driver.css says disabled with `opacity: .5` and nothing else, and half-fading a white
+ * button on a white card is barely a change at all: the step unlocks and the popover
+ * looks the same as it did. So the two states get colours of their own instead -- green
+ * once the step has been done, flat grey until then -- and the fade between them is what
+ * announces the unlock. A step is usually finished while the player is looking at the
+ * editor rather than at the popover, so the change has to still be arriving when they
+ * look back.
  *
- * No !important. This outranks driver.css on specificity, which order does not affect.
+ * setForwardEnabled unlocks the button already on screen, which is what gives the
+ * transition something to run from. A step that arrives locked has no previous state and
+ * simply starts grey, which is right: nothing happened there to announce.
+ *
+ * Fixed colours rather than Pico's, because the popover is driver.css's own white card
+ * under either theme -- a variable that follows the OS would be unreadable on it half
+ * the time.
+ *
+ * No !important anywhere here. These outrank driver.css on specificity, which order does
+ * not affect.
  */
-body.driver-active .driver-popover-next-btn:disabled {
+body.driver-active .driver-popover-footer button {
+    transition:
+        background-color 0.35s ease,
+        border-color 0.35s ease,
+        color 0.35s ease;
+}
+
+body.driver-active .driver-popover-next-btn:enabled {
+    background-color: #dff3e4;
+    border-color: #4c9a68;
+    color: #1c6b3f;
+}
+
+body.driver-active .driver-popover-next-btn:enabled:hover,
+body.driver-active .driver-popover-next-btn:enabled:focus {
+    background-color: #c6e9d3;
+}
+
+/*
+ * The opacity is overridden along with the colours, because halving it would wash the
+ * grey back towards the same near-white this is here to get away from. The text shadow
+ * goes with it: it is a white highlight, which only reads as one on a white button.
+ *
+ * driver.css also stops a disabled button taking the pointer, and the rule above handing
+ * the app its clicks back undoes that -- so the cursor is said again here. Wanted anyway:
+ * the button is hovered to read the title saying what the walkthrough is waiting for.
+ */
+body.driver-active .driver-popover-footer button:disabled {
+    opacity: 1;
+    background-color: #ededed;
+    border-color: #d8d8d8;
+    color: #8b8b8b;
+    text-shadow: none;
     cursor: not-allowed;
 }
 

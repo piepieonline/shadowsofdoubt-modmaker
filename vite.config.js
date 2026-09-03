@@ -141,6 +141,13 @@ export default defineConfig(({ command, mode, isPreview }) => ({
         https: mode === 'lan' ? lanHttps() : undefined,
         port: 8123,
         strictPort: true,
+
+        // No hot reload. Nothing in the app implements `import.meta.hot`, so an edit was
+        // never being patched in -- the HMR client just reloaded the page whole, which
+        // throws away the state the app is actually holding: the picked mod folder, the
+        // open document and its unsaved edits. Reloading is a keypress; getting back to a
+        // half-edited ScriptableObject is not. Edit, then refresh when you want to see it.
+        hmr: false,
     },
 
     preview: {

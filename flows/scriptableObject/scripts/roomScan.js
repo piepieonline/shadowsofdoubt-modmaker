@@ -136,6 +136,7 @@ export function reconstruct(files, configuration) {
         || (operation.path === '/roomCompatibility/-' && operation.value === configRef));
 
     const clusters = new Set();
+    const owned = new Set();
     const presets = new Set();
     const surfaces = new Set();
     const lighting = new Set();
@@ -183,15 +184,26 @@ export function reconstruct(files, configuration) {
             continue;
         }
 
-        // One of the mod's own clusters admitted only to this room is a clone, which is
-        // what the writer produces when a shipped cluster's gates conflict.
+        /*
+         * One of the mod's own clusters naming this room's filter, which furnishes the room
+         * as surely as a patched one and is not this tool's to touch.
+         *
+         * Kept apart from `clusters` for that reason. A shipped cluster is a name in the
+         * reference data that the room admits by patching it; this is a file in the folder
+         * whose author decided what is in it, what it is allowed near and which gates it
+         * relaxes. The room creator's advice when a gate refuses a cluster is to make
+         * exactly one of these, so it is the ordinary shape of a furnished room rather than
+         * an oddity -- and everything it places is furniture nothing here can enumerate.
+         */
         if (entry.type === 'FurnitureCluster') {
             const admits = (entry.raw?.allowedRoomFilters ?? []).some((value) => filterRefs.has(value));
-            if (admits) clusters.add(entry.raw?.presetName ?? entry.raw?.name ?? entry.file);
+            if (admits) owned.add(entry.raw?.presetName ?? entry.raw?.name ?? entry.file);
         }
     }
 
-    const verdict = decide({ filters, clusters, presets, surfaces, lighting, unaccounted });
+    const verdict = decide({
+        filters, clusters, owned, presets, surfaces, lighting, unaccounted,
+    });
 
     return {
         configuration: name,
@@ -201,6 +213,7 @@ export function reconstruct(files, configuration) {
         donor,
         filters,
         clusters: [...clusters].sort(),
+        owned: [...owned].sort(),
         presets: [...presets].sort(),
         surfaces: [...surfaces].sort(),
         lighting: [...lighting].sort(),
@@ -209,9 +222,11 @@ export function reconstruct(files, configuration) {
     };
 }
 
-function decide({ filters, clusters, surfaces, lighting, unaccounted }) {
+function decide({
+    filters, clusters, owned, surfaces, lighting, unaccounted,
+}) {
     const nothingAdmitted = !filters.length
-        || (!clusters.size && !surfaces.size && !lighting.size);
+        || (!clusters.size && !owned.size && !surfaces.size && !lighting.size);
 
     if (nothingAdmitted) return 'identity';
     return unaccounted.length ? 'partial' : 'exact';
@@ -248,6 +263,7 @@ export function choicesFrom(room, rooms) {
         name: room.roomType ?? room.configuration,
         donor: room.donor ?? '',
         clusters: room.clusters,
+        owned: room.owned,
         lighting: room.lighting,
         surfaces,
     };

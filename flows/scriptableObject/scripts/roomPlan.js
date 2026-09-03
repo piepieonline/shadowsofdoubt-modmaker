@@ -1,11 +1,11 @@
 /**
- * The files a room comes to, worked out before any of them is written.
+ * The changes a room comes to, worked out before any of them is written.
  *
  * A room is four assets and a patch per thing admitted, and a half-written set is a mod
- * that will not load. So the whole set is decided here, as data, and `writeRoom` in
- * `roomCreator.js` is the only part that touches a folder. That split is what lets the
- * pane show the author exactly what it is about to do, and lets the decision be tested
- * without a filesystem.
+ * that will not load. So the whole set is decided here, as data, and `core/soBuilder.js`
+ * decides where each one lands and is the only part that touches a folder. That split is
+ * what lets the pane show the author exactly what it is about to do, and lets the decision
+ * be tested without a filesystem.
  *
  * ## Load order is dependency order
  *
@@ -21,6 +21,20 @@
  * hand-built floor nothing needs it: the node's own forced-room reference names the
  * configuration directly.
  *
+ * ## What a room may write, and what it may not
+ *
+ * Its own four assets, and one additive operation on each shipped asset it admits:
+ * `allowedRoomFilters` for furniture, `roomClasses` for a surface filter,
+ * `roomCompatibility` for a light. Nothing else, ever.
+ *
+ * This used to do more. A cluster whose gates refuse the room -- `PicnicTable` is limited
+ * to floors -1 to 0, so a room three storeys up cannot have one -- was cloned into a file
+ * of the mod's own with the offending gate relaxed. It was the right shape and the wrong
+ * thing: the clone came back out of the folder under its own name, which the reference data
+ * has never heard of, and the next save wrote a patch aimed at the mod's own file. So the
+ * relaxing is the author's now. The room says which gate refuses what, and copying the
+ * cluster to relax it is a thing they do by hand and keep.
+ *
  * ## Naming
  *
  * The `RoomTypePreset` takes the bare room name and the other three take suffixes. It is
@@ -29,9 +43,9 @@
  * one whose name is read by a human in normal use. This diverges from the templates on the
  * export server, which suffix all four.
  */
-import { PATCH_SUFFIX, PRESET_SUFFIX, stemFor, patchFileNameFor } from '../../../core/soFileName.js';
+import { patchFileNameFor } from '../../../core/soFileName.js';
 import { admits, closures, importantElements } from '../../../core/spawnRules.js';
-import { stringifyJSON } from '../../../core/jsonNumbers.js';
+import { addTo, ownAsset } from '../../../core/soBuilder.js';
 
 /**
  * The four types a room patches, and where the reference data lists each one's names.
@@ -132,52 +146,58 @@ export const assetNames = (name) => ({
 });
 
 /**
- * The gate fields to turn off when a cluster is cloned because that gate refused it.
+ * The fields this pane owns in each of the room's four assets, and therefore the only ones a
+ * save may write over.
  *
- * Only the conflicting gate is relaxed. Patching the gate on the shipped asset would
- * change every vanilla room the cluster already appears in; relaxing every gate on the
- * clone would admit it to rooms its author never meant it for.
+ * A file this tool wrote once is not a file it owns for ever -- the pane's own note tells
+ * the author to go and edit what it wrote. So a save is a merge: what is on disk is the
+ * base, these keys are replaced, and everything else is left exactly as it was, including
+ * fields nothing here has heard of. See the note on `mergeOwned` in `core/soBuilder.js` for
+ * why the list is written out rather than taken from the object being saved.
+ *
+ * `overrideFloorHeight` and `forceConfiguration` are owned rather than merely written once.
+ * Both have to stay as they are whatever a donor carries -- see the ring above, and the note
+ * on the room type below -- so a save has to be able to put them back.
+ *
+ * `type` is owned and no longer written. Files this tool made before carry a `type` beside
+ * `fileType`; every reader takes `fileType` first, so the stray key says nothing, and owning
+ * it means a save clears it out rather than leaving it there to be read as a claim.
  */
-const RELAXATIONS = {
-    floor: { limitToFloor: false, limitToFloorRange: false },
-    wealth: { minimumWealth: 0, wealthLimit: false },
-    grub: { useRoomGrub: false },
-    openPlan: { allowedInOpenPlan: 0 },
-    inhabitants: { skipIfNoAddressInhabitants: false },
-    residences: { useBuildingResidences: false },
-    district: { limitToDistricts: false },
+const IDENTITY = ['fileType', 'type', 'name', 'presetName', 'copyFrom'];
+
+export const OWNED_FIELDS = {
+    RoomClassPreset: IDENTITY,
+    RoomTypeFilter: [...IDENTITY, 'roomClasses'],
+    RoomTypePreset: [...IDENTITY, 'overrideFloorHeight', 'forceConfiguration'],
+    RoomConfiguration: [...IDENTITY, 'roomType', 'roomClass'],
 };
 
 /**
- * Whether a cluster can be patched where it stands, or has to be cloned.
+ * The gates that refuse a cluster where this room sits, if any.
  *
- * A cluster whose every gate passes for this room takes one patch adding the room's filter
- * to its `allowedRoomFilters`, which is additive and changes nothing else. One that fails a
- * gate cannot: the gate is checked before the room-class whitelist, so the patch would be
- * ignored, and editing the gate on the shipped asset would move every vanilla room the
- * cluster already appears in.
+ * Refusing does not stop the room admitting it. The patch is additive and says nothing
+ * about the gates, so it is harmless where it is inert and correct the moment the author
+ * states a floor or a wealth that suits -- and the context is design intent that is written
+ * nowhere, so a room reopened tomorrow has forgotten what it was.
+ *
+ * What it does do is say so, loudly, because the failure is otherwise silent: the gate is
+ * checked before the room-class whitelist, so a refused cluster is simply never placed and
+ * nothing is logged.
  */
-export function decideCluster(rooms, name, context) {
-    const { failures } = admits(rooms, name, context);
-    if (!failures.length) return { name, action: 'patch', relax: {} };
-
-    const relax = {};
-    for (const failure of failures) Object.assign(relax, RELAXATIONS[failure.gate] ?? {});
-
-    return { name, action: 'clone', relax, because: failures };
-}
+export const refusedBy = (rooms, name, context) => admits(rooms, name, context).failures;
 
 /**
- * Every file the room comes to, in load order.
+ * Every change the room comes to, in load order.
  *
- * @param choices `{ name, donor, donorRoomType, context, clusters, surfaces, lighting }`
+ * @param choices `{ name, donor, donorRoomType, context, clusters, furniture, admitted,
+ *                surfaces, lighting }`
  * @param rooms   the parsed `refs/derived/roomCreator.json`
  * @param chain   the parsed `refs/derived/furnitureChain.json`
  *
- * @returns `{ files, order, problems, collided }` -- `files` in dependency order, `order`
- *          the `fileOrder` entries for them, `problems` what would leave the room built
- *          and wrong, and `collided` the assets whose patches want one file name, which is
- *          the one thing here that stops a write outright.
+ * @returns `{ changes, problems, collided }` -- `changes` in dependency order for
+ *          `core/soBuilder.js` to land, `problems` what would leave the room built and
+ *          wrong, and `collided` the assets whose patches want one file name, which is the
+ *          one thing here that stops a write outright.
  */
 export function planRoom(choices, rooms, chain) {
     const { name, donor, context = {}, clusters = [], surfaces = {}, lighting = [] } = choices;
@@ -193,36 +213,23 @@ export function planRoom(choices, rooms, chain) {
     const filterRef = `REF:RoomTypeFilter|${named.filter}`;
     const classRef = `REF:RoomClassPreset|${named.roomClass}`;
 
-    const files = [];
+    const changes = [];
 
-    const asset = (assetName, type, content) => files.push({
-        kind: 'asset',
+    const asset = (assetName, type, content) => changes.push(ownAsset({
         asset: assetName,
         type,
-        file: `${stemFor(assetName, type)}${PRESET_SUFFIX}`,
-        entry: stemFor(assetName, type),
-        content: {
-            presetName: assetName, fileType: type, name: assetName, type, ...content,
-        },
-    });
+        owns: OWNED_FIELDS[type],
+        content: { presetName: assetName, fileType: type, name: assetName, ...content },
+    }));
 
     // A name belonging to two of the patched types takes the type in its file name, so
     // this room's change to each has a file of its own. The `name`/`fileType` inside are
     // what the loader matches on and are the same either way.
     const shared = sharedNames(rooms, chain);
 
-    const patch = (assetName, type, patches) => {
-        const file = patchFileOf(shared, assetName, type);
-
-        files.push({
-            kind: 'patch',
-            asset: assetName,
-            type,
-            file,
-            entry: file.slice(0, -PATCH_SUFFIX.length),
-            content: { name: assetName, fileType: type, patches },
-        });
-    };
+    const patch = (assetName, type, ops) => changes.push(addTo({
+        asset: assetName, type, ops, shared: shared.has(assetName),
+    }));
 
     /* The four. Order is the order they reference each other. */
 
@@ -249,40 +256,44 @@ export function planRoom(choices, rooms, chain) {
 
     /* The clusters, and then everything they need in order to resolve furniture. */
 
-    // What the author admitted, or everything these clusters could resolve when they have
-    // not narrowed it. Intersected with the closure rather than trusted: a preset left
-    // over from a cluster since unticked must not be patched into the room.
+    /*
+     * What the author admitted, or everything these clusters could resolve when they have
+     * not narrowed it.
+     *
+     * Narrowed rather than trusted, because a preset left over from a cluster since
+     * unticked must not be patched into the room. Narrowed against what this room *already*
+     * admits as well as against the closure, which is the difference between an untick and
+     * a name this tool cannot account for: a cluster the author copied into their own mod by
+     * hand is not in the reference data, nothing here can resolve what is in it, and a
+     * closure that has never heard of it is not grounds for withdrawing the furniture it
+     * places. An untick still removes, because the tick is what `choices.furniture` is.
+     */
     const closure = closures(chain);
     const reachable = new Set(fullClosure(chain, clusters));
+    const already = new Set(choices.admitted ?? []);
+
     const chosen = choices.furniture
-        ? new Set(choices.furniture.filter((preset) => reachable.has(preset)))
+        ? new Set(choices.furniture.filter((preset) => reachable.has(preset) || already.has(preset)))
         : reachable;
 
     const needed = new Set();
+    const refused = [];
 
     for (const clusterName of clusters) {
-        const decision = decideCluster(rooms, clusterName, context);
+        const failures = refusedBy(rooms, clusterName, context);
+        if (failures.length) refused.push({ cluster: clusterName, failures });
 
-        if (decision.action === 'patch') {
-            patch(clusterName, 'FurnitureCluster', [
-                { op: 'add', path: '/allowedRoomFilters/-', value: filterRef },
-            ]);
-        } else {
-            // `clusterElements` is deliberately not restated. The reference data holds a
-            // trimmed element -- its class and whether it is important, not its placement,
-            // facing or offsets -- so restating one would be writing a cluster whose
-            // contents this tool made up. An unstated list is the donor's, through
-            // `copyFrom`. See the note in ROOM-CREATOR-PLAN.md: the export server's own
-            // template restates them, and why is not established.
-            asset(`${named.roomType}_${clusterName}`, 'FurnitureCluster', {
-                copyFrom: `REF:FurnitureCluster|${clusterName}`,
-                allowedRoomFilters: [filterRef],
-                ...decision.relax,
-            });
-        }
+        patch(clusterName, 'FurnitureCluster', [
+            { op: 'add', path: '/allowedRoomFilters/-', value: filterRef },
+        ]);
 
         for (const preset of closure[clusterName] ?? []) if (chosen.has(preset)) needed.add(preset);
     }
+
+    // Furniture this room admits that nothing here resolves. Kept for the reason above, and
+    // said out loud below rather than carried silently.
+    const unexplained = [...already].filter((preset) => chosen.has(preset) && !needed.has(preset));
+    for (const preset of unexplained) needed.add(preset);
 
     // One patch per preset in the closure. Admitting a cluster does not admit its
     // contents: the game re-filters furniture on the room class independently, and an
@@ -320,7 +331,7 @@ export function planRoom(choices, rooms, chain) {
     // written in order, the second replaces the first, and the room quietly loses an
     // admission the plan said it had.
     const byFile = new Map();
-    for (const entry of files) {
+    for (const entry of changes) {
         if (!byFile.has(entry.file)) byFile.set(entry.file, []);
         byFile.get(entry.file).push(entry);
     }
@@ -369,7 +380,30 @@ export function planRoom(choices, rooms, chain) {
 
     if (!lighting.length) problems.push('No lighting preset accepts this room, so it gets no ceiling light.');
 
-    return { files, order: files.map((entry) => entry.entry), problems, collided };
+    /*
+     * The clusters this room admits that will not be placed in it, and what to do about it.
+     *
+     * Said per cluster rather than gathered, because the gate and the answer differ: a floor
+     * limit is a different sentence from a wealth minimum, and the author has to relax the
+     * one that refused this one.
+     */
+    for (const entry of refused) {
+        problems.push(`${entry.cluster} is admitted, but where this room sits it is refused: `
+            + `${entry.failures.map((failure) => failure.reason).join(' ')} The patch admitting it `
+            + 'is written either way and is harmless, and does nothing on its own — the gate is '
+            + `checked first. To place it here, copy ${entry.cluster} into your mod by hand and `
+            + 'relax that on the copy; changing it on the shipped one would move it in every '
+            + 'vanilla room too.');
+    }
+
+    if (unexplained.length) {
+        problems.push(`${and(unexplained)} ${unexplained.length === 1 ? 'is' : 'are'} already `
+            + `admitted to this room and nothing here resolves ${unexplained.length === 1 ? 'it' : 'them'} `
+            + '— a cluster of your own places furniture this tool cannot read. Left exactly as it '
+            + 'is rather than withdrawn.');
+    }
+
+    return { changes, problems, collided };
 }
 
 /**
@@ -390,92 +424,14 @@ export function roomRefs(name) {
 }
 
 /**
- * A patch with this room taken out of it, for furniture the author has unticked.
+ * Whether one operation in somebody else's patch is this room's.
  *
- * The whole file is not deleted unless it is left with nothing: another room, or the
- * author by hand, may have added to the same shipped asset, and their operations are none
- * of this room's business.
- *
- * @returns `{ content, removed, empty }` -- `empty` when the file has no operations left
- *          and should go, along with its entry in the manifest.
+ * Everything the room adds names one of the three references above, so a patch carrying one
+ * is a patch this room wrote and a patch carrying none is somebody else's business even if
+ * it sits on the same asset. That is what `takeOut` asks of each operation when the author
+ * unticks something.
  */
-export function withoutRoom(existing, refs) {
-    const ours = new Set(Object.values(refs));
-    const patches = Array.isArray(existing?.patches) ? existing.patches : [];
-    const kept = patches.filter((operation) => !ours.has(operation?.value));
-
-    return {
-        content: { ...existing, patches: kept },
-        removed: patches.length - kept.length,
-        empty: kept.length === 0,
-    };
-}
-
-/**
- * What a file already in the folder means for writing this room.
- *
- * The two kinds are not the same problem. One of the mod's own assets is a thing with an
- * identity -- `PicnicAreaRCP` is *this* room's class, and a second room cannot have it --
- * so a file already there is a name clash and the author has to resolve it.
- *
- * A patch is the opposite. It is a list of changes to a shipped asset, and two rooms
- * admitting the same cluster genuinely both want to change it: the second adds its own
- * filter beside the first's. Replacing the file would silently un-admit the first room's
- * furniture, which is the bug this exists to make impossible.
- *
- * @returns `{ content, added }` for a patch to write back, or `{ reason }` for one that
- *          cannot be merged.
- */
-export function mergePatch(existing, planned) {
-    if (!Array.isArray(existing?.patches)) {
-        // The format this app replaced states fields rather than operations. Appending an
-        // operation to it would produce a file that is half one format and half the other,
-        // and converting it needs the base asset, which is not always readable.
-        return { reason: `${planned.name} is written in the older whole-field format, so this room's change cannot be added to it` };
-    }
-
-    if (existing.fileType && planned.fileType && existing.fileType !== planned.fileType) {
-        return { reason: `${planned.name} patches a ${existing.fileType} and this room needs it to patch a ${planned.fileType}` };
-    }
-
-    const has = (operation) => existing.patches.some((each) => each?.op === operation.op
-        && each?.path === operation.path
-        && stringifyJSON(each?.value) === stringifyJSON(operation.value));
-
-    // Idempotent on purpose: writing the same room twice should be a no-op on its patches
-    // rather than a file with the same operation in it twice.
-    const missing = planned.patches.filter((operation) => !has(operation));
-
-    return {
-        content: { ...existing, patches: [...existing.patches, ...missing] },
-        added: missing.length,
-    };
-}
-
-/**
- * How each planned file lands against what is already in the folder.
- *
- * @param existing `Set` of file names already present
- * @returns each file tagged `write`, `append`, or `clash`
- */
-export function against(files, existing) {
-    return files.map((entry) => {
-        if (!existing.has(entry.file)) return { ...entry, landing: 'write' };
-        return { ...entry, landing: entry.kind === 'patch' ? 'append' : 'clash' };
-    });
-}
-
-/**
- * The asset files that would have to be overwritten, which is what blocks a write.
- *
- * `own` is the files the room being edited already has. Rewriting its own class or its own
- * configuration is the whole of what saving an edit means, so those are not clashes -- a
- * clash is somebody *else's* asset standing where this room's would go.
- */
-export function collisions(files, existing, own = new Set()) {
-    const present = existing instanceof Set ? existing : new Set(existing);
-
-    return files
-        .filter((entry) => entry.kind === 'asset' && present.has(entry.file) && !own.has(entry.file))
-        .map((entry) => entry.file);
+export function roomOperations(name) {
+    const ours = new Set(Object.values(roomRefs(name)));
+    return (operation) => ours.has(operation?.value);
 }

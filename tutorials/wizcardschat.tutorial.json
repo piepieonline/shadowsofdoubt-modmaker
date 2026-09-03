@@ -88,8 +88,7 @@
                 "rows": "participantA.triggers",
                 "window": "#file-window-0",
                 "count": 5
-            },
-            "autoAdvance": true
+            }
         },
         {
             "element": "#file-window-0",
@@ -112,13 +111,12 @@
                 "rows": "participantB.triggers",
                 "window": "#file-window-0",
                 "count": 3
-            },
-            "autoAdvance": true
+            }
         },
         {
             "element": "#file-window-0",
             "title": "The second thing said",
-            "description": "Find <code>messages</code> and click the <b>+</b> beside it. A new message — and the block inside it — is written into the mod, and the entry points at it.<br><br>Nothing is asked, because nothing has to be. To use a message another tree already has instead, put its GUID in <code>msgID</code> afterwards.",
+            "description": "Find <code>messages</code> and click the <b>+</b> beside it. A new message — and the block inside it — is written into the mod, and the entry points at it.<br><br>Nothing else is asked, because nothing else has to be.",
             "side": "left",
             "advanceWhen": {
                 "rows": "messages",
@@ -178,59 +176,9 @@
         },
         {
             "element": "#file-window-0",
-            "title": "B again",
-            "description": "<b>+</b> on <code>messages</code> again.",
+            "title": "Two more, the same way",
+            "description": "You have the loop now: <b>+</b> on <code>messages</code>, turn it around if B is the one speaking, drill in with <b>➥</b>, type the line. Do it twice more.<br><br><code>messages.3</code> is B, so <code>saidBy</code> <code>1</code> and <code>saidTo</code> <code>0</code> — the line is <code>I hold my own.</code><br><br><code>messages.4</code> is A, so leave both alone — the line is <code>Ain't no talking you into it?</code><br><br>B's boast is deliberately flat. In a moment you will make that one line read three different ways depending on who is saying it.<br><br>Five messages exist then, and not one of them leads to another. Nothing about the order you made them in tells the game what follows what — that is next.",
             "side": "left",
-            "advanceWhen": {
-                "rows": "messages",
-                "window": "#file-window-0",
-                "count": 4
-            },
-            "autoAdvance": true
-        },
-        {
-            "element": "#file-window-0",
-            "title": "Turned around again",
-            "description": "On <code>messages.3</code>: <code>saidBy</code> <code>1</code>, <code>saidTo</code> <code>0</code>.<br><br>Then drill into <code>messages.3</code>.",
-            "side": "left",
-            "advanceWhen": {
-                "field": "messages.3.saidTo",
-                "window": "#file-window-0",
-                "is": 0
-            }
-        },
-        {
-            "element": "#file-window-2",
-            "title": "How good B claims to be",
-            "description": "Put <code>I hold my own.</code> in the block.<br><br>Deliberately flat. In a moment you will make this same line read three different ways depending on who is saying it.",
-            "side": "right",
-            "advanceWhen": {
-                "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
-                "contains": "I hold my own."
-            }
-        },
-        {
-            "element": "#file-window-0",
-            "title": "The last one",
-            "description": "<b>+</b> on <code>messages</code> one more time.",
-            "side": "left",
-            "advanceWhen": {
-                "rows": "messages",
-                "window": "#file-window-0",
-                "count": 5
-            }
-        },
-        {
-            "element": "#file-window-0",
-            "title": "A has the last word",
-            "description": "<code>messages.4</code> is A talking to B again, so <code>saidBy</code> and <code>saidTo</code> are already right.<br><br>Drill into <code>messages.4</code>.",
-            "side": "left"
-        },
-        {
-            "element": "#file-window-2",
-            "title": "How it ends",
-            "description": "Put <code>Ain't no talking you into it?</code> in the block.<br><br>Five messages exist now, and not one of them leads to another. Nothing about the order you made them in tells the game what follows what — that is next.",
-            "side": "right",
             "advanceWhen": {
                 "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
                 "contains": "Ain't no talking you into it?"
@@ -239,7 +187,7 @@
         {
             "element": "#file-window-0",
             "title": "Chain the first two",
-            "description": "On <code>messages.0</code>, click the <b>+</b> beside <code>links</code>. Open the link it adds and set its <code>to</code> to <b>messages.1</b>.<br><br>That list is the messages in this tree, and what it writes is an <code>instanceID</code>. A message has two IDs: <code>msgID</code> names the document, and <code>instanceID</code> names <i>this use of it in this tree</i>. Links run between instances, so the same message can appear twice in a tree and be followed by something different each time — which is also why <code>instanceID</code> is the one field here you cannot type into.",
+            "description": "On <code>messages.0</code>, click the <b>+</b> beside <code>links</code>. Open the link it adds and set its <code>to</code> to <b>messages.1</b>.<br><br>A link is what makes one message follow another. The dropdown lists the messages this tree holds, by where each one sits in it.",
             "side": "left",
             "advanceWhen": {
                 "field": "messages.0.links.0.to",
@@ -280,7 +228,7 @@
         {
             "element": "#file-window-2",
             "title": "Say who gets it",
-            "description": "On <code>replacements.0</code>, set <code>useTraits</code> to <b>true</b> and add two <code>traits</code>: <code>Char-Enthusiastic</code> and <code>Char-Cheerful</code>. Leave <code>traitCondition</code> at <b>IfAnyOfThese</b> — either one will do.<br><br>Each row is the game's list of traits, searched by typing in it. What goes in the file is the bare name — not the <code>REF:CharacterTrait|…</code> form the case editor wants — and a trait your own mod defines is in the list too, above the game's.",
+            "description": "On <code>replacements.0</code>, set <code>useTraits</code> to <b>true</b> and add two <code>traits</code>: <code>Char-Enthusiastic</code> and <code>Char-Cheerful</code>. Leave <code>traitCondition</code> at <b>IfAnyOfThese</b> — either one will do.<br><br>Each row is the game's list of traits, searched by typing in it. A trait your own mod defines is in the list too, above the game's.",
             "side": "right",
             "advanceWhen": {
                 "rows": "replacements.0.traits",
@@ -290,18 +238,8 @@
         },
         {
             "element": "#file-window-2",
-            "title": "And from someone who has had enough",
-            "description": "A second replacement, the same way: line <code>I quit. Rigged deck.</code>",
-            "side": "right",
-            "advanceWhen": {
-                "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
-                "contains": "I quit. Rigged deck."
-            }
-        },
-        {
-            "element": "#file-window-2",
-            "title": "For the sour ones",
-            "description": "On <code>replacements.1</code>: <code>useTraits</code> <b>true</b>, traits <code>Char-Pessimistic</code> and <code>Char-Spiteful</code>.<br><br>One authored line now covers three kinds of person, and a citizen who is none of them gets the plain one. That is what makes the base game's chatter feel written rather than randomised.",
+            "title": "And one for the sour ones",
+            "description": "A second replacement, the whole thing this time: line <code>I quit. Rigged deck.</code>, then <code>useTraits</code> <b>true</b> and traits <code>Char-Pessimistic</code> and <code>Char-Spiteful</code>.<br><br>One authored line now covers three kinds of person, and a citizen who is none of them gets the plain one. That is what makes the base game's chatter feel written rather than randomised.",
             "side": "right",
             "advanceWhen": {
                 "rows": "replacements.1.traits",
@@ -324,17 +262,7 @@
         {
             "element": "#file-window-2",
             "title": "Do it again for the boast",
-            "description": "Add two replacements the same way, with the lines <code>I'm unbeatable.</code> and <code>I lose every hand.</code>",
-            "side": "right",
-            "advanceWhen": {
-                "savedText": "DDSContent/Strings/English/DDS/dds.blocks.csv",
-                "contains": "I lose every hand."
-            }
-        },
-        {
-            "element": "#file-window-2",
-            "title": "And who they belong to",
-            "description": "Set <code>useTraits</code> on both, and give them their traits: <code>Char-Enthusiastic</code> and <code>Char-Cheerful</code> for the boast, <code>Char-Abrasive</code> and <code>Char-Pessimistic</code> for the surrender.<br><br>Do not leave <code>useTraits</code> off. A replacement with no condition on it replaces the line for everybody, which is a roundabout way of rewriting the block.",
+            "description": "Two more replacements on this block, both complete:<br><br><code>I'm unbeatable.</code> — <code>useTraits</code> <b>true</b>, traits <code>Char-Enthusiastic</code> and <code>Char-Cheerful</code>.<br><br><code>I lose every hand.</code> — <code>useTraits</code> <b>true</b>, traits <code>Char-Abrasive</code> and <code>Char-Pessimistic</code>.<br><br>Do not leave <code>useTraits</code> off on either. A replacement with no condition on it replaces the line for everybody, which is a roundabout way of rewriting the block.",
             "side": "right",
             "advanceWhen": {
                 "rows": "replacements.1.traits",
@@ -395,7 +323,7 @@
         {
             "element": "#dds-file-list",
             "title": "That is a conversation",
-            "description": "One tree, five messages, six blocks and ten lines of text — all of it in the panel on the left, and all of it in the mod.<br><br>Two citizens who know each other, sitting somewhere public, will now sometimes talk about Wizcards, and the conversation reads differently depending on which of them the game cast.<br><br>Worth trying from here: give <code>participantA</code> a <code>jobs</code> entry and set <code>useJobs</code>, so only certain workers have the conversation — that row is the same kind of list as <code>traits</code>, of the game's occupations; or open the tree's <code>document</code> and give it a background, a colour and a font — the same fields turn a tree into something the player reads rather than overhears.",
+            "description": "One tree, five messages, six blocks and ten lines of text — all of it in the panel on the left, and all of it in the mod.<br><br>Two citizens who know each other, sitting somewhere public, will now sometimes talk about Wizcards, and the conversation reads differently depending on which of them the game cast.",
             "side": "right"
         }
     ]

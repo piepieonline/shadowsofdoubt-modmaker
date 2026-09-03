@@ -371,10 +371,15 @@ test('it walks from an empty mod to a conversation the game can play', async ({ 
 
     // awake(0) and noReactionState(4) come with a new conversation, so the three added
     // here go on the end of them.
+    //
+    // Both trigger steps are pressed rather than carried, and that is deliberate in the
+    // tutorial: their condition counts rows, and a row arrives holding `awake` and has to
+    // be changed afterwards -- so the count is met while there is still half the step to
+    // do. Carrying it would take the instructions away mid-edit.
     await onStep(page, 'Where they have to be');
     await addChoices(page, TREE, 'participantA.triggers', ['29', '21', '15'], 2);
 
-    await onStep(page, 'And who they are talking to');
+    await nextStep(page, 'And who they are talking to');
     await expandAt(page, TREE, 'participantB');
     await setEnum(page, TREE, 'participantB.connection', 18);
 
@@ -383,7 +388,7 @@ test('it walks from an empty mod to a conversation the game can play', async ({ 
 
     // --- the other four messages ----------------------------------------------------
 
-    await onStep(page, 'The second thing said');
+    await nextStep(page, 'The second thing said');
     await addMessage(page, 1);
 
     // Each of these ends by drilling into the message it just described. The step asks
@@ -406,24 +411,20 @@ test('it walks from an empty mod to a conversation the game can play', async ({ 
     await nextStep(page, 'What A asks');
     await setLine(page, 'Any good at it?');
 
-    await nextStep(page, 'B again');
-    await addMessage(page, 3);
+    // The last two are one step, because by here the loop has been walked twice and the
+    // third and fourth times have nothing left to teach. So this is the whole of both
+    // messages against a single popover -- which is also the assertion that everything it
+    // asks for can be reached without the step it belongs to going away.
+    await nextStep(page, 'Two more, the same way');
 
-    await onStep(page, 'Turned around again');
+    await addMessage(page, 3);
     await setText(page, TREE, 'messages.3.saidBy', '1');
     await setText(page, TREE, 'messages.3.saidTo', '0');
     await openMessage(page, 3);
-
-    await nextStep(page, 'How good B claims to be');
     await setLine(page, 'I hold my own.');
 
-    await nextStep(page, 'The last one');
     await addMessage(page, 4);
-
-    await nextStep(page, 'A has the last word');
     await openMessage(page, 4);
-
-    await nextStep(page, 'How it ends');
     await setLine(page, "Ain't no talking you into it?");
 
     // --- the links ------------------------------------------------------------------
@@ -458,11 +459,11 @@ test('it walks from an empty mod to a conversation the game can play', async ({ 
     await addNames(page, BLOCK, 'replacements.0.traits',
         ['Char-Enthusiastic', 'Char-Cheerful']);
 
-    await nextStep(page, 'And from someone who has had enough');
+    // The second replacement is one step, for the reason the last two messages were: the
+    // first one was walked through line-then-traits, and doing it again teaches nothing.
+    await nextStep(page, 'And one for the sour ones');
     await addAndOpen(page, BLOCK, 'replacements', 1);
     await setText(page, BLOCK, 'replacements.1._ENG Localisation_', 'I quit. Rigged deck.');
-
-    await nextStep(page, 'For the sour ones');
     await setEnum(page, BLOCK, 'replacements.1.useTraits', 1);
     await addNames(page, BLOCK, 'replacements.1.traits',
         ['Char-Pessimistic', 'Char-Spiteful']);
@@ -473,16 +474,18 @@ test('it walks from an empty mod to a conversation the game can play', async ({ 
     await nextStep(page, 'Back to the boast');
     await openMessage(page, 3);
 
+    // And the boast's pair is one step for the same reason again -- by here it is the
+    // third time round, and the step gives each replacement whole rather than splitting
+    // the lines from the traits they belong to.
     await onStep(page, 'Do it again for the boast');
     await addAndOpen(page, BLOCK, 'replacements', 0);
     await setText(page, BLOCK, 'replacements.0._ENG Localisation_', "I'm unbeatable.");
-    await addAndOpen(page, BLOCK, 'replacements', 1);
-    await setText(page, BLOCK, 'replacements.1._ENG Localisation_', 'I lose every hand.');
-
-    await nextStep(page, 'And who they belong to');
     await setEnum(page, BLOCK, 'replacements.0.useTraits', 1);
     await addNames(page, BLOCK, 'replacements.0.traits',
         ['Char-Enthusiastic', 'Char-Cheerful']);
+
+    await addAndOpen(page, BLOCK, 'replacements', 1);
+    await setText(page, BLOCK, 'replacements.1._ENG Localisation_', 'I lose every hand.');
     await setEnum(page, BLOCK, 'replacements.1.useTraits', 1);
     await addNames(page, BLOCK, 'replacements.1.traits',
         ['Char-Abrasive', 'Char-Pessimistic']);

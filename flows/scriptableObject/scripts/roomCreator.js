@@ -24,6 +24,12 @@
  * `core/spawnRules.js` holds every gate below the room class and is shared. Nothing about
  * what a room admits is decided here; this module asks and draws.
  *
+ * The same is true of writing. `roomPlan.js` says what the room comes to as a list of
+ * changes, `core/soBuilder.js` says where each one lands against the folder and does the
+ * writing, and this module reads the folder, draws the answer and reports what happened.
+ * The preview and the write run the one function -- `landing` -- over two readings of the
+ * same folder, so the pane cannot promise something the write then does differently.
+ *
  * The two reference files are fetched rather than imported, the way the building flow
  * fetches its own: 233 KB and 124 KB, read by one pane of one flow, and the other flows
  * should not pay for them on load. The building flow fetches `furnitureChain.json` too and
@@ -35,18 +41,15 @@ import {
     clustersFor,
 } from '../../../core/spawnRules.js';
 
-import { getFile, tryGetFile, writeFile, readFileContent, removeFile } from '../../../core/fs.js';
 import {
-    readManifest, blankManifest, withListing, withoutListing, MANIFEST_FILE,
-} from '../../../core/murderManifest.js';
-import { PATCH_SUFFIX, PRESET_SUFFIX } from '../../../core/soFileName.js';
+    readModFiles, indexMod, emptyIndex, landAll, commit, takeOut,
+} from '../../../core/soBuilder.js';
+import { MANIFEST_FILE } from '../../../core/murderManifest.js';
 import {
-    planRoom, decideCluster, collisions, mergePatch, against, fullClosure, abandoned,
-    roomRefs, withoutRoom, sharedNames, patchFileOf,
+    planRoom, refusedBy, fullClosure, abandoned, roomOperations, sharedNames, patchFileOf,
 } from './roomPlan.js';
 import { scanRooms, choicesFrom } from './roomScan.js';
 import { createStepper } from './creatorSteps.js';
-import { parseJSON, stringifyJSON } from '../../../core/jsonNumbers.js';
 
 // Through BASE_URL rather than a leading slash: the web build is mounted under the Pages
 // project prefix, where a root-absolute path lands outside the site entirely.
@@ -67,8 +70,8 @@ const STEP_NOTES = {
         + 'reach beside them errs wide.',
     contents: 'A cluster brings its own presets with it. The ceiling lights start as the '
         + 'donor’s, and are yours from the first one you untick.',
-    write: 'Nothing here is overwritten. A file that belongs to another room stops the '
-        + 'write rather than replacing what is in it.',
+    write: 'Nothing of anybody else’s is overwritten. A file that belongs to another room '
+        + 'stops the write, and one of your own is added to rather than rebuilt.',
 };
 
 /** The step rail, built on first open. Null until the dialog is on screen. */
@@ -101,7 +104,7 @@ const state = {
     editing: null,
 
     // The last copy of a donor's furniture, as a record of something that happened rather
-    // than a setting: `{ donor, clusters, cloned }`, or null. Nothing reads it back into
+    // than a setting: `{ donor, clusters, refused }`, or null. Nothing reads it back into
     // the choices -- once copied, the clusters are ordinary ticks.
     copied: null,
 };
@@ -409,10 +412,11 @@ export function toggleRoomCluster(name, on) {
  * author who ticked something by hand and then reached for the donor's furniture wants
  * both; and untangling one from the other afterwards is what "no tracking" rules out.
  *
- * **Clusters the context refuses are copied too**, and each becomes a clone with the gate
- * that refused it relaxed -- `planRoom` already does exactly that for one ticked by hand
- * before the floor was stated. A donor's room is furnished, and copying it minus the
- * eleven things the third floor rules out would be a copy that quietly is not one.
+ * **Clusters the context refuses are copied too.** A donor's room is furnished, and copying
+ * it minus the eleven things the third floor rules out would be a copy that quietly is not
+ * one. Each is admitted the same way as any other and each is reported: the patch is
+ * harmless where the gate refuses it, and relaxing the gate is the author's to do on a copy
+ * of their own -- see the note at the top of `roomPlan.js`.
  */
 export function copyDonorFurniture() {
     const names = clustersFor(chain, state.donor);
@@ -427,7 +431,7 @@ export function copyDonorFurniture() {
     state.copied = {
         donor: state.donor,
         clusters: names.length,
-        cloned: names.filter((name) => decideCluster(rooms, name, state.context).action === 'clone').length,
+        refused: names.filter((name) => refusedBy(rooms, name, state.context).length).length,
     };
 
     redraw();
@@ -711,9 +715,10 @@ function drawCopy() {
     // it does not follow the ticks around as they are narrowed afterwards.
     if (state.copied) {
         parts.push(note(`Copied ${state.copied.clusters} of ${state.copied.donor}’s furniture `
-            + `clusters${state.copied.cloned
-                ? `, ${state.copied.cloned} of which are refused where this room sits and are copied `
-                    + 'as clones with that one gate relaxed'
+            + `clusters${state.copied.refused
+                ? `, ${state.copied.refused} of which are refused where this room sits and will not `
+                    + 'be placed until you copy them into your mod and relax the gate that refuses '
+                    + 'them — the write plan names which'
                 : ''}. Narrow them under “What goes in it”.`));
     }
 
@@ -723,11 +728,13 @@ function drawCopy() {
 /**
  * The clusters this room could take, and the ones it could not, as a list to choose from.
  *
- * The refused ones are shown rather than dropped. A list that quietly omits them answers
- * "why can I not put a picnic table here" with silence, and the answer -- which gate said
- * no, and what it wanted -- is the thing an author needs in order to change the room so
- * that it fits. So they are listed, their box is disabled, and the reason is one click
- * away rather than absent.
+ * The refused ones are shown rather than dropped, and can be ticked. A list that quietly
+ * omits them answers "why can I not put a picnic table here" with silence, and the answer --
+ * which gate said no, and what it wanted -- is the thing an author needs in order to change
+ * the room so that it fits. So they are listed, the reason is one click away, and admitting
+ * one writes the same harmless patch as any other: the gate is checked before the room
+ * class, so it does nothing until the author either states a floor that suits or copies the
+ * cluster into their own mod and relaxes it there.
  *
  * Capped at what fits, with the count said out loud: 399 rows is not a list anyone reads,
  * and a silent truncation reads as "that is all there is".
@@ -758,36 +765,33 @@ function drawContents(result) {
         const failures = refusals.get(name);
         const admittedHere = state.clusters.has(name);
 
-        // A refused cluster cannot be ticked by hand -- the reason is the thing to read
-        // first, and a tick before reading it is a clone written by accident. But one the
-        // copy button brought in *is* in the room, as a clone, so it shows ticked and can
-        // be taken back out. A box that showed empty for something the plan below is about
-        // to write would be the pane disagreeing with itself.
+        // Tickable whatever the gates say. What a gate refuses is the room as it has been
+        // described so far, and that description is design intent written nowhere -- a room
+        // reopened tomorrow has forgotten its floor, and a box disabled on the strength of
+        // a blank field is the pane refusing on evidence it does not have.
         box.type = 'checkbox';
         box.checked = admittedHere;
-        box.disabled = !!failures && !admittedHere;
-        if (!box.disabled) box.addEventListener('change', () => toggleRoomCluster(name, box.checked));
+        box.addEventListener('change', () => toggleRoomCluster(name, box.checked));
 
-        const decision = decideCluster(rooms, name, state.context);
         const presets = closure[name] ?? [];
-
         const admitted = presets.filter((preset) => state.furniture.has(preset)).length;
 
         const caption = document.createElement('span');
         caption.textContent = ` ${name} — ${admittedHere && admitted !== presets.length
             ? `${admitted} of ${presets.length}`
             : `${presets.length} ${presets.length === 1 ? 'preset' : 'presets'}`}`
-            + `${decision.action === 'clone' ? ', cloned' : ''}`;
+            + `${failures ? ', refused here' : ''}`;
 
         label.append(box, caption);
 
-        // Greyed only while it is out. Once it is in the room it is as real as any other
-        // ticked row, whatever the gate that made it a clone.
+        // Marked while it is out, so the list reads as what suits this room first. Once it
+        // is in, it is as real as any other ticked row and the reason below says what will
+        // still stop it being placed.
         if (failures && !admittedHere) label.className = 'room-creator-refused';
         row.append(label);
 
-        // The reason stays on a cloned row: it is what the clone relaxes, and the author
-        // taking one back out wants to know why it needed cloning in the first place.
+        // The reason stays on an admitted row: it is what the author has to relax on a copy
+        // of their own, and it is the whole of why the cluster is not appearing in game.
         if (failures) row.append(...whyNot(name, failures));
 
         // Its contents, once it is in. A cluster puts down a slot per element and the
@@ -851,7 +855,7 @@ function drawContents(result) {
  * allowed to make, as long as they are not making it by accident.
  */
 /**
- * Why a cluster cannot be admitted, behind a button rather than on the row.
+ * Why a cluster will not be placed here, behind a button rather than on the row.
  *
  * On the row it would be a wall of text: at floor 3 the reason is the same sentence on a
  * hundred and forty rows, and the list stops being scannable. Behind a button it is there
@@ -866,13 +870,16 @@ function whyNot(name, failures) {
     button.type = 'button';
     button.className = 'room-creator-why';
     button.textContent = '?';
-    button.setAttribute('aria-label', `Why ${name} cannot go in this room`);
+    button.setAttribute('aria-label', `Why ${name} will not be placed in this room`);
     button.setAttribute('aria-expanded', 'false');
 
     const reason = document.createElement('small');
     reason.className = 'room-creator-note room-creator-note-warning room-creator-reason';
     reason.hidden = true;
-    reason.textContent = failures.map((failure) => failure.reason).join(' ');
+    reason.textContent = `${failures.map((failure) => failure.reason).join(' ')} Admitting it here `
+        + 'is harmless and does nothing on its own: the gate is checked before the room class. To '
+        + `place ${name} in this room, copy it into your mod and relax that on the copy — changing `
+        + 'it on the shipped one would move it in every vanilla room too.';
 
     button.addEventListener('click', () => {
         reason.hidden = !reason.hidden;
@@ -944,6 +951,57 @@ function contentsOf(name, presets) {
 }
 
 /**
+ * The whole write, landed against a folder: what the room is, plus what it is taken out of.
+ *
+ * One function for the preview and for the write, called with the folder as it was last
+ * read and with the folder as it is. They used to be two -- `against` for the pane and a
+ * staging loop for the write -- and two answers to "what will happen to this file" is one
+ * more than a pane showing the author what it is about to do can afford.
+ */
+function landing(index) {
+    const plan = planRoom(choices(), rooms, chain);
+    const editing = editingRoom();
+
+    // Saving a room over itself is not a clash: its own assets are what is being saved.
+    // Anything else standing where one of them would go belongs to something else.
+    const own = new Set(editing
+        ? plan.changes.filter((change) => change.kind === 'own').map((change) => change.file)
+        : []);
+
+    // What this room admits today and would not after saving. Compared by asset and type
+    // rather than by file name, so a patch the folder happens to hold under the other
+    // spelling of its name is recognised as the same admission rather than added to and
+    // withdrawn from at once.
+    const wanted = new Set(plan.changes.map((change) => `${change.type}|${change.asset}`));
+    const shared = sharedNames(rooms, chain);
+
+    const withdrawals = admissionsOf(editing)
+        .filter((entry) => !wanted.has(`${entry.type}|${entry.asset}`))
+        .map((entry) => takeOut({
+            asset: entry.asset,
+            type: entry.type,
+            shared: shared.has(entry.asset),
+            ours: roomOperations(state.name),
+        }));
+
+    return { plan, landed: landAll([...plan.changes, ...withdrawals], index, { own }) };
+}
+
+/** What each landed change reads as in the list. */
+const HOW = {
+    create: '',
+    merge: ' — this room’s, rewritten',
+    delete: ' — nothing left in it, removed',
+};
+
+const howLanded = (item) => HOW[item.action]
+    ?? (item.action === 'append'
+        ? (item.change.kind === 'out' ? ' — this room taken back out of it' : ' — already here, this room is added to it')
+        : item.action === 'leave' ? ' — yours, left alone'
+            : item.action === 'clash' ? ' — already here, and another room’s'
+                : ` — cannot be written: ${item.reason}`);
+
+/**
  * What is about to be written, and a count of it for the rail.
  *
  * Returns `{ count, problems }` rather than drawing the rail itself: the rail is the same
@@ -953,48 +1011,39 @@ function drawPlan() {
     const out = $('#room-creator-plan');
     if (!out) return null;
 
-    const plan = planRoom(choices(), rooms, chain);
-    const editing = editingRoom();
-    const landing = against(plan.files, existingFiles).map((entry) => (
-        // Saving a room over itself is not a clash: its own assets are what is being saved.
-        editing && entry.landing === 'clash' ? { ...entry, landing: 'resave' } : entry));
+    const { plan, landed } = landing(modIndex);
+
+    // A withdrawal from a file that is not there is the ordinary case rather than an event:
+    // most of what a room could once have written it never wrote.
+    const shown = landed.filter((item) => !(item.action === 'leave' && item.change.kind === 'out'));
 
     const parts = [];
 
-    const appends = landing.filter((entry) => entry.landing === 'append').length;
-    const clashes = landing.filter((entry) => entry.landing === 'clash');
-
-    // Furniture this room admits today and would not after saving.
-    const wanted = new Set(plan.files.map((entry) => entry.file));
-    const shared = sharedNames(rooms, chain);
-    const taken = admissionsOf(editing)
-        .filter((entry) => !wanted.has(patchFileOf(shared, entry.asset, entry.type)))
-        .map((entry) => entry.asset);
-
-    const resaves = landing.filter((entry) => entry.landing === 'resave').length;
+    const counts = (action) => shown.filter((item) => item.action === action).length;
+    const appends = shown.filter((item) => item.action === 'append' && item.change.kind === 'add').length;
+    const taken = shown.filter((item) => item.change.kind === 'out');
+    const blockers = shown.filter((item) => item.action === 'clash' || item.action === 'refuse');
+    const left = shown.filter((item) => item.action === 'leave');
 
     const summary = document.createElement('p');
-    summary.innerHTML = `<strong>${landing.length - appends - resaves}</strong> new files`
-        + (resaves ? `, <strong>${resaves}</strong> rewritten` : '')
+    summary.innerHTML = `<strong>${counts('create')}</strong> new files`
+        + (counts('merge') ? `, <strong>${counts('merge')}</strong> rewritten` : '')
         + (appends ? `, <strong>${appends}</strong> added to` : '')
         + (taken.length ? `, <strong>${taken.length}</strong> taken back` : '')
+        + (left.length ? `, <strong>${left.length}</strong> left alone` : '')
         + ', plus the manifest.';
     parts.push(summary);
 
     const list = document.createElement('ol');
-    for (const entry of landing) {
+    for (const item of shown) {
         const row = document.createElement('li');
-        const how = {
-            write: '',
-            append: ' — already here, this room is added to it',
-            resave: ' — this room’s, rewritten',
-            clash: ' — already here, and another room’s',
-        }[entry.landing];
 
         // The name as a name, and what happens to it as a reading of that -- a file name is
         // a thing the author will go looking for in the folder, and it reads as one rather
         // than as the first few words of a sentence about it.
-        row.append(asFile(entry.file));
+        row.append(asFile(item.file));
+
+        const how = howLanded(item);
         if (how) row.append(said(how));
 
         list.append(row);
@@ -1002,21 +1051,33 @@ function drawPlan() {
     parts.push(list);
 
     if (taken.length) {
-        parts.push(note(`This room is taken out of ${taken.join(', ')}. Any other room's changes to `
-            + 'those files stay, and a file left with nothing goes.'));
+        parts.push(note(`This room is taken out of ${taken.map((item) => item.change.asset).join(', ')}. `
+            + 'Any other room\'s changes to those files stay, and a file left with nothing goes.'));
     }
 
+    for (const item of left) parts.push(note(item.reason, 'warning'));
+
+    // The two blockers read differently because the answers differ. A clash is a name
+    // another room has, and renaming is the whole of the fix; a refusal is a file that
+    // cannot be added to, and what to do about it depends on why.
+    const clashes = blockers.filter((item) => item.action === 'clash');
+    const refused = blockers.filter((item) => item.action === 'refuse');
+
     if (clashes.length) {
-        parts.push(note(`${clashes.map((entry) => entry.file).join(', ')} `
+        parts.push(note(`${clashes.map((item) => item.file).join(', ')} `
             + `${clashes.length === 1 ? 'belongs' : 'belong'} to another room. Change this room's `
             + 'name before writing.', 'warning'));
+    }
+
+    if (refused.length) {
+        parts.push(note(`Nothing will be written: ${refused.map((item) => item.reason).join('. ')}.`, 'warning'));
     }
 
     for (const problem of plan.problems) parts.push(note(problem, 'warning'));
 
     out.replaceChildren(...parts);
 
-    const counted = { count: landing.length, problems: plan.problems };
+    const counted = { count: shown.length, problems: plan.problems };
     const button = $('#room-creator-write');
     if (!button) return counted;
 
@@ -1024,14 +1085,16 @@ function drawPlan() {
     const unnamed = plan.problems.some((text) => text.includes('needs a name')
         || text.includes('not a usable asset name') || text.includes('needs a configuration'));
 
-    button.disabled = blocked || unnamed || clashes.length > 0 || plan.collided.length > 0;
+    button.disabled = blocked || unnamed || blockers.length > 0 || plan.collided.length > 0;
+
+    const writes = counts('create') + counts('merge') + counts('append') + counts('delete');
 
     if (blocked) button.textContent = 'Choose a mod to write into';
     else if (plan.collided.length) button.textContent = 'Two of this room’s files share a name';
-    else if (clashes.length) button.textContent = 'Change the name to write';
-    else if (editing) button.textContent = `Save ${state.name}`;
-    else if (appends) button.textContent = `Write ${landing.length - appends} files, add to ${appends}`;
-    else button.textContent = `Write ${landing.length} files`;
+    else if (blockers.length) button.textContent = 'Change the name to write';
+    else if (editingRoom()) button.textContent = `Save ${state.name}`;
+    else if (appends) button.textContent = `Write ${writes - appends} files, add to ${appends}`;
+    else button.textContent = `Write ${writes} files`;
 
     return counted;
 }
@@ -1044,6 +1107,12 @@ const choices = () => ({
     context: state.context,
     clusters: [...state.clusters],
     furniture: [...state.furniture],
+
+    // What this room already admits, which is not the same question as what it can resolve.
+    // A cluster of the author's own places furniture nothing here can enumerate, and a
+    // closure that has never heard of it is not grounds for withdrawing that furniture --
+    // see the note in `planRoom`.
+    admitted: [...(editingRoom()?.presets ?? [])],
     surfaces: state.surfaces,
     lighting: [...state.lighting],
 });
@@ -1053,63 +1122,17 @@ const choices = () => ({
 /* Opening a room that is already there                                        */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Every asset and patch in the content folder, in the shape `scanRooms` reads.
- *
- * Deliberately not the manifest's list. A room half-written, or one whose author has not
- * got round to listing a file yet, is still a room worth showing -- and a file the loader
- * would ignore is better reported through the room it belongs to than hidden from it.
- */
-export async function readRoomFiles(folder) {
-    if (!folder) return [];
-
-    const files = [];
-
-    try {
-        for await (const entry of folder.values()) {
-            if (entry.kind !== 'file' || entry.name === MANIFEST_FILE) continue;
-
-            const patch = entry.name.endsWith(PATCH_SUFFIX);
-            if (!patch && !entry.name.endsWith(PRESET_SUFFIX)) continue;
-
-            let raw = null;
-            try {
-                raw = parseJSON(await readFileContent(entry));
-            } catch {
-                // A file being edited, or one that is not JSON at all. Neither is a
-                // reason to show no rooms.
-                continue;
-            }
-
-            files.push({
-                // `file` is the stem, which is what the manifest names and what the
-                // scanner reports. `fileName` is what is actually on disk, which is what
-                // the plan's own entries are keyed by.
-                file: entry.name.slice(0, -(patch ? PATCH_SUFFIX : PRESET_SUFFIX).length),
-                fileName: entry.name,
-                type: raw?.fileType ?? raw?.type ?? null,
-                patch,
-                raw,
-            });
-        }
-    } catch {
-        return [];
-    }
-
-    return files;
-}
-
 /** The rooms the folder was last found to hold, which the picker offers. */
 let found = [];
 
 /**
- * The file names the folder held when it was last read, for the plan's preview.
+ * The folder as it was when it was last read, for the plan's preview.
  *
  * A preview only. `writeRoom` reads the folder again rather than trusting this: the pane
  * can sit open while files are added beside it, and a write has to answer to the folder as
  * it is rather than as it was.
  */
-let existingFiles = new Set();
+let modIndex = emptyIndex();
 
 /** Fill the room picker from the selected mod, and say when there is nothing to fill it from. */
 async function refreshRoomList() {
@@ -1117,10 +1140,10 @@ async function refreshRoomList() {
     if (!select) return;
 
     const folder = window.selectedMod?.baseFolder;
-    const files = folder ? await readRoomFiles(folder) : [];
+    const read = await readModFiles(folder);
 
-    found = scanRooms(files);
-    existingFiles = new Set(files.map((entry) => entry.fileName));
+    found = scanRooms(read.files);
+    modIndex = indexMod(read);
 
     select.replaceChildren(new Option(
         found.length ? `${found.length} room${found.length === 1 ? '' : 's'} in this mod…` : 'No rooms in this mod',
@@ -1140,9 +1163,9 @@ async function refreshRoomList() {
  *
  * What comes back is what the files say. **The context does not** -- which floor the author
  * had in mind, and how wealthy the district was, are design intent and are written nowhere,
- * so they start blank again. That matters for one thing only: a cluster that was cloned
- * because a gate conflicted will read as patchable until the context that conflicted is
- * stated again.
+ * so they start blank again. Nothing is decided on the strength of that blank: every gate it
+ * would answer reads "unknown" rather than "no", and what a gate refuses is reported rather
+ * than acted on.
  */
 export function openExistingRoom() {
     const select = $('#room-creator-open');
@@ -1156,6 +1179,10 @@ export function openExistingRoom() {
     state.clusters = new Set(choices.clusters);
     state.lighting = new Set(choices.lighting);
     state.surfaces = { ...choices.surfaces };
+
+    // `choices.owned` -- clusters of the author's own that furnish this room -- is
+    // deliberately not read into the ticks. This pane has nothing to write to one, and the
+    // furniture they place is kept by `admitted` in `choices` rather than by a tick.
 
     // The presets the folder's patches actually admit, not the closure of the clusters --
     // a room whose author narrowed the furniture must come back narrowed.
@@ -1207,6 +1234,17 @@ function drawOpened(room) {
             + 'Where the room sits is not written down anywhere, so those boxes start empty.'));
     }
 
+    // Said separately because it is a different kind of thing: a file in this folder whose
+    // author decided what is in it. Nothing this pane does touches one.
+    if (room.owned.length) {
+        const one = room.owned.length === 1;
+
+        parts.push(note(`${room.owned.join(', ')} ${one ? 'is a cluster' : 'are clusters'} of your `
+            + `own naming this room’s filter, so ${one ? 'it furnishes' : 'they furnish'} it too. `
+            + `Nothing here writes to ${one ? 'it' : 'them'}, and the furniture ${one ? 'it places is'
+                : 'they place are'} left admitted even where this tool cannot say what it is.`));
+    }
+
     parts.push(note('Writing makes a new room. Nothing here is overwritten — change the name first.'));
 
     out.replaceChildren(...parts);
@@ -1220,21 +1258,25 @@ function drawOpened(room) {
 /**
  * Write the room into the selected mod's content folder.
  *
- * Order matters twice over. The files go down before the manifest, so a failure part way
- * through leaves assets the loader never reaches rather than a load order naming files
- * that are not there. And `fileOrder` is appended in dependency order, because every
- * `REF:` has to resolve to something already loaded.
+ * The deciding is `core/soBuilder.js`'s and so is the writing; what is here is the reading
+ * of the folder as it is now, and the saying of what happened. The pane's preview and this
+ * run the same `landing` over two readings of the same folder, which is what stops the two
+ * disagreeing about what a file is about to become.
  *
- * Nothing is overwritten. A patch of a cluster another room already patched is the case
- * that matters -- the second room has to add its filter to the existing file rather than
- * replace it, and that is the author's call.
+ * Nothing of anybody else's is overwritten. A patch of a cluster another room already
+ * patched is the case that matters -- the second room adds its filter to the existing file
+ * rather than replacing it -- and an asset the mod declares is left alone entirely.
  */
 export async function writeRoom() {
     const folder = window.selectedMod?.baseFolder;
     const out = $('#room-creator-plan');
     if (!folder || !out) return;
 
-    const plan = planRoom(choices(), rooms, chain);
+    // Read before deciding anything. The index the pane draws its preview from is whatever
+    // the folder held when it was opened, and a write has to answer to the folder as it is
+    // now.
+    const read = await readModFiles(folder);
+    const { plan, landed } = landing(indexMod(read));
 
     // Before the folder is touched at all: two of the room's own files wanting one name is
     // decided by the room, not by what is on disk, and writing the set half-way would put
@@ -1248,153 +1290,28 @@ export async function writeRoom() {
         return;
     }
 
-    // Read before deciding anything. The cached list the pane draws its preview from is
-    // whatever the folder held when it was opened, and a write has to answer to the folder
-    // as it is now.
-    const onDisk = new Map();
-    for (const entry of plan.files) {
-        const handle = await tryGetFile(folder, [entry.file]);
-        if (!handle) continue;
+    const result = await commit(folder, landed);
 
-        try {
-            onDisk.set(entry.file, parseJSON(await readFileContent(handle)));
-        } catch {
-            onDisk.set(entry.file, null);
-        }
-    }
-
-    const editing = editingRoom();
-    const own = new Set(editing ? plan.files.map((entry) => entry.file) : []);
-    const clash = collisions(plan.files, new Set(onDisk.keys()), own);
-
-    if (clash.length) {
-        out.prepend(note(`${clash.join(', ')} ${clash.length === 1 ? 'is' : 'are'} already in this `
-            + 'folder, and belong to another room. Nothing has been written — change this room\'s '
-            + 'name.', 'warning'));
+    if (result.refused.length) {
+        out.prepend(note(`Nothing has been written. ${result.refused.map((item) => item.reason).join('. ')}.`, 'warning'));
         return;
     }
 
-    // Furniture, surfaces and lights this room used to admit and no longer does. Read from
-    // the folder rather than from what the pane started with, so a file edited elsewhere
-    // since is still handled correctly.
-    //
-    // Both spellings for an ambiguous name. A room saved before the type went into these
-    // file names admits through the bare one, and leaving that behind would mean unticking
-    // a cluster took it out of the new file and not out of the old -- which reads as the
-    // untick not having worked. Nothing is lost by looking: a file that is not there is
-    // skipped, and one belonging to another room keeps everything but this room's own
-    // operations.
-    const shared = sharedNames(rooms, chain);
-    const wanted = new Set(plan.files.map((entry) => entry.file));
-    const stale = [...new Set(admissionsOf(editing)
-        .flatMap((entry) => [
-            patchFileOf(shared, entry.asset, entry.type),
-            `${entry.asset}${PATCH_SUFFIX}`,
-        ])
-        .filter((file) => !wanted.has(file)))];
-
-    // Work out every merge before writing any of them, so a patch this room cannot be
-    // added to stops the whole write rather than leaving the room half admitted.
-    const staged = [];
-    const refused = [];
-
-    for (const entry of plan.files) {
-        const existing = onDisk.get(entry.file);
-
-        if (existing === undefined) {
-            staged.push({ entry, content: entry.content, appended: false });
-            continue;
-        }
-
-        if (existing === null) {
-            refused.push(`${entry.file} is in this folder and will not parse`);
-            continue;
-        }
-
-        // One of this room's own assets, being saved again: written as the plan says
-        // rather than merged, because the plan *is* what the room now is.
-        if (entry.kind === 'asset' && own.has(entry.file)) {
-            staged.push({ entry, content: entry.content, appended: false, rewritten: true });
-            continue;
-        }
-
-        const merged = mergePatch(existing, entry.content);
-
-        if (merged.reason) refused.push(merged.reason);
-        else staged.push({ entry, content: merged.content, appended: true, added: merged.added });
-    }
-
-    // What this room is being taken out of. Only its own operations go; anything else in
-    // the file belongs to another room or to the author and is left exactly as it is.
-    const refs = roomRefs(state.name);
-    const withdrawn = [];
-
-    for (const file of stale) {
-        const handle = await tryGetFile(folder, [file]);
-        if (!handle) continue;
-
-        let existing = null;
-        try {
-            existing = parseJSON(await readFileContent(handle));
-        } catch {
-            refused.push(`${file} still admits this room but will not parse`);
-            continue;
-        }
-
-        const stripped = withoutRoom(existing, refs);
-        if (stripped.removed) withdrawn.push({ file, ...stripped });
-    }
-
-    if (refused.length) {
-        out.prepend(note(`Nothing has been written. ${refused.join('. ')}.`, 'warning'));
-        return;
-    }
-
-    for (const item of staged) {
-        const handle = await getFile(folder, [item.entry.file], true);
-        await writeFile(handle, `${stringifyJSON(item.content, null, 2)}\n`);
-    }
-
-    // A patch left with no operations is a file saying nothing, so it goes rather than
-    // sitting in the folder and the load order as a puzzle for whoever reads it next.
-    for (const item of withdrawn) {
-        if (item.empty) await removeFile(folder, [item.file]);
-        else {
-            const handle = await getFile(folder, [item.file], true);
-            await writeFile(handle, `${stringifyJSON(item.content, null, 2)}\n`);
-        }
-    }
-
-    const appended = staged.filter((item) => item.appended);
-
-    // One read and one write rather than a pass of `ensureListed` per file: twelve
-    // re-reads of the same manifest is twelve chances for it to be half-updated.
-    const { present, malformed, data } = await readManifest(folder);
-
-    if (malformed) {
+    if (result.malformed) {
         out.prepend(note(`${MANIFEST_FILE} could not be read, so it has been left alone. The `
-            + `${plan.files.length} files are written but none of them will load until they are `
-            + 'listed there by hand.', 'warning'));
+            + `${result.written.length} files are written but none of them will load until they `
+            + 'are listed there by hand.', 'warning'));
         return;
     }
 
-    let manifest = present ? data : blankManifest();
-    for (const entry of plan.order) manifest = withListing(manifest, entry);
+    const appended = result.written.filter((item) => item.action === 'append' && item.change.kind === 'add');
+    const withdrawn = [...result.removed, ...result.written.filter((item) => item.change.kind === 'out')];
 
-    // A file that has gone must stop being named, or the loader goes looking for it.
-    for (const item of withdrawn) {
-        if (item.empty) manifest = withoutListing(manifest, item.file.replace(PATCH_SUFFIX, ''));
-    }
-
-    const handle = await getFile(folder, [MANIFEST_FILE], true);
-    await writeFile(handle, `${stringifyJSON(manifest, null, 2)}\n`);
-
-    const written = staged.length - appended.length;
-    const parts = [`${written} files written`];
+    const parts = [`${result.written.length - appended.length} files written`];
     if (appended.length) parts.push(`${appended.length} existing ${appended.length === 1 ? 'patch' : 'patches'} added to`);
     if (withdrawn.length) {
-        const gone = withdrawn.filter((item) => item.empty).length;
-        parts.push(`${withdrawn.length} taken back${gone ? ` (${gone} left empty and removed)` : ''}`);
+        parts.push(`${withdrawn.length} taken back${result.removed.length
+            ? ` (${result.removed.length} left empty and removed)` : ''}`);
     }
     const how = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
 

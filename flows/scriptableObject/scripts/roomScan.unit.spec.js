@@ -98,6 +98,7 @@ describe('a room nobody named by the convention', () => {
             name: 'NookRoom',
             donor: 'Atrium',
             clusters: ['PicnicTable'],
+            owned: [],
             lighting: ['AtriumLight'],
             surfaces: { walls: 'PlainWall' },
         });
@@ -246,19 +247,49 @@ describe('what the scanner will not guess at', () => {
 });
 
 
-describe('a cloned cluster', () => {
-    test('counts as admitted, the same as a patched one', () => {
-        const [room] = scanRooms([
-            ...handWritten,
-            asset('Nook_PicnicTable', 'FurnitureCluster', {
-                copyFrom: 'REF:FurnitureCluster|PicnicTable',
+/**
+ * A cluster of the mod's own naming this room's filter.
+ *
+ * This is what an author is told to make when a gate refuses a shipped cluster -- a copy
+ * with the offending gate relaxed. It furnishes the room and it is not this tool's to
+ * touch, so it comes back apart from the clusters the room admits by patching them: those
+ * are names in the reference data, this is a file whose contents are the author's.
+ */
+describe('a cluster of the mod’s own', () => {
+    const [room] = scanRooms([
+        ...handWritten,
+        asset('MyPicnicTable', 'FurnitureCluster', {
+            copyFrom: 'REF:FurnitureCluster|PicnicTable',
+            allowedRoomFilters: ['REF:RoomTypeFilter|AlcoveThings'],
+            limitToFloorRange: false,
+        }),
+    ]);
+
+    test('counts as furnishing the room', () => {
+        expect(room.owned).toEqual(['MyPicnicTable']);
+        expect(room.verdict).toBe('exact');
+    });
+
+    test('is not one of the clusters the room patches', () => {
+        expect(room.clusters).toEqual(['PicnicTable']);
+    });
+
+    test('reaches the pane as its own list, so nothing offers to write to it', () => {
+        expect(choicesFrom(room, rooms).owned).toEqual(['MyPicnicTable']);
+        expect(choicesFrom(room, rooms).clusters).toEqual(['PicnicTable']);
+    });
+
+    /** One that furnishes a room with nothing else in it still makes it a furnished room. */
+    test('is enough on its own for the room to read as more than an identity', () => {
+        const [alone] = scanRooms([
+            ...handWritten.filter((entry) => entry.patch !== true),
+            asset('MyPicnicTable', 'FurnitureCluster', {
                 allowedRoomFilters: ['REF:RoomTypeFilter|AlcoveThings'],
-                limitToFloorRange: false,
             }),
         ]);
 
-        expect(room.clusters).toContain('Nook_PicnicTable');
-        expect(room.verdict).toBe('exact');
+        expect(alone.owned).toEqual(['MyPicnicTable']);
+        expect(alone.verdict).not.toBe('identity');
     });
 });
 
