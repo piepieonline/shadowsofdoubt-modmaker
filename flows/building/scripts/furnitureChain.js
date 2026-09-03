@@ -82,7 +82,9 @@ import {
 
 import { overlayChain } from './furnitureOverlay.js';
 
-const CHAIN_PATH = '/refs/derived/furnitureChain.json';
+// Through BASE_URL rather than a leading slash: the web build is mounted under the Pages
+// project prefix, where a root-absolute path lands outside the site entirely.
+const CHAIN_PATH = `${import.meta.env.BASE_URL}refs/derived/furnitureChain.json`;
 
 /**
  * The gates this cannot apply, in the order an author is likely to care about them.

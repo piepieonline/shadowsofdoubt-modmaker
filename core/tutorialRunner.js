@@ -28,16 +28,49 @@ import { probeFile, readFileContent } from './fs.js';
 import DRIVER_CSS from 'driver.js/dist/driver.css?url';
 
 let driverModule = null;
+let styleReady = null;
 
-async function loadDriver() {
-    if (!document.querySelector(`link[href="${DRIVER_CSS}"]`)) {
+/**
+ * The stylesheet, and a promise for when it has actually applied.
+ *
+ * Awaited rather than fired and forgotten, because driver.js measures the popover to
+ * decide where to put it -- `getPopoverDimensions` reads the wrapper's own bounding rect
+ * -- and it does that once, on the first `highlight`. Unstyled, that wrapper is an
+ * ordinary block the full width of the page, so the measurement comes back 1280 wide
+ * instead of 250 and the position computed from it is nonsense: `left: 1280px;
+ * bottom: -784px`. The stylesheet then lands, `position: fixed` starts applying, and the
+ * first step of the walkthrough is parked off-screen. Nothing recovers it -- driver.js
+ * repositions on scroll and resize, neither of which a stuck popover provokes -- so the
+ * step cannot be read or left, and the walkthrough is over before it starts.
+ *
+ * It needs a cold cache to happen, which is exactly the first-time visitor a walkthrough
+ * is for. It showed up here as an occasional Playwright timeout on the first step.
+ *
+ * Resolved on error as well as load: a stylesheet that 404s leaves the popover ugly, and
+ * ugly is better than a tutorial that hangs on a promise that will never settle.
+ */
+function loadDriverStyles() {
+    styleReady ??= new Promise((resolve) => {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = DRIVER_CSS;
+        link.addEventListener('load', resolve, { once: true });
+        link.addEventListener('error', resolve, { once: true });
         document.head.appendChild(link);
-    }
+    });
+
+    return styleReady;
+}
+
+async function loadDriver() {
+    // Started before the import and awaited after it, so the two fetches overlap. The
+    // module is the slower of them from a cold cache, and serialising them would put the
+    // stylesheet's round trip in front of every walkthrough for no reason.
+    const styles = loadDriverStyles();
 
     driverModule ??= await import('driver.js');
+    await styles;
+
     return driverModule.driver;
 }
 
@@ -594,7 +627,11 @@ async function runStep(tour, steps, index, live, signal) {
 export async function startTutorial(id) {
     stopTutorial();
 
-    const response = await fetch(`./tutorials/${id}.tutorial.json`);
+    // Through BASE_URL rather than document-relative. `./` happens to resolve correctly
+    // from the shell at the site root, but it resolves against whatever page is open --
+    // the two redirect stubs under flows/ are real pages at a different depth -- while
+    // BASE_URL is the one answer that is right from all of them and under both builds.
+    const response = await fetch(`${import.meta.env.BASE_URL}tutorials/${id}.tutorial.json`);
     if (!response.ok) throw new Error(`No tutorial file for ${id}`);
     const definition = await response.json();
 

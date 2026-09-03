@@ -37,22 +37,31 @@ const lanHttps = () => {
 };
 
 /**
- * The reference data that is fetched at runtime rather than imported.
+ * The data directories that are read at runtime by URL, copied whole.
  *
- * refs/ splits in two. `authored/`, `derived/` and `generated/` are 17 files read through
- * `import ... with { type: 'json' }`, so Rollup inlines them into the bundle and they must
- * not also be copied -- that would ship 4.3 MB twice. These two are read a file at a time
- * by URL, 1642 of them, and have to arrive as plain files.
+ * Whole directories, not the subdirectories that are known to be fetched. That distinction
+ * was the bug: this list held `refs/assets` and `refs/floors` because those are read a file
+ * at a time and obviously need to be plain files, while `refs/authored`, `refs/derived` and
+ * `refs/generated` were taken to be the imported half -- read through `import ... with
+ * { type: 'json' }`, inlined by Rollup, and not to be copied on top.
  *
- * Not `publicDir`, because refs/ has to stay importable for the other three directories
- * and Vite does not allow importing out of the public folder. Copying only what is fetched
- * keeps both halves working and leaves refs/ where every existing path expects it.
+ * That was true of two of the three. `refs/derived` is imported only by unit specs, which
+ * run in Node against the source tree, so nothing inlined it and nothing shipped it, and
+ * the three fetches of it 404ed on the deployed site. Splitting a directory by how its
+ * files *happen* to be read today means every new fetch is a chance to get this wrong
+ * again, and the failure is close to silent: `loadFurnitureChain` turns a failed fetch into
+ * an absent panel, so the symptom was a feature quietly not being there.
  *
- * refs/assets/index.json is the awkward one: imported by the ScriptableObject flow's
- * loadRefs and fetched by nothing, while its 1532 neighbours are fetched and imported by
- * nothing. It ends up inlined *and* copied, which costs 177 bytes and needs no special case.
+ * So the rule is now the coarse one -- if a directory is read at runtime at all, all of it
+ * ships. The cost is that `refs/generated` is inlined *and* copied, about 4 MB of duplicate
+ * in `dist`. That is deploy-artifact size only: nothing fetches those copies, so no user
+ * ever downloads them, and the same was already true of refs/assets/index.json. Paying it
+ * once is worth more than a list that has to be revised every time a fetch is added.
+ *
+ * Not `publicDir`, because refs/ has to stay importable -- Vite does not allow importing
+ * out of the public folder. Copying leaves refs/ where every existing path expects it.
  */
-const FETCHED_AT_RUNTIME = ['refs/assets', 'refs/floors'];
+const FETCHED_AT_RUNTIME = ['refs', 'tutorials'];
 
 const copyFetchedRefs = () => ({
     name: 'copy-fetched-refs',

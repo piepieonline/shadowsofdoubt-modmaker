@@ -785,3 +785,73 @@ test('closing the walkthrough stops it watching', async ({ page }) => {
     await expect(page.locator(POPOVER)).toBeHidden();
     expect(await alerts(page)).toEqual([]);
 });
+
+/**
+ * The first step, when driver.js's own stylesheet is slow.
+ *
+ * driver.js decides where to put a popover by measuring it -- getPopoverDimensions reads
+ * the wrapper's bounding rect -- and it does that once, as the step is drawn. Before
+ * driver.css applies, that wrapper is an ordinary block the full width of the page, so
+ * the measurement comes back 1280 wide instead of 250 and the position computed from it
+ * is nonsense: `left: 1280px; bottom: -784px`. The stylesheet then lands, `position:
+ * fixed` starts applying, and the step is parked off the bottom-right corner. Nothing
+ * recovers it -- driver.js repositions on scroll and resize, and a popover nobody can
+ * reach provokes neither -- so the walkthrough is unreadable and unleaveable at step one.
+ *
+ * It needs the stylesheet to lose a race it usually wins, so in the suite it surfaced as
+ * an occasional timeout clicking through the first step, on whichever test happened to
+ * draw the short straw. In use it needs a cold cache, which is precisely the first-time
+ * visitor a walkthrough exists for.
+ *
+ * The delay is what makes that deterministic. It is longer than the popover could
+ * plausibly take to be drawn, so this fails every time if the runner stops waiting for
+ * the stylesheet, rather than going back to being flaky in the other direction.
+ */
+test('the first step is placed against its target when the stylesheet is slow', async ({ page }) => {
+    await useTutorial(page, {
+        steps: [
+            { element: '#select-mod', title: 'First', description: 'Just reading.' },
+            { element: '#select-content', title: 'Second', description: 'Also reading.' },
+        ],
+    });
+
+    await page.route('**/*driver*.css*', async (route) => {
+        await new Promise((resolve) => { setTimeout(resolve, 1500); });
+        await route.continue();
+    });
+
+    await gotoFlow(page, '?flow=scriptableObject');
+    await seedFs(page, soFolderContent);
+    await connectFolders(page, { modDir: 'Mods' });
+    await openTutorials(page);
+    await start(page);
+
+    const popover = page.locator(POPOVER);
+    await expect(popover).toContainText('First');
+
+    // Not measured until the stylesheet has actually applied, and `position: fixed` is
+    // what says so -- driver.css sets it on the popover and nothing else does. Measuring
+    // before that point is what makes this test useless: unstyled, the popover is a
+    // full-width block that happens to land inside the viewport, so the geometry looks
+    // fine however wrong the position waiting to be applied to it is.
+    await expect
+        .poll(() => popover.evaluate((element) => getComputedStyle(element).position))
+        .toBe('fixed');
+
+    // Asserted on the geometry and not only on the click, so a regression says "it is off
+    // the screen" instead of spending the full timeout on a button that never becomes
+    // clickable. `#select-mod` is in the header, so a popover placed against it is nowhere
+    // near an edge -- being outside the viewport at all is the whole of the failure.
+    const box = await popover.boundingBox();
+    const viewport = page.viewportSize();
+
+    expect(box, 'the popover has no box at all').not.toBeNull();
+    expect({ x: box.x >= 0, y: box.y >= 0 }).toEqual({ x: true, y: true });
+    expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+
+    // And usable, which is what being off-screen took away.
+    await popover.locator(FORWARD).click();
+    await expect(popover).toContainText('Second');
+    expect(await alerts(page)).toEqual([]);
+});

@@ -48,8 +48,10 @@ import { scanRooms, choicesFrom } from './roomScan.js';
 import { createStepper } from './creatorSteps.js';
 import { parseJSON, stringifyJSON } from '../../../core/jsonNumbers.js';
 
-const CHAIN_PATH = '/refs/derived/furnitureChain.json';
-const ROOMS_PATH = '/refs/derived/roomCreator.json';
+// Through BASE_URL rather than a leading slash: the web build is mounted under the Pages
+// project prefix, where a root-absolute path lands outside the site entirely.
+const CHAIN_PATH = `${import.meta.env.BASE_URL}refs/derived/furnitureChain.json`;
+const ROOMS_PATH = `${import.meta.env.BASE_URL}refs/derived/roomCreator.json`;
 
 /**
  * What each step is for, said in the footer while it is being read.

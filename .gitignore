@@ -19,4 +19,3 @@ playwright-report/
 # Vite build output
 dist/
 dist-desktop/
-CLAUDE.md
