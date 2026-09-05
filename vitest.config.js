@@ -18,7 +18,13 @@ export default defineConfig({
 
         // Beside the module, not in a directory of their own. `.unit.spec.js` so the
         // suite a file belongs to is readable from its name.
-        include: ['{core,flows}/**/*.unit.spec.js'],
+        //
+        // `desktop/` is here for one file. Most of the Electron shell cannot be tested
+        // without an Electron -- a protocol handler, a window, a blocklist callback that
+        // needs a real native picker to fire -- but deciding whether a release tag is
+        // newer than this build is a pure function of two strings, and it is the part
+        // that is wrong in the ways nobody notices. See desktop/version.js.
+        include: ['{core,flows,desktop}/**/*.unit.spec.js'],
 
         // Reference data is fetched from app-absolute paths at runtime, and the JSON
         // Patch library arrives as a global from a classic script. See both shims.

@@ -11,6 +11,7 @@
  */
 import { probeFolder } from './fs.js';
 import { isDemoMode } from './demo/demoMode.js';
+import { isDesktop } from './platform.js';
 
 export const FOLDERS = [
     {
@@ -139,6 +140,28 @@ export function useFolder(id, handle) {
 }
 
 /**
+ * What a rejected pick is told, on the web.
+ *
+ * Chromium refuses to hand out a directory under `Program Files` or `Program Files (x86)`
+ * -- the list is compiled into the browser as `kBlockAllChildren` and there is no flag,
+ * prompt or amount of user consent that lifts it. A default Steam install puts the game,
+ * and the BepInEx `plugins` folder inside it, in exactly that tree, so for those users both
+ * folders this app needs are unreachable.
+ *
+ * The cruelty is in how it fails: `showDirectoryPicker` rejects with `AbortError`, which is
+ * the *same* rejection it gives when the user presses Cancel. So this cannot say which
+ * happened, and must read sensibly either way -- as information for someone who cancelled
+ * on purpose, and as an explanation for someone who did not and would otherwise be looking
+ * at a dialog that closed and did nothing.
+ *
+ * Not shown on desktop, where the blocklist is lifted and a rejection really is a cancel.
+ */
+const BLOCKED_HINT = 'No folder was selected.\n\n'
+    + 'If you did pick one, and it was inside Program Files, your browser blocks that '
+    + 'folder and cannot tell you so. A default Steam install puts the game there. The '
+    + 'desktop build of this tool can open it.';
+
+/**
  * Ask for a folder. Must be called from a user gesture.
  *
  * If we have a remembered handle for a folder that is not connected, try re-granting
@@ -175,7 +198,18 @@ export async function selectFolder(id) {
     const options = { mode: kind.mode };
     if (remembered) options.startIn = remembered;
 
-    const picked = await window.showDirectoryPicker(options);
+    let picked;
+
+    try {
+        picked = await window.showDirectoryPicker(options);
+    } catch {
+        // Nothing was picked. Returning null rather than rethrowing, which is what the
+        // other two ways out of here already do -- the caller in core/foldersModal.js
+        // wrapped this in a try/catch precisely because a cancel arrived as a rejection.
+        if (!isDesktop) alert(BLOCKED_HINT);
+        return null;
+    }
+
     const resolved = kind.resolve ? await kind.resolve(picked) : picked;
 
     if (!resolved) {

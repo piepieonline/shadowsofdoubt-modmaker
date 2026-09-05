@@ -128,7 +128,17 @@ export async function installFsHarness(page) {
             if (window.__pickerQueue.length === 0) {
                 throw new Error('showDirectoryPicker called but the test queued no directory');
             }
-            return window.__pickerQueue.shift();
+
+            const next = window.__pickerQueue.shift();
+
+            // A pick that produces no folder. The real API rejects with AbortError both
+            // when the user cancels and when Chromium refuses the folder outright -- see
+            // BLOCKED_HINT in core/folders.js -- and the app cannot tell those apart, so
+            // this is deliberately the one rejection rather than two. Queued rather than
+            // taken from an empty queue, which stays a harness fault.
+            if (next?.__abort) throw new DOMException('The user aborted a request.', 'AbortError');
+
+            return next;
         };
 
         /** Resolve an OPFS directory by '/'-separated path, creating as needed. */
@@ -208,6 +218,16 @@ export async function seedFs(page, files) {
         await window.__opfsSeed(f);
     }, files);
 }
+
+/**
+ * Queue a pick that comes back with nothing.
+ *
+ * Stands for both of the things that produce that: the user pressing Cancel, and the
+ * browser refusing a folder on its blocklist. They are one rejection, which is the whole
+ * difficulty the hint in core/folders.js is written around.
+ */
+export const queueDismissedPick = (page) =>
+    page.evaluate(() => { window.__pickerQueue.push({ __abort: true }); });
 
 /** Queue OPFS directories to be returned by successive showDirectoryPicker calls. */
 export async function queuePicks(page, paths) {

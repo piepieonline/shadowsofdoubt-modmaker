@@ -19,3 +19,6 @@ playwright-report/
 # Vite build output
 dist/
 dist-desktop/
+
+# electron-builder output (installers, unpacked apps)
+release/

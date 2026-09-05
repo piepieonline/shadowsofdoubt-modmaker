@@ -21,6 +21,19 @@ const BASE = '/shadowsofdoubt-modmaker/';
 
 export const BUILD_URL = `http://127.0.0.1:${PORT}${BASE}`;
 
+/**
+ * The commit this suite's build is told it came from.
+ *
+ * `GITHUB_SHA` is what Actions sets and what vite.config.js reads first, so setting it here
+ * is supplying the input rather than faking the behaviour -- it is the same path the deployed
+ * site takes, with a value a test can assert on. Without it the build falls back to asking
+ * git, and what that answers depends on whose machine is running, which is not something to
+ * write an assertion against.
+ *
+ * Deliberately not a real commit: nothing should be tempted to follow it.
+ */
+export const BUILD_SHA = 'f000dead0000beef0000cafe0000f00d0000abcd';
+
 export default defineConfig({
     testDir: './tests-build',
     testMatch: '**/*.spec.js',
@@ -51,5 +64,9 @@ export default defineConfig({
         url: BUILD_URL,
         reuseExistingServer: false,
         timeout: 120_000,
+
+        // Inherited plus this one. See BUILD_SHA above: the build stamp is read from the
+        // environment, so the environment is what a test of it has to control.
+        env: { ...process.env, GITHUB_SHA: BUILD_SHA },
     },
 });

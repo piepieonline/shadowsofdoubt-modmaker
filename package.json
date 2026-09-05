@@ -4,11 +4,20 @@
   "private": true,
   "description": "Tooling for the Shadows of Doubt Mod Maker. Built with Vite, targeting both a static web build for GitHub Pages and an Electron desktop shell.",
   "type": "module",
+  "main": "desktop/main.js",
+  "author": "piepieonline <piepieonline@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/piepieonline/shadowsofdoubt-modmaker.git"
+  },
+  "homepage": "https://piepieonline.github.io/shadowsofdoubt-modmaker/",
+  "desktopName": "shadowsofdoubt-modmaker.desktop",
   "scripts": {
     "dev": "vite",
     "dev:lan": "npm run cert && vite --mode lan",
     "build": "vite build",
     "build:desktop": "vite build --mode desktop",
+    "desktop": "npm run build:desktop && electron .",
     "preview": "vite preview",
     "cert": "test -f cert.pem -a -f key.pem || openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365 -subj '/CN=localhost' 2>/dev/null && echo 'Self-signed cert ready (cert.pem, key.pem).'",
     "test": "npm run test:unit && npm run test:playwright && npm run test:build",
@@ -16,6 +25,9 @@
     "test:unit:watch": "vitest",
     "test:playwright": "playwright test",
     "test:build": "playwright test -c playwright.build.js",
+    "test:desktop": "playwright test -c playwright.desktop.js",
+    "pack:desktop:win": "npm run build:desktop && electron-builder --win --publish never",
+    "pack:desktop:linux": "npm run build:desktop && electron-builder --linux --publish never",
     "test:e2e": "playwright test -c playwright.e2e.config.js",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
@@ -24,6 +36,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
+    "electron": "44.2.0",
+    "electron-builder": "26.15.3",
     "vite": "^8.2.2",
     "vitest": "^4.1.11"
   },

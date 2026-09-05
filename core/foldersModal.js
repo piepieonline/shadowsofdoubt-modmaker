@@ -50,7 +50,11 @@ function render(flow) {
             try {
                 await selectFolder(kind.id);
             } catch {
-                // The user dismissed the picker; leave everything as it was.
+                // Not the dismissed picker any more -- selectFolder catches that itself
+                // and answers null, because a cancel and a folder the browser refuses to
+                // open are the same rejection and one of them needs explaining. Kept for
+                // anything else that could throw on the way, so a failure still leaves
+                // the modal drawn and the listeners told rather than stopping here.
             }
             render(currentFlow);
             await notifyChanged();

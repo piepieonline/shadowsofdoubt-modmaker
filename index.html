@@ -114,6 +114,21 @@
         folders, and every visit starts fresh. Reload without <code>?demo</code> to use your own.
     </div>
 
+    <!-- Desktop only, and only when GitHub has a newer release than this build. The
+         desktop binaries are unsigned and do not update themselves, so without this the
+         only way to find out is to go looking. Filled in and unhidden by
+         core/updateBanner.js; the version and the link are not known until the main
+         process has asked. The web build never shows it -- reloading the page is what
+         updating means there. -->
+    <div id="update-banner" hidden>
+        <span>
+            <strong>Update available</strong>
+            — version <a id="update-banner-link" href="#" target="_blank" rel="noreferrer">?</a>
+            has been released. This build does not update itself.
+        </span>
+        <button id="update-banner-dismiss" class="secondary">Dismiss</button>
+    </div>
+
     <!-- The active flow's markup is cloned in here. Only one flow is ever mounted:
          the two share element ids (#trees, #help-modal), so having
          both in the document at once would break getElementById for whichever came
@@ -123,8 +138,13 @@
     <!-- What build this is, for anyone reporting something. The shell's rather than a
          flow's: it is the same answer whichever editor is open, and as a flow's own it
          was said twice by the two document editors and not at all by the building flow.
-         Substituted by Jekyll on GitHub Pages; served locally it says so literally. -->
-    <footer id="build-version">{{ site.github.build_revision }}</footer>
+
+         Filled in by core/buildVersion.js: the commit on the web, and the release version
+         as well on desktop. Empty here rather than holding a placeholder -- this used to
+         carry `{{ site.github.build_revision }}` for Jekyll to substitute, and when Pages
+         stopped building the site with Jekyll it went on showing that text to everyone.
+         An empty line is at least not a claim. -->
+    <footer id="build-version"></footer>
 
     <!-- Spoiler warning, dev requested, do not remove. Applies to the whole tool, so
          it lives in the shell rather than in one flow. -->

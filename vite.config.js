@@ -1,10 +1,48 @@
 import { defineConfig } from 'vite';
 import { cp } from 'node:fs/promises';
 import { readFileSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Which commit this build came from, baked in as `__BUILD_COMMIT__`.
+ *
+ * The footer used to hold `{{ site.github.build_revision }}`, which Jekyll substituted back
+ * when GitHub Pages built the site itself. It builds a Vite artifact now and uploads it, so
+ * nothing has substituted that in a long time and every visitor has been reading the template
+ * as written. Worse, the one test that looked at the footer asserted exactly that string, so
+ * the breakage was pinned in place rather than caught.
+ *
+ * Three sources, in order of how much they can be trusted:
+ *
+ * - `GITHUB_SHA`, which Actions sets on every runner. Both workflows that build get it for
+ *   free, so neither needed changing for this.
+ * - `git rev-parse`, for a build made on somebody's machine.
+ * - `dev`, when there is no git either -- a tarball, or a worktree detached from its origin.
+ *   Said plainly rather than guessed at: a footer claiming a commit it is not sure of is
+ *   worse than one admitting it does not know.
+ *
+ * The whole hash, not the short one. The display takes the first seven characters and the
+ * link wants something to point at; deriving the short form from the long one is possible in
+ * that order and not in the other.
+ */
+const buildCommit = () => {
+    if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA;
+
+    try {
+        return execFileSync('git', ['rev-parse', 'HEAD'], {
+            cwd: ROOT,
+            // Not inherited: outside a repository this writes "fatal: not a git repository"
+            // to the terminal, and a fallback that is working as intended should be quiet.
+            stdio: ['ignore', 'pipe', 'ignore'],
+        }).toString().trim();
+    } catch {
+        return '';
+    }
+};
 
 /**
  * HTTPS for the LAN, when a certificate has been made.
@@ -104,6 +142,12 @@ export default defineConfig(({ command, mode, isPreview }) => ({
         : (mode === 'desktop' ? './' : '/shadowsofdoubt-modmaker/'),
 
     plugins: [copyFetchedRefs()],
+
+    // Read through `typeof` in core/buildVersion.js, so the module also works under Vitest,
+    // which has no `define` of its own and would otherwise throw a ReferenceError on import.
+    define: {
+        __BUILD_COMMIT__: JSON.stringify(buildCommit()),
+    },
 
     /**
      * No single-page fallback. A request for a file that is not there must 404.

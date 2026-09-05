@@ -1,0 +1,119 @@
+# Build and publish the desktop binaries for a `v*` tag.
+#
+# Desktop only. The web build ships from pages.yml on every push to main, and the two are
+# meant to move at different speeds: the site can be corrected by pushing again, while a
+# downloaded binary is on somebody's disk until they replace it themselves.
+#
+# Each platform is built on its own runner. Cross-building is not attempted -- NSIS from Linux
+# would need wine, and deb and AppImage cannot be produced from Windows at all -- so the matrix
+# is the shape of the constraint rather than a preference.
+#
+# Nothing is signed, on either platform, which is a decision and not an omission. It is why
+# there are no secrets here, why there is no auto-update, and why the README carries the
+# SmartScreen and `chmod +x` instructions. See electron-builder.yml.
+name: Release
+
+# Tags only, and no workflow_dispatch: every step below is written against a tag name, and a
+# run from a branch would fail at the first of them with something unhelpful.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+# Never cancel a release that has started. A half-uploaded set of binaries is worse than a
+# late one, and the upload is the last thing that happens.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The version is not cosmetic here. electron-builder names every artifact from
+      # package.json, and desktop/main.js compares `app.getVersion()` against the newest
+      # release tag -- so a binary tagged v1.2.0 while package.json still says 1.1.0 tells
+      # every one of its users, on first launch, that they should go and download the build
+      # they are already running. Cheaper to refuse the release than to explain that.
+      - name: The tag and package.json must agree
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match package.json version ${pkg}"
+            exit 1
+          fi
+          echo "Releasing ${pkg}."
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: A virtual display, for the Electron suite
+        run: sudo apt-get install -y xvfb
+
+      - run: npm run test:unit
+      - run: npm run test:playwright
+      - run: npm run test:build
+      - run: xvfb-run -a npm run test:desktop
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-release-gate
+          path: playwright-report/
+          retention-days: 7
+
+  build:
+    name: Build (${{ matrix.os }})
+    needs: gate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: --win
+            # NSIS installer and the portable zip. Not the .blockmap or latest.yml beside
+            # them: those exist for electron-updater, and there is no auto-update here.
+            artifacts: release/*.exe release/*.zip
+          - os: ubuntu-latest
+            platform: --linux
+            artifacts: release/*.AppImage release/*.deb
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The renderer, which electron-builder only copies. It does not build it.
+      - run: npm run build:desktop
+
+      - name: Package
+        run: npx electron-builder ${{ matrix.platform }} --publish never
+
+      # `gh` rather than a third-party action: it is on every runner, it needs no extra trust,
+      # and this is two commands. The create is tolerated failing because both matrix jobs
+      # reach it and only one of them can be first.
+      - name: Attach to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --generate-notes --title "$GITHUB_REF_NAME" \
+            || echo "Release already exists; uploading to it."
+          gh release upload "$GITHUB_REF_NAME" ${{ matrix.artifacts }} --clobber

@@ -54,6 +54,8 @@ import { isDemoMode, seedDemoFolders } from './core/demo/demoMode.js';
 import { initNewContent } from './core/newContent.js';
 import { initBarMenus } from './core/barMenu.js';
 import { initAutosave } from './core/autosave.js';
+import { initUpdateBanner } from './core/updateBanner.js';
+import { initBuildVersion } from './core/buildVersion.js';
 import { configureNavigation, switchFlow } from './core/navigation.js';
 import { beginRestore, initUrlState, readUrlState, whileRestoring } from './core/urlState.js';
 import ddsFlow from './flows/dds/flow.js';
@@ -201,6 +203,13 @@ initTutorialsModal();
 initModSelection();
 initNewContent();
 initAutosave();
+// Early, and before anything that can wait: the main process starts the update check as
+// the window is created, so the answer can be in flight already. Nothing on the web,
+// where there is no such check and no banner. See core/updateBanner.js.
+initUpdateBanner();
+// Nothing waits on this and nothing else reads it, but it is the line a bug report is
+// written from, so it should be there before anything can go wrong rather than after.
+initBuildVersion();
 // Before any flow is mounted, and never again: the menus belong to whichever flow is on
 // screen, and this is bound to the document rather than to any of them.
 initBarMenus();

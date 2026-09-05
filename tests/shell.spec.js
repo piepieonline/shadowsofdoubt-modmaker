@@ -374,9 +374,55 @@ test('the build number is the last line of the page, in every flow', async ({ pa
         expect(measured, flow).toEqual(seen);
     }
 
-    // Substituted by Jekyll on GitHub Pages; served here it is the template as written,
-    // which is what says the element is still wired to the build at all.
-    expect(seen.text).toBe('{{ site.github.build_revision }}');
+    // This used to assert `{{ site.github.build_revision }}` -- the Jekyll template, on the
+    // grounds that seeing it unsubstituted was proof the element was still wired to the
+    // build. It stopped being proof of anything when Pages started deploying a prebuilt Vite
+    // artifact instead of running Jekyll: nothing substituted it any more, and every visitor
+    // read the template text. The test went on passing, because the template was what it
+    // asked for. So the assertion is now on the shape of an answer rather than on a literal.
+    expect(seen.text).not.toContain('{{');
+    expect(seen.text).toMatch(/^(?:[0-9a-f]{7}|unknown)$/);
+});
+
+/**
+ * The footer says which build this is, and links to it.
+ *
+ * Both outcomes are legitimate and which one appears is a property of where the build was
+ * made, not of the app: a commit when `GITHUB_SHA` is set or git can be asked, and `unknown`
+ * from a tarball or a worktree with no repository behind it. So this pins the two shapes and
+ * the link, and leaves proving that a commit actually reaches the page to `tests-build/`,
+ * which can set the environment it builds in and assert on an exact value.
+ *
+ * On the web the commit is the whole identity -- the site is whatever was deployed last and
+ * has no version to give. tests-desktop/shell.spec.js covers the half that adds the release.
+ */
+test('the footer names the build, and a commit is a link to itself', async ({ page }) => {
+    await gotoFlow(page, '?flow=dds');
+
+    const footer = page.locator('#build-version');
+    const link = footer.locator('a');
+
+    if (await link.count() === 0) {
+        await expect(footer).toHaveText('unknown');
+        return;
+    }
+
+    const href = await link.getAttribute('href');
+    const shown = (await link.textContent()).trim();
+
+    expect(href).toMatch(/^https:\/\/github\.com\/piepieonline\/shadowsofdoubt-modmaker\/commit\/[0-9a-f]{7,40}$/);
+
+    // Shown short, linked long. An abbreviation is a display decision and has no business in
+    // a URL that has to keep resolving as the repository grows past seven characters of
+    // uniqueness.
+    expect(shown).toMatch(/^[0-9a-f]{7}$/);
+    expect(href).toContain(shown);
+
+    // On desktop this would replace the app, its connected folders and any unsaved edits
+    // with a web page if desktop/main.js did not intercept it. Marked the way an outside
+    // link should be either way.
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', 'noreferrer');
 });
 
 test('the tree area fits below the chrome rather than overflowing it', async ({ page }) => {

@@ -1,0 +1,110 @@
+# What a pull request has to pass.
+#
+# This is the first workflow here to run Playwright, and pages.yml deliberately does not --
+# its header gives the reasons, and they have not stopped being true: a browser download, six
+# times slower on a runner than on a developer's machine, and several specs that read a file
+# straight after the click that writes it. That last one is a race that only opens up on
+# hardware this slow, so expect it to surface here and expect to fix the specs rather than the
+# runner.
+#
+# `retries: 0` everywhere, deliberately. Retrying a flaky spec until it passes turns a race
+# into a slow leak: it stays green, it stays broken, and the next person to touch that file
+# inherits it. A failure here is meant to be read.
+#
+# Split in two because the halves need different things. The web job wants a Chromium download
+# and no display; the desktop job wants no Chromium at all -- Electron brings its own, and
+# Playwright's `_electron.launch` uses the binary from node_modules -- but does want a display
+# on Linux. Running them together would pay both costs twice.
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+# A pull request that is pushed to again does not need the previous run finished.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Unit, app and build suites
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Chromium only. Firefox and Safari do not implement the File System Access API, so the
+      # app cannot function in them and testing them would only assert that.
+      - run: npx playwright install --with-deps chromium
+
+      - run: npm run test:unit
+
+      # The app's own coverage, against the Vite dev server. Raised by the config.
+      - run: npm run test:playwright
+
+      # The seam between source and artifact: asset URLs under the Pages base, side-effect
+      # imports, stylesheet order, a missing data file 404ing. Builds `dist/` itself.
+      - run: npm run test:build
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-web
+          path: playwright-report/
+          retention-days: 7
+
+  desktop:
+    name: Desktop smoke (${{ matrix.os }})
+    strategy:
+      # Both halves, whatever the other does. A failure on one platform and a pass on the
+      # other is the most informative result this job has, and fail-fast throws it away.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # No `playwright install` here, and that is not an oversight -- verified by running the
+      # suite with an empty PLAYWRIGHT_BROWSERS_PATH. The renderer is Electron's own Chromium.
+      # What Linux does need is the shared libraries that Chromium links against, and a
+      # display for a window to open on. `install-deps` fetches the first without downloading
+      # a browser; xvfb is the second, and is named explicitly rather than assumed to be in
+      # Playwright's dependency list.
+      - name: System libraries and a virtual display
+        if: runner.os == 'Linux'
+        run: |
+          npx playwright install-deps chromium
+          sudo apt-get install -y xvfb
+
+      # Two steps rather than one with the wrapper interpolated in. The expression form works
+      # and reads like a puzzle; a CI file is read most often by someone trying to work out
+      # why it failed.
+      - name: Desktop smoke
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:desktop
+
+      - name: Desktop smoke
+        if: runner.os == 'Windows'
+        run: npm run test:desktop
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-desktop-${{ matrix.os }}
+          path: playwright-report/
+          retention-days: 7
