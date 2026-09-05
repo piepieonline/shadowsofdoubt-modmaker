@@ -62,8 +62,15 @@ jobs:
       - name: A virtual display, for the Electron suite
         run: sudo apt-get install -y xvfb
 
+      # `tests/` is left out here for the same reason ci.yml leaves it out, and it costs more
+      # here than there: this is the last check before an unsigned binary with no auto-update
+      # lands on somebody's disk, and a release is exactly when you want the app's own coverage
+      # to have run. It is out because it cannot currently give an answer -- one spec fails
+      # between a third and two thirds of the time -- and a gate that has to be re-run until it
+      # goes green is not gating anything, it is just delaying the person clicking re-run.
+      #
+      # So run `npm test` locally before tagging, and put this back the day that race is fixed.
       - run: npm run test:unit
-      - run: npm run test:playwright
       - run: npm run test:build
       - run: xvfb-run -a npm run test:desktop
 
