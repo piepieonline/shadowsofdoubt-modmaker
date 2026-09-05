@@ -18,6 +18,35 @@ import { collectPageErrors } from '../test-support/harness.js';
  * Base game floors are read from `refs/`, so no mod folder is needed and none is connected.
  */
 
+/**
+ * Skip when the machine cannot do WebGL at all, which some CI runners cannot.
+ *
+ * Not a platform test, and deliberately not. `windows-latest` has no GPU either and runs these
+ * happily, so "Linux" is the wrong thing to key on -- what matters is whether a context can be
+ * had. Asked of the browser rather than assumed: Electron on a runner with no GPU answers
+ * `null` to `getContext('webgl2')` outright rather than falling back to software, and every
+ * symptom downstream of that is the floorplan view never opening. The panel lists floors, the
+ * click lands, `openFloor` builds a scene, the scene asks for a context, and the app sits on
+ * "No floor open." with nothing logged.
+ *
+ * Written as a capability check so it stays honest. If these ever fail on a runner for some
+ * *other* reason, WebGL is present, this does not fire, and the test fails as it should --
+ * which is the property a plain `test.skip(process.platform === 'linux')` would have thrown
+ * away, along with the coverage on every Linux machine that does have a GPU.
+ *
+ * What is lost when it does fire is smaller than it looks: the regression these guard is a
+ * content policy in desktop/main.js, which is the same policy on every platform, so a run on
+ * Windows covers it. See tests-desktop/shell.spec.js for the part that needs no GPU at all.
+ */
+async function requireWebGL(page) {
+    const available = await page.evaluate(() => {
+        const canvas = document.createElement('canvas');
+        return Boolean(canvas.getContext('webgl2') ?? canvas.getContext('webgl'));
+    });
+
+    test.skip(!available, 'This runner has no WebGL context, so no floor can be opened on it.');
+}
+
 /** Open the Browse dialog and the first floor it offers, in one go. */
 async function openFirstFloor(page) {
     await page.locator('#building-file-list').waitFor({ state: 'attached' });
@@ -49,6 +78,7 @@ test('a base game floor opens, and its text is not silently missing', async ({ p
     const errors = collectPageErrors(page);
 
     await gotoFlow(page, '?flow=building');
+    await requireWebGL(page);
     await dismissFolderPrompt(page);
 
     const floor = await openFirstFloor(page);
@@ -69,6 +99,7 @@ test('clicking a square marks it, which is a glyph the scene has to lay out', as
     const errors = collectPageErrors(page);
 
     await gotoFlow(page, '?flow=building');
+    await requireWebGL(page);
     await dismissFolderPrompt(page);
     await openFirstFloor(page);
 
