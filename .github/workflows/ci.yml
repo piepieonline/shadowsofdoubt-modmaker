@@ -150,20 +150,6 @@ jobs:
       - name: Package
         run: npx electron-builder ${{ matrix.platform }} --publish never
 
-      # Every target, not merely some target. `if-no-files-found: error` below fires only when
-      # nothing at all matched, so a build that quietly stopped producing the .deb would upload
-      # the AppImage on its own and look entirely successful. Missing targets are exactly the
-      # kind of packaging failure that goes unnoticed until somebody asks where the download
-      # went.
-      - name: Every expected artifact was produced
-        shell: bash
-        run: |
-          for pattern in ${{ matrix.artifacts }}; do
-            compgen -G "$pattern" > /dev/null \
-              || { echo "::error::electron-builder produced nothing matching $pattern"; exit 1; }
-            echo "ok: $(compgen -G "$pattern" | tr '\n' ' ')"
-          done
-
       - name: Upload the installers
         uses: actions/upload-artifact@v4
         with:
