@@ -100,6 +100,24 @@ const CONTENT_TYPES = {
  * `style-src` needs it for the same reason at one remove: jsonTree and select2 both write
  * style attributes.
  *
+ * `'unsafe-eval'` and `blob:` are both troika, and both were left out of the first version of
+ * this policy -- which silently removed every piece of text from the floorplan view.
+ * troika-worker-utils assembles its worker out of stringified functions: it rebuilds them on
+ * the other side with `new Function`, which needs the first, and pulls its modules in with
+ * `importScripts` on a blob URL, which needs the second. `worker-src blob:` is not enough for
+ * that second one -- it permits the worker to exist, while a script the worker then loads is
+ * `script-src`'s business.
+ *
+ * They fail one at a time, which is worth knowing if this ever moves again: fixing the eval
+ * only got as far as `Failed to execute 'importScripts'`. And neither says anything on screen.
+ * The floor renders, the room colours are right, and the labels and the selected square's mark
+ * are simply not there -- which reads as a rendering quirk, not as a policy refusing an API.
+ *
+ * What is left of this policy after those three is still the part that matters and the part
+ * the grant below is defended by: no script, style, font, image or connection may come from
+ * anywhere but this origin. Eval of a local string is a much smaller thing than a fetch of a
+ * remote one, and no remote one can happen here.
+ *
  * `blob:` in `worker-src` is troika, which compiles its font worker from a blob URL. Local
  * by construction -- a blob comes from this origin or it does not exist.
  *
@@ -108,7 +126,7 @@ const CONTENT_TYPES = {
  */
 const CSP = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",

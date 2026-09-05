@@ -82,20 +82,36 @@ jobs:
       fail-fast: false
       matrix:
         # Spelled out per platform rather than as a bare list of runners, because packaging
-        # needs a target and a set of files that differ between the two. Same shape as
-        # release.yml, deliberately: what a pull request builds should be what a tag builds,
-        # or the first time anyone finds out the installer is broken is on release day.
+        # needs a target and a set of files that differ between the two. Same targets as
+        # release.yml builds, deliberately: what a pull request builds should be what a tag
+        # builds, or the first time anyone finds out the installer is broken is on release
+        # day.
+        #
+        # Two artifacts per platform rather than one holding both. An Actions artifact is
+        # always delivered as a zip, so a single artifact carrying the installer *and* the
+        # no-install download meant clicking the one download and finding a setup .exe next
+        # to another zip -- which is the opposite of what someone reaching for the portable
+        # build wanted. Named for what they are, so the choice is made before the download
+        # rather than after it.
         include:
           - os: ubuntu-latest
             platform: --linux
-            artifacts: |
-              release/*.AppImage
-              release/*.deb
+            installer: release/*.deb
+            # A single file, so Actions' own zip is a wrapper around it and there is nothing
+            # to be done about that. Unavoidable and harmless: the AppImage is what falls out.
+            portable: release/*.AppImage
           - os: windows-latest
             platform: --win
-            artifacts: |
-              release/*.exe
-              release/*.zip
+            installer: release/*.exe
+            # The unpacked application, not electron-builder's own .zip of it. Actions is
+            # going to zip whatever this points at, so pointing it at the zip produced a zip
+            # inside a zip -- two extractions to reach an .exe. This way the artifact *is*
+            # the portable download: extract it and the app is there.
+            #
+            # electron-builder only puts the architecture in this name when it is not x64,
+            # and windows-latest is x64. If that ever changes, `if-no-files-found: error`
+            # below is what says so.
+            portable: release/win-unpacked/**
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
@@ -150,14 +166,25 @@ jobs:
       - name: Package
         run: npx electron-builder ${{ matrix.platform }} --publish never
 
-      - name: Upload the installers
+      # Neither of these picks up the .blockmap or latest.yml sitting beside the artifacts:
+      # those exist for electron-updater, and there is no auto-update here.
+      #
+      # `if-no-files-found: error` on both, because a packaging change that quietly stops
+      # producing one of them would otherwise upload nothing and pass.
+      - name: Upload the installer
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-${{ matrix.os }}
-          path: ${{ matrix.artifacts }}
-          # Not the .blockmap or latest.yml beside them: those exist for electron-updater,
-          # and there is no auto-update here.
+          name: desktop-${{ matrix.os }}-installer
+          path: ${{ matrix.installer }}
           if-no-files-found: error
           # Long enough to outlast a review that sits over a weekend, short enough that a
-          # busy repository is not storing a hundred installers. These are ~100 MB apiece.
+          # busy repository is not storing a hundred of them. These are ~100 MB apiece.
+          retention-days: 14
+
+      - name: Upload the no-install build
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os }}-portable
+          path: ${{ matrix.portable }}
+          if-no-files-found: error
           retention-days: 14

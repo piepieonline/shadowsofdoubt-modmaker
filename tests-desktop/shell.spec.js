@@ -165,6 +165,40 @@ test('the policy served with the page forbids every remote origin', async ({ pag
 });
 
 /**
+ * The policy still permits what the floorplan view's text is built out of.
+ *
+ * troika-worker-utils ships its worker by stringifying functions and rebuilding them on the
+ * other side with `new Function`. The first version of this CSP had no `'unsafe-eval'`, so
+ * that threw inside the worker, the module never initialised, and every piece of text in the
+ * 3D view vanished -- the tile labels and the mark on the selected square both. Nothing said
+ * so: the floor drew correctly, in the right colours, with the words simply absent.
+ *
+ * Asserted here as a capability rather than by reading the header back, because the header is
+ * not the thing that broke -- what broke was something the header made impossible. In a worker
+ * specifically: that is where troika does it, and a main-thread check would not have caught
+ * this, since Playwright's own `evaluate` is not subject to the page's policy.
+ */
+test('the policy permits the eval that troika rebuilds its worker with', async ({ page }) => {
+    await gotoFlow(page);
+
+    expect(await page.evaluate(async () => {
+        const code = `self.onmessage = () => {
+            try { self.postMessage(new Function('return 41 + 1')()); }
+            catch (e) { self.postMessage(String(e)); }
+        };`;
+
+        const worker = new Worker(URL.createObjectURL(new Blob([code], { type: 'text/javascript' })));
+
+        return new Promise((resolve) => {
+            const timer = setTimeout(() => resolve('timed out'), 10_000);
+            worker.onmessage = (e) => { clearTimeout(timer); resolve(e.data); };
+            worker.onerror = (e) => { clearTimeout(timer); resolve(`worker error: ${e.message}`); };
+            worker.postMessage(1);
+        });
+    })).toBe(42);
+});
+
+/**
  * The footer carries the release as well as the commit, which is the desktop half.
  *
  * A downloaded binary needs both and the web build needs neither. The version is what a user
