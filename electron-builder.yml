@@ -1,0 +1,72 @@
+# Packaging for the desktop build. See .local/DESKTOP-PLAN.md, phase 4.
+#
+# Windows and Linux only. macOS is out of scope by decision rather than by obstacle --
+# Electron bundles its own Chromium, so the WKWebView limitation that would sink a Tauri
+# port does not apply here, and adding macOS later is a matrix entry plus notarization.
+#
+# Nothing here is signed, on either platform. That is a decision, not an oversight: signing
+# certificates cost money per year and the audience is modders, so the trade taken is
+# unsigned binaries plus instructions for getting past SmartScreen and `chmod +x`. It is
+# also why there is no auto-update -- electron-updater effectively requires signed builds --
+# and why the app carries the version banner in core/updateBanner.js instead.
+
+appId: com.piepieonline.shadowsofdoubt-modmaker
+productName: SoD Mod Maker
+
+directories:
+  output: release
+  buildResources: build
+
+# What goes in the app, and nothing else.
+#
+# The negation is the load-bearing line. electron-builder bundles production dependencies by
+# default, and three, troika, jQuery, select2 and the rest are production dependencies -- but
+# `npm run build:desktop` has already bundled every one of them into dist-desktop/, so
+# without this the installer carries a second copy of about 49 MB of packages that nothing
+# will ever import. The main process imports nothing outside `electron` itself, so there is
+# no runtime dependency left to ship.
+#
+# The failure is silent: a fatter installer, no error, no missing module. Check the output
+# rather than trusting this comment -- `npx electron-builder --linux dir` and look for
+# release/linux-unpacked/resources/app.asar.
+files:
+  - package.json
+  - desktop/**/*
+  - dist-desktop/**/*
+  - '!node_modules/**/*'
+  # Beside version.js and collected by vitest, not something to ship.
+  - '!desktop/**/*.unit.spec.js'
+
+# asar on, which is the default, and the protocol handler is written for it: desktop/main.js
+# serves the renderer with fs.readFile rather than a file:// stream through the network
+# stack, because Electron patches fs for asar and that is one fewer thing that has to be
+# true of a packaged build than of a developer's checkout.
+asar: true
+
+win:
+  # NSIS for people who want it installed, zip for people who want it in a folder they can
+  # delete. The zip matters more than usual here: an unsigned installer is the thing
+  # SmartScreen objects to most loudly.
+  target:
+    - nsis
+    - zip
+
+nsis:
+  # Not a one-click install. The whole audience of this tool already chooses where their
+  # game and mods live; taking that decision away from them for the editor would be odd.
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Development
+  synopsis: Editor for Shadows of Doubt mods
+
+  # Ties the running window to the .desktop entry, which is what a Linux desktop uses to
+  # decide which icon and name belong to it. Without it the window is associated with
+  # nothing and shows up unnamed in the dock and the alt-tab list. The file it syncs to is
+  # `desktopName` in package.json.
+  syncDesktopName: true

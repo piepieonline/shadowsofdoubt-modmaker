@@ -1177,6 +1177,43 @@ body.driver-active .driver-popover.tutorial-popover-narrow {
 }
 
 /*
+ * The update strip. Desktop only -- see core/updateBanner.js.
+ *
+ * Quieter than #demo-banner on purpose, and the difference is the point. Mistaking demo
+ * content for your own mod loses work; running last month's build does not. This is news
+ * you want once, so it takes a line, says what it is, and offers a way to be rid of it.
+ *
+ * flex: none for the same reason the demo strip has it: body is a column flex container,
+ * and without it this shares the height with #flow-root.
+ */
+/*
+ * `:not([hidden])` rather than a plain `display: flex`, which an id selector would use to
+ * beat the `[hidden]` reset and leave the banner on screen permanently. Pico's own
+ * `[hidden] { display: none !important }` happens to win that fight today; not depending on
+ * a vendor sheet's !important for whether a strip is on the page is the cheaper position.
+ */
+#update-banner:not([hidden]) {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 0.35rem 1rem;
+    background: var(--pico-card-sectioning-background-color);
+    border-bottom: 1px solid var(--pico-muted-border-color);
+    font-size: 0.8rem;
+
+    /* Pico gives a button a block of vertical margin and a full-width box, both of which
+       are for a form rather than for a chip at the end of a sentence. */
+    button {
+        margin: 0;
+        width: auto;
+        padding: 0.1rem 0.6rem;
+        font-size: 0.75rem;
+    }
+}
+
+/*
  * The build this is, under everything.
  *
  * The last line of the page rather than of a flow: it answers the same question whichever
