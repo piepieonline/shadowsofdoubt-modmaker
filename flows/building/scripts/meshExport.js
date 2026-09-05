@@ -1101,8 +1101,8 @@ export const MESH_ROOF_FIELD = 'modMakerBuildRoof';
 /**
  * Fields generation writes that `withoutDefaults` would otherwise drop.
  *
- * A stub says `copyFrom`, so a field left out is not "unchanged" -- it is whatever the
- * copied-from building has. `floorCount: 1` and `sortedWindows: []` are both the game's
+ * A copy says `copyFrom`, so a field left out is not "unchanged" -- it is whatever the
+ * copied-from building has, and an override says nothing about a field it does not name. `floorCount: 1` and `sortedWindows: []` are both the game's
  * defaults, so a one-storey building or one with no windows at all would silently keep
  * the original's window data. See withoutDefaults in buildingLibrary.js.
  */

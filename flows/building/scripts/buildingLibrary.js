@@ -25,19 +25,33 @@
  * plain data in both -- so a slot list can be read from either. Only the mod loader's
  * shape is ever written.
  *
- * **Base game presets are never written to.** Saving a floor against one creates a stub
- * of the same name in the mod, carrying `copyFrom: "REF:BuildingPreset|<name>"` and its
- * floor list and nothing else. That is what lets a custom floor reuse a base game
- * building's existing prefab, mesh and window data -- and so what makes generating a
- * mesh optional rather than a prerequisite for getting a floor into the game.
+ * **Base game presets are never written to,** and there are two ways a mod may say
+ * something about one. Which of them applies is the author's answer, asked the first time
+ * a base game floor is edited and recorded in nothing but the files below -- see
+ * scripts/ownership.js.
  *
- * Which is also why a stub is written **without its default-valued fields**. `copyFrom`
- * means "start from that asset and apply what follows", so a field written at its
- * default is not a no-op -- it overwrites whatever the base game building had with
- * nothing. A stub carrying the full template would name a building to copy and then
- * blank its prefab, its height and its window data in the same breath. This is the one
- * place the flow departs from how the ScriptableObject flow writes a new file, and the
- * reason is `copyFrom`.
+ *   override  `<Name>.sodso_patch.json`, a list of operations over the game's own
+ *             building. The city places the game's building; the patch puts this mod's
+ *             floors in the slots it names. See scripts/buildingPatch.js for what those
+ *             operations may say and why the list is as narrow as it is.
+ *   clone     a whole preset of the mod's own, under a name of its own, carrying
+ *             `copyFrom: "REF:BuildingPreset|<donor>"` -- which is what lets it reuse the
+ *             donor's prefab, mesh and window data, and so what makes generating a mesh
+ *             optional rather than a prerequisite for getting a floor into the game.
+ *
+ * A preset written with `copyFrom` is written **without its default-valued fields**.
+ * `copyFrom` means "start from that asset and apply what follows", so a field written at
+ * its default is not a no-op -- it overwrites whatever the copied-from building had with
+ * nothing. A clone carrying the full template would name a building to copy and then blank
+ * its prefab, its height and its window data in the same breath. This is the one place the
+ * flow departs from how the ScriptableObject flow writes a new file, and the reason is
+ * `copyFrom`.
+ *
+ * What is *not* here any more is the stub: a whole preset under the base game's own name,
+ * copying from itself. It was neither of the two above -- it had the game's name, so it was
+ * not a copy, and it was a whole asset, so whether it or the game's building won was a
+ * question of load order. It could not say that a floor had been taken out of a building
+ * either, for the reason `withoutDefaults` gives.
  *
  * Every preset written here is also named in the mod's `murdermanifest.sodso.json`,
  * which is what makes the loader read it at all. See core/murderManifest.js.
@@ -45,10 +59,16 @@
 import { readFileContent, tryGetFile, tryGetFolder, getFile, getFolder, writeFile } from '../../../core/fs.js';
 import { BUILDING_TYPE } from '../../../core/modFolders.js';
 import { ensureListed } from '../../../core/murderManifest.js';
-import { assetNameOf, fileNameFor, PRESET_SUFFIX } from '../../../core/soFileName.js';
+import {
+    assetNameOf, fileNameFor, patchFileNameFor, PATCH_SUFFIX, PRESET_SUFFIX,
+} from '../../../core/soFileName.js';
+import { applyPatches, isPatchFormat, patchFile } from '../../../core/patchFormat.js';
+import { mergeOps, withdrawOps } from '../../../core/soBuilder.js';
 import { pathIdMap } from '../../../core/baseAssets.js';
 import { refName } from './furnitureOverlay.js';
 import { parseJSON, stringifyJSON } from '../../../core/jsonNumbers.js';
+import { buildingOps, isBuildingOp } from './buildingPatch.js';
+import { BuildingForm, Ownership } from './ownership.js';
 
 /**
  * The game's own default for every BuildingPreset field, which is what "default-valued"
@@ -119,10 +139,10 @@ export function blueprintName(entry) {
 const REF_ROOT = `${import.meta.env.BASE_URL}refs/floors/`;
 
 /**
- * Fields a stub always states, however ordinary their values.
+ * Fields a preset always states, however ordinary their values.
  *
  * The first four are what identify the file to the mod loader, and dropping any of them
- * leaves an asset it cannot place. `copyFrom` is the whole point of a stub.
+ * leaves an asset it cannot place. `copyFrom` is the whole point of a copy.
  */
 const ALWAYS_WRITTEN = ['name', 'presetName', 'type', 'fileType', 'copyFrom'];
 
@@ -196,19 +216,58 @@ export async function listCustomBuildings(contentFolder) {
 }
 
 /**
+ * The base game buildings this mod holds a patch over, by name.
+ *
+ * The folder rather than the manifest, exactly as the presets above are read: a patch the
+ * author has not got round to listing is still a patch that is there, and one this hid
+ * would be a building the panel called untouched while a file beside it said otherwise.
+ */
+export async function listBuildingPatches(contentFolder) {
+    if (!contentFolder) return new Set();
+
+    const found = new Set();
+
+    for await (const entry of contentFolder.values()) {
+        if (entry.kind !== 'file' || !entry.name.endsWith(PATCH_SUFFIX)) continue;
+
+        const patch = await readJson(entry);
+        if (patch?.fileType !== BUILDING_TYPE) continue;
+
+        // A patch names its target in `name`; the file it is in may be called anything,
+        // and for a name belonging to more than one type it carries the type as well.
+        found.add(patch.name ?? assetNameOf(entry.name.slice(0, -PATCH_SUFFIX.length), BUILDING_TYPE));
+    }
+
+    return found;
+}
+
+/**
  * Every building that can be opened: the mod's own first, then the base game's.
  *
- * A mod building shadows a base game one of the same name, because that is exactly what
- * a stub is -- the same building, with this mod's floors in it.
+ * `form` is what the mod holds for each, and it is what decides how a save is written --
+ * see scripts/ownership.js. A patched building stays on the base game's side of the list,
+ * because that is what it is: the game's building, with this mod's floors in some of its
+ * slots. Moving it across was what the stub did, and it was the visible half of the lie.
+ *
+ * A mod building of the same name as a base game one takes its place. Nothing this app
+ * writes produces one any more -- an override is a patch -- but a hand-written mod may
+ * hold one, and the file that is there is the one the game loads.
  */
 export async function listBuildings(contentFolder) {
-    const custom = await listCustomBuildings(contentFolder);
+    const custom = (await listCustomBuildings(contentFolder))
+        .map((entry) => ({ ...entry, form: BuildingForm.OWN }));
     const taken = new Set(custom.map((entry) => entry.name));
+    const patched = await listBuildingPatches(contentFolder);
 
     const index = await loadFloorIndex();
     const vanilla = index.buildings
         .filter((name) => !taken.has(name))
-        .map((name) => ({ name, isCustom: false, preset: null }));
+        .map((name) => ({
+            name,
+            isCustom: false,
+            form: patched.has(name) ? BuildingForm.PATCH : BuildingForm.VANILLA,
+            preset: null,
+        }));
 
     return [...custom, ...vanilla];
 }
@@ -273,17 +332,111 @@ export async function readCustomPreset(contentFolder, name) {
 }
 
 /**
- * A building's preset, whether the mod defines it or the base game does.
+ * The mod's patch over a base game building, and the two ways there can be none of it.
  *
- * `isCustom` is what the caller needs before saving: a base game preset has to become a
- * stub first, because the copy shipped with the app is not a file anyone can write to.
+ * Two file names, for the same reason a preset has two: a patch's file carries the asset's
+ * type only when that name belongs to assets of more than one -- see `patchFileNameFor` --
+ * and which of the two an author's mod holds is not something to assume. The typed name is
+ * tried first, as it is for presets, so a folder holding both is read the way it is
+ * written.
+ *
+ * A file at one of those names holding a patch over something *else* is not this building's
+ * and is passed over rather than refused: `Hotel.sodso_patch.json` may perfectly well be a
+ * patch over a FurniturePreset called Hotel, and it is the `fileType` inside that says
+ * which asset a patch is about.
+ *
+ *   `{ patch, fileName }`      the folder holds one
+ *   `{ unreadable: fileName }` the folder holds one and it does not parse
+ *   neither                    the folder holds none
+ */
+export async function findBuildingPatch(contentFolder, name) {
+    if (!contentFolder) return { patch: null, fileName: null, unreadable: null };
+
+    for (const fileName of patchNamesFor(name)) {
+        const handle = await tryGetFile(contentFolder, [fileName]);
+        if (!handle) continue;
+
+        const patch = await readJson(handle);
+        if (!patch) return { patch: null, fileName, unreadable: fileName };
+        if (patch.fileType !== BUILDING_TYPE) continue;
+
+        return { patch, fileName, unreadable: null };
+    }
+
+    return { patch: null, fileName: null, unreadable: null };
+}
+
+/** The two names a building's patch may be filed under, most specific first. */
+const patchNamesFor = (name) => [
+    patchFileNameFor(name, BUILDING_TYPE, true),
+    patchFileNameFor(name, BUILDING_TYPE, false),
+];
+
+/**
+ * A building as the game will see it, and which of the three things this mod holds for it.
+ *
+ * `form` is the whole point, and every writer branches on it:
+ *
+ *   own      the mod declares this building. `preset` is that file.
+ *   patch    the mod patches the base game's. `preset` is the game's copy with the
+ *            operations applied -- what the game will end up with, which is what the panel
+ *            has to draw and what the storey list has to be read from.
+ *   vanilla  the base game's, untouched.
+ *
+ * `isCustom` is kept beside it for the callers that only want to know whether this is a
+ * file the mod can write whole.
+ *
+ * A patch whose operations will not apply comes back as the base game's building with the
+ * patch reported rather than as nothing at all. The floors are still openable and the
+ * building is still listed; what the author needs is to be told which operation failed,
+ * which is a thing to say once rather than a reason to make the building disappear.
  */
 export async function loadPreset(contentFolder, name) {
     const custom = await readCustomPreset(contentFolder, name);
-    if (custom) return { preset: custom, isCustom: true };
+    if (custom) return { preset: custom, isCustom: true, form: BuildingForm.OWN };
 
     const vanilla = await loadVanillaPreset(name);
-    return vanilla ? { preset: vanilla, isCustom: false } : null;
+    if (!vanilla) return null;
+
+    const { patch } = await findBuildingPatch(contentFolder, name);
+    if (!patch) return { preset: vanilla, isCustom: false, form: BuildingForm.VANILLA };
+
+    const applied = applyBuildingPatch(vanilla, patch);
+
+    return {
+        preset: applied.preset,
+        isCustom: false,
+        form: BuildingForm.PATCH,
+        failed: applied.failed,
+    };
+}
+
+/**
+ * The game's building with a mod's operations applied, or the game's building and a reason.
+ *
+ * A patch in the format this one replaced -- fields rather than operations -- is not applied
+ * at all. The old format is read by the loader as fields written over the asset, which this
+ * could imitate, but a building it imitated would then be saved back as operations and the
+ * author's file would have been converted by opening it.
+ */
+function applyBuildingPatch(vanilla, patch) {
+    if (!isPatchFormat(patch)) {
+        return {
+            preset: vanilla,
+            failed: `${patch?.name ?? 'that patch'} is written in the older whole-field format, `
+                + 'so what it says is not shown here and saving would not add to it',
+        };
+    }
+
+    const { document, failed } = applyPatches(vanilla, patch.patches);
+
+    return failed
+        ? {
+            preset: vanilla,
+            failed: `operation ${failed.index + 1} of this mod's patch does not apply to `
+                + `${patch.name}: ${failed.reason}`,
+        }
+        : { preset: document, failed: null };
 }
 
 
@@ -725,32 +878,42 @@ export async function listCustomBlueprints(contentFolder) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * A stub of a base game building: its name, its floors, and an instruction to take
- * everything else from the original.
+ * A building of the mod's own: its name, its floors, and where the rest of it comes from.
+ *
+ * Two callers, and they differ only in `copyFrom`. A **clone** of a base game building
+ * names its donor, and so has that building's prefab, mesh and window data from the moment
+ * it exists. A building of the mod's own names nothing, and has none of those until a mesh
+ * is generated for it.
  *
  * Seeded from the source's floor list alone rather than from the whole preset. The
  * base game's copy is a *dump*, so its prefab is `{m_FileID: 66256}` and its scene
  * profile an integer -- neither is what the mod loader reads, and both differ from
- * their defaults, so a stub seeded from the whole thing would carry them out into the
+ * their defaults, so a preset seeded from the whole thing would carry them out into the
  * mod. Floor settings are plain data in both shapes and are the only part that
  * transfers cleanly.
+ *
+ * A clone takes its donor's floor list *as it stands*, base game blueprint names included.
+ * Those names are not copies and nothing has been written for them: the clone reads the
+ * game's own floors until one of them is edited, and that is the point at which it gets a
+ * file and a name of its own. See `needsFloorRename` in scripts/ownership.js for why the
+ * rename cannot wait any longer than that, and why it must not happen any sooner.
  *
  * `presetName` is what the building is: it names the file, it is what a `REF:` string
  * points at, and it is the key its readable name is stored against -- so it has to be
  * safe as an identifier and as a file name. `title` is the readable name, and defaults
- * to the preset name for the stubs nobody titled.
+ * to the preset name for the buildings nobody titled.
  *
  * **`copyFrom` has no default and must be stated, `null` included.** It used to default to
- * `presetName`, which is right for the one case it was written for -- a stub of a base game
- * building is that building with this mod's floors in it, so it copies from its own name --
- * and silently wrong for every other. A caller that reached here with a name the base game
- * does not have got back a preset copying from itself: a ring the loader follows round
- * without ever reaching an asset that answers. Nothing about the name says which case it
- * is, so the caller says.
+ * `presetName`, which is right for the one case it was written for -- the stub of a base
+ * game building this flow no longer writes, which was that building with this mod's floors
+ * in it and so copied from its own name -- and silently wrong for every other. A caller
+ * that reached here with a name the base game does not have got back a preset copying from
+ * itself: a ring the loader follows round without ever reaching an asset that answers.
+ * Nothing about the name says which case it is, so the caller says.
  */
-export function stubFor(presetName, sourcePreset, { copyFrom, title = presetName } = {}) {
+export function presetFor(presetName, sourcePreset, { copyFrom, title = presetName } = {}) {
     if (copyFrom === undefined) {
-        throw new Error('A stub has to state what it copies from, even when that is nothing');
+        throw new Error('A building has to state what it copies from, even when that is nothing');
     }
 
     return {
@@ -804,12 +967,12 @@ export function withoutDefaults(preset, alsoWritten = []) {
  * back rather than a second one appearing.
  *
  * The manifest entry is here rather than beside the dialog that adds a building because
- * this is the one place a building preset reaches the mod's folder: adding a building
- * comes through here, and so does the stub written the first time a floor is saved
- * against a base game building. A preset the manifest does not name is not loaded, so
- * one written through either path and left unlisted is a building the game never sees.
- * Listing it is idempotent -- every later save finds it named already and writes
- * nothing.
+ * this is the one place a building *preset* reaches the mod's folder: adding a building
+ * comes through here, and so does the copy made when a base game building is copied.
+ * (`writeBuildingPatch` does the same for the other kind.) A preset the manifest does not
+ * name is not loaded, so one written through either path and left unlisted is a building
+ * the game never sees. Listing it is idempotent -- every later save finds it named already
+ * and writes nothing.
  *
  * The preset is written first. If listing then fails the building is still on disk to be
  * listed by hand, which is the recoverable half of the two.
@@ -835,6 +998,116 @@ export async function writeCustomPreset(contentFolder, name, preset, { alsoWritt
     await ensureListed(contentFolder, fileName.slice(0, -PRESET_SUFFIX.length));
 
     return handle;
+}
+
+/**
+ * Write this mod's floors into a base game building, as operations over it.
+ *
+ * The other half of `writeCustomPreset`, and the two are never both right: which one a save
+ * goes through is the `form` presetForSaving answered with, which is the author's decision
+ * about this building.
+ *
+ * ## Why a mod's own asset is never patched
+ *
+ * A patch names an asset and a type, and the loader applies it to whatever is registered
+ * under them. A mod that both declares `Hotel` and patches `Hotel` is asking the load order
+ * which of the two the patch lands on -- and the load order is a list the author maintains
+ * by hand. So this refuses rather than writing a file that may or may not apply. The same
+ * rule, and the same words for it, as `landAdd` in core/soBuilder.js.
+ *
+ * ## Replacing this flow's operations rather than adding to them
+ *
+ * A save says what the building's floors are *now*, and the paths it says it about are the
+ * ones it said last time. Appending would leave the file holding two operations for one
+ * slot, the older of them a statement that is no longer true -- so the ones this flow owns
+ * come out before the new ones go in, which is `withdrawOps` and then `mergeOps` from
+ * core/soBuilder.js.
+ *
+ * Only the ones it owns. A patch is a file an author may have added to by hand, and another
+ * flow may have written to it as well; an operation over a field this knows nothing about is
+ * none of its business and is left exactly where it is. A generated field is only claimed on
+ * the save that recomputes it, which is why `alsoWritten` decides that half rather than a
+ * fixed list.
+ *
+ * An operation over the floor lists *is* claimed, whoever wrote it, and nothing is lost by
+ * that: `presetForSaving` hands over the building with the whole patch already applied, so
+ * a floor list an author edited by hand is part of what this is stating and comes back out
+ * in the operations below. It round trips rather than being taken away.
+ *
+ * Not soBuilder's `landAll`/`commit`, though the rules and the two merges are its. That
+ * pipeline *appends* -- which is right for a room admitting a cluster, and wrong here: a
+ * save says what the building's floors are now, at the paths it said it about last time, so
+ * appending would leave the file holding two answers for one slot.
+ *
+ * @param base the base game's own copy, which is what the operations are measured against
+ * @throws when the mod declares this building, or holds a patch that cannot be added to
+ */
+export async function writeBuildingPatch(contentFolder, name, base, preset, { alsoWritten = [] } = {}) {
+    const declared = await findCustomPreset(contentFolder, name);
+
+    if (declared.unreadable) {
+        throw new Error(`"${declared.unreadable}" is in this folder and will not parse, so `
+            + `whether this mod declares ${name} cannot be settled.`);
+    }
+
+    if (declared.preset) {
+        throw new Error(`${name} is one of this mod's own buildings rather than the game's, so `
+            + 'this change belongs in that file — a patch over it would apply or not '
+            + 'depending on the load order.');
+    }
+
+    const held = await findBuildingPatch(contentFolder, name);
+
+    if (held.unreadable) {
+        throw new Error(`"${held.unreadable}" is not readable as JSON, so this mod's patch over `
+            + `${name} cannot be added to. Repair or remove it.`);
+    }
+
+    const existing = held.patch ?? patchFile(name, BUILDING_TYPE, []);
+
+    if (!isPatchFormat(existing)) {
+        throw new Error(`"${held.fileName}" is written in the older whole-field format, so `
+            + 'this change cannot be added to it.');
+    }
+
+    const pointed = pointAtModFloors(preset, new Set(await listCustomBlueprints(contentFolder)));
+    const ops = buildingOps(base, pointed, { alsoWritten });
+
+    const stripped = withdrawOps(existing, ourOperation(alsoWritten));
+    const merged = mergeOps(stripped.content, ops);
+    if (merged.reason) throw new Error(merged.reason);
+
+    const fileName = held.fileName ?? await freePatchName(contentFolder, name);
+    const handle = await getFile(contentFolder, [fileName], true);
+    await writeFile(handle, `${stringifyJSON(merged.content, null, 2)}\n`);
+
+    await ensureListed(contentFolder, fileName.slice(0, -PATCH_SUFFIX.length));
+
+    return handle;
+}
+
+/**
+ * Which operations in an existing patch this save is entitled to take out.
+ *
+ * The floor lists always, because that is what a save states. A generated field only when
+ * this save recomputed it -- an ordinary floor save must leave the mesh's operations alone,
+ * or generating a model and then painting a wall would take the model's window data back
+ * out of the patch.
+ */
+const ourOperation = (alsoWritten) => (op) =>
+    isBuildingOp(op) || alsoWritten.some((field) => op?.path === `/${field}`);
+
+/**
+ * What to call a patch this folder does not hold yet.
+ *
+ * The bare name is the ordinary one, and the typed name is for when it is taken: a file
+ * called `Hotel.sodso_patch.json` that is not this building's patch is a patch over
+ * something else of that name, and writing over it would be this flow destroying it. See
+ * `patchFileNameFor`.
+ */
+async function freePatchName(contentFolder, name) {
+    const [typed, bare] = patchNamesFor(name);
+    return (await tryGetFile(contentFolder, [bare])) ? typed : bare;
 }
 
 /**
@@ -923,8 +1196,9 @@ export async function deleteCustomBlueprint(contentFolder, name) {
 /**
  * Make a building the mod owns.
  *
- * With `copyFrom` naming a base game building it is a stub of that one; without, it is
- * a building of its own, which needs a mesh generating before the game can show it.
+ * With `copyFrom` naming a base game building it is a copy of that one, and has its
+ * prefab, mesh and window data from the start; without, it is a building of its own, which
+ * needs a mesh generating before the game can show it.
  *
  * Named by its preset name, file included. The `title` is the readable name and is not
  * an identifier -- it may hold spaces and punctuation, and the game reads it from a
@@ -932,7 +1206,7 @@ export async function deleteCustomBlueprint(contentFolder, name) {
  * DDS content and this file is about buildings.
  */
 export async function createCustomBuilding(contentFolder, presetName, { copyFrom = null, title = presetName } = {}) {
-    const preset = stubFor(
+    const preset = presetFor(
         presetName, copyFrom ? await loadVanillaPreset(copyFrom) : null, { copyFrom, title });
 
     await writeCustomPreset(contentFolder, presetName, preset);
@@ -942,34 +1216,40 @@ export async function createCustomBuilding(contentFolder, presetName, { copyFrom
 }
 
 /**
- * The building a floor should be saved against, creating the stub if it is still the
- * base game's.
+ * The building a floor should be saved against, and how it is to be written.
  *
- * This is the step that keeps base game presets read-only: whatever the author had
- * open, what gets written is always the mod's own copy.
+ * This is the step that keeps base game presets read-only. Nothing here writes; what it
+ * answers with is a preset to change and the `form` that says which writer takes it
+ * afterwards -- `writeCustomPreset` for the mod's own file, `writeBuildingPatch` for
+ * operations over the game's.
  *
- * Three answers, and only one of them writes anything:
+ *   the mod declares it     `own`. That preset, to be written back into its own file.
+ *   the mod patches it      `patch`. The game's building with the mod's operations
+ *                           already applied, so that a save states the building as it
+ *                           will be rather than as the game ships it.
+ *   the base game has it,   `patch` as well, from an empty operation list. The author has
+ *   and the author said     answered "override" and the file is written on this save.
+ *   override
+ *   the base game has it,   an error. Nothing may be written against a base game building
+ *   and nothing was asked   until the author has said which way -- see ownership.js. A
+ *                           caller reaching here without an answer has skipped the gate.
+ *   neither has it          an error, because there is nothing to save against.
  *
- *   the mod holds it        that preset, to be written back into its own file
- *   the base game holds it  a stub copying from it, which is what a base game building
- *                           becomes the first time a floor is saved against it
- *   neither does            an error, because there is nothing to save against
+ * `base` comes back only for a patch, and is the game's own copy: the operations are the
+ * difference between it and the preset above, so it has to be the untouched one rather
+ * than the one the caller is about to change.
  *
- * That last one used to be a stub as well, built from a null source and copying from its
- * own name. It is the shape a corrupted preset takes: `copyFrom` pointing at itself, the
- * five identifying fields, and one floor -- the slot being saved, which setBlueprint
- * appends to the empty floor list it was handed. Everything the building actually said
- * about itself is gone, and the file it replaced is the file it could not read.
+ * An unreadable file is reported rather than treated as an absent one, on both sides. A
+ * preset that will not parse is a preset whose contents are still the author's, and taking
+ * it for absent is how a save comes to overwrite a building it could not read. That is
+ * where a preset copying from itself came from, back when this invented one.
  *
- * So an unreadable preset is reported rather than treated as an absent one. `copyFrom` is
- * settled when a building is created and by the author thereafter; no save decides it.
- *
- * @throws when the mod holds a preset that will not parse, or when neither the mod nor the
- *         base game has a building of this name
+ * @throws when a file that would be written cannot be read, when nothing has been decided,
+ *         or when neither the mod nor the base game has a building of this name
  */
-export async function presetForSaving(contentFolder, name) {
+export async function presetForSaving(contentFolder, name, ownership = Ownership.UNASKED) {
     const { preset, unreadable } = await findCustomPreset(contentFolder, name);
-    if (preset) return { preset, created: false };
+    if (preset) return { preset, form: BuildingForm.OWN, base: null };
 
     if (unreadable) {
         throw new Error(`"${unreadable}" is not readable as JSON. Repair or remove it before `
@@ -982,9 +1262,26 @@ export async function presetForSaving(contentFolder, name) {
             + 'so there is nothing to save a floor against.');
     }
 
-    // A stub of a base game building copies from the building it is a stub of, which is
-    // the one case where a preset's own name is the right thing to copy from.
-    return { preset: stubFor(name, vanilla, { copyFrom: name }), created: true };
+    const held = await findBuildingPatch(contentFolder, name);
+
+    if (held.unreadable) {
+        throw new Error(`"${held.unreadable}" is not readable as JSON. Repair or remove it `
+            + `before saving against ${name}, so that what it holds is not written over.`);
+    }
+
+    // The gate is the caller's, and this is the guard against it being gone round. A save
+    // that reached here on a building nobody has answered for would write the first of the
+    // two answers it happened to be able to write, which is the whole of what was wrong
+    // with the behaviour this replaced.
+    if (!held.patch && ownership !== Ownership.OVERRIDE) {
+        throw new Error(`${name} is one of the base game's buildings, and nothing has been `
+            + 'said about whether this mod overrides it or copies it.');
+    }
+
+    const applied = applyBuildingPatch(vanilla, held.patch ?? patchFile(name, BUILDING_TYPE, []));
+    if (applied.failed) throw new Error(`${applied.failed}. Repair the patch before saving.`);
+
+    return { preset: applied.preset, form: BuildingForm.PATCH, base: vanilla };
 }
 
 

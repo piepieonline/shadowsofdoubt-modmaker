@@ -651,6 +651,77 @@
                 </article>
             </dialog>
 
+            <!-- The first edit to a floor of a base game building.
+
+                 Asked here rather than when the floor is opened, so that browsing the
+                 game's buildings stays free of dialogs. Nothing has been written when
+                 this appears: the autosave was not scheduled, and the edit that provoked
+                 it is in memory and nowhere else.
+
+                 The three answers are what a mod can actually do about somebody else's
+                 building, and the difference between the first two is where the change
+                 lands rather than how much work it is. An override goes into the game's
+                 own building wherever the city places it; a copy is a second building
+                 standing beside the original and competing with it for the same slots,
+                 because a preset carries its own district and density rules.
+
+                 Dismissing is the third answer, not a fourth: there is nothing here to
+                 cancel into. See scripts/ownership.js. -->
+            <dialog id="building-ownership-modal">
+                <article>
+                    <header>
+                        <button aria-label="Close" rel="prev" class="close-button"
+                            onclick="cancelOwnership()"></button>
+                        <h5><strong><span id="building-ownership-what">This building</span>
+                            is vanilla</strong></h5>
+                    </header>
+                    <div id="building-ownership-choices">
+                        <p>
+                            <small>Base game buildings can't be edited directly - either a patch or clone is required</small>
+                        </p>
+                        <button type="button" style="width: 100%"
+                            onclick="chooseOverride()">Override it</button>
+                        <p>
+                            <small>Write a patch over the game's own building, so the
+                                floors you edit replace its floors wherever the city
+                                places it.</small>
+                        </p>
+                        <button type="button" class="secondary" style="width: 100%"
+                            onclick="chooseClone()">Make a copy of it</button>
+                        <p>
+                            <small>A new building, reusing the model and
+                                window data.</small>
+                        </p>
+                        <button type="button" class="secondary outline" style="width: 100%"
+                            onclick="discardEdit()">Do nothing</button>
+                        <p>
+                            <small>Throw this edit away and restore the floor.</small>
+                        </p>
+                    </div>
+                    <form id="building-ownership-clone-fields" hidden
+                        onsubmit="event.preventDefault();submitClone()">
+                        <label>
+                            Title
+                            <input id="building-ownership-clone-title" required
+                                oninput="syncCloneNameToTitle()" />
+                            <small>What a player reads. Written to the mod's
+                                names.rooms.csv, which is the only place it is used.</small>
+                        </label>
+                        <label>
+                            Preset name
+                            <input id="building-ownership-clone-name" required
+                                pattern="[A-Za-z0-9_\-]+"
+                                title="Letters, digits, hyphens and underscores only"
+                                oninput="markCloneNameEdited()" />
+                            <small>Letters, digits, hyphens and underscores -- no spaces.
+                                Follows the title unless it is changed.</small>
+                        </label>
+                        <button id="building-ownership-clone-confirm" type="submit"
+                            style="width: 100%">Make the copy</button>
+                    </form>
+                </article>
+            </dialog>
+
             <!-- Help. The other two flows each carry one under this same id, which is
                  deliberate: only ever one flow is mounted, so the name belongs to
                  whichever that is. See the note on #flow-root.

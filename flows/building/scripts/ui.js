@@ -30,9 +30,12 @@ import {
     listBuildings, listCustomBuildings, listCustomBlueprints, loadPreset, resolveBlueprint,
     enumerateSlots, storeysOf, adjoiningStorey, firstLayoutOf,
     sameSlot, setBlueprint, removeBlueprint, presetForSaving,
-    writeCustomPreset, writeCustomBlueprint, deleteCustomBlueprint, createCustomBuilding,
-    loadFloorIndex, stubFor, readCustomPreset, stairwellElevators,
+    writeCustomPreset, writeBuildingPatch, writeCustomBlueprint, deleteCustomBlueprint,
+    createCustomBuilding, loadFloorIndex, presetFor, readCustomPreset, stairwellElevators,
 } from './buildingLibrary.js';
+import {
+    BuildingForm, Ownership, ownershipFor, needsAnswer, needsFloorRename,
+} from './ownership.js';
 import {
     generateBuilding, writeGeneratedBuilding, isMeshStale, GENERATED_FIELDS, MESH_ROOF_FIELD,
 } from './meshExport.js';
@@ -308,14 +311,16 @@ async function buildCategories(folder) {
         // category at a time. It is a heading now, so the division is the shape of the
         // menu rather than something spelled out on each line.
         //
-        // Adding and deleting floors is offered on the mod's own buildings only. A base
-        // game building has to become a stub in the mod before its floor list is
-        // anything this app can write -- which is what saving a floor against one does,
-        // and doing it silently from a delete button would be a mod gaining a building
-        // it never asked for.
+        // A patched building stays on the base game's side, because that is what it is:
+        // the game's building, with this mod's floors in some of its slots. The stub used
+        // to move it across, which was the visible half of what was wrong with it. What
+        // says so is the count beside the name -- see patchedLabel.
+        const patched = building.form === BuildingForm.PATCH;
+        const ownership = ownershipFor(building.form);
+
         (building.isCustom ? custom : vanilla).push({
             id: building.name,
-            label: building.name,
+            label: patched ? `${building.name} — overridden` : building.name,
             group: building.isCustom ? CUSTOM : VANILLA,
             // Twelve buildings of a dozen floors each is a scroll, not a list, and the
             // one being looked for is found by name.
@@ -328,19 +333,28 @@ async function buildCategories(folder) {
                 id: `${building.name}/${storey.key}`,
                 label: storey.label,
                 entries: storey.options.map((option) => floorEntry(
-                    building, option, modFloors)),
-                footer: building.isCustom ? {
+                    building, storey, option, modFloors, ownership)),
+                // A layout is an alternative of a storey the building already has, which
+                // is something a patch can say as well as a preset: it appends to a list
+                // inside a storey rather than changing how many storeys there are. See
+                // scripts/buildingPatch.js.
+                footer: building.isCustom || patched ? {
                     label: 'Add layout',
                     title: `Add another layout of ${storey.label} to ${building.name}, `
                         + 'as a copy of the one already there. The game picks between the '
                         + 'layouts of one floor when it builds the city.',
-                    onClick: () => addLayout(building.name, storey),
+                    onClick: () => addLayout(building.name, storey, ownership),
                 } : null,
             })),
             // A building grows in two directions, and the game keeps the two apart:
             // floorLayouts up from the ground floor, basementLayouts down from it. So
             // they are two buttons rather than one asking which -- the answer is the
             // thing being asked for.
+            //
+            // The mod's own buildings only. Adding a storey to a base game building means
+            // changing how many its floor list has, which renumbers every storey after it
+            // -- and every operation in the patch, this mod's and any the author wrote by
+            // hand, is a position in that list. Copy the building to change its shape.
             footer: building.isCustom ? [
                 {
                     id: 'add-floor',
@@ -403,7 +417,7 @@ async function buildCategories(folder) {
  * the Floor panel's Layout select uses -- it is a different thing from the layout beside
  * it rather than another of the same.
  */
-function floorEntry(building, option, modFloors) {
+function floorEntry(building, storey, option, modFloors, ownership) {
     return {
         id: `${building.name}/${option.blueprint}`,
         label: `${option.slot.isControlVariant ? 'Control: ' : ''}${option.blueprint}`,
@@ -411,16 +425,51 @@ function floorEntry(building, option, modFloors) {
         // not obvious from the name: a floor the mod holds shadows the base game copy of
         // the same name.
         tag: modFloors.has(option.blueprint) ? 'edited' : null,
-        action: building.isCustom ? {
-            label: '×',
-            title: `Delete ${option.blueprint}`,
-            onClick: () => deleteFloor(building.name, option.blueprint, option.slot),
-        } : null,
+        action: deleteAction(building, storey, option, ownership),
         openAs: {
             building: building.name,
             blueprint: option.blueprint,
             slot: option.slot,
         },
+    };
+}
+
+/**
+ * The × beside a floor, on the buildings where taking one out is something this can write.
+ *
+ * Offered on a patched building as well as the mod's own, because it is the other half of
+ * Add layout: a list you can add to and not take from is a trap. What it may not do is take
+ * out the *last* layout of a storey, which is removing the storey by another name --
+ * `removeBlueprint` drops a setting it has emptied, and a patch that changed how many
+ * storeys a building has would misdirect every operation after it. So it is withheld with
+ * the reason rather than offered and refused.
+ *
+ * A control room variant does not count towards that: a storey holding one of those and no
+ * ordinary layout is a storey `removeBlueprint` keeps, so the last ordinary layout can go.
+ */
+function deleteAction(building, storey, option, ownership) {
+    if (!building.isCustom && ownership !== Ownership.OVERRIDE) return null;
+
+    const siblings = storey.options.filter(
+        (each) => !!each.slot.isControlVariant === !!option.slot.isControlVariant);
+    const wouldEmptyStorey = siblings.length === 1
+        && storey.options.length === siblings.length;
+
+    if (!building.isCustom && wouldEmptyStorey) {
+        return {
+            label: '×',
+            title: `${option.blueprint} is the only layout of ${storey.label}, and taking a `
+                + `storey out of ${building.name} is not something an override can say. `
+                + 'Copy the building to change its shape.',
+            onClick: () => alert(`${storey.label} is the only layout, so it cannot be `
+                + `removed from ${building.name} by an override. Copy the building instead.`),
+        };
+    }
+
+    return {
+        label: '×',
+        title: `Delete ${option.blueprint}`,
+        onClick: () => deleteFloor(building.name, option.blueprint, option.slot, ownership),
     };
 }
 
@@ -469,13 +518,15 @@ export async function openFloor({ building, blueprint, slot }, selections = [], 
     // and unknown is already handled below: the floor opens on its own and saving it
     // touches no preset. That is the safe half of the two, and it is the same answer this
     // gives a name nothing answers to.
-    let preset = null;
+    let heldBuilding = null;
 
     try {
-        preset = await presetOfBuilding(building);
+        heldBuilding = await buildingOf(building);
     } catch (error) {
         console.error('Could not read the building this floor belongs to', error);
     }
+
+    const preset = heldBuilding?.preset ?? null;
 
     /**
      * The building this floor is actually held to belong to, which is the name only when
@@ -509,11 +560,24 @@ export async function openFloor({ building, blueprint, slot }, selections = [], 
     // first time rather than losing a line a moment after they appear.
     model.stairwellElevators = await stairwellElevators(contentFolder(), preset);
 
+    // A patch whose operations no longer apply is shown as the base game's building, and
+    // said out loud once here rather than on every save. The floors are all still openable
+    // -- what is lost is whatever the patch was adding, which is exactly what the author
+    // needs to know about while they can still repair the file.
+    if (inBuilding && heldBuilding?.failed && !quiet) {
+        alert(`${blueprint} has been opened, but ${heldBuilding.failed}`);
+    }
+
     open = {
         building: inBuilding,
         blueprint,
         slot: inBuilding ? slot : null,
         isCustom: found.isCustom,
+        // Which of the two files this building lives in, and so which way a save writes
+        // it. `vanilla` is the state in which nothing may be written at all -- see
+        // markDirty, and scripts/ownership.js for what is asked and when.
+        form: inBuilding ? heldBuilding.form : null,
+        ownership: inBuilding ? ownershipFor(heldBuilding.form) : Ownership.UNASKED,
         model,
         // What the Floor panel steps through.
         storeys: storeysOf(enumerateSlots(preset)),
@@ -570,18 +634,22 @@ export async function openFloor({ building, blueprint, slot }, selections = [], 
 }
 
 /**
- * The preset of the building a floor was opened through, or null for a floor no building
- * refers to.
+ * The building a floor was opened through, as the game will see it, or null for a floor no
+ * building refers to.
  *
  * Null rather than an empty preset, because the two are different answers: a building with
  * nothing in it still names a stairwell and still has storeys to be one of, and a floor
  * belonging to no building has neither.
+ *
+ * The whole answer rather than the preset alone: `form` is what says whether a save writes
+ * a file of the mod's own or operations over the game's, and it is read here because this
+ * is where the building is read. Asking again at save time would be a second file read on
+ * the end of every 600ms autosave, and a second chance for the two to disagree.
  */
-async function presetOfBuilding(building) {
+async function buildingOf(building) {
     if (!building) return null;
 
-    const found = await loadPreset(contentFolder(), building);
-    return found?.preset ?? null;
+    return await loadPreset(contentFolder(), building);
 }
 
 /**
@@ -591,7 +659,7 @@ async function presetOfBuilding(building) {
  * the Floor panel says so rather than offering to climb one.
  */
 async function storeysForBuilding(building) {
-    return storeysOf(enumerateSlots(await presetOfBuilding(building)));
+    return storeysOf(enumerateSlots((await buildingOf(building))?.preset ?? null));
 }
 
 /**
@@ -1086,10 +1154,236 @@ function markDirty() {
     // where nothing can catch it. The floor is still editable in memory; the bar says so.
     if (!canEdit()) return;
 
+    // The gate. A base game building nobody has answered for is not written to at all --
+    // not in 600ms and not now -- and the edit that got here sits in memory until the
+    // author says what should become of it. See scripts/ownership.js.
+    if (needsAnswer(open)) {
+        askOwnership();
+        return;
+    }
+
     if (!shouldSave(false)) return;
 
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => { saveTimer = null; saveFloor(); }, SAVE_DELAY);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Taking over a base game building                                            */
+/* -------------------------------------------------------------------------- */
+
+const OWNERSHIP_MODAL = '#building-ownership-modal';
+
+/**
+ * Whether the question is already on screen, so that a second stroke does not ask it twice.
+ *
+ * A stroke is a pointer drag over a floor and it calls markDirty for every node it touches,
+ * so without this the first drag across a base game floor would stack a dialog per node.
+ * Cleared when the dialog is answered, not when it closes: the two are the same event, and
+ * a flag cleared by a `close` handler would still be set while the answer was being acted
+ * on -- which is when a save runs, and a save may take another stroke's worth of time.
+ */
+let asking = false;
+
+/**
+ * Ask what this mod should do about the base game building the open floor belongs to.
+ *
+ * Nothing has been written at this point and nothing will be until this is answered: the
+ * autosave was not scheduled, and the edit that provoked the question is in the model and
+ * nowhere else.
+ *
+ * The building is named in the dialog rather than the floor, because the answer is about
+ * the building: overriding it puts this mod's floors into the game's own building wherever
+ * the city places it, and cloning it makes a second building that competes with the
+ * original for the same slots. Neither of those is a fact about the floor that was painted.
+ */
+function askOwnership() {
+    const dialog = document.querySelector(OWNERSHIP_MODAL);
+
+    // No dialog means no way to ask, and going ahead would be the silent takeover this
+    // exists to prevent. The edit stays in the model, unsaved, which the bar says.
+    if (!dialog || asking || !open?.building) return;
+
+    asking = true;
+
+    field('building-ownership-what').textContent = open.building;
+    field('building-ownership-clone-name').value = '';
+    field('building-ownership-clone-title').value = '';
+    delete field('building-ownership-clone-name').dataset.edited;
+    showCloneFields(false);
+
+    dialog.setAttribute('open', '');
+}
+
+/** The two name fields, which only the clone answer needs. */
+function showCloneFields(showing) {
+    const fields = document.querySelector('#building-ownership-clone-fields');
+    if (fields) fields.hidden = !showing;
+
+    const confirm = field('building-ownership-clone-confirm');
+    if (confirm) confirm.hidden = !showing;
+
+    const choices = document.querySelector('#building-ownership-choices');
+    if (choices) choices.hidden = showing;
+
+    if (showing) field('building-ownership-clone-title').focus();
+}
+
+function closeOwnership() {
+    document.querySelector(OWNERSHIP_MODAL)?.removeAttribute('open');
+    asking = false;
+}
+
+/**
+ * Override: the mod patches the game's building, and the save that was waiting goes ahead.
+ *
+ * Nothing is written here. The building is marked as one this mod overrides and the edit
+ * is put back through the ordinary path, so the patch file appears at the end of the same
+ * 600ms autosave every other edit uses -- with the floor written before it, in the order
+ * that keeps a building from ever naming a floor that is not there.
+ */
+export function chooseOverride() {
+    if (!open?.building) return closeOwnership();
+
+    open.ownership = Ownership.OVERRIDE;
+    open.form = BuildingForm.PATCH;
+
+    closeOwnership();
+    markDirty();
+}
+
+/** Clone: reveal the two names it needs, rather than answering with a name of our choosing. */
+export function chooseClone() {
+    if (!open?.building) return closeOwnership();
+
+    // A copy of the Hotel is not called Hotel, and it is not called HotelCopy either unless
+    // that is what the author wanted. The donor's name is a starting point in the field
+    // rather than a default that gets written.
+    field('building-ownership-clone-title').value = `${open.building} copy`;
+    syncCloneNameToTitle();
+    showCloneFields(true);
+}
+
+/**
+ * Nothing: the edit is thrown away and the floor is read again from disk.
+ *
+ * A reload is the revert. The copy on disk is the base game's untouched blueprint -- this
+ * is a building nothing has been written for -- so reading it again is exactly the floor as
+ * it was before the stroke, and no undo has to be kept for it.
+ *
+ * Painting goes away with it, which `openFloor` does to every floor it opens. That is the
+ * whole of the state a discarded floor is in: no read-only mode to explain and nothing to
+ * turn off later, because a discarded floor *is* a freshly opened one. Picking a tool up
+ * again and drawing is deliberate, and asks again.
+ */
+export async function discardEdit() {
+    closeOwnership();
+
+    if (!open?.blueprint) return;
+
+    const { building, blueprint, slot } = open;
+    const selections = open.model?.addresses.map((address) => address.selectedVariation) ?? [];
+
+    dirty = false;
+    await openFloor({ building, blueprint, slot }, selections);
+}
+
+/**
+ * Make the clone, move the open floor into it, and let the ordinary save write both.
+ *
+ * The clone is created before anything else, because everything after it depends on the
+ * building existing: the floor is renamed for it, and the save writes the blueprint and
+ * then the preset that names it.
+ *
+ * What is *not* done here is copying the donor's floors. The clone lists them under the
+ * donor's own names and reads the game's copies until one is edited -- see
+ * `needsFloorRename`, which is where a floor gets a name of its own, and only ever the one
+ * being worked on.
+ */
+export async function submitClone() {
+    const folder = contentFolder();
+    if (!folder || !open?.building) return closeOwnership();
+
+    const donor = open.building;
+    const title = field('building-ownership-clone-title').value.trim();
+    const presetName = field('building-ownership-clone-name').value.trim();
+
+    const refusal = await whyNotABuildingName(folder, presetName, title);
+    if (refusal) {
+        alert(refusal);
+        return;
+    }
+
+    closeOwnership();
+
+    try {
+        await createCustomBuilding(folder, presetName, { copyFrom: donor, title });
+    } catch (error) {
+        console.error('Could not create the copy of the building', error);
+        alert(`${donor} could not be copied: ${error.message}`);
+        return;
+    }
+
+    await writeBuildingTitle(folder, presetName, title);
+
+    // The floor being edited is now a floor of the clone. Nothing has moved on disk: the
+    // clone's floor list still names the donor's blueprints, and this one gets a name of
+    // its own on the save below.
+    if (open?.building !== donor) return;
+
+    open.building = presetName;
+    open.form = BuildingForm.OWN;
+    open.ownership = Ownership.MINE;
+    open.storeys = await storeysForBuilding(presetName);
+
+    updateHeading();
+    markDirty();
+}
+
+/**
+ * Why a name cannot be used for a new building, or null when it can.
+ *
+ * The same three questions the Add building dialog asks, in one place because they are the
+ * same three and a copy of them would be a second answer to what a building may be called.
+ */
+async function whyNotABuildingName(folder, presetName, title) {
+    if (!title || !presetName) return 'A copy needs a name and a title.';
+
+    if (!isNameFieldSafe(presetName)) {
+        return 'A preset name can hold only letters, digits, hyphens and underscores.';
+    }
+
+    const existing = await listCustomBuildings(folder);
+    if (existing.some((entry) => entry.name === presetName)) {
+        return `This mod already has a building called "${presetName}".`;
+    }
+
+    // A name the base game has would be an override wearing a copy's clothes: the mod's
+    // file would shadow that building rather than stand beside it.
+    const index = await loadFloorIndex();
+    if ((index.buildings ?? []).includes(presetName)) {
+        return `The base game already has a building called "${presetName}". A copy needs a `
+            + 'name of its own.';
+    }
+
+    return null;
+}
+
+/** As the Add building dialog does: the preset name follows the title until it is typed in. */
+export function syncCloneNameToTitle() {
+    const presetName = field('building-ownership-clone-name');
+    if (presetName.dataset.edited === 'true') return;
+
+    presetName.value = makeNameFieldSafe(field('building-ownership-clone-title').value);
+}
+
+export function markCloneNameEdited() {
+    field('building-ownership-clone-name').dataset.edited = 'true';
+}
+
+/** Dismissing the dialog is answering "nothing": the edit goes, as it does from the button. */
+export function cancelOwnership() {
+    return discardEdit();
 }
 
 /**
@@ -1104,9 +1398,9 @@ function markDirty() {
  * Not used by the autosave, which has more to say than the refusal itself -- the floor is
  * already written by then -- and more to do about it. See saveFloor.
  */
-async function presetToWrite(folder, buildingName) {
+async function presetToWrite(folder, buildingName, ownership) {
     try {
-        return (await presetForSaving(folder, buildingName)).preset;
+        return await presetForSaving(folder, buildingName, ownership);
     } catch (error) {
         console.error('Could not read the building to write it back', error);
         alert(error.message);
@@ -1131,8 +1425,9 @@ async function flushPendingSave() {
  * missing floor in game; the other way round is a floor nothing uses, which is visible
  * in the panel and harmless.
  *
- * If the floor came from a base game building, this is where that building becomes a
- * stub in the mod. See buildingLibrary.js -- the base game's copy is a URL this app
+ * If the floor came from a base game building, this is where the mod's patch over that
+ * building appears -- and only because the author has already said so, which is what the
+ * gate below stands over. See buildingLibrary.js: the base game's copy is a URL this app
  * fetched, not a file it could write to even if it wanted.
  */
 export async function saveFloor(force = false) {
@@ -1140,8 +1435,18 @@ export async function saveFloor(force = false) {
     if (!canEdit()) return;
     if (!shouldSave(force)) return;
 
+    // Nothing is written for a building nobody has answered for. markDirty is where the
+    // question is ordinarily asked, and this is the same gate for every other way a save
+    // arrives -- the Save button most of all, which would otherwise appear to do nothing.
+    if (needsAnswer(open)) {
+        askOwnership();
+        return;
+    }
+
     assertModSelected();
     const folder = contentFolder();
+
+    await renameInheritedFloor(folder);
 
     await writeCustomBlueprint(folder, open.model.floorName, serialiseFloor(open.model));
 
@@ -1152,9 +1457,9 @@ export async function saveFloor(force = false) {
         const floorName = open.model.floorName;
 
         try {
-            const { preset } = await presetForSaving(folder, building);
-            if (open.slot) open.slot = setBlueprint(preset, open.slot, open.model.floorName);
-            await writeCustomPreset(folder, building, preset);
+            const held = await presetForSaving(folder, building, open.ownership);
+            if (open.slot) open.slot = setBlueprint(held.preset, open.slot, floorName);
+            await writeBuilding(folder, building, held);
         } catch (error) {
             // The blueprint is already on disk, so nothing drawn has been lost; what failed
             // is pointing the building at it. presetForSaving refuses rather than inventing
@@ -1183,9 +1488,9 @@ export async function saveFloor(force = false) {
     open.blueprint = open.model.floorName;
     open.isCustom = true;
 
-    // Saving can put a floor in a slot it was not in before -- a base game building
-    // becoming a stub, or a slot appended for one that had none -- so the storeys the
-    // Floor section steps through are read again rather than left as they were opened.
+    // Saving can put a floor in a slot it was not in before -- a copy taking the floor it
+    // renamed, or a slot appended for a building that had none -- so the storeys the Floor
+    // section steps through are read again rather than left as they were opened.
     open.storeys = await storeysForBuilding(open.building);
 
     dirty = false;
@@ -1204,6 +1509,58 @@ export async function saveNow() {
     clearTimeout(saveTimer);
     saveTimer = null;
     await saveFloor(true);
+}
+
+/**
+ * Write a building back, into whichever of the two files it lives in.
+ *
+ * The one place the two writers are chosen between, so that every caller states what it
+ * has rather than deciding what to do with it. `form` came from presetForSaving, which read
+ * the folder to answer it.
+ */
+async function writeBuilding(folder, name, { preset, form, base }, { alsoWritten = [] } = {}) {
+    if (form === BuildingForm.PATCH) {
+        await writeBuildingPatch(folder, name, base, preset, { alsoWritten });
+        return;
+    }
+
+    await writeCustomPreset(folder, name, preset, { alsoWritten });
+}
+
+/**
+ * Give the open floor a name of its own, if it is one a clone inherited from its donor.
+ *
+ * The moment a copy stops being a second name for the same building. A clone lists its
+ * donor's blueprints under the donor's own names, and a blueprint is resolved by its bare
+ * name for every building that refers to it -- so writing `Hotel_FirstFloor` into the mod
+ * while editing a copy of the Hotel would override that floor in the real Hotel too, which
+ * is the one thing choosing "copy" said not to do.
+ *
+ * Renamed rather than copied when the clone was made: the floors nobody edits keep the
+ * donor's names, cost the mod no files, and go on being read out of the game's own assets.
+ *
+ * Only ever the floor being saved, and only the first time -- see needsFloorRename for the
+ * three things that have to hold. The slot it sits in is repointed by the save itself, a
+ * few lines below, which is the same thing that happens when a floor is renamed by hand.
+ */
+async function renameInheritedFloor(folder) {
+    const index = await loadFloorIndex();
+
+    const renaming = needsFloorRename({
+        ownership: open.ownership,
+        floorIsCustom: open.isCustom,
+        floorName: open.model.floorName,
+        baseBlueprints: new Set(index.blueprints ?? []),
+    });
+
+    if (!renaming) return;
+
+    open.model.floorName = await nextFloorName(folder, open.building, {
+        storey: open.slot
+            ? { isBasement: open.slot.isBasement, layoutIndex: open.slot.layoutIndex }
+            : null,
+        isBasement: open.slot?.isBasement ?? false,
+    });
 }
 
 
@@ -1263,10 +1620,10 @@ function setMeshRoof(roof) {
  * itself stale against the one on screen -- which is true, and not what anyone pressing
  * the button meant.
  *
- * On a base game building this creates the mod's stub of it first, the same way saving a
- * floor against one does. That is not a side effect to be quiet about: the generated
- * prefab and window data are exactly what stops the stub deferring to the original, so a
- * stub is what has to exist for any of this to be written at all.
+ * On a base game building this asks the same question the first edit to a floor does, and
+ * for the same reason: seven files and a building to point at them is a takeover whichever
+ * button starts it. Once answered, the generated prefab and window data are written into
+ * whichever of the two files that building lives in.
  */
 export async function generateMesh() {
     const folder = contentFolder();
@@ -1274,6 +1631,14 @@ export async function generateMesh() {
     // The button is disabled when either is missing. This is the guard against being
     // called some other way.
     if (!folder || !open?.building || meshState.busy) return;
+
+    // Generating writes seven files and a building to point at them, so it is one of the
+    // two ways a base game building would be taken over -- and it is asked about in the
+    // same words as the other. The button comes back to a decided building.
+    if (needsAnswer(open)) {
+        askOwnership();
+        return;
+    }
 
     if (dirty) await saveFloor(true);
 
@@ -1284,8 +1649,8 @@ export async function generateMesh() {
     updateFloorPanel();
 
     try {
-        const { preset } = await presetForSaving(folder, building);
-        const result = await generateBuilding(building, preset, resolveFloorData, { roof });
+        const held = await presetForSaving(folder, building, open.ownership);
+        const result = await generateBuilding(building, held.preset, resolveFloorData, { roof });
 
         if (!result.ok) {
             meshState = { ...meshState, busy: false, stale: null, status: result.reason };
@@ -1295,7 +1660,7 @@ export async function generateMesh() {
             // is not there is a building the city cannot draw, and the other way round is
             // seven files nothing reads.
             await writeGeneratedBuilding(folder, building, result.files);
-            await writeCustomPreset(folder, building, preset, { alsoWritten: GENERATED_FIELDS });
+            await writeBuilding(folder, building, held, { alsoWritten: GENERATED_FIELDS });
 
             // The preset now says what the checkbox says, so reading it back is no longer
             // reading a stale answer over the top of the author's.
@@ -1354,7 +1719,10 @@ async function refreshMeshState() {
     if (!building || !contentFolder()) return;
 
     try {
-        const preset = await readCustomPreset(contentFolder(), building);
+        // The building as the game will see it, not the mod's own file: a building this
+        // mod overrides holds its mesh bookkeeping in the patch, and reading only the
+        // preset would say "never generated" about every one of them.
+        const preset = (await buildingOf(building))?.preset ?? null;
         const stale = preset ? await isMeshStale(preset, resolveFloorData) : null;
 
         if (open?.building !== building || meshState.busy) return;
@@ -1618,10 +1986,13 @@ async function addStorey(buildingName, { isBasement = false } = {}) {
     // decides which answers are worth offering. Nothing is written by reading it -- but a
     // building that cannot be read is one there is no point asking about, since the answer
     // could not be written either.
-    const preset = await presetToWrite(folder, buildingName);
-    if (!preset) return;
+    //
+    // Offered on the mod's own buildings only, so the ownership is settled: see
+    // buildCategories, and buildingPatch.js for why a patch may not add a storey.
+    const held = await presetToWrite(folder, buildingName, Ownership.MINE);
+    if (!held) return;
 
-    const against = adjoiningStorey(storeysOf(enumerateSlots(preset)), { isBasement });
+    const against = adjoiningStorey(storeysOf(enumerateSlots(held.preset)), { isBasement });
 
     const start = await askStoreyStart(buildingName, { isBasement, against });
     if (!start) return;
@@ -1637,14 +2008,14 @@ async function addStorey(buildingName, { isBasement = false } = {}) {
  * altered rather than drawn. Anything less than the whole of it would be a different
  * storey wearing its number.
  */
-async function addLayout(buildingName, storey) {
+async function addLayout(buildingName, storey, ownership) {
     const folder = folderToWriteIn();
     if (!folder) return;
 
     closeBrowse();
     await flushPendingSave();
 
-    await writeNewFloor(folder, buildingName, { storey });
+    await writeNewFloor(folder, buildingName, { storey, ownership });
 }
 
 /**
@@ -1666,8 +2037,11 @@ async function addLayout(buildingName, storey) {
  * what" -- the name can be changed on the floor itself.
  *
  * @param storey a storey from storeysOf to add a layout to, or null for a new storey
+ * @param ownership how this building is written, from the panel that offered the button
  */
-async function writeNewFloor(folder, buildingName, { storey = null, isBasement = false, start = null }) {
+async function writeNewFloor(folder, buildingName, {
+    storey = null, isBasement = false, start = null, ownership = Ownership.MINE,
+}) {
     const name = await nextFloorName(folder, buildingName, { storey, isBasement });
 
     // Read again here rather than passed in, because what the new floor starts as
@@ -1678,17 +2052,17 @@ async function writeNewFloor(folder, buildingName, { storey = null, isBasement =
     // Before the blueprint is written, so that a building that refuses leaves nothing
     // behind. A floor written for a building that could not be pointed at it is a file
     // nothing reads and nothing lists.
-    const preset = await presetToWrite(folder, buildingName);
-    if (!preset) return;
+    const held = await presetToWrite(folder, buildingName, ownership);
+    if (!held) return;
 
-    const data = await newFloorData(folder, name, preset, { storey, isBasement, start });
+    const data = await newFloorData(folder, name, held.preset, { storey, isBasement, start });
     await writeCustomBlueprint(folder, name, data);
 
     // A blueprintIndex outside the list appends rather than leaving a hole, so a layout
     // lands after the ones already in the storey. Never a control room variant: those
     // are the same layouts with a control room in them, which is not something this can
     // make out of a blank floor.
-    const slot = setBlueprint(preset, storey
+    const slot = setBlueprint(held.preset, storey
         ? {
             isBasement: storey.isBasement,
             isControlVariant: false,
@@ -1697,7 +2071,19 @@ async function writeNewFloor(folder, buildingName, { storey = null, isBasement =
         }
         : { isBasement, isControlVariant: false, layoutIndex: -1, blueprintIndex: 0 },
         name);
-    await writeCustomPreset(folder, buildingName, preset);
+
+    // A patch may append a layout to a storey the building already has and may not add a
+    // storey, so this refuses rather than writing operations that renumber the rest. The
+    // panel does not offer Add floor on a patched building; this is the guard behind it.
+    try {
+        await writeBuilding(folder, buildingName, held);
+    } catch (error) {
+        console.error('Could not point the building at its new floor', error);
+        alert(`"${name}" has been written, but ${buildingName} could not be pointed at it: `
+            + error.message);
+        await refreshPanel();
+        return;
+    }
 
     await refreshPanel();
     await openFloor({ building: buildingName, blueprint: name, slot });
@@ -1728,9 +2114,9 @@ async function writeNewFloor(folder, buildingName, { storey = null, isBasement =
  * it yet yields one too, whatever was asked for: there is nothing to copy, which is what
  * the dialog says while it offers the answer this falls back to.
  *
- * A floor the mod does not hold resolves to the base game's copy, which is what a stub
- * building's floors are -- so adding a floor to a stub of a base game building starts
- * from that building's own shape.
+ * A floor the mod does not hold resolves to the base game's copy, which is what most of a
+ * copied building's floors are -- so adding a floor to a copy of a base game building
+ * starts from that building's own shape.
  */
 async function newFloorData(folder, name, preset, { storey = null, isBasement = false, start = null }) {
     if (!storey && start === StoreyStart.EMPTY) return blankFloor(name);
@@ -1875,11 +2261,12 @@ async function nextFloorName(folder, buildingName, { storey = null, isBasement =
  *
  * Only ever the mod's own file. A slot holding a base game blueprint has no file here to
  * delete, and deleting the mod's copy of a floor the base game also has uncovers the
- * original rather than losing it -- so on a stub, this means "stop overriding it".
+ * original rather than losing it -- so on an overridden building, this means "stop
+ * overriding that floor".
  *
  * `slot` is null for a floor no building uses, which is a file and nothing else.
  */
-async function deleteFloor(buildingName, blueprint, slot) {
+async function deleteFloor(buildingName, blueprint, slot, ownership = Ownership.MINE) {
     const folder = contentFolder();
     if (!folder) return;
 
@@ -1908,9 +2295,19 @@ async function deleteFloor(buildingName, blueprint, slot) {
         // A building that cannot be read leaves the slot naming a floor that has gone,
         // which is the lesser of the two: the file is deleted either way, and the author
         // has been told which building still points at it.
-        const preset = await presetToWrite(folder, buildingName);
-        if (preset && removeBlueprint(preset, slot)) {
-            await writeCustomPreset(folder, buildingName, preset);
+        const held = await presetToWrite(folder, buildingName, ownership);
+
+        if (held && removeBlueprint(held.preset, slot)) {
+            try {
+                await writeBuilding(folder, buildingName, held);
+            } catch (error) {
+                // Taking the last layout out of a storey removes the storey, which a patch
+                // may not say -- see buildingPatch.js. The panel refuses that before it
+                // gets here; this is what a slot list that changed underneath us comes to.
+                console.error('Could not take the floor out of its building', error);
+                alert(`"${blueprint}" has been deleted, but ${buildingName} still names it: `
+                    + error.message);
+            }
         }
     }
 
@@ -1953,7 +2350,7 @@ function closeFloor() {
  */
 export function scaffoldBuildingFolder(name) {
     return async (folder) => {
-        const preset = stubFor(name, null, { copyFrom: null });
+        const preset = presetFor(name, null, { copyFrom: null });
 
         // Named for the building and for what it is, as everything written here is:
         // see core/soFileName.js. The manifest names the file, so it gets the stem.

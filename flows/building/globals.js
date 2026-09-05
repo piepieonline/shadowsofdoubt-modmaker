@@ -12,6 +12,8 @@ import {
     showAddBuilding, closeAddBuilding, submitAddBuilding,
     syncPresetNameToTitle, markPresetNameEdited,
     closeAddStorey, submitAddStorey,
+    chooseOverride, chooseClone, discardEdit, cancelOwnership, submitClone,
+    syncCloneNameToTitle, markCloneNameEdited,
     showHelp, closeHelp,
 } from './scripts/ui.js';
 
@@ -23,6 +25,13 @@ export default {
     markPresetNameEdited,
     closeAddStorey,
     submitAddStorey,
+    chooseOverride,
+    chooseClone,
+    discardEdit,
+    cancelOwnership,
+    submitClone,
+    syncCloneNameToTitle,
+    markCloneNameEdited,
     showHelp,
     closeHelp,
 };

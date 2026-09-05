@@ -781,22 +781,73 @@ not furnished from a room class. The seventh is `FathomsLobby`, which no address
 lists as compatible — the condition the game logs `No address preset shortlist for …` for,
 and falls back to its lobby preset. The panel says so rather than showing an empty list.
 
-## Saving
+## Editing a base game building
 
 Base game presets are never written to — the copy under `refs/floors/` is a URL this app
-fetched, not a file it has a handle on. Saving a floor against one creates a stub of the
-same name in the mod, carrying `copyFrom: "REF:BuildingPreset|<name>"` and its floor
-list. That is what lets a custom floor reuse a base game building's existing prefab, mesh
-and window data.
+fetched, not a file it has a handle on. So the first edit to a floor of one is a decision
+about that building, and **the author is asked before anything reaches disk**. It used to
+be taken silently by the autosave, 600 ms after a click that may have been a `+` on an
+address panel.
 
-A stub is written **without its default-valued fields**. Under `copyFrom`, writing a
-field at its default is not a no-op — it overwrites. A stub carrying the full template
-would name a building to copy and blank its prefab, height and window data in the same
-breath. This is the one place the flow departs from how the ScriptableObject flow writes
-a new file.
+Asked at the first edit rather than when the floor is opened, so browsing the game's
+buildings stays free of dialogs. Three answers:
 
-A floor saved into the mod keeps the name the building already refers to, so it shadows
-the base game copy and the building needs no change at all.
+| | |
+|---|---|
+| **Override it** | `<Name>.sodso_patch.json` — operations over the game's own building. The city places the game's building, with this mod's floors in the slots the patch names. |
+| **Make a copy** | A building of the mod's own under a name of its own, carrying `copyFrom: "REF:BuildingPreset|<donor>"`, so it has the donor's prefab, mesh and window data from the start. Placed in the city *beside* the original, since a preset carries its own district and density rules. |
+| **Do nothing** | The edit is thrown away and the floor is read again from disk. Painting is put away, which is what opening any floor does — so a discarded floor is exactly a freshly opened one, and drawing again asks once more. |
+
+There is no fourth state and no read-only mode to leave. The answer is not stored
+anywhere either: a folder holding a patch has answered *override*, and one declaring the
+building has answered *copy*. See `scripts/ownership.js`.
+
+### What an override may say
+
+Only the floor lists, and only inside a storey the building already has:
+`replace` a layout, `add` one to a storey, `remove` one. The outer array never changes
+length. A storey is an element of `floorLayouts` and every path in the file is a position
+in it, so inserting one would silently redirect every later operation — this mod's and any
+the author wrote by hand. Adding a floor or a basement is therefore offered on the mod's
+own buildings only, and taking the last layout out of a storey is refused with the reason.
+
+A slot carries no `name`, `presetName` or `id`, so there is no `[field=value]` selector to
+be had and every path is an index. What survives that is a patch whose only way of going
+wrong is a game update that renumbers the storeys, which is said in the dialog.
+
+Operations are **constructed, never diffed**. The app's copy of a base game building is a
+dump — Unity `{m_FileID, m_PathID}` references, enums as integers — and is not the shape
+the loader holds; a whole-document comparison would call every one of those differences a
+change. `floorLayouts` and `basementLayouts` are plain data in both shapes, which is why
+they are the only fields compared. Generated mesh fields are written from the values the
+generator computed, as `add` (an upsert on an object member, and two of them are this
+editor's own bookkeeping rather than fields the game has). See `scripts/buildingPatch.js`.
+
+A save replaces the operations this flow owns rather than appending to them, so the file
+holds one answer per slot. Anything else in the patch — another flow's, or the author's —
+is left where it is.
+
+### What a copy does about its floors
+
+A copy lists its donor's blueprints under the donor's own names and reads the game's
+copies until one is edited. That floor is then written under a name of its own and only
+its slot is repointed.
+
+The rename is not cosmetic. A blueprint is resolved by its bare name for *every* building
+that names it, so a copy of the Hotel that saved `Hotel_GroundFloor` would override that
+floor in the real Hotel — the one thing choosing *copy* said not to do. Renaming lazily is
+what keeps the floors nobody touches costing the mod no files at all.
+
+## Saving
+
+A preset written with `copyFrom` is written **without its default-valued fields**. Under
+`copyFrom`, writing a field at its default is not a no-op — it overwrites. A preset
+carrying the full template would name a building to copy and blank its prefab, height and
+window data in the same breath. This is the one place the flow departs from how the
+ScriptableObject flow writes a new file.
+
+A floor saved into a building the mod overrides keeps the name the building already refers
+to, so it shadows the base game copy — which is what overriding means.
 
 A preset new to the mod is written as `<Name>.BuildingPreset.sodso.json` — the building,
 then what it is. The type is there because a name alone does not identify an asset, and
@@ -810,11 +861,10 @@ Every preset written is also named in the mod's `murdermanifest.sodso.json`, whi
 written for a mod that has none. `fileOrder` is what the loader reads a `.sodso.json`
 through — an unlisted preset is one the game never loads, which in game is a building
 that is simply not in the city and nothing anywhere saying why. The entry names the
-*file*, so it carries the type the file name carries. That happens in
-`writeCustomPreset` rather than beside the dialog, because it is the one place a preset
-reaches the mod: adding a building goes through it, and so does the stub written the
-first time a floor is saved against a base game one. Entries go last, and a manifest that
-will not parse is left as its author wrote it. See `core/murderManifest.js`.
+*file*, so it carries the type the file name carries. That happens in `writeCustomPreset`
+and `writeBuildingPatch` rather than beside the dialog, because those are the two places
+a building reaches the mod's folder. Entries go last, and a manifest that will not parse
+is left as its author wrote it. See `core/murderManifest.js`.
 
 Saving is debounced by 600 ms. A blueprint is around 55 KB of coordinates and one drag
 can touch a hundred nodes.

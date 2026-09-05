@@ -234,23 +234,58 @@ test('generating again clears it', async ({ page }) => {
     await expect(meshNote(page)).not.toContainText('generate again');
 });
 
-test('a base game building becomes the mod\'s own before anything is written', async ({ page }) => {
+/**
+ * Generating writes seven files and a building to point at them, so it is one of the two
+ * ways a base game building would be taken over -- and it asks the same question the first
+ * edit to a floor does, rather than deciding for itself. See scripts/ownership.js.
+ */
+test('generating against a base game building asks before it writes anything', async ({ page }) => {
     await openBuildingFlow(page);
 
-    // Townhouse ships with the app and is not a file this app has a handle on, so
-    // generating against it has to create the mod's stub of it first -- exactly as saving
-    // a floor against one does.
     await open(page, 'Townhouse', 'Tenement_MainFloor1', {
         isBasement: false, isControlVariant: false, layoutIndex: 1, blueprintIndex: 0,
     });
 
+    // The button, not the `generate` helper: that waits for the progress note, and the
+    // whole point here is that no generation starts at all.
+    await generateButton(page).click();
+
+    await expect(page.locator('#building-ownership-modal[open]')).toHaveCount(1);
+
+    // Nothing at all: not the model, not a preset, not a patch.
+    expect(await readFile(page, 'Plugins/MyTower/Townhouse.BuildingPreset.sodso.json')).toBeNull();
+    expect(await readFile(page, 'Plugins/MyTower/Townhouse.sodso_patch.json')).toBeNull();
+});
+
+test('overriding a base game building puts its generated model in the patch', async ({ page }) => {
+    await openBuildingFlow(page);
+
+    // Townhouse ships with the app and is not a file this app has a handle on, so
+    // generating against it writes operations over the game's own building.
+    await open(page, 'Townhouse', 'Tenement_MainFloor1', {
+        isBasement: false, isControlVariant: false, layoutIndex: 1, blueprintIndex: 0,
+    });
+
+    await page.evaluate(async () => {
+        const { chooseOverride } = await import('/flows/building/scripts/ui.js');
+        chooseOverride();
+    });
+
     await generate(page);
 
-    const written = JSON.parse(await readFile(page, 'Plugins/MyTower/Townhouse.BuildingPreset.sodso.json'));
+    const patch = JSON.parse(await readFile(page, 'Plugins/MyTower/Townhouse.sodso_patch.json'));
+    const stated = Object.fromEntries(patch.patches.map((op) => [op.path, op.value]));
 
-    expect(written.copyFrom).toBe('REF:BuildingPreset|Townhouse');
-    expect(written.prefab).toBe('PREFAB:TownhousePrefab/Townhouse');
-    expect(written.sortedWindows).toHaveLength(5);
+    // Stated rather than diffed. The app's copy of a base game building is a dump, whose
+    // prefab is a Unity `{m_FileID}` reference -- a patch built by comparison would carry
+    // every one of those differences out into the mod.
+    expect(stated['/prefab']).toBe('PREFAB:TownhousePrefab/Townhouse');
+    expect(stated['/sortedWindows']).toHaveLength(5);
+    expect(patch.patches.every((op) => op.op === 'add' || op.path.startsWith('/floorLayouts/')))
+        .toBe(true);
+
+    // And no preset. The game places its own Townhouse, drawn with this model.
+    expect(await readFile(page, 'Plugins/MyTower/Townhouse.BuildingPreset.sodso.json')).toBeNull();
 
     // Written into the mod's manifest, or the loader never reads it.
     const manifest = JSON.parse(await readFile(page, 'Plugins/MyTower/murdermanifest.sodso.json'));

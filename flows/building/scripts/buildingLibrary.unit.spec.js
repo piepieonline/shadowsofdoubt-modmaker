@@ -184,7 +184,7 @@ test('a building with no floor list at all is not a failure', async () => {
 /* -------------------------------------------------------------------------- */
 
 test('a field left at the game\'s default is not written', () => {
-    const stub = library.stubFor(
+    const stub = library.presetFor(
         'Thing', { floorLayouts: [], basementLayouts: [] }, { copyFrom: 'Thing' });
 
     // enableAlleywayWalls defaults to true and echelonFloorStart to 10, so neither
@@ -203,7 +203,7 @@ test('a field left at the game\'s default is not written', () => {
 });
 
 test('the fields identifying a stub are written even at their defaults', () => {
-    const stub = library.stubFor('Thing', null, { copyFrom: null });
+    const stub = library.presetFor('Thing', null, { copyFrom: null });
     const written = library.withoutDefaults(stub);
 
     // presetName's default is the empty string and copyFrom's is absent from the game's
@@ -218,12 +218,12 @@ test('a stub is not built without being told what it copies from', () => {
     // The default used to be the preset's own name, which is the right answer for a stub of
     // a base game building -- that is what a stub is -- and a ring for every other caller.
     // Nothing about a name says which of the two it is, so there is no default to have.
-    expect(() => library.stubFor('Thing', null)).toThrow(/copies from/);
-    expect(() => library.stubFor('Thing', null, { title: 'A Thing' })).toThrow(/copies from/);
+    expect(() => library.presetFor('Thing', null)).toThrow(/copies from/);
+    expect(() => library.presetFor('Thing', null, { title: 'A Thing' })).toThrow(/copies from/);
 
     // Copying from nothing is an answer, and a different one from not saying.
-    expect(library.stubFor('Thing', null, { copyFrom: null }).copyFrom).toBeNull();
-    expect(library.stubFor('Thing', null, { copyFrom: 'Hotel' }).copyFrom)
+    expect(library.presetFor('Thing', null, { copyFrom: null }).copyFrom).toBeNull();
+    expect(library.presetFor('Thing', null, { copyFrom: 'Hotel' }).copyFrom)
         .toBe('REF:BuildingPreset|Hotel');
 });
 

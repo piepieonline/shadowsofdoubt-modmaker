@@ -587,7 +587,15 @@ test('opening the checker does not scroll the page', async ({ page }) => {
  * without a second of the test spent proving that setTimeout works.
  */
 test('a save under an open dropdown leaves it open', async ({ page }) => {
-    await openBuildingFlow(page);
+    // Already overridden, so that a save is something this building can have. What is
+    // being tested is the redraw the save ends in; the question asked before the first
+    // edit to a base game building is tested where it is asked.
+    await openBuildingFlow(page, {
+        ...modWithBuilding,
+        'Plugins/MyTower/EdenTower.sodso_patch.json': json({
+            name: 'EdenTower', fileType: 'BuildingPreset', patches: [],
+        }),
+    });
     await open(page, 'EdenTower', 'Eden_OfficeFloor01');
 
     const control = page.locator('#building-rooms .select2-selection').first();
@@ -995,45 +1003,181 @@ test('opening a floor that is not there says so rather than failing quietly', as
 /* Saving -- what the flow exists for                                          */
 /* -------------------------------------------------------------------------- */
 
-test('editing a base game floor writes it into the mod and stubs its building', async ({ page }) => {
-    await openBuildingFlow(page);
+/* -------------------------------------------------------------------------- */
+/* The first edit to a base game building                                      */
+/* -------------------------------------------------------------------------- */
 
-    // The base game's Hotel, ground floor, in the slot the building lists it in.
-    await open(page, 'Hotel', 'Hotel_GroundFloor', {
-        isBasement: false, isControlVariant: false, layoutIndex: 0, blueprintIndex: 0,
-    });
+/**
+ * Editing a base game floor used to take its building over silently, 600ms after a click
+ * that may have been a `+` on an address panel. The author was never asked, and found out
+ * from the file panel.
+ *
+ * So the question is asked at the first edit, nothing is written until it is answered, and
+ * the three answers are the three things a mod can do about somebody else's building. See
+ * flows/building/scripts/ownership.js.
+ */
 
-    // Paint something, then save explicitly.
+/** Open the base game's Hotel at its ground floor, in the slot the building lists it in. */
+const openHotelGround = (page) => open(page, 'Hotel', 'Hotel_GroundFloor', {
+    isBasement: false, isControlVariant: false, layoutIndex: 0, blueprintIndex: 0,
+});
+
+const OWNERSHIP = '#building-ownership-modal';
+
+const askedAbout = (page) => page.locator(`${OWNERSHIP}[open]`);
+
+/**
+ * Change the floor and try to write it.
+ *
+ * `saveNow` is the Save button, and it runs the same gate the autosave does: on a base game
+ * building nobody has answered for it writes nothing and asks instead, which is what a Save
+ * that quietly did nothing would have hidden.
+ */
+async function editAndSave(page) {
     await page.evaluate(async () => {
-        const { saveNow } = await import('/flows/building/scripts/ui.js');
+        const { openFloorModel, saveNow } = await import('/flows/building/scripts/ui.js');
         const model = await import('/flows/building/scripts/floorModel.js');
 
-        const { openFloorModel } = await import('/flows/building/scripts/ui.js');
         model.setWall(openFloorModel(), 9, 9, model.AXIS_X, '16');
         await saveNow();
     });
+}
 
-    // The floor is in the mod, under the name the building already refers to.
-    const floors = await listDir(page, 'Plugins/MyTower/Floors');
-    expect(floors).toContain('Hotel_GroundFloor.json');
+test('a base game building is not written to until the author has answered', async ({ page }) => {
+    await openBuildingFlow(page);
+    await openHotelGround(page);
 
+    await editAndSave(page);
+
+    // Nothing at all. Not the floor, not a preset, not a patch -- which is the property
+    // the whole change exists for.
+    expect(await listDir(page, 'Plugins/MyTower/Floors')).not.toContain('Hotel_GroundFloor.json');
+    expect(await readFile(page, 'Plugins/MyTower/Hotel.BuildingPreset.sodso.json')).toBeNull();
+    expect(await readFile(page, 'Plugins/MyTower/Hotel.sodso_patch.json')).toBeNull();
+});
+
+test('overriding writes the floor and a patch over the game’s building', async ({ page }) => {
+    await openBuildingFlow(page);
+    await openHotelGround(page);
+    await editAndSave(page);
+
+    await page.evaluate(async () => {
+        const { chooseOverride, saveNow } = await import('/flows/building/scripts/ui.js');
+        chooseOverride();
+        await saveNow();
+    });
+
+    // The floor is in the mod, under the name the building already refers to: overriding
+    // is exactly a floor that shadows the game's by being pointed at.
     const written = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/Hotel_GroundFloor.json'));
     expect(written.floorName).toBe('Hotel_GroundFloor');
     expect(written.a_d.length).toBeGreaterThan(0);
 
-    // And the base game's Hotel has become a stub the mod owns, which copies everything
-    // it does not say from the original -- prefab, mesh, window data.
-    const stub = JSON.parse(await readFile(page, 'Plugins/MyTower/Hotel.BuildingPreset.sodso.json'));
-    expect(stub.copyFrom).toBe('REF:BuildingPreset|Hotel');
-    expect(stub.fileType).toBe('BuildingPreset');
-    expect(stub.prefab).toBeUndefined();
+    const patch = JSON.parse(await readFile(page, 'Plugins/MyTower/Hotel.sodso_patch.json'));
+    expect(patch.fileType).toBe('BuildingPreset');
+    expect(patch.patches).toEqual([
+        {
+            op: 'replace',
+            path: '/floorLayouts/0/blueprints/0',
+            value: 'FLOOR:Floors/Hotel_GroundFloor',
+        },
+    ]);
 
-    // The slot points at the mod's copy. A floor the mod holds does not shadow the base
-    // game's by sharing its name -- the building has to name the path to it.
-    expect(stub.floorLayouts[0].blueprints).toEqual(['FLOOR:Floors/Hotel_GroundFloor']);
+    // And no preset. The game places its own Hotel, with this in one slot of it.
+    expect(await readFile(page, 'Plugins/MyTower/Hotel.BuildingPreset.sodso.json')).toBeNull();
+});
 
-    // Every other slot is still a name the game resolves out of its own assets.
-    expect(stub.floorLayouts[1].blueprints.every((entry) => !entry.startsWith('FLOOR:'))).toBe(true);
+/**
+ * A copy is a building of the author's own, and its floors have to be its own too. A
+ * blueprint is resolved by its bare name for every building that names it, so a copy that
+ * saved `Hotel_GroundFloor` would override that floor in the real Hotel -- which is the one
+ * thing choosing "copy" said not to do.
+ */
+test('copying makes a building of its own, and renames the floor it edits', async ({ page }) => {
+    await openBuildingFlow(page);
+    await openHotelGround(page);
+    await editAndSave(page);
+
+    await page.evaluate(async () => {
+        const ui = await import('/flows/building/scripts/ui.js');
+        ui.chooseClone();
+
+        document.getElementById('building-ownership-clone-title').value = 'My Hotel';
+        ui.syncCloneNameToTitle();
+
+        await ui.submitClone();
+        await ui.saveNow();
+    });
+
+    const preset = JSON.parse(await readFile(page, 'Plugins/MyTower/MyHotel.BuildingPreset.sodso.json'));
+
+    expect(preset.presetName).toBe('MyHotel');
+    expect(preset.name).toBe('My Hotel');
+    expect(preset.copyFrom).toBe('REF:BuildingPreset|Hotel');
+
+    // The floor it was editing has a name of its own, and the copy's slot points at it.
+    expect(preset.floorLayouts[0].blueprints[0]).toMatch(/^FLOOR:Floors\/MyHotel_/);
+
+    // The floors nobody touched still name the game's own, and cost the mod no files.
+    const floors = await listDir(page, 'Plugins/MyTower/Floors');
+    expect(floors).not.toContain('Hotel_GroundFloor.json');
+    expect(floors.filter((name) => name.startsWith('MyHotel_'))).toHaveLength(1);
+
+    // The original Hotel is untouched: no patch, no preset, nothing.
+    expect(await readFile(page, 'Plugins/MyTower/Hotel.sodso_patch.json')).toBeNull();
+    expect(await readFile(page, 'Plugins/MyTower/Hotel.BuildingPreset.sodso.json')).toBeNull();
+});
+
+/**
+ * Discarding discards. There is no fourth state to enter: the floor is read again from
+ * disk, which is the base game's untouched blueprint, so a discarded floor is exactly a
+ * freshly opened one.
+ */
+test('doing nothing throws the edit away and leaves the folder alone', async ({ page }) => {
+    await openBuildingFlow(page);
+    await openHotelGround(page);
+
+    const before = await listDir(page, 'Plugins/MyTower/Floors');
+
+    await editAndSave(page);
+
+    await page.evaluate(async () => {
+        const { discardEdit } = await import('/flows/building/scripts/ui.js');
+        await discardEdit();
+    });
+
+    await expect(askedAbout(page)).toHaveCount(0);
+
+    // The wall that was painted is gone, because the floor was read again.
+    const wall = await page.evaluate(async () => {
+        const { openFloorModel } = await import('/flows/building/scripts/ui.js');
+        const { getWall, AXIS_X } = await import('/flows/building/scripts/floorModel.js');
+        return getWall(openFloorModel(), 9, 9, AXIS_X)?.preset ?? null;
+    });
+    expect(wall).not.toBe('16');
+
+    // And the folder is as it was.
+    expect(await listDir(page, 'Plugins/MyTower/Floors')).toEqual(before);
+    expect(await readFile(page, 'Plugins/MyTower/Hotel.sodso_patch.json')).toBeNull();
+});
+
+/**
+ * The building the mod already owns is not asked about at all: the folder is the answer.
+ * A question on every edit to your own building would be the same nuisance the silent
+ * takeover was a hazard.
+ */
+test('the mod’s own building is saved without being asked about', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'MyTower', 'MyTower_Ground', {
+        isBasement: false, isControlVariant: false, layoutIndex: 0, blueprintIndex: 0,
+    });
+
+    await editAndSave(page);
+
+    await expect(askedAbout(page)).toHaveCount(0);
+
+    const written = JSON.parse(await readFile(page, 'Plugins/MyTower/Floors/MyTower_Ground.json'));
+    expect(written.floorName).toBe('MyTower_Ground');
 });
 
 test('both halves of a painted wall reach the file', async ({ page }) => {
