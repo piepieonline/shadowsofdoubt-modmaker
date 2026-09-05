@@ -393,7 +393,8 @@ async function readLayout(layout, resolveFloor, missing) {
 
     // A storey that is mostly open air is a rooftop rather than a floor of the building.
     // Trimmed off the top later, so the model does not carry a row of windows above the
-    // last real floor.
+    // last real floor -- unless it turns out to have windows of its own, which
+    // `isShellStorey` is where that is settled.
     footprint.isRooftop = footprint.enclosed.size === 0
         || footprint.openAir.size > footprint.enclosed.size;
 
@@ -507,6 +508,19 @@ export function fillEnclosedVoids(cells) {
 }
 
 /**
+ * Whether a storey at the top of the building is shell rather than a window row.
+ *
+ * Mostly open air, and nothing glazed looking out of it. The second half is what stops a
+ * penthouse being thrown away for having a big terrace beside it: a storey with exterior
+ * windows has a facade whatever the majority of its squares are, the game will light
+ * those windows, and a storey built as shell has nowhere for them to be painted.
+ *
+ * The window walls that decide it are the exterior ones, so a rooftop plant room with a
+ * window into its own stairwell is still shell.
+ */
+const isShellStorey = (storey) => storey.isRooftop && exteriorWindows(storey).length === 0;
+
+/**
  * The storeys that get a row of windows: everything but the ground floor and the roof.
  *
  * The ground floor is drawn by the street frontage the game puts in front of it rather
@@ -524,7 +538,7 @@ export function trimToWindowFloors(floors) {
     const body = floors.slice(1);
     const rooftops = [];
 
-    while (body.length && body[body.length - 1].isRooftop) {
+    while (body.length && isShellStorey(body[body.length - 1])) {
         rooftops.unshift(body.pop());
     }
 
@@ -555,10 +569,13 @@ const NO_CELLS = new Set();
  *              them is the floor of somebody else's mesh, and two surfaces in one place
  *              is what shimmers as the camera moves.
  * @param above the rooftop storeys, stacked on the body and built as shell only: see
- *              `onOuterShell`. They take no row of the texture, so the vertical UV still
+ *              `facesInside`. They take no row of the texture, so the vertical UV still
  *              runs over `body` alone and their walls are mapped to flat masonry.
+ * @param seal  true to put a quad on every face of every storey, including the ones inside
+ *              the mass of the building -- a closed model rather than the silhouette. See
+ *              `facesInside` for which walls that is.
  */
-export function buildMesh(body, { roof = true, above = [] } = {}) {
+export function buildMesh(body, { roof = true, above = [], seal = false } = {}) {
     const storeys = [...body, ...above];
     const height = body.length * FLOOR_HEIGHT;
     const buffers = {
@@ -578,7 +595,7 @@ export function buildMesh(body, { roof = true, above = [] } = {}) {
                 const across = cellKey(cell.x + step.x, cell.y + step.y);
 
                 if (cells.has(across)) continue;
-                if (shellOnly && !onOuterShell(across, under)) continue;
+                if (!seal && facesInside(across, storeys[floor], under, shellOnly)) continue;
 
                 addWall(buffers, cell, band,
                     floor * FLOOR_HEIGHT, (floor + 1) * FLOOR_HEIGHT, height, shellOnly);
@@ -624,23 +641,33 @@ export function buildMesh(body, { roof = true, above = [] } = {}) {
 }
 
 /**
- * Whether a rooftop storey's wall is part of the building's outer shell.
+ * Whether a wall stands inside the mass of the building rather than on the outside of it.
  *
- * A trimmed rooftop is two different things at once. Where its enclosed block reaches the
- * edge of the building it is the building -- `CityBank_Floor2` runs penthouse right across
- * the north of the lot, and without those walls the model stops a storey short of what the
- * street can see. Where the same block faces its own roof deck it is a structure standing
- * *on* the building, interior to the mass below it and not part of the silhouette; those
- * walls are left off, along with the deck they look out over.
+ * A block on a roof is two different things at once. Where it reaches the edge of the
+ * building it *is* the building -- `CityBank_Floor2` runs penthouse right across the north
+ * of the lot, and without those walls the model stops a storey short of what the street can
+ * see. Where the same block faces its own roof deck it is a structure standing *on* the
+ * building, interior to the mass below it and not part of the silhouette. Unsealed, those
+ * walls are left off along with the deck they look out over.
  *
- * The test is what the wall stands over: a square the storey below encloses is roof, and
- * anything else is open air past the edge of the building.
+ * Two things make a wall one of those, and it needs both:
  *
- * Only rooftops are read this way. A body storey that steps in is a setback and its walls
- * face the street over the roof below them -- which is why `Eden_Rooftop` is trimmed by
- * the majority rule in `readLayout` and the storeys under it are not.
+ *   - it stands over a square the storey below encloses. That square is roof; anything
+ *     else is open air past the edge of the building, which is what a *setback* faces --
+ *     a body storey that steps in is seen from the street over the roof below it, and
+ *     dropping its walls would put a hole in the front of the building.
+ *   - the square across it is this storey's own open air, which is the deck. A shell
+ *     storey is excused this half: it has no window row and is not the silhouette either
+ *     way, so what it stands over is the whole of the question for it.
+ *
+ * A yard open to the ground answers no to the first half and stays walled, which is what
+ * the shipped buildings' yards are: `Townhouse`, `BrandyNetherland` and `ShantyTown` all
+ * carry open squares on a body storey and lose no wall to this. What does lose walls is
+ * `Hotel_RooftopBar`, 31 of its 46, and `MixedIndustrial_ThirdFloor01`, 12 of 54 -- both
+ * of them blocks standing on the roof of the storey below with a deck beside them.
  */
-const onOuterShell = (across, below) => !below.has(across);
+const facesInside = (across, storey, below, shellOnly) =>
+    below.has(across) && (shellOnly || storey.openAir.has(across));
 
 /**
  * One storey of one square's outside wall.
@@ -760,12 +787,36 @@ const sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
 /* -------------------------------------------------------------------------- */
 
 /**
- * Every window that is actually on the outside of the building, with the rectangle it
- * takes in the texture.
+ * The window walls of one storey that face the outside of the building.
  *
  * A blueprint's window walls include the ones between two rooms of the same floor -- a
  * window into a corridor is still a window -- so a wall only counts here if the square it
- * belongs to is enclosed and the square across it is not.
+ * belongs to is enclosed and the square across it is not. A square the storey leaves as
+ * open air is not enclosed, so a penthouse window looking out over its own roof deck is
+ * one of these: the game's `AssignWindowUVData` enumerates it too, because the deck is
+ * outside as far as the room is concerned.
+ *
+ * In the order the reference walks them, which is what makes two runs over one blueprint
+ * produce the same block indices.
+ */
+function exteriorWindows(storey) {
+    return [...storey.windows]
+        .map((key) => {
+            const [x, y, band] = key.split(',').map(Number);
+            return { cell: { x, y }, band };
+        })
+        .sort((a, b) => a.cell.x - b.cell.x || a.cell.y - b.cell.y || a.band - b.band)
+        .filter(({ cell, band }) => {
+            const across = BAND_NEIGHBOURS[band];
+
+            return storey.enclosed.has(cellKey(cell.x, cell.y))
+                && !storey.enclosed.has(cellKey(cell.x + across.x, cell.y + across.y));
+        });
+}
+
+/**
+ * Every window that is actually on the outside of the building, with the rectangle it
+ * takes in the texture.
  *
  * Two walls facing the same way at different depths, which a floor with a courtyard has,
  * land on the same texture column: `wallColumn` maps a square to one of 15 per side and
@@ -777,20 +828,7 @@ export function collectWindows(body) {
     const rowHeight = TEXTURE_HEIGHT / body.length;
 
     for (let floor = 0; floor < body.length; floor++) {
-        const cells = body[floor].enclosed;
-
-        const onFloor = [...body[floor].windows]
-            .map((key) => {
-                const [x, y, band] = key.split(',').map(Number);
-                return { cell: { x, y }, band };
-            })
-            .sort((a, b) => a.cell.x - b.cell.x || a.cell.y - b.cell.y || a.band - b.band);
-
-        for (const { cell, band } of onFloor) {
-            const across = BAND_NEIGHBOURS[band];
-            if (!cells.has(cellKey(cell.x, cell.y))) continue;
-            if (cells.has(cellKey(cell.x + across.x, cell.y + across.y))) continue;
-
+        for (const { cell, band } of exteriorWindows(body[floor])) {
             windows.push({
                 cell,
                 band,
@@ -1099,6 +1137,18 @@ export const MESH_SOURCE_FIELD = 'modMakerFloorHash';
 export const MESH_ROOF_FIELD = 'modMakerBuildRoof';
 
 /**
+ * The field a building carries saying whether its model was closed up on the inside.
+ *
+ * The third of these, held for the reason the other two are: it is a decision about the
+ * building, and a mesh is rebuilt from its floors every time one of them is edited.
+ *
+ * Written as the exception here, unlike the roof, because the ordinary building is the
+ * silhouette -- a wall facing a storey's own roof deck is inside the mass and off by
+ * default, the way the game's own capture meshes have it. See `facesInside`.
+ */
+export const MESH_SEAL_FIELD = 'modMakerSealInterior';
+
+/**
  * Fields generation writes that `withoutDefaults` would otherwise drop.
  *
  * A copy says `copyFrom`, so a field left out is not "unchanged" -- it is whatever the
@@ -1108,7 +1158,7 @@ export const MESH_ROOF_FIELD = 'modMakerBuildRoof';
  */
 export const GENERATED_FIELDS = [
     'prefab', 'emissionMapUnlit', 'emissionMapLit', 'floorCount', 'sortedWindows',
-    MESH_SOURCE_FIELD, MESH_ROOF_FIELD,
+    MESH_SOURCE_FIELD, MESH_ROOF_FIELD, MESH_SEAL_FIELD,
 ];
 
 /**
@@ -1197,11 +1247,12 @@ export async function isMeshStale(preset, resolveFloor) {
  * rather than a fault: a building with nothing above its ground floor has no facade to
  * model, and saying so is more useful than a stack trace.
  *
- * `roof` is the author's, and it is written onto the preset so that the next generation
- * -- which happens whenever one of the floors is edited -- does not have to be told
- * again.
+ * `roof` and `seal` are the author's, and both are written onto the preset so that the
+ * next generation -- which happens whenever one of the floors is edited -- does not have
+ * to be told again.
  */
-export async function generateBuilding(name, preset, resolve, { roof = true } = {}) {
+export async function generateBuilding(
+    name, preset, resolve, { roof = true, seal = false } = {}) {
     // Every blueprint is read twice -- once for its footprint and once for the hash --
     // and a storey's control room variant is usually the same file as another storey's.
     // Held for the length of one generation only, so an edit made after it is not hidden
@@ -1225,7 +1276,7 @@ export async function generateBuilding(name, preset, resolve, { roof = true } = 
     // transform is built once here and handed to both.
     const place = shellSpace((body.length + rooftops.length) * FLOOR_HEIGHT);
 
-    const mesh = buildMesh(body, { roof, above: rooftops });
+    const mesh = buildMesh(body, { roof, above: rooftops, seal });
     const windows = collectWindows(body);
     const textures = paintTextures(windows);
 
@@ -1235,6 +1286,7 @@ export async function generateBuilding(name, preset, resolve, { roof = true } = 
     preset.floorCount = body.length;
     preset.sortedWindows = buildWindowData(windows, body.length, height, place);
     preset[MESH_ROOF_FIELD] = roof;
+    preset[MESH_SEAL_FIELD] = seal;
     preset[MESH_SOURCE_FIELD] = await sourceFloorHash(preset, resolveFloor);
 
     const folder = prefabFolder(name);

@@ -1077,6 +1077,7 @@ preset to point at them:
 | `floorCount` | the number of window rows |
 | `sortedWindows` | four lists of `WindowUVBlock` per floor |
 | `modMakerBuildRoof` | whether the **Roof** box was ticked — not a field the game has |
+| `modMakerSealInterior` | whether **Seal interior** was ticked — not one either |
 
 At runtime `NewRoom.UpdateEmission` blits the emissive map at a block's `originPixel` and
 `rectSize` into the building's own emission texture when a room's lights come on, and the
@@ -1091,11 +1092,11 @@ generated prefab and window data are what stop the stub deferring to the origina
 The ground floor is left out, because the street frontage the game puts in front of it is
 what draws it. Basements are not modelled at all.
 
-A **rooftop** storey — one `readLayout` finds is more open air than enclosed — takes no row
-of the texture either, and would shift every floor above it if it did. It is still part of
-the model. `CityBank_Floor2` is three rows of penthouse right across the north of the lot
-with an open deck beside it, and dropping it outright left the building a storey short of
-what the street can see:
+A **rooftop** storey — one `readLayout` finds is more open air than enclosed, *and* that
+has no windows on the outside of it — takes no row of the texture either, and would shift
+every floor above it if it did. It is still part of the model. `CityBank_Floor2` is three
+rows of penthouse right across the north of the lot with an open deck beside it, and
+dropping it outright left the building a storey short of what the street can see:
 
 ```
 CityBank_Floor1        CityBank_Floor2        # enclosed   o open deck
@@ -1117,11 +1118,35 @@ Shell walls take their UV from the texture's roof block, which is flat masonry �
 side bands are window rows, and mapping a parapet there would print somebody else's lit
 windows onto it.
 
-The rule is only applied to rooftops. A *body* storey that steps in is a setback, and its
-walls face the street over the roof below them. The majority-vote test that sorts one from
-the other reproduces the base game's own `floorCount` on all 15 shipped buildings —
-`Eden_Rooftop` is 49 enclosed squares against 176 open and the game gives it no window row,
-so loosening it to "has anything enclosed" would make EdenTower 19 rows instead of 18.
+A storey with a window row is read the same way, with one more condition: the square across
+the wall has to be that storey's *own* open air. So a penthouse leaves off the walls facing
+its terrace, and a *setback* keeps its walls, because what a setback faces is not open air
+on its own storey — it is the sky over the roof below, seen from the street. A yard that is
+open to the ground keeps its walls too, by the first half of the test: it is not standing on
+anything. Of the shipped buildings only two lose a wall to this, both blocks on a roof with
+a deck beside them — `Hotel_RooftopBar` (31 of its 46) and `MixedIndustrial_ThirdFloor01`
+(12 of 54).
+
+**Seal interior**, beside the roof box, turns all of that off and puts a quad on every face
+— a closed model rather than the silhouette. It is remembered on the preset as
+`modMakerSealInterior`, since a mesh is rebuilt every time one of its floors is edited.
+Either way the window data is the same: a wall that is not drawn is still a wall the game
+enumerates, and dropping its block would shift every window after it on that side.
+
+### Which storeys have a window row
+
+The majority-vote test agrees with the game on every rooftop it ships — `Eden_Rooftop` is
+49 enclosed squares against 176 open and the game gives it no window row, so loosening it
+to "has anything enclosed" would make EdenTower 19 rows instead of 18. It is a guess all
+the same, because the base game's `floorCount` is hand-authored beside a painted window
+map rather than derived: `CityHall` is 5 storeys and says 3, giving its 40-square tower no
+row where this gives it one.
+
+What overrides the vote is windows. A storey with any window on the outside of it is kept
+as a window row however much of it is deck, because the alternative is a facade with
+nowhere in the texture to paint it and a `sortedWindows` list the game's own enumeration
+does not agree with. None of the shipped rooftops has one, so this changes no base game
+building.
 
 The panel reports both: *Not modelled* for the ground floor, *Shell only* for rooftops.
 
@@ -1140,7 +1165,9 @@ and the terrace of any storey that steps in. Untick it for a building something 
 stacked on: what would be its roof is the underside of somebody else's mesh, and two
 surfaces in one place shimmer against each other as the camera moves. The answer is stored
 on the preset as `modMakerBuildRoof`, because a mesh is regenerated every time one of its
-floors changes and a choice held nowhere would put the roof silently back.
+floors changes and a choice held nowhere would put the roof silently back. **Seal
+interior** sits beside it and is held the same way; what it does is above, under *What is
+modelled*.
 
 In their place goes a **10 cm rim**, on top of every wall with open sky over it — the top
 of the building and the edge of every terrace under it — so the building has a visible top
@@ -1224,13 +1251,13 @@ section says *built from floors that have changed since* when they no longer mat
 field is not one the game has; the mod loader is expected to ignore a property it does not
 recognise, which is what both of the common .NET JSON readers do by default — an
 expectation rather than something verified against the loader, and the reason it is one
-short string rather than anything larger — `modMakerBuildRoof` is the only other one, and
-it is a boolean. Only a building that has actually had a mesh generated is checked, so
-nothing else pays for reading its floors again.
+short string rather than anything larger — `modMakerBuildRoof` and `modMakerSealInterior`
+are the only other two, and both are booleans. Only a building that has actually had a
+mesh generated is checked, so nothing else pays for reading its floors again.
 
-The roof is deliberately not part of the hash. It is not something that can go out of date
-behind the author's back: nothing changes it but the checkbox, and the checkbox is right
-beside the button that acts on it.
+Neither checkbox is part of the hash. Neither is something that can go out of date behind
+the author's back: nothing changes them but the boxes, and the boxes are right beside the
+button that acts on them.
 
 ### Known limitations
 

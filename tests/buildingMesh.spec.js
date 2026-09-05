@@ -92,6 +92,7 @@ const open = (page, building, blueprint, slot) => page.evaluate(async (request) 
 const generateButton = (page) => page.locator('#building-floor button', { hasText: 'Generate mesh' });
 const meshNote = (page) => page.locator('#building-floor .mesh-note');
 const roofBox = (page) => page.locator('#building-floor .mesh-roof input');
+const sealBox = (page) => page.locator('#building-floor .mesh-seal input');
 
 /**
  * Press Generate mesh and wait for it to finish.
@@ -375,6 +376,30 @@ test('a building built without a roof opens with the box still unticked', async 
     // otherwise the next generation quietly puts the roof back on.
     await open(page, 'MyTower', 'Tenement_MainFloor1', UPPER_SLOT);
     await expect(roofBox(page)).not.toBeChecked();
+});
+
+/**
+ * The seal checkbox, which is the roof box's other half: whether the model is closed up
+ * on the faces inside it. Same question, so the same two things are covered -- the answer
+ * reaches the generator, and it survives the building being put down and picked up. Which
+ * walls it adds is asserted on the mesh in meshExport.unit.spec.js.
+ */
+test('sealing the model is remembered on the preset', async ({ page }) => {
+    await openBuildingFlow(page);
+    await open(page, 'MyTower', 'Tenement_MainFloor1', UPPER_SLOT);
+
+    // The silhouette is what a building is generated as until it is asked otherwise.
+    await expect(sealBox(page)).not.toBeChecked();
+
+    await sealBox(page).check();
+    await generate(page);
+
+    expect((await preset(page)).modMakerSealInterior).toBe(true);
+
+    // Opened again from scratch, where the answer has to come off the preset -- otherwise
+    // the next generation quietly opens the model back up.
+    await open(page, 'MyTower', 'Tenement_MainFloor1', UPPER_SLOT);
+    await expect(sealBox(page)).toBeChecked();
 });
 
 test('saving a floor does not tick the box back on', async ({ page }) => {

@@ -38,6 +38,7 @@ import {
 } from './ownership.js';
 import {
     generateBuilding, writeGeneratedBuilding, isMeshStale, GENERATED_FIELDS, MESH_ROOF_FIELD,
+    MESH_SEAL_FIELD,
 } from './meshExport.js';
 import { createScene, Overlay, describeCell } from './scene.js';
 import { createToolState, attachPainting, nearestEdge, Tool, PaintMode } from './tools.js';
@@ -692,6 +693,7 @@ function openFloorContext() {
             stale: meshState.stale,
             status: meshState.status,
             roof: meshState.roof,
+            seal: meshState.seal,
         },
     };
 }
@@ -744,6 +746,7 @@ function updateFloorPanel() {
             onOpen: openSlot,
             onGenerateMesh: generateMesh,
             onMeshRoof: setMeshRoof,
+            onMeshSeal: setMeshSeal,
         });
     }
 }
@@ -969,6 +972,7 @@ function renderPanels() {
         onOpenFloor: openSlot,
         onGenerateMesh: generateMesh,
         onMeshRoof: setMeshRoof,
+        onMeshSeal: setMeshSeal,
         canPaint: canEdit(),
     });
 
@@ -1570,19 +1574,23 @@ async function renameInheritedFloor(folder) {
 
 /**
  * What the last generation did, whether the building's model still matches its floors,
- * and whether the next one puts a top on it.
+ * and what the next one is asked to build.
  *
  * `stale` is three-valued on purpose. `true` and `false` are answers about a building
  * whose mesh this app generated; `null` is *no question* -- a building copying its model
  * from a base game one, or one that has never had a mesh generated, has nothing that
  * could have gone out of date and nothing regenerating would fix.
  *
- * `roofChosen` is what keeps the checkbox from being answered over the top of. The
- * preset only learns the answer when a mesh is generated, so between ticking the box and
- * pressing the button every autosave reads a preset that still says the old thing --
- * and without this, the first one would untick it again.
+ * `roofChosen` and `sealChosen` are what keep the two checkboxes from being answered over
+ * the top of. The preset only learns either answer when a mesh is generated, so between
+ * ticking a box and pressing the button every autosave reads a preset that still says the
+ * old thing -- and without these, the first one would put the box back.
  */
-const NO_MESH_STATE = { busy: false, stale: null, status: '', roof: true, roofChosen: false };
+const NO_MESH_STATE = {
+    busy: false, stale: null, status: '',
+    roof: true, roofChosen: false,
+    seal: false, sealChosen: false,
+};
 
 let meshState = NO_MESH_STATE;
 
@@ -1606,6 +1614,11 @@ const resolveFloorData = async (blueprint) =>
  */
 function setMeshRoof(roof) {
     meshState = { ...meshState, roof, roofChosen: true };
+}
+
+/** The same, for whether the next mesh is closed up on the inside. */
+function setMeshSeal(seal) {
+    meshState = { ...meshState, seal, sealChosen: true };
 }
 
 /**
@@ -1644,13 +1657,15 @@ export async function generateMesh() {
 
     const building = open.building;
     const roof = meshState.roof;
+    const seal = meshState.seal;
 
     meshState = { ...meshState, busy: true, stale: null, status: 'Reading the floors…' };
     updateFloorPanel();
 
     try {
         const held = await presetForSaving(folder, building, open.ownership);
-        const result = await generateBuilding(building, held.preset, resolveFloorData, { roof });
+        const result = await generateBuilding(
+            building, held.preset, resolveFloorData, { roof, seal });
 
         if (!result.ok) {
             meshState = { ...meshState, busy: false, stale: null, status: result.reason };
@@ -1667,6 +1682,7 @@ export async function generateMesh() {
             meshState = {
                 busy: false, stale: false, status: describeGeneration(result),
                 roof, roofChosen: false,
+                seal, sealChosen: false,
             };
         }
     } catch (error) {
@@ -1734,6 +1750,7 @@ async function refreshMeshState() {
             // generating, the preset still describes the mesh on disk rather than the one
             // about to be built, and this runs after every autosave.
             roof: meshState.roofChosen ? meshState.roof : (preset?.[MESH_ROOF_FIELD] ?? true),
+            seal: meshState.sealChosen ? meshState.seal : (preset?.[MESH_SEAL_FIELD] ?? false),
         };
         updateFloorPanel();
     } catch (error) {

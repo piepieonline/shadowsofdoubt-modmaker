@@ -760,9 +760,11 @@
     }
 }
 
-/* Whether the next generation caps the top. Pico lays a checkbox out as a block with a
-   margin under it, which is a row of its own in a column this narrow. */
-.mesh-roof {
+/* Whether the next generation caps the top, and whether it closes the inside up. Pico
+   lays a checkbox out as a block with a margin under it, which is a row of its own in a
+   column this narrow. */
+.mesh-roof,
+.mesh-seal {
     display: flex;
     align-items: center;
     gap: 0.3rem;

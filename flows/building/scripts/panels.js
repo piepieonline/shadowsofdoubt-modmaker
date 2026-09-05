@@ -639,7 +639,8 @@ function variationControls(model, index, address, state, { onRebuild, canEdit = 
  *              when nothing is open
  * @param onOpen called with the slot to open
  */
-export function renderFloorPanel(container, floor, { onOpen, onGenerateMesh, onMeshRoof } = {}) {
+export function renderFloorPanel(
+    container, floor, { onOpen, onGenerateMesh, onMeshRoof, onMeshSeal } = {}) {
     clear(container);
 
     if (!floor?.blueprint) {
@@ -691,7 +692,11 @@ export function renderFloorPanel(container, floor, { onOpen, onGenerateMesh, onM
     }));
 
     if (storey) container.appendChild(layoutSelect(storey, floor.slot, onOpen));
-    if (floor.mesh) container.appendChild(meshSection(floor.mesh, onGenerateMesh, onMeshRoof));
+
+    if (floor.mesh) {
+        container.appendChild(
+            meshSection(floor.mesh, onGenerateMesh, onMeshRoof, onMeshSeal));
+    }
 }
 
 /**
@@ -707,7 +712,7 @@ export function renderFloorPanel(container, floor, { onOpen, onGenerateMesh, onM
  * and every edit made afterwards silently pulls it out of step. It is the one thing here
  * you would not otherwise think to check.
  */
-function meshSection(mesh, onGenerate, onRoof) {
+function meshSection(mesh, onGenerate, onRoof, onSeal) {
     const notes = [];
     if (mesh.stale) notes.push('Built from floors that have changed since — generate again.');
     if (mesh.status) notes.push(mesh.status);
@@ -724,6 +729,7 @@ function meshSection(mesh, onGenerate, onRoof) {
             onclick: () => onGenerate?.(),
         }),
         roofToggle(mesh, onRoof),
+        sealToggle(mesh, onSeal),
         notes.length
             ? el('small', { class: mesh.stale ? 'mesh-note stale' : 'mesh-note', text: notes.join(' ') })
             : null,
@@ -753,6 +759,31 @@ function roofToggle(mesh, onRoof) {
             onchange: (event) => onRoof?.(event.target.checked),
         }),
         el('span', { text: 'Roof' }),
+    ]);
+}
+
+/**
+ * Whether the next generation closes the model up on the inside.
+ *
+ * Unticked for the ordinary building, which is drawn as the silhouette the street sees: a
+ * penthouse wall looking out over its own roof deck stands inside the mass of the
+ * building, and the model leaves it off along with the deck. Tick it for a model that has
+ * to be solid from every side.
+ *
+ * It reads off the preset the last generation wrote, for the reason the roof box does.
+ */
+function sealToggle(mesh, onSeal) {
+    return el('label', { class: 'mesh-seal', title: mesh.canGenerate
+        ? 'Wall the faces inside the building — a storey\'s own roof deck. Off draws the '
+            + 'silhouette the street sees.'
+        : 'Needs a mod folder and a building to generate for' }, [
+        el('input', {
+            type: 'checkbox',
+            checked: mesh.seal ? 'checked' : null,
+            ...unless(mesh.canGenerate && !mesh.busy),
+            onchange: (event) => onSeal?.(event.target.checked),
+        }),
+        el('span', { text: 'Seal interior' }),
     ]);
 }
 
@@ -2126,6 +2157,7 @@ export function createPanels(elements, model, state = createToolState(), handler
                 onOpen: handlers.onOpenFloor,
                 onGenerateMesh: handlers.onGenerateMesh,
                 onMeshRoof: handlers.onMeshRoof,
+                onMeshSeal: handlers.onMeshSeal,
             });
         }
 

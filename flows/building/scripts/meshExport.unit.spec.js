@@ -21,12 +21,16 @@ import {
     readFootprints, trimToWindowFloors, buildMesh, collectWindows, buildWindowData,
     fillEnclosedVoids, paintTextures, windowPixels, toObj, prefabDefinition,
     generateBuilding, sourceFloorHash, isMeshStale,
-    MESH_SOURCE_FIELD, MESH_ROOF_FIELD, GENERATED_FIELDS, MESH_CHILD_LOCAL_Y,
+    MESH_SOURCE_FIELD, MESH_ROOF_FIELD, MESH_SEAL_FIELD, GENERATED_FIELDS,
+    MESH_CHILD_LOCAL_Y,
 } from './meshExport.js';
 import { loadVanillaPreset, loadVanillaBlueprint, withoutDefaults } from './buildingLibrary.js';
 
 const FLOOR_HEIGHT = 5.4;
 const SIDES = ['front', 'back', 'left', 'right'];
+
+/** `WindowLargeRectangle`, one of the nine wall presets wallPresetKinds.json glazes. */
+const WINDOW_PRESET = 14;
 
 /** A building's window data, derived from its blueprints rather than read off it. */
 async function generate(name) {
@@ -523,8 +527,190 @@ describe('trimToWindowFloors', () => {
         expect(trimToWindowFloors(floors).body).toHaveLength(2);
     });
 
+    /**
+     * A penthouse with a terrace beside it: mostly open air, and glazed. Trimming it
+     * takes away the only row of the texture its windows could be painted in, while the
+     * game goes on enumerating them -- so it stays a window row and the majority vote
+     * loses.
+     */
+    it('keeps a rooftop storey that has windows on the outside', () => {
+        const penthouse = footprint(square(5, 5, 9, 9), {
+            blueprint: 'penthouse',
+            isRooftop: true,
+            windows: new Set(['5,5,3']),
+        });
+
+        const { body, rooftops } = trimToWindowFloors([footprint(['5,5']), penthouse]);
+
+        expect(body).toEqual([penthouse]);
+        expect(rooftops).toEqual([]);
+    });
+
+    it('trims a rooftop storey whose only windows are inside it', () => {
+        // A window between two of its own enclosed squares -- a plant room looking into
+        // its stairwell. The game does not light it from the street and neither is there
+        // a facade to paint it on.
+        const roof = footprint(square(5, 5, 9, 9), {
+            blueprint: 'roof',
+            isRooftop: true,
+            windows: new Set(['5,5,0']),
+        });
+
+        const { body, rooftops } = trimToWindowFloors([footprint(['5,5']), roof]);
+
+        expect(body).toEqual([]);
+        expect(rooftops).toEqual([roof]);
+    });
+
+    it('trims the shell storeys above one it keeps', () => {
+        const penthouse = footprint(square(5, 5, 9, 9), {
+            blueprint: 'penthouse', isRooftop: true, windows: new Set(['5,5,3']),
+        });
+        const vents = footprint([], { blueprint: 'vents', isRooftop: true });
+
+        const { body, rooftops } = trimToWindowFloors(
+            [footprint(['5,5']), penthouse, vents]);
+
+        expect(body.map((floor) => floor.blueprint)).toEqual(['penthouse']);
+        expect(rooftops.map((floor) => floor.blueprint)).toEqual(['vents']);
+    });
+
     it('leaves nothing for a building with only a ground floor', () => {
         expect(trimToWindowFloors([footprint(['5,5'])]).body).toHaveLength(0);
+    });
+});
+
+/**
+ * The shape the majority vote used to throw away: a top floor walled on some of its
+ * sides with a deck over the rest of the lot. Run from blueprints rather than from
+ * footprint stubs, because what made it a rooftop was the floor tile types.
+ */
+describe('a top floor with a terrace beside it', () => {
+    const node = (x, y, floorType, walls = []) => ({
+        f_c: { x, y }, f_h: 0, f_t: floorType, f_r: '', w_d: walls,
+    });
+
+    /** Five squares of penthouse across the back of the lot, and 40 of deck below them. */
+    const penthouse = () => {
+        const nodes = [];
+
+        // The offset points at (0, +1), which is the deck: a wall of the penthouse
+        // looking out over its own terrace, which the game counts as an exterior one.
+        for (let x = 5; x <= 9; x++) nodes.push(node(x, 5, 1, x === 5
+            ? [{ w_o: { x: 0, y: 0.5 }, p_n: WINDOW_PRESET }]
+            : []));
+
+        for (let x = 5; x <= 9; x++) for (let y = 6; y <= 13; y++) nodes.push(node(x, y, 2));
+
+        return { a_d: [{ p_n: 'Lobby', vs: [{ r_d: [{ n_d: nodes }] }] }] };
+    };
+
+    const solid = () => ({
+        a_d: [{
+            p_n: 'Lobby',
+            vs: [{
+                r_d: [{
+                    n_d: square(5, 5, 9, 13).map((cell) => {
+                        const [x, y] = cell.split(',').map(Number);
+                        return node(x, y, 1);
+                    }),
+                }],
+            }],
+        }],
+    });
+
+    const read = async () => {
+        const floors = { ground: solid(), middle: solid(), top: penthouse() };
+        const { floors: storeys } = await readFootprints({
+            floorLayouts: Object.keys(floors).map((name) => ({ blueprints: [name] })),
+        }, async (name) => floors[name]);
+
+        return trimToWindowFloors(storeys);
+    };
+
+    it('keeps it as a window row rather than as shell', async () => {
+        const { body, rooftops } = await read();
+
+        expect(body.map((floor) => floor.blueprint)).toEqual(['middle', 'top']);
+        expect(rooftops).toEqual([]);
+    });
+
+    it('paints its window in the top row of the texture', async () => {
+        const { body } = await read();
+        const windows = collectWindows(body);
+
+        expect(windows).toHaveLength(1);
+        expect(windows[0].floor).toBe(1);
+        // Two rows over 512 pixels, so the upper one starts halfway up.
+        expect(windows[0].pixels.y).toBeGreaterThanOrEqual(256);
+    });
+
+    it('writes it into the window data the game reads', async () => {
+        const { body } = await read();
+        const data = buildWindowData(
+            collectWindows(body), body.length, body.length * FLOOR_HEIGHT);
+
+        expect(data).toHaveLength(2);
+        // A wall facing +Y is the back of the building, and the floor is 1-based off the
+        // ground floor.
+        expect(data[1].back).toHaveLength(1);
+        expect(data[1].back[0].floor).toBe(2);
+    });
+});
+
+describe('the faces inside the building', () => {
+    /** A storey with a deck: enclosed squares, and open air it looks out over. */
+    const withDeck = (cells, deck, extra = {}) =>
+        footprint(cells, { openAir: new Set(deck), ...extra });
+
+    const walls = (mesh) => quads(mesh).filter((quad) => quad.normal.y === 0).length;
+
+    /** A row of penthouse along one edge, with its terrace filling the rest. */
+    const penthouse = (extra = {}) =>
+        withDeck(square(5, 5, 9, 5), square(5, 6, 9, 9), extra);
+
+    // Five squares: five walls out, five onto the deck, and one at each end.
+    const ALL_WALLS = 12;
+    const ONTO_THE_DECK = 5;
+
+    /** What the top storey adds, since the one under it walls itself the same either way. */
+    const topWalls = (floors, options) =>
+        walls(buildMesh(floors, options)) - walls(buildMesh(floors.slice(0, 1)));
+
+    it('leaves off a wall a storey turns towards its own deck', () => {
+        const floors = [footprint(square(5, 5, 9, 9)), penthouse()];
+
+        expect(topWalls(floors)).toBe(ALL_WALLS - ONTO_THE_DECK);
+        expect(topWalls(floors, { seal: true })).toBe(ALL_WALLS);
+    });
+
+    it('walls a yard that is open to the ground either way', () => {
+        // The same shape, but the storey below is only the block: what is beside it is
+        // open from the street rather than a deck the storey is standing on, and a hole
+        // there is a hole in the front of the building.
+        const floors = [footprint(square(5, 5, 9, 5)), penthouse()];
+
+        expect(topWalls(floors)).toBe(ALL_WALLS);
+        expect(topWalls(floors, { seal: true })).toBe(ALL_WALLS);
+    });
+
+    it('walls a storey that steps in either way', () => {
+        // A setback: it stands over the storey below, and there is nothing beside it on
+        // its own storey. Those walls are seen from the street over the roof below them.
+        const floors = [footprint(square(5, 5, 9, 9)), footprint(square(6, 6, 8, 8))];
+
+        expect(walls(buildMesh(floors)))
+            .toBe(walls(buildMesh(floors, { seal: true })));
+    });
+
+    it('closes a shell rooftop up as well', () => {
+        const body = [footprint(square(5, 5, 9, 9))];
+        const above = [penthouse({ isRooftop: true })];
+
+        expect(walls(buildMesh(body, { above }))).toBe(
+            walls(buildMesh(body)) + ALL_WALLS - ONTO_THE_DECK);
+        expect(walls(buildMesh(body, { above, seal: true }))).toBe(
+            walls(buildMesh(body)) + ALL_WALLS);
     });
 });
 
@@ -1009,6 +1195,32 @@ describe('generateBuilding', () => {
         await generateBuilding('Townhouse', preset, loadVanillaBlueprint);
 
         expect(preset[MESH_ROOF_FIELD]).toBe(true);
+    });
+
+    it('records whether the model was closed up on the inside', async () => {
+        const open = await presetCopy('Townhouse');
+        const sealed = await presetCopy('Townhouse');
+
+        await generateBuilding('Townhouse', open, loadVanillaBlueprint);
+        await generateBuilding('Townhouse', sealed, loadVanillaBlueprint, { seal: true });
+
+        expect(open[MESH_SEAL_FIELD]).toBe(false);
+        expect(sealed[MESH_SEAL_FIELD]).toBe(true);
+    });
+
+    it('seals the walls a rooftop bar turns towards its own deck', async () => {
+        // `Hotel_RooftopBar` is the shipped building this shows on: a block standing on
+        // the ballroom below with a terrace beside it, 31 of whose 46 walls face the deck.
+        const open = await generateBuilding(
+            'Hotel', await presetCopy('Hotel'), loadVanillaBlueprint);
+        const sealed = await generateBuilding(
+            'Hotel', await presetCopy('Hotel'), loadVanillaBlueprint, { seal: true });
+
+        expect(sealed.triangleCount).toBe(open.triangleCount + 31 * 2);
+        // The window data is the same either way. A wall that is not drawn is still a wall
+        // the game enumerates, and dropping its block would shift every one after it.
+        expect(sealed.preset.sortedWindows).toEqual(open.preset.sortedWindows);
+        expect(sealed.windowCount).toBe(open.windowCount);
     });
 
     it('leaves the top off, and says so, for a building with a floor above it', async () => {
