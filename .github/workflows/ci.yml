@@ -23,6 +23,13 @@
 # and no display; the desktop job wants no Chromium at all -- Electron brings its own, and
 # Playwright's `_electron.launch` uses the binary from node_modules -- but does want a display
 # on Linux. Running them together would pay both costs twice.
+#
+# The desktop job also packages, and attaches the installers to the run. Unsigned binaries are
+# awkward enough to install that "does it actually work once installed" is a question nobody
+# answers unless the answer is one download away -- and the blocklist handler this whole build
+# exists for cannot be tested any other way, because no automated test can make Chromium refuse
+# a folder. Building the real targets rather than a quick `--dir` is the same argument: an
+# installer has its own ways of being broken, and release day is a bad time to find them.
 name: CI
 
 on:
@@ -68,13 +75,27 @@ jobs:
           retention-days: 7
 
   desktop:
-    name: Desktop smoke (${{ matrix.os }})
+    name: Desktop (${{ matrix.os }})
     strategy:
       # Both halves, whatever the other does. A failure on one platform and a pass on the
       # other is the most informative result this job has, and fail-fast throws it away.
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        # Spelled out per platform rather than as a bare list of runners, because packaging
+        # needs a target and a set of files that differ between the two. Same shape as
+        # release.yml, deliberately: what a pull request builds should be what a tag builds,
+        # or the first time anyone finds out the installer is broken is on release day.
+        include:
+          - os: ubuntu-latest
+            platform: --linux
+            artifacts: |
+              release/*.AppImage
+              release/*.deb
+          - os: windows-latest
+            platform: --win
+            artifacts: |
+              release/*.exe
+              release/*.zip
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
@@ -115,3 +136,42 @@ jobs:
           name: playwright-report-desktop-${{ matrix.os }}
           path: playwright-report/
           retention-days: 7
+
+      # The renderer, which electron-builder copies rather than builds. The smoke suite has
+      # already built it once in its own global setup; this is a few hundred milliseconds and
+      # it makes the dependency explicit instead of resting on what a test harness happens to
+      # leave behind. `GITHUB_SHA` is set on every runner, so the build stamp in the footer is
+      # the pull request's own head commit -- which is the point of downloading one of these.
+      - run: npm run build:desktop
+
+      # After the tests, so a build that does not work is not handed to anyone as though it
+      # does. The whole target list rather than a quick `--dir`: an installer is a thing that
+      # breaks on its own, and NSIS, deb and AppImage each have their own ways of doing it.
+      - name: Package
+        run: npx electron-builder ${{ matrix.platform }} --publish never
+
+      # Every target, not merely some target. `if-no-files-found: error` below fires only when
+      # nothing at all matched, so a build that quietly stopped producing the .deb would upload
+      # the AppImage on its own and look entirely successful. Missing targets are exactly the
+      # kind of packaging failure that goes unnoticed until somebody asks where the download
+      # went.
+      - name: Every expected artifact was produced
+        shell: bash
+        run: |
+          for pattern in ${{ matrix.artifacts }}; do
+            compgen -G "$pattern" > /dev/null \
+              || { echo "::error::electron-builder produced nothing matching $pattern"; exit 1; }
+            echo "ok: $(compgen -G "$pattern" | tr '\n' ' ')"
+          done
+
+      - name: Upload the installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os }}
+          path: ${{ matrix.artifacts }}
+          # Not the .blockmap or latest.yml beside them: those exist for electron-updater,
+          # and there is no auto-update here.
+          if-no-files-found: error
+          # Long enough to outlast a review that sits over a weekend, short enough that a
+          # busy repository is not storing a hundred installers. These are ~100 MB apiece.
+          retention-days: 14
